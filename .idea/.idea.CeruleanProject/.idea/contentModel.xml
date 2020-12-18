@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Git\CeruleanProject" t="IncludeRecursive">
+      <e p=".gitignore" t="Include" />
+      <e p="appsettings.Development.json" t="Include" />
+      <e p="appsettings.json" t="Include" />
+      <e p="bin" t="ExcludeRecursive" />
+      <e p="Cerulean.csproj" t="IncludeRecursive" />
+      <e p="CeruleanProject.sln" t="IncludeFlat" />
+      <e p="ClientApp" t="Include">
+        <e p=".env" t="Include" />
+        <e p=".gitignore" t="Include" />
+        <e p="node_modules\@babel\parser" t="IncludeRecursive" />
+        <e p="node_modules\@babel\types" t="IncludeRecursive" />
+        <e p="node_modules\@jest\console" t="IncludeRecursive" />
+        <e p="node_modules\@jest\environment" t="IncludeRecursive" />
+        <e p="node_modules\@jest\fake-timers" t="IncludeRecursive" />
+        <e p="node_modules\@jest\source-map" t="IncludeRecursive" />
+        <e p="node_modules\@jest\test-result" t="IncludeRecursive" />
+        <e p="node_modules\@jest\transform" t="IncludeRecursive" />
+        <e p="node_modules\@jest\types" t="IncludeRecursive" />
+        <e p="node_modules\@types" t="IncludeRecursive">
+          <e p="babel__generator" t="IncludeRecursive" />
+          <e p="babel__template" t="IncludeRecursive" />
+          <e p="babel__traverse" t="IncludeRecursive" />
+          <e p="events" t="IncludeRecursive" />
+          <e p="istanbul-lib-coverage" t="IncludeRecursive" />
+          <e p="istanbul-lib-report" t="IncludeRecursive" />
+          <e p="minimatch" t="IncludeRecursive" />
+          <e p="node" t="IncludeRecursive" />
+          <e p="yargs-parser" t="IncludeRecursive" />
+        </e>
+        <e p="node_modules\@typescript-eslint\experimental-utils" t="IncludeRecursive" />
+        <e p="node_modules\@typescript-eslint\parser" t="IncludeRecursive" />
+        <e p="node_modules\@typescript-eslint\typescript-estree" t="IncludeRecursive" />
+        <e p="node_modules\ajv" t="IncludeRecursive" />
+        <e p="node_modules\bootstrap" t="IncludeRecursive" />
+        <e p="node_modules\camelcase" t="IncludeRecursive" />
+        <e p="node_modules\chalk" t="IncludeRecursive" />
+        <e p="node_modules\cross-env" t="IncludeRecursive" />
+        <e p="node_modules\eslint-config-react-app" t="IncludeRecursive" />
+        <e p="node_modules\eslint-plugin-import" t="IncludeRecursive" />
+        <e p="node_modules\eslint-plugin-jsx-a11y" t="IncludeRecursive" />
+        <e p="node_modules\eslint-plugin-react" t="IncludeRecursive" />
+        <e p="node_modules\fast-deep-equal" t="IncludeRecursive" />
+        <e p="node_modules\fast-json-stable-stringify" t="IncludeRecursive" />
+        <e p="node_modules\is-docker" t="IncludeRecursive" />
+        <e p="node_modules\jest" t="IncludeRecursive" />
+        <e p="node_modules\jest-environment-jsdom-fourteen" t="IncludeRecursive" />
+        <e p="node_modules\jest-haste-map" t="IncludeRecursive" />
+        <e p="node_modules\jest-message-util" t="IncludeRecursive" />
+        <e p="node_modules\jest-mock" t="IncludeRecursive" />
+        <e p="node_modules\jest-pnp-resolver" t="IncludeRecursive" />
+        <e p="node_modules\jest-regex-util" t="IncludeRecursive" />
+        <e p="node_modules\jest-resolve" t="IncludeRecursive" />
+        <e p="node_modules\jest-serializer" t="IncludeRecursive" />
+        <e p="node_modules\jest-util" t="IncludeRecursive" />
+        <e p="node_modules\jest-worker" t="IncludeRecursive" />
+        <e p="node_modules\jquery" t="IncludeRecursive" />
+        <e p="node_modules\merge" t="IncludeRecursive" />
+        <e p="node_modules\nan" t="IncludeRecursive" />
+        <e p="node_modules\oidc-client" t="IncludeRecursive" />
+        <e p="node_modules\open" t="IncludeRecursive" />
+        <e p="node_modules\pirates" t="IncludeRecursive" />
+        <e p="node_modules\react" t="IncludeRecursive" />
+        <e p="node_modules\react-dom" t="IncludeRecursive" />
+        <e p="node_modules\react-router-bootstrap" t="IncludeRecursive" />
+        <e p="node_modules\react-router-dom" t="IncludeRecursive" />
+        <e p="node_modules\react-scripts" t="IncludeRecursive" />
+        <e p="node_modules\reactstrap" t="IncludeRecursive" />
+        <e p="node_modules\rimraf" t="IncludeRecursive" />
+        <e p="node_modules\ts-pnp" t="IncludeRecursive" />
+        <e p="node_modules\tslib" t="IncludeRecursive" />
+        <e p="node_modules\tsutils" t="IncludeRecursive" />
+        <e p="node_modules\uri-js" t="IncludeRecursive" />
+        <e p="package-lock.json" t="Include" />
+        <e p="package.json" t="Include" />
+        <e p="public" t="Include">
+          <e p="favicon.ico" t="Include" />
+          <e p="index.html" t="Include" />
+          <e p="manifest.json" t="Include" />
+        </e>
+        <e p="README.md" t="Include" />
+        <e p="src" t="Include">
+          <e p="App.js" t="Include" />
+          <e p="App.test.js" t="Include" />
+          <e p="components" t="Include">
+            <e p="Counter.js" t="Include" />
+            <e p="FetchData.js" t="Include" />
+            <e p="Home.js" t="Include" />
+            <e p="Layout.js" t="Include" />
+            <e p="NavMenu.css" t="Include" />
+            <e p="NavMenu.js" t="Include" />
+          </e>
+          <e p="custom.css" t="Include" />
+          <e p="index.js" t="Include" />
+          <e p="registerServiceWorker.js" t="Include" />
+        </e>
+      </e>
+      <e p="Controllers" t="Include">
+        <e p="WeatherForecastController.cs" t="Include" />
+      </e>
+      <e p="obj" t="ExcludeRecursive">
+        <e p="Debug" t="Include">
+          <e p="net5.0" t="Include">
+            <e p="Cerulean.AssemblyInfo.cs" t="Include" />
+            <e p="Cerulean.RazorAssemblyInfo.cs" t="Include" />
+          </e>
+        </e>
+      </e>
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="Pages" t="Include">
+        <e p="_ViewImports.cshtml" t="Include" />
+        <e p="Error.cshtml" t="Include" />
+        <e p="Error.cshtml.cs" t="Include" />
+      </e>
+      <e p="Program.cs" t="Include" />
+      <e p="Properties" t="Include">
+        <e p="launchSettings.json" t="Include" />
+      </e>
+      <e p="Startup.cs" t="Include" />
+      <e p="WeatherForecast.cs" t="Include" />
+    </e>
+    <e p="C:\Users\Fluke\AppData\Local\JetBrains\Rider2020.3\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\Fluke\AppData\Local\JetBrains\Rider2020.3\javascript\typings\react-dom\16.0.0\node_modules\@types\node" t="IncludeRecursive" />
+    <e p="C:\Users\Fluke\AppData\Local\JetBrains\Rider2020.3\javascript\typings\react-dom\16.0.0\node_modules\@types\prop-types" t="IncludeRecursive" />
+    <e p="C:\Users\Fluke\AppData\Local\JetBrains\Rider2020.3\javascript\typings\react-dom\16.0.0\node_modules\@types\react" t="IncludeRecursive" />
+    <e p="C:\Users\Fluke\AppData\Local\JetBrains\Rider2020.3\javascript\typings\react-dom\16.0.0\node_modules\@types\react-dom" t="IncludeRecursive" />
+    <e p="C:\Users\Fluke\AppData\Local\JetBrains\Rider2020.3\javascript\typings\react-dom\16.0.0\node_modules\csstype" t="IncludeRecursive" />
+    <e p="C:\Users\Fluke\AppData\Local\JetBrains\Rider2020.3\resharper-host\Local\Transient\Rider\v203\SolutionCaches\_CeruleanProject.1246100587.00" t="ExcludeRecursive" />
+  </component>
+</project>
