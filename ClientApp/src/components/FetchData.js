@@ -1,3 +1,4 @@
+/*
 import React, { Component } from 'react';
 
 export class FetchData extends Component {
@@ -57,3 +58,4 @@ export class FetchData extends Component {
     this.setState({ forecasts: data, loading: false });
   }
 }
+*/
