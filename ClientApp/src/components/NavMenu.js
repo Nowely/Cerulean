@@ -1,51 +1,202 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import {
+	AppBar, CssBaseline, Divider,
+	Drawer, Hidden, IconButton, List, ListItem,
+	ListItemIcon, ListItemText, Toolbar, Typography
+} from '@material-ui/core';
+import {makeStyles, useTheme} from '@material-ui/core/styles';
+import MenuIcon from '@material-ui/icons/Menu';
+
+const drawerWidth = 240;
+
+const useStyles = makeStyles((theme) => ({
+	root: {
+		display: 'flex',
+	},
+	drawer: {
+		[theme.breakpoints.up('sm')]: {
+			width: drawerWidth,
+			flexShrink: 0,
+		},
+	},
+	appBar: {
+		[theme.breakpoints.up('sm')]: {
+			width: `calc(100% - ${drawerWidth}px)`,
+			marginLeft: drawerWidth,
+		},
+	},
+	menuButton: {
+		marginRight: theme.spacing(2),
+		[theme.breakpoints.up('sm')]: {
+			display: 'none',
+		},
+	},
+	// necessary for content to be below app bar
+	toolbar: theme.mixins.toolbar,
+	drawerPaper: {
+		width: drawerWidth,
+	},
+	content: {
+		flexGrow: 1,
+		padding: theme.spacing(3),
+	},
+}));
+
+function ResponsiveDrawer(props) {
+	const {window} = props;
+	const classes = useStyles();
+	const theme = useTheme();
+	const [mobileOpen, setMobileOpen] = React.useState(false);
+
+	const handleDrawerToggle = () => {
+		setMobileOpen(!mobileOpen);
+	};
+
+	const drawer = (
+		<div>
+			<div className={classes.toolbar}/>
+			<Divider/>
+			<List>
+				{['Dashboard', 'Profile'].map((text, index) => (
+					<ListItem button key={text}>
+						<ListItemText primary={text}/>
+					</ListItem>
+				))}
+			</List>
+		</div>
+	);
+
+	const container = window !== undefined ? () => window().document.body : undefined;
+
+	return (
+		<div className={classes.root}>
+			<CssBaseline/>
+			<AppBar position="fixed" className={classes.appBar}>
+				<Toolbar>
+					<IconButton
+						color="inherit"
+						aria-label="open drawer"
+						edge="start"
+						onClick={handleDrawerToggle}
+						className={classes.menuButton}
+					>
+						<MenuIcon/>
+					</IconButton>
+					<Typography variant="h6" noWrap>
+						Responsive drawer
+					</Typography>
+				</Toolbar>
+			</AppBar>
+			<nav className={classes.drawer} aria-label="mailbox folders">
+				{/* The implementation can be swapped with js to avoid SEO duplication of links. */}
+				<Hidden smUp implementation="css">
+					<Drawer
+						container={container}
+						variant="temporary"
+						anchor={theme.direction === 'rtl' ? 'right' : 'left'}
+						open={mobileOpen}
+						onClose={handleDrawerToggle}
+						classes={{
+							paper: classes.drawerPaper,
+						}}
+						ModalProps={{
+							keepMounted: true, // Better open performance on mobile.
+						}}
+					>
+						{drawer}
+					</Drawer>
+				</Hidden>
+				<Hidden xsDown implementation="css">
+					<Drawer
+						classes={{
+							paper: classes.drawerPaper,
+						}}
+						variant="permanent"
+						open
+					>
+						{drawer}
+					</Drawer>
+				</Hidden>
+			</nav>
+			<main className={classes.content}>
+				<div className={classes.toolbar}/>
+				<Typography paragraph>
+					Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
+					ut labore et dolore magna aliqua. Rhoncus dolor purus non enim praesent elementum
+					facilisis leo vel. Risus at ultrices mi tempus imperdiet. Semper risus in hendrerit
+					gravida rutrum quisque non tellus. Convallis convallis tellus id interdum velit laoreet id
+					donec ultrices. Odio morbi quis commodo odio aenean sed adipiscing. Amet nisl suscipit
+					adipiscing bibendum est ultricies integer quis. Cursus euismod quis viverra nibh cras.
+					Metus vulputate eu scelerisque felis imperdiet proin fermentum leo. Mauris commodo quis
+					imperdiet massa tincidunt. Cras tincidunt lobortis feugiat vivamus at augue. At augue eget
+					arcu dictum varius duis at consectetur lorem. Velit sed ullamcorper morbi tincidunt. Lorem
+					donec massa sapien faucibus et molestie ac.
+				</Typography>
+			</main>
+		</div>
+	);
+}
+
+ResponsiveDrawer.propTypes = {
+	/**
+	 * Injected by the documentation to work in an iframe.
+	 * You won't need it on your project.
+	 */
+	window: PropTypes.func,
+};
+
+export default ResponsiveDrawer;
+
+
 /*
-import React, { Component } from 'react';
-import { Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from 'reactstrap';
-import { Link } from 'react-router-dom';
+import React, {Component} from 'react';
+import {Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink} from 'reactstrap';
+import {Link} from 'react-router-dom';
 import './NavMenu.css';
 
 export class NavMenu extends Component {
-  static displayName = NavMenu.name;
+	static displayName = NavMenu.name;
 
-  constructor (props) {
-    super(props);
+	constructor(props) {
+		super(props);
 
-    this.toggleNavbar = this.toggleNavbar.bind(this);
-    this.state = {
-      collapsed: true
-    };
-  }
+		this.toggleNavbar = this.toggleNavbar.bind(this);
+		this.state = {
+			collapsed: true
+		};
+	}
 
-  toggleNavbar () {
-    this.setState({
-      collapsed: !this.state.collapsed
-    });
-  }
+	toggleNavbar() {
+		this.setState({
+			collapsed: !this.state.collapsed
+		});
+	}
 
-  render () {
-    return (
-      <header>
-        <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" light>
-          <Container>
-            <NavbarBrand tag={Link} to="/">Cerulean</NavbarBrand>
-            <NavbarToggler onClick={this.toggleNavbar} className="mr-2" />
-            <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!this.state.collapsed} navbar>
-              <ul className="navbar-nav flex-grow">
-                <NavItem>
-                  <NavLink tag={Link} className="text-dark" to="/">Home</NavLink>
-                </NavItem>
-                <NavItem>
-                  <NavLink tag={Link} className="text-dark" to="/counter">Counter</NavLink>
-                </NavItem>
-                <NavItem>
-                  <NavLink tag={Link} className="text-dark" to="/fetch-data">Fetch data</NavLink>
-                </NavItem>
-              </ul>
-            </Collapse>
-          </Container>
-        </Navbar>
-      </header>
-    );
-  }
+	render() {
+		return (
+			<header>
+				<Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" light>
+					<Container>
+						<NavbarBrand tag={Link} to="/">Cerulean</NavbarBrand>
+						<NavbarToggler onClick={this.toggleNavbar} className="mr-2"/>
+						<Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!this.state.collapsed} navbar>
+							<ul className="navbar-nav flex-grow">
+								<NavItem>
+									<NavLink tag={Link} className="text-dark" to="/">Home</NavLink>
+								</NavItem>
+								<NavItem>
+									<NavLink tag={Link} className="text-dark" to="/counter">Counter</NavLink>
+								</NavItem>
+								<NavItem>
+									<NavLink tag={Link} className="text-dark" to="/fetch-data">Fetch data</NavLink>
+								</NavItem>
+							</ul>
+						</Collapse>
+					</Container>
+				</Navbar>
+			</header>
+		);
+	}
 }
 */

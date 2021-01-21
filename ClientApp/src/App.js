@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Route } from 'react-router';
 import { Button } from '@material-ui/core';
 
-//import { Layout } from './components/Layout';
+import { Layout } from './components/Layout';
 //import { Home } from './components/Home';
 //import { FetchData } from './components/FetchData';
 //import { Counter } from './components/Counter';
@@ -14,14 +14,12 @@ export default class App extends Component {
 
   render () {
     return (
-        <>
+      <Layout>
           <Button color="primary">Hello World</Button>
-        </>
-      /*<Layout>
-        <Route exact path='/' component={Home} />
+        {/*<Route exact path='/' component={Home} />
         <Route path='/counter' component={Counter} />
-        <Route path='/fetch-data' component={FetchData} />
-      </Layout>*/
+        <Route path='/fetch-data' component={FetchData} />*/}
+      </Layout>
     );
   }
 }
