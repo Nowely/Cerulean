@@ -4,39 +4,16 @@
     <projectFile>Cerulean.csproj</projectFile>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bec63cab-5e6d-421f-9f5d-bca31d204119" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Cerulean.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CeruleanProject.sln" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/.env" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/package-lock.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/package.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/public/favicon.ico" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/public/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/public/manifest.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/App.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/App.test.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/components/Counter.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/components/FetchData.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/components/Home.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/components/Layout.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/components/NavMenu.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/components/NavMenu.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/custom.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/index.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClientApp/src/registerServiceWorker.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Controllers/WeatherForecastController.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Pages/Error.cshtml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Pages/Error.cshtml.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Pages/_ViewImports.cshtml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Properties/launchSettings.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Startup.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/WeatherForecast.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/appsettings.Development.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/appsettings.json" afterDir="false" />
+    <list default="true" id="bec63cab-5e6d-421f-9f5d-bca31d204119" name="Default Changelist" comment="Initial commit">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.CeruleanProject/.idea/contentModel.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.CeruleanProject/.idea/contentModel.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.CeruleanProject/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.CeruleanProject/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cerulean.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/Cerulean.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ClientApp/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/ClientApp/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ClientApp/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ClientApp/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ClientApp/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/ClientApp/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ClientApp/src/components/Layout.js" beforeDir="false" afterPath="$PROJECT_DIR$/ClientApp/src/components/Layout.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ClientApp/src/components/NavMenu.js" beforeDir="false" afterPath="$PROJECT_DIR$/ClientApp/src/components/NavMenu.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,6 +22,16 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/ClientApp/package-lock.json" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <changedPaths>
+      <option value="$PROJECT_DIR$/Program.cs" />
+      <option value="$PROJECT_DIR$/Extensions/Extensions.cs" />
+    </changedPaths>
   </component>
   <component name="ProjectId" id="1lqerV4crjNlPbFAwTcP6NMf1lR" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -53,12 +40,13 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
-    <property name="DebuggerViewTab_PTCS_FirstProportionKey" value="0.3501865" />
+    <property name="DebuggerViewTab_PTCS_FirstProportionKey" value="0.35033166" />
     <property name="DebuggerViewTab_PTCS_LastProportionKey" value="0.0" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.C#" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RunManager" selected=".NET Launch Settings Profile.Cerulean">
@@ -102,17 +90,45 @@
       <option name="presentableId" value="Default" />
       <updated>1608329250458</updated>
       <workItem from="1608329257802" duration="147000" />
+      <workItem from="1608329511430" duration="1692000" />
+      <workItem from="1608590433183" duration="7578000" />
+      <workItem from="1610136888639" duration="3940000" />
     </task>
+    <task id="LOCAL-00001" summary="Initial commit">
+      <created>1608329644427</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1608329644428</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Change Bootstrap on MaterialUI">
+      <created>1608761388070</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1608761388071</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
-  <component name="UnityProjectConfiguration" hasMinimizedUI="null" />
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="UnityUnitTestConfiguration" currentTestLauncher="NUnit" />
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
+        <entry key="1">
+          <value>
+            <State />
+          </value>
+        </entry>
+        <entry key="2">
+          <value>
+            <State />
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -120,8 +136,16 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="Initial commit" />
+    <MESSAGE value="Change Bootstrap on MaterialUI" />
+    <option name="LAST_COMMIT_MESSAGE" value="Change Bootstrap on MaterialUI" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>
