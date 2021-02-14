@@ -88,6 +88,7 @@ function ResponsiveDrawer(props) {
 					</Typography>
 				</Toolbar>
 			</AppBar>
+
 			<nav className={classes.drawer} aria-label="mailbox folders">
 				{/* The implementation can be swapped with js to avoid SEO duplication of links. */}
 				<Hidden smUp implementation="css">
@@ -119,6 +120,7 @@ function ResponsiveDrawer(props) {
 					</Drawer>
 				</Hidden>
 			</nav>
+
 			<main className={classes.content}>
 				<div className={classes.toolbar}/>
 				<Typography paragraph>
