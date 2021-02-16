@@ -1,6 +1,6 @@
 using System;
 
-namespace Cerulean
+namespace Cerulean.Models
 {
     public class WeatherForecast
     {
