@@ -8,6 +8,21 @@ export const useStyles = makeStyles((theme) => ({
 	grow: {
 		flexGrow: 1,
 	},
+	container: {
+		marginTop: 10,
+		display: 'flex',
+		flexWrap: 'wrap',
+	},
+	paper: {
+		padding: theme.spacing(1),
+		textAlign: 'center',
+		color: theme.palette.text.secondary,
+		flex: '1 0 auto',
+		margin: theme.spacing(2),
+	},
+	inline: {
+		display: 'inline',
+	},
 	menuButton: {
 		marginRight: theme.spacing(2),
 	},

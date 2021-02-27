@@ -31,7 +31,7 @@ export const Layout = props => {
 	};
 
 	return (
-		<div>
+		<div className={classes.root}>
 			<AppBar position="static">
 				<Toolbar variant="dense">
 					<IconButton edge="start" color="inherit" aria-label="menu">
@@ -45,8 +45,9 @@ export const Layout = props => {
 						render={({location}) => (
 							<>
 								<Tabs value={value} onChange={handleChange}>
-									<Tab label="Задачи" component={Link} to="/" {...a11yProps(0)}/>
-									<Tab label="Счетчик" component={Link} to="/counter" {...a11yProps(1)}/>
+									//TODO display label without CAPS
+									<Tab label="Tasks" component={Link} to="/" {...a11yProps(0)}/>
+									<Tab label="Counter" component={Link} to="/counter" {...a11yProps(1)}/>
 								</Tabs>
 							</>
 						)}/>
@@ -81,7 +82,7 @@ export const Layout = props => {
 					</Menu>
 				</Toolbar>
 			</AppBar>
-			<Container>
+			<Container maxWidth={false} disableGutters={true} className={classes.container}>
 				{props.children}
 			</Container>
 		</div>
