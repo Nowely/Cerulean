@@ -1,3 +1,5 @@
+using Cerulean.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -20,6 +22,12 @@ namespace Cerulean
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<Context>(options =>
+                //options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")) TODO add sup more provider
+                options.UseNpgsql(Configuration.GetConnectionString("Postgres")));
+            
+            services.AddDatabaseDeveloperPageExceptionFilter();
+            
             services.AddControllersWithViews();
 
             // In production, the React files will be served from this directory
