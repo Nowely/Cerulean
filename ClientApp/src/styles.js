@@ -16,9 +16,22 @@ export const useStyles = makeStyles((theme) => ({
 	paper: {
 		padding: theme.spacing(1),
 		textAlign: 'center',
-		color: theme.palette.text.secondary,
+		/*color: theme.palette.text.secondary,*/
 		flex: '1 0 auto',
 		margin: theme.spacing(2),
+		marginTop: 0,
+	},
+	typographyPaper: {
+		marginTop: theme.spacing(1),
+		marginLeft: theme.spacing(2),
+	},
+	filterTabs: {
+		marginRight: theme.spacing(2),
+	},
+	filterTab: {
+		minWidth: 72,
+		minHeight: 35,
+		marginRight: 0
 	},
 	inline: {
 		display: 'inline',
