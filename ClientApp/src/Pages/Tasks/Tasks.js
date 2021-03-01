@@ -8,10 +8,6 @@ export const Tasks = (props) => {
 	const classes = useStyles();
 	const [tasks, setTasks] = useState([]);
 
-	useEffect(() => {
-		//TODO получать записи с базы
-	}, [])
-
 	const taskTypeFilter = (type) => {
 	  return tasks.filter(task => task?.type === type);
 	}

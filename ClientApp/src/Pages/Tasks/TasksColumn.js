@@ -1,17 +1,8 @@
 import {useStyles} from '../../styles'
 import Paper from "@material-ui/core/Paper";
 import TextField from '@material-ui/core/TextField';
-
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import Divider from '@material-ui/core/Divider';
-import ListItemText from '@material-ui/core/ListItemText';
 import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import ButtonGroup from '@material-ui/core/ButtonGroup';
-import CheckRoundedIcon from '@material-ui/icons/CheckRounded';
-import CloseRoundedIcon from '@material-ui/icons/CloseRounded';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import {useEffect, useState} from "react";
@@ -19,11 +10,14 @@ import _ from 'lodash'
 import {STATUS, TODO_TYPE} from "./constants";
 import {v4} from 'uuid';
 import axios from 'axios';
+import {ToDoItem} from "./ToDoItem";
+import {ToDoDialog} from './ToDoDialog'
 
 export const TasksColumn = ({type, data, children}) => {
 	const classes = useStyles();
 	const [tasks, setTasks] = useState([]);
 	const [itemTitle, setItemTitle] = useState("");
+	const [filterTab, setFilterTab] = useState(0);
 
 	const handleKeyDown = (event) => {
 		if (event.key === 'Enter' && !_.isEmpty(itemTitle)) {
@@ -47,7 +41,6 @@ export const TasksColumn = ({type, data, children}) => {
 			]);
 			setItemTitle("");
 			addTask(newTask);
-			//TODO отправлять на базу изменения
 		}
 	}
 
@@ -59,8 +52,7 @@ export const TasksColumn = ({type, data, children}) => {
 
 	const addTask = async (task) => {
 		try {
-			const response = await axios.post(`task`, {...task});
-			console.log(response);
+			await axios.post(`task`, {...task});
 		} catch (e) {
 			console.error(e);
 		}
@@ -68,8 +60,7 @@ export const TasksColumn = ({type, data, children}) => {
 
 	const updateTask = async (task) => {
 		try {
-			const response = await axios.put(`task`, task);
-			console.log(response);
+			await axios.put(`task`, task);
 		} catch (e) {
 			console.error(e);
 		}
@@ -77,8 +68,7 @@ export const TasksColumn = ({type, data, children}) => {
 
 	const deleteTask = async (id) => {
 		try {
-			const response = await axios.delete(`task`, {params: {id}});
-			console.log(response);
+			await axios.delete(`task`, {params: {id}});
 		} catch (e) {
 			console.error(e);
 		}
@@ -91,12 +81,6 @@ export const TasksColumn = ({type, data, children}) => {
 		setTasks([...tasks]);
 		updateTask(item);
 	}
-
-	const [filterTab, setFilterTab] = useState(0);
-
-	const handleChange = (event, newValue) => {
-		setFilterTab(newValue);
-	};
 
 	const itemsFilter = (value => {
 		switch (filterTab) {
@@ -116,7 +100,7 @@ export const TasksColumn = ({type, data, children}) => {
 				value={filterTab}
 				indicatorColor="primary"
 				textColor="primary"
-				onChange={handleChange}
+				onChange={(_, newValue) => setFilterTab(newValue)}
 				aria-label="disabled tabs example"
 			>
 				{<Tab className={classes.filterTab} label="Active"/>}
@@ -124,7 +108,6 @@ export const TasksColumn = ({type, data, children}) => {
 				<Tab className={classes.filterTab} value={STATUS.Failed} label="Failed"/>
 			</Tabs>
 		</div>
-		{/*TODO Title component? С названием колонки, отключаемым колличеством элементов и фильтрами в правой зоне */}
 		<Paper className={classes.paper} elevation={6}>
 			<TextField fullWidth
 								 label="Add a To Do" variant="outlined" size="small"
@@ -132,37 +115,11 @@ export const TasksColumn = ({type, data, children}) => {
 								 value={itemTitle}
 								 onChange={event => setItemTitle(event.target.value)}/>
 			<List>
-				{tasks.filter(itemsFilter).map((value, index) => <ToDoItem key={index} {...value}
-																																	 changeStatus={changeStatus}/>)}
+				{tasks.filter(itemsFilter).map((value, index) =>
+					<ToDoItem key={index} {...value} changeStatus={changeStatus}/>)}
 			</List>
 			abc
 		</Paper>
 	</div>;
-
 };
 
-const ToDoItem = (props) => {
-	const classes = useStyles();
-
-	return <>
-		<ListItem disabled={props.status !== STATUS.Absent} button>
-			<ListItemText
-				primary={props.title}
-				secondary={props.note}/>
-			<ListItemSecondaryAction>
-				<ButtonGroup
-					size="small"
-					disableElevation
-					orientation="vertical">
-					<IconButton edge="end" onClick={() => props.changeStatus(props.id, STATUS.Completed)}>
-						<CheckRoundedIcon color="primary"/>
-					</IconButton>
-					<IconButton edge="end" onClick={() => props.changeStatus(props.id, STATUS.Failed)}>
-						<CloseRoundedIcon color="error"/>
-					</IconButton>
-				</ButtonGroup>
-			</ListItemSecondaryAction>
-		</ListItem>
-		<Divider variant="middle" component="li"/>
-	</>;
-};
