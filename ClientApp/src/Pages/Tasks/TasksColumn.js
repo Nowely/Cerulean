@@ -17,52 +17,95 @@ import Tab from '@material-ui/core/Tab';
 import {useEffect, useState} from "react";
 import _ from 'lodash'
 import {STATUS, TODO_TYPE} from "./constants";
+import {v4} from 'uuid';
+import axios from 'axios';
 
-export const TasksColumn = ({type, children}) => {
+export const TasksColumn = ({type, data, children}) => {
 	const classes = useStyles();
-	const [items, setItems] = useState([]);
+	const [tasks, setTasks] = useState([]);
 	const [itemTitle, setItemTitle] = useState("");
 
-	//TODO фильтрация и расположение по типу, но это в родителе
 	const handleKeyDown = (event) => {
 		if (event.key === 'Enter' && !_.isEmpty(itemTitle)) {
 			event.preventDefault();
-			setItems([
-				...items,
-				{
-					id: items.length,
-					title: itemTitle,
-					notes: "",
-					checklist: [],
-					active: true,
-					status: STATUS.Absent,
-					difficulty: "",
-					type: type, //Column type from title
-					color: "", //Green, Red, Common task
-					dueDate: null,
-					tags: [],
-				}
+			let newTask = {
+				id: v4(),
+				title: itemTitle,
+				note: "",
+				checklist: [],
+				active: true,
+				status: STATUS.Absent,
+				difficulty: "",
+				type: type, //Column type from title
+				color: "", //Green, Red, Common task
+				dueDate: null,
+				tags: [],
+			};
+			setTasks([
+				...tasks,
+				newTask
 			]);
 			setItemTitle("");
+			addTask(newTask);
 			//TODO отправлять на базу изменения
 		}
 	}
 
-	const changeStatus = (index, newStatus) => {
-		items[index].active = false;
-		items[index].status = newStatus;
-		setItems([...items]);
+	useEffect(() => {
+		if (!_.isEmpty(data) && _.isArray(data)) {
+			setTasks(data);
+		}
+	}, [data])
+
+	const addTask = async (task) => {
+		try {
+			const response = await axios.post(`task`, {...task});
+			console.log(response);
+		} catch (e) {
+			console.error(e);
+		}
 	}
 
-	const [value, setValue] = useState(0);
+	const updateTask = async (task) => {
+		try {
+			const response = await axios.put(`task`, task);
+			console.log(response);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	const deleteTask = async (id) => {
+		try {
+			const response = await axios.delete(`task`, {params: {id}});
+			console.log(response);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	const changeStatus = (id, newStatus) => {
+		let item = tasks.find(value => value.id === id);
+		item.active = false;
+		item.status = newStatus;
+		setTasks([...tasks]);
+		updateTask(item);
+	}
+
+	const [filterTab, setFilterTab] = useState(0);
 
 	const handleChange = (event, newValue) => {
-		setValue(newValue);
+		setFilterTab(newValue);
 	};
 
-	useEffect(() => {
-		//TODO получать записи с базы
-	}, [])
+	const itemsFilter = (value => {
+		switch (filterTab) {
+			case 0:
+				return value.active;
+			default:
+				return value.status === filterTab;
+		}
+	});
 
 	return <div style={{width: '25%'}}>
 		<div style={{display: 'flex', justifyContent: 'space-between'}}>
@@ -70,15 +113,15 @@ export const TasksColumn = ({type, children}) => {
 			<Tabs
 				TabIndicatorProps={{style: {bottom: 'auto'}}}
 				className={classes.filterTabs}
-				value={value}
+				value={filterTab}
 				indicatorColor="primary"
 				textColor="primary"
 				onChange={handleChange}
 				aria-label="disabled tabs example"
 			>
 				{<Tab className={classes.filterTab} label="Active"/>}
-				<Tab className={classes.filterTab} label="Completed"/>
-				<Tab className={classes.filterTab} label="Failed"/>
+				<Tab className={classes.filterTab} value={STATUS.Completed} label="Completed"/>
+				<Tab className={classes.filterTab} value={STATUS.Failed} label="Failed"/>
 			</Tabs>
 		</div>
 		{/*TODO Title component? С названием колонки, отключаемым колличеством элементов и фильтрами в правой зоне */}
@@ -89,10 +132,10 @@ export const TasksColumn = ({type, children}) => {
 								 value={itemTitle}
 								 onChange={event => setItemTitle(event.target.value)}/>
 			<List>
-				{items.map((value, index) => <ToDoItem key={index} {...value} changeStatus={_.partial(changeStatus, index)}/>)}
+				{tasks.filter(itemsFilter).map((value, index) => <ToDoItem key={index} {...value}
+																																	 changeStatus={changeStatus}/>)}
 			</List>
 			abc
-			{children}
 		</Paper>
 	</div>;
 
@@ -105,16 +148,16 @@ const ToDoItem = (props) => {
 		<ListItem disabled={props.status !== STATUS.Absent} button>
 			<ListItemText
 				primary={props.title}
-				secondary={props.notes}/>
+				secondary={props.note}/>
 			<ListItemSecondaryAction>
 				<ButtonGroup
 					size="small"
 					disableElevation
 					orientation="vertical">
-					<IconButton edge="end" onClick={() => props.changeStatus(STATUS.Completed)}>
+					<IconButton edge="end" onClick={() => props.changeStatus(props.id, STATUS.Completed)}>
 						<CheckRoundedIcon color="primary"/>
 					</IconButton>
-					<IconButton edge="end" onClick={() => props.changeStatus(STATUS.Failed)}>
+					<IconButton edge="end" onClick={() => props.changeStatus(props.id, STATUS.Failed)}>
 						<CloseRoundedIcon color="error"/>
 					</IconButton>
 				</ButtonGroup>
