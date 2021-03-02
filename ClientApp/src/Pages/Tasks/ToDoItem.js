@@ -11,24 +11,25 @@ import Divider from "@material-ui/core/Divider";
 import {useState} from "react";
 import {ToDoDialog} from "./ToDoDialog";
 
-export const ToDoItem = (props) => {
+export const ToDoItem = ({item, changeStatus}) => {
 	const classes = useStyles();
 	const [dialog, setDialog] = useState(false);
+	const [value, setValue] = useState(item);
 
 	return <>
-		<ListItem disabled={props.status !== STATUS.Absent} button onClick={() => setDialog(true)}>
+		<ListItem disabled={value.status !== STATUS.Absent} button onClick={() => setDialog(true)}>
 			<ListItemText
-				primary={props.title}
-				secondary={props.note}/>
+				primary={value.title}
+				secondary={value.note}/>
 			<ListItemSecondaryAction>
 				<ButtonGroup
 					size="small"
 					disableElevation
 					orientation="vertical">
-					<IconButton edge="end" onClick={() => props.changeStatus(props.id, STATUS.Completed)}>
+					<IconButton edge="end" onClick={() => changeStatus(value.id, STATUS.Completed)}>
 						<CheckRoundedIcon color="primary"/>
 					</IconButton>
-					<IconButton edge="end" onClick={() => props.changeStatus(props.id, STATUS.Failed)}>
+					<IconButton edge="end" onClick={() => changeStatus(value.id, STATUS.Failed)}>
 						<CloseRoundedIcon color="error"/>
 					</IconButton>
 				</ButtonGroup>
@@ -38,7 +39,7 @@ export const ToDoItem = (props) => {
 		<ToDoDialog
 			open={dialog}
 			onClose={() => setDialog(false)}
-			value={props}
+			value={value}
 		/>
 	</>;
 };

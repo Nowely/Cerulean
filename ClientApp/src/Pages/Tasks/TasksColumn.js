@@ -115,8 +115,8 @@ export const TasksColumn = ({type, data, children}) => {
 								 value={itemTitle}
 								 onChange={event => setItemTitle(event.target.value)}/>
 			<List>
-				{tasks.filter(itemsFilter).map((value, index) =>
-					<ToDoItem key={index} {...value} changeStatus={changeStatus}/>)}
+				{tasks.filter(itemsFilter).map((item, index) =>
+					<ToDoItem key={index} item={item} changeStatus={changeStatus}/>)}
 			</List>
 			abc
 		</Paper>

@@ -34,7 +34,7 @@ const options = [
 
 
 export const ToDoDialog = (props) => {
-	const {onClose, value: valueProp, open, ...other} = props;
+	const {onClose, value: valueProp, open} = props;
 	const [value, setValue] = useState(valueProp);
 	const radioGroupRef = useRef(null);
 
@@ -66,29 +66,26 @@ export const ToDoDialog = (props) => {
 		<Dialog
 			disableBackdropClick
 			disableEscapeKeyDown
+			fullWidth={true}
+			maxWidth="sm"
 			onEntering={handleEntering}
 			open={open}
-			{...other}
 		>
-			<DialogTitle id="confirmation-dialog-title">Phone Ringtone</DialogTitle>
+			<DialogTitle>{value.title}</DialogTitle>
+
 			<DialogContent dividers>
-				<RadioGroup
-					ref={radioGroupRef}
-					aria-label="ringtone"
-					name="ringtone"
-					value={value}
-					onChange={handleChange}
-				>
-					{options.map((option) => (
-						<FormControlLabel value={option} key={option} control={<Radio/>} label={option}/>
-					))}
-				</RadioGroup>
+
 			</DialogContent>
+
 			<DialogActions>
+				{/*TODO убрать костыль со стилем*/}
+				<Button style={{right: 349}} variant="contained" color="secondary">
+					Delete
+				</Button>
 				<Button autoFocus onClick={handleCancel} color="primary">
 					Cancel
 				</Button>
-				<Button onClick={handleOk} color="primary">
+				<Button onClick={handleOk}  variant="contained" color="primary">
 					Ok
 				</Button>
 			</DialogActions>
