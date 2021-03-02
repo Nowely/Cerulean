@@ -9,9 +9,8 @@ import {useEffect, useState} from "react";
 import _ from 'lodash'
 import {STATUS, TODO_TYPE} from "./constants";
 import {v4} from 'uuid';
-import axios from 'axios';
 import {ToDoItem} from "./ToDoItem";
-import {ToDoDialog} from './ToDoDialog'
+import {Task} from "../../Queries";
 
 export const TasksColumn = ({type, data, children}) => {
 	const classes = useStyles();
@@ -40,7 +39,7 @@ export const TasksColumn = ({type, data, children}) => {
 				newTask
 			]);
 			setItemTitle("");
-			addTask(newTask);
+			Task.create(newTask);
 		}
 	}
 
@@ -50,36 +49,16 @@ export const TasksColumn = ({type, data, children}) => {
 		}
 	}, [data])
 
-	const addTask = async (task) => {
-		try {
-			await axios.post(`task`, {...task});
-		} catch (e) {
-			console.error(e);
-		}
-	}
-
-	const updateTask = async (task) => {
-		try {
-			await axios.put(`task`, task);
-		} catch (e) {
-			console.error(e);
-		}
-	}
-
-	const deleteTask = async (id) => {
-		try {
-			await axios.delete(`task`, {params: {id}});
-		} catch (e) {
-			console.error(e);
-		}
-	}
-
-	const changeStatus = (id, newStatus) => {
-		let item = tasks.find(value => value.id === id);
-		item.active = false;
-		item.status = newStatus;
+	const handleChange = (task) => {
+		let index = tasks.findIndex(item => item.id === task.id);
+		tasks[index] = task;
 		setTasks([...tasks]);
-		updateTask(item);
+		Task.update(task);
+	}
+
+	const handleDelete = (id) => {
+		setTasks(tasks.filter(item => item.id !== id));
+		Task.delete(id);
 	}
 
 	const itemsFilter = (value => {
@@ -115,10 +94,10 @@ export const TasksColumn = ({type, data, children}) => {
 								 value={itemTitle}
 								 onChange={event => setItemTitle(event.target.value)}/>
 			<List>
-				{tasks.filter(itemsFilter).map((item, index) =>
-					<ToDoItem key={index} item={item} changeStatus={changeStatus}/>)}
+				{tasks.filter(itemsFilter).map(item =>
+					<ToDoItem key={item.id} item={item} onChange={handleChange} onDelete={handleDelete} />)}
 			</List>
-			abc
+			{children}
 		</Paper>
 	</div>;
 };

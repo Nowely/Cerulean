@@ -2,7 +2,7 @@ import {useStyles} from '../../styles'
 import {TasksColumn} from './TasksColumn'
 import {TODO_TYPE} from "./constants";
 import {useEffect, useState} from "react";
-import axios from "axios";
+import {Task} from "../../Queries";
 
 export const Tasks = (props) => {
 	const classes = useStyles();
@@ -13,17 +13,8 @@ export const Tasks = (props) => {
 	}
 
 	useEffect(() => {
-		getTasks()
-	}, [])
-
-	const getTasks = async () => {
-		try {
-			const response = await axios.get(`task`);
-			setTasks(response.data);
-		} catch (e) {
-			console.error(e);
-		}
-	}
+		Task.get((response) => setTasks(response.data))
+	}, []);
 
 	return <>
 		<TasksColumn type={TODO_TYPE.Daily} data={taskTypeFilter(TODO_TYPE.Daily)}/>
