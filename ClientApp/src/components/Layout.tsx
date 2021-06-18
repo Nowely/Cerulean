@@ -1,6 +1,5 @@
-import React from 'react';
+import React, {ChangeEvent, MouseEvent, ReactChild, ReactNode, useState} from "react";
 import {AppBar, Tabs, Tab, Toolbar, Container, IconButton, Typography, Button} from '@material-ui/core';
-//import {WhatshotRoundedIcon} from '@material-ui/icons';
 import WhatshotRoundedIcon from '@material-ui/icons/WhatshotRounded';
 import {useStyles} from '../styles'
 import {Route, Link} from "react-router-dom";
@@ -9,20 +8,24 @@ import PersonRoundedIcon from '@material-ui/icons/PersonRounded';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 
-export const Layout = props => {
+interface LayoutProps {
+	children: ReactChild[],
+}
+
+export const Layout = ({children}: LayoutProps) => {
 	const classes = useStyles();
 
-	const [value, setValue] = React.useState(0);
-	const [anchorEl, setAnchorEl] = React.useState(null);
+	const [value, setValue] = useState(0);
+	const [anchorEl, setAnchorEl] = useState<Element | null>(null);
 	const open = Boolean(anchorEl);
 
 
-	const handleChange = (event, newValue) => {
+	const handleChange = (event: ChangeEvent<{}>, newValue: any) => {
 		console.log(newValue);
 		setValue(newValue);
 	};
 
-	const handleMenu = (event) => {
+	const handleMenu = (event: MouseEvent<HTMLButtonElement>) => {
 		setAnchorEl(event.currentTarget);
 	};
 
@@ -83,7 +86,7 @@ export const Layout = props => {
 				</Toolbar>
 			</AppBar>
 			<Container maxWidth={false} disableGutters={true} className={classes.container}>
-				{props.children}
+				{children}
 			</Container>
 		</div>
 	);
@@ -91,7 +94,7 @@ export const Layout = props => {
 
 Layout.displayName = Layout.name
 
-function a11yProps(index) {
+function a11yProps(index: number) {
 	return {
 		id: `nav-tab-${index}`,
 		'aria-controls': `nav-tabpanel-${index}`,
