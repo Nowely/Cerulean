@@ -5,35 +5,42 @@ import List from '@material-ui/core/List';
 import Typography from '@material-ui/core/Typography';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import {useEffect, useState} from "react";
+import {ReactNode, useEffect, useState} from "react";
 import _ from 'lodash'
 import {STATUS, TODO_TYPE} from "./constants";
 import {v4} from 'uuid';
 import {ToDoItem} from "./ToDoItem";
-import {Task} from "../../Queries";
+import {Task} from "../../Models/Task";
 
-export const TasksColumn = ({type, data, children}) => {
+interface TasksColumnProps {
+	type: TODO_TYPE,
+	data: Task[],
+	children?: ReactNode,
+}
+
+export const TasksColumn = ({type, data, children}: TasksColumnProps) => {
 	const classes = useStyles();
-	const [tasks, setTasks] = useState([]);
+	const [tasks, setTasks] = useState<Task[]>([]);
 	const [itemTitle, setItemTitle] = useState("");
 	const [filterTab, setFilterTab] = useState(0);
 
-	const handleKeyDown = (event) => {
+	const handleKeyDown = (event: { key: string; preventDefault: () => void; }) => {
 		if (event.key === 'Enter' && !_.isEmpty(itemTitle)) {
 			event.preventDefault();
-			let newTask = {
-				id: v4(),
-				title: itemTitle,
-				note: "",
-				checklist: [],
-				active: true,
-				status: STATUS.Absent,
-				difficulty: "",
-				type: type, //Column type from title
-				color: "", //Green, Red, Common task
-				dueDate: null,
-				tags: [],
-			};
+			let newTask = new Task();
+			//TODO
+			newTask.id = v4();
+			newTask.title = itemTitle;
+			newTask.note = "";
+			newTask.checklist = [];
+			newTask.active = true;
+			newTask.status = STATUS.Absent;
+			newTask.difficulty = "";
+			newTask.type = type;
+			newTask.color = "";
+			newTask.dueDate = null;
+			newTask.tags = [];
+
 			setTasks([
 				...tasks,
 				newTask
@@ -49,19 +56,19 @@ export const TasksColumn = ({type, data, children}) => {
 		}
 	}, [data])
 
-	const handleChange = (task) => {
+	const handleChange = (task: Task) => {
 		let index = tasks.findIndex(item => item.id === task.id);
 		tasks[index] = task;
 		setTasks([...tasks]);
 		Task.update(task);
 	}
 
-	const handleDelete = (id) => {
+	const handleDelete = (id: string) => {
 		setTasks(tasks.filter(item => item.id !== id));
 		Task.delete(id);
 	}
 
-	const itemsFilter = (value => {
+	const itemsFilter = ((value: Task) => {
 		switch (filterTab) {
 			case 0:
 				return value.active;

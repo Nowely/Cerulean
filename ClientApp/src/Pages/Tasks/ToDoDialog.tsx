@@ -6,8 +6,17 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {useState, useRef, useEffect} from "react";
 import {TextField} from "@material-ui/core";
+import {Task} from "../../Models/Task";
 
-export const ToDoDialog = ({onClose, value: valueProp, open, onDelete, onSave}) => {
+interface ToDoDialogProps {
+	value: Task,
+	open: boolean,
+	onClose: () => void,
+	onDelete: (id: string) => void,
+	onSave: (task: Task) => void,
+}
+
+export const ToDoDialog = ({onClose, value: valueProp, open, onDelete, onSave}: ToDoDialogProps) => {
 	const [value, setValue] = useState(valueProp);
 	useEffect(() => {
 		if (!open) {
@@ -45,7 +54,7 @@ export const ToDoDialog = ({onClose, value: valueProp, open, onDelete, onSave}) 
 			<Button autoFocus onClick={() => onClose()} color="primary"> Cancel </Button>
 			<Button onClick={() => {
 				onSave(value);
-				onClose(value);
+				onClose();
 			}} variant="contained" color="primary"> Ok </Button>
 		</DialogActions>
 	</Dialog>;

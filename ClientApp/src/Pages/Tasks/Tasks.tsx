@@ -2,13 +2,16 @@ import {useStyles} from '../../styles'
 import {TasksColumn} from './TasksColumn'
 import {TODO_TYPE} from "./constants";
 import {useEffect, useState} from "react";
-import {Task} from "../../Queries";
+import {Task} from "../../Models/Task";
 
-export const Tasks = (props) => {
+interface TasksProps {
+}
+
+export const Tasks = (props: TasksProps) => {
 	const classes = useStyles();
-	const [tasks, setTasks] = useState([]);
+	const [tasks, setTasks] = useState<Task[]>([]);
 
-	const taskTypeFilter = (type) => {
+	const taskTypeFilter = (type: TODO_TYPE) => {
 	  return tasks.filter(task => task?.type === type);
 	}
 

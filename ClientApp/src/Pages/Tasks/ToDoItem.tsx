@@ -10,13 +10,20 @@ import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import Divider from "@material-ui/core/Divider";
 import {useEffect, useState} from "react";
 import {ToDoDialog} from "./ToDoDialog";
+import {Task} from "../../Models/Task";
 
-export const ToDoItem = ({item, onChange, onDelete}) => {
+interface ToDoItemProps {
+	item: Task,
+	onChange: (task: Task) => void,
+	onDelete: (id: string) => void,
+}
+
+export const ToDoItem = ({item, onChange, onDelete}: ToDoItemProps) => {
 	const classes = useStyles();
 	const [dialog, setDialog] = useState(false);
 	const [value, setValue] = useState(item);
 
-	const handleChange = (status) => {
+	const handleChange = (status: STATUS) => {
 		let newValue = {...value, status, active: false};
 		setValue(newValue);
 		onChange(newValue);
