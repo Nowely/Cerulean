@@ -1,4 +1,3 @@
-import {useStyles} from "../../styles";
 import ListItem from "@material-ui/core/ListItem";
 import {STATUS} from "./constants";
 import ListItemText from "@material-ui/core/ListItemText";
@@ -19,7 +18,6 @@ interface ToDoItemProps {
 }
 
 export const ToDoItem = ({item, onChange, onDelete}: ToDoItemProps) => {
-	const classes = useStyles();
 	const [dialog, setDialog] = useState(false);
 	const [value, setValue] = useState(item);
 

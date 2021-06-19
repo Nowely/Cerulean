@@ -1,4 +1,3 @@
-import {useStyles} from '../../styles'
 import {TasksColumn} from './TasksColumn'
 import {TODO_TYPE} from "./constants";
 import {useEffect, useState} from "react";
@@ -8,7 +7,6 @@ interface TasksProps {
 }
 
 export const Tasks = (props: TasksProps) => {
-	const classes = useStyles();
 	const [tasks, setTasks] = useState<Task[]>([]);
 
 	const taskTypeFilter = (type: TODO_TYPE) => {
