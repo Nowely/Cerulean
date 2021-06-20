@@ -7,6 +7,6 @@ namespace Cerulean.Data
     {
         public Context(DbContextOptions<Context> options) : base(options) { }
 
-        public DbSet<Task> Task { get; set; }
+        public DbSet<Affair> Affair { get; set; }
     }
 }

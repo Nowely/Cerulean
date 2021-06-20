@@ -10,42 +10,42 @@ using Type = Cerulean.Models.Type;
 namespace Cerulean.Controllers
 {
     [Route("[controller]")]
-    public class TaskController : Controller
+    public class AffairController : Controller
     {
         private readonly Context _context;
         
-        public TaskController(Context context)
+        public AffairController(Context context)
         {
             _context = context;
         }
         
         [HttpGet]
-        public IEnumerable<Task> Get()
+        public IEnumerable<Affair> Get()
         {
-            return _context.Task.ToList();
+            return _context.Affair.ToList();
         }
         
         [HttpPost]
-        public int Create([FromBody]Task task)
+        public int Create([FromBody]Affair affair)
         {
-            _context.Task.Add(task);
+            _context.Affair.Add(affair);
             return _context.SaveChanges();
         }
         
         [HttpPut]
-        public int Update([FromBody]Task task)
+        public int Update([FromBody]Affair affair)
         {
-            task.ModifiedOn = DateTimeOffset.Now;
-            _context.Task.Update(task);
+            affair.ModifiedOn = DateTimeOffset.Now;
+            _context.Affair.Update(affair);
             return _context.SaveChanges();
         }
         
         [HttpDelete]
         public int Delete(Guid id)
         {
-            var task = _context.Task.Find(id);
-            if (task == null) return 0;
-            _context.Task.Remove(task);
+            var affair = _context.Affair.Find(id);
+            if (affair == null) return 0;
+            _context.Affair.Remove(affair);
             return _context.SaveChanges();
         }
     }

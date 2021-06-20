@@ -2,7 +2,7 @@ import {STATUS, TODO_TYPE} from "../Pages/Tasks/constants";
 import axios from "axios";
 import {v4} from "uuid";
 
-export class Task {
+export class Affair {
     id: string = v4();
     title: string = "";
     note: string = "";
@@ -17,29 +17,29 @@ export class Task {
 
     static get = async (callback: { (response: any): void; call?: any; }) => {
         try {
-            const response = await axios.get(`task`);
+            const response = await axios.get(`affair`);
             callback.call(null, response);
         } catch (e) {
             console.error(e);
         }
     }
-    static create = async (task : Task) => {
+    static create = async (affair : Affair) => {
         try {
-            await axios.post(`task`, {...task});
+            await axios.post(`affair`, {...affair});
         } catch (e) {
             console.error(e);
         }
     }
-    static update = async (task: Task) => {
+    static update = async (affair: Affair) => {
         try {
-            await axios.put(`task`, task);
+            await axios.put(`affair`, affair);
         } catch (e) {
             console.error(e);
         }
     }
     static delete = async (id: string) => {
         try {
-            await axios.delete(`task`, {params: {id}});
+            await axios.delete(`affair`, {params: {id}});
         } catch (e) {
             console.error(e);
         }

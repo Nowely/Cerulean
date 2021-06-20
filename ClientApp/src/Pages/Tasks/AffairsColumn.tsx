@@ -9,56 +9,56 @@ import {ReactNode, useEffect, useState} from "react";
 import _ from 'lodash'
 import {STATUS, TODO_TYPE} from "./constants";
 import {ToDoItem} from "./ToDoItem";
-import {Task} from "../../Models/Task";
+import {Affair} from "../../Models/Affair";
 
-interface TasksColumnProps {
+interface AffairsColumnProps {
 	type: TODO_TYPE,
-	data: Task[],
+	data: Affair[],
 	children?: ReactNode,
 }
 
-export const TasksColumn = ({type, data, children}: TasksColumnProps) => {
+export const AffairsColumn = ({type, data, children}: AffairsColumnProps) => {
 	const classes = useStyles();
-	const [tasks, setTasks] = useState<Task[]>([]);
+	const [affairs, setAffairs] = useState<Affair[]>([]);
 	const [itemTitle, setItemTitle] = useState("");
 	const [filterTab, setFilterTab] = useState(0);
 
 	const handleKeyDown = (event: { key: string; preventDefault: () => void; }) => {
 		if (event.key === 'Enter' && !_.isEmpty(itemTitle)) {
 			event.preventDefault();
-			let newTask = new Task();
+			let newAffair = new Affair();
 			//TODO
-			newTask.title = itemTitle;
-			newTask.type = type;
+			newAffair.title = itemTitle;
+			newAffair.type = type;
 
-			setTasks([
-				...tasks,
-				newTask
+			setAffairs([
+				...affairs,
+				newAffair
 			]);
 			setItemTitle("");
-			Task.create(newTask);
+			Affair.create(newAffair);
 		}
 	}
 
 	useEffect(() => {
 		if (!_.isEmpty(data) && _.isArray(data)) {
-			setTasks(data);
+			setAffairs(data);
 		}
 	}, [data])
 
-	const handleChange = (task: Task) => {
-		let index = tasks.findIndex(item => item.id === task.id);
-		tasks[index] = task;
-		setTasks([...tasks]);
-		Task.update(task);
+	const handleChange = (affair: Affair) => {
+		let index = affairs.findIndex(item => item.id === affair.id);
+		affairs[index] = affair;
+		setAffairs([...affairs]);
+		Affair.update(affair);
 	}
 
 	const handleDelete = (id: string) => {
-		setTasks(tasks.filter(item => item.id !== id));
-		Task.delete(id);
+		setAffairs(affairs.filter(item => item.id !== id));
+		Affair.delete(id);
 	}
 
-	const itemsFilter = ((value: Task) => {
+	const itemsFilter = ((value: Affair) => {
 		switch (filterTab) {
 			case 0:
 				return value.active;
@@ -91,7 +91,7 @@ export const TasksColumn = ({type, data, children}: TasksColumnProps) => {
 								 value={itemTitle}
 								 onChange={event => setItemTitle(event.target.value)}/>
 			<List>
-				{tasks.filter(itemsFilter).map(item =>
+				{affairs.filter(itemsFilter).map(item =>
 					<ToDoItem key={item.id} item={item} onChange={handleChange} onDelete={handleDelete} />)}
 			</List>
 			{children}

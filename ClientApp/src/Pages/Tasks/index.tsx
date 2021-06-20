@@ -1,26 +1,26 @@
-import {TasksColumn} from './TasksColumn'
+import {AffairsColumn} from './AffairsColumn'
 import {TODO_TYPE} from "./constants";
 import {useEffect, useState} from "react";
-import {Task} from "../../Models/Task";
+import {Affair} from "../../Models/Affair";
 
 interface TasksProps {
 }
 
 export const Tasks = (props: TasksProps) => {
-	const [tasks, setTasks] = useState<Task[]>([]);
+	const [tasks, setTasks] = useState<Affair[]>([]);
 
 	const taskTypeFilter = (type: TODO_TYPE) => {
 	  return tasks.filter(task => task?.type === type);
 	}
 
 	useEffect(() => {
-		Task.get((response) => setTasks(response.data))
+		Affair.get((response) => setTasks(response.data))
 	}, []);
 
 	return <>
-		<TasksColumn type={TODO_TYPE.Daily} data={taskTypeFilter(TODO_TYPE.Daily)}/>
-		<TasksColumn type={TODO_TYPE.Week} data={taskTypeFilter(TODO_TYPE.Week)}/>
-		<TasksColumn type={TODO_TYPE.Month} data={taskTypeFilter(TODO_TYPE.Month)}/>
-		<TasksColumn type={TODO_TYPE.Year} data={taskTypeFilter(TODO_TYPE.Year)}/>
+		<AffairsColumn type={TODO_TYPE.Daily} data={taskTypeFilter(TODO_TYPE.Daily)}/>
+		<AffairsColumn type={TODO_TYPE.Week} data={taskTypeFilter(TODO_TYPE.Week)}/>
+		<AffairsColumn type={TODO_TYPE.Month} data={taskTypeFilter(TODO_TYPE.Month)}/>
+		<AffairsColumn type={TODO_TYPE.Year} data={taskTypeFilter(TODO_TYPE.Year)}/>
 	</>
 }

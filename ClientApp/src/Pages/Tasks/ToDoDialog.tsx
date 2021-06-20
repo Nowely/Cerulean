@@ -5,14 +5,14 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {useState, useEffect} from "react";
 import {TextField} from "@material-ui/core";
-import {Task} from "../../Models/Task";
+import {Affair} from "../../Models/Affair";
 
 interface ToDoDialogProps {
-	value: Task,
+	value: Affair,
 	open: boolean,
 	onClose: () => void,
 	onDelete: (id: string) => void,
-	onSave: (task: Task) => void,
+	onSave: (affair: Affair) => void,
 }
 
 export const ToDoDialog = ({onClose, value: valueProp, open, onDelete, onSave}: ToDoDialogProps) => {

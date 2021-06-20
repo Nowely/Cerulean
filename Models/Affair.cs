@@ -19,7 +19,7 @@ namespace Cerulean.Models
         Year = 3,
     }
     
-    public class Task : Base
+    public class Affair : Base
     {
         public string Title { get; set; }
         public string Note { get; set; }

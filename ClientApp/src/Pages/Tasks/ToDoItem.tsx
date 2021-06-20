@@ -9,11 +9,11 @@ import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import Divider from "@material-ui/core/Divider";
 import {useEffect, useState} from "react";
 import {ToDoDialog} from "./ToDoDialog";
-import {Task} from "../../Models/Task";
+import {Affair} from "../../Models/Affair";
 
 interface ToDoItemProps {
-	item: Task,
-	onChange: (task: Task) => void,
+	item: Affair,
+	onChange: (affair: Affair) => void,
 	onDelete: (id: string) => void,
 }
 

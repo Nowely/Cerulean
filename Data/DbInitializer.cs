@@ -9,12 +9,12 @@ namespace Cerulean.Data
 		{
 			context.Database.EnsureCreated();
 
-			if (context.Task.Any())
+			if (context.Affair.Any())
 			{
 				return; // DB has been seeded
 			}
 
-			var tasks = new Task[]
+			var affairs = new Affair[]
 			{
 				new()
 				{
@@ -98,9 +98,9 @@ namespace Cerulean.Data
 				}
 			};
 
-				foreach (var task in tasks)
+				foreach (var affair in affairs)
 				{
-				context.Task.Add(task);
+				context.Affair.Add(affair);
 				}
 
 				context.SaveChanges();
