@@ -1,13 +1,13 @@
 import {makeAutoObservable} from "mobx";
-import {AffairStore} from "./AffairStore";
+import {Affair} from "../Models/Affair";
 
-export class Store {
+export class AffairStore {
     //region Singleton
-    private static _instance: Store;
+    private static _instance: AffairStore;
 
-    static get instance(): Store {
+    static get instance(): AffairStore {
         if (!this._instance) {
-            this._instance = new Store();
+            this._instance = new AffairStore();
         }
         return this._instance;
     }
@@ -18,5 +18,5 @@ export class Store {
 
     //endregion
 
-    affairStore: AffairStore = AffairStore.instance;
+    affairs: Affair[] = [];
 }

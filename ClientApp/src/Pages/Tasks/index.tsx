@@ -17,6 +17,7 @@ export const Tasks = (props: TasksProps) => {
 		Affair.get((response) => setTasks(response.data))
 	}, []);
 
+	//TODO убрать передачу data
 	return <>
 		<AffairsColumn type={TODO_TYPE.Daily} data={taskTypeFilter(TODO_TYPE.Daily)}/>
 		<AffairsColumn type={TODO_TYPE.Week} data={taskTypeFilter(TODO_TYPE.Week)}/>
