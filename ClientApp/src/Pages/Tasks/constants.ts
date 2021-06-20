@@ -10,4 +10,5 @@ export enum TODO_TYPE {
     Week = 1,
     Month = 2,
     Year = 3,
+    None,
 }

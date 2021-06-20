@@ -8,7 +8,6 @@ import Tab from '@material-ui/core/Tab';
 import {ReactNode, useEffect, useState} from "react";
 import _ from 'lodash'
 import {STATUS, TODO_TYPE} from "./constants";
-import {v4} from 'uuid';
 import {ToDoItem} from "./ToDoItem";
 import {Task} from "../../Models/Task";
 
@@ -29,17 +28,8 @@ export const TasksColumn = ({type, data, children}: TasksColumnProps) => {
 			event.preventDefault();
 			let newTask = new Task();
 			//TODO
-			newTask.id = v4();
 			newTask.title = itemTitle;
-			newTask.note = "";
-			newTask.checklist = [];
-			newTask.active = true;
-			newTask.status = STATUS.Absent;
-			newTask.difficulty = "";
 			newTask.type = type;
-			newTask.color = "";
-			newTask.dueDate = null;
-			newTask.tags = [];
 
 			setTasks([
 				...tasks,

@@ -1,18 +1,19 @@
 import {STATUS, TODO_TYPE} from "../Pages/Tasks/constants";
 import axios from "axios";
+import {v4} from "uuid";
 
 export class Task {
-    id!: string;
-    title!: string;
-    note!: string;
-    checklist!: string[];
-    active!: boolean;
-    status!: STATUS;
-    difficulty!: string;
-    type!: TODO_TYPE; //Column type from title
-    color!: string; //Green, Red, Common task
-    dueDate!: string | null;
-    tags!: string[];
+    id: string = v4();
+    title: string = "";
+    note: string = "";
+    checklist: string[] = [];
+    active: boolean = true;
+    status: STATUS = STATUS.Absent;
+    difficulty: string = "";
+    type: TODO_TYPE = TODO_TYPE.None; //Column type from title
+    color: string = ""; //Green, Red, Common task
+    dueDate: string | null = null;
+    tags: string[] = [];
 
     static get = async (callback: { (response: any): void; call?: any; }) => {
         try {
