@@ -32,6 +32,8 @@ export const Layout = ({children}: LayoutProps) => {
 		setAnchorEl(null);
 	};
 
+	//TODO не выделяется корректно таб при перезагрузке страницы и не на первом табе
+	//TODO display label without CAPS
 	return (
 		<div className={classes.root}>
 			<AppBar position="static">
@@ -47,7 +49,6 @@ export const Layout = ({children}: LayoutProps) => {
 						render={({location}) => (
 							<>
 								<Tabs value={value} onChange={handleChange}>
-									//TODO display label without CAPS
 									<Tab label="Tasks" component={Link} to="/" {...a11yProps(0)}/>
 									<Tab label="Counter" component={Link} to="/counter" {...a11yProps(1)}/>
 								</Tabs>
