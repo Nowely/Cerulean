@@ -2,8 +2,8 @@ import 'fontsource-roboto';
 import React, {Component} from 'react';
 import {Route} from 'react-router';
 import {Layout} from './components/Layout';
-import {Tasks} from './Pages/Tasks/Tasks';
 import {Counter} from './components/Counter';
+import {Tasks} from "./Pages/Tasks";
 
 export default class App extends Component {
 	static displayName = App.name;
