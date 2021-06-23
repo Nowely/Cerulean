@@ -1,6 +1,7 @@
 import {makeAutoObservable} from "mobx";
 import {Affair} from "../Models/Affair";
 import axios from "axios";
+import {AffairType} from "../Pages/Tasks/constants";
 
 export class AffairStore {
     //region Singleton
@@ -16,19 +17,23 @@ export class AffairStore {
 
     //endregion
 
-    affairs: Affair[] = [];
+    data: Affair[] = [];
 
-
-    get = async (callback: { (response: any): void; call?: any; }) => {
+    get = async () => {
         try {
             const response = await axios.get(`affair`);
-            callback.call(null, response);
+            this.data = response.data;
         } catch (e) {
             console.error(e);
+            let a = new Affair();
+            a.title = `Test Task ${this.data.length}`
+            a.type = AffairType.Daily
+            this.data.push(a)
         }
     }
 
     create = async (affair : Affair) => {
+        this.data.push(affair);
         try {
             await axios.post(`affair`, {...affair});
         } catch (e) {
@@ -36,20 +41,11 @@ export class AffairStore {
         }
     }
 
-    update = async (affair: Affair) => {
-
-        affair.update(new Affair());
-        /*try {
-            await axios.put(`affair`, affair);
-        } catch (e) {
-            console.error(e);
-        }*/
+    update = async (id: string) => {
+        await this.data.find(value => value.id === id)?.update();
     }
+
     delete = async (id: string) => {
-        /*try {
-            await axios.delete(`affair`, {params: {id}});
-        } catch (e) {
-            console.error(e);
-        }*/
+        await this.data.find(value => value.id === id)?.delete();
     }
 }

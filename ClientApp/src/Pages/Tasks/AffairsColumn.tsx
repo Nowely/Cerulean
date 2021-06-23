@@ -7,22 +7,23 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import {ReactNode, useEffect, useState} from "react";
 import _ from 'lodash'
-import {STATUS, TODO_TYPE} from "./constants";
+import {STATUS, AffairType} from "./constants";
 import {ToDoItem} from "./ToDoItem";
 import {Affair} from "../../Models/Affair";
 import {AffairStore} from "../../Stores/AffairStore";
+import {observer} from "mobx-react";
 
 interface AffairsColumnProps {
-	type: TODO_TYPE,
-	data: Affair[],
+	type: AffairType,
 	children?: ReactNode,
 }
 
-export const AffairsColumn = ({type, data, children}: AffairsColumnProps) => {
+export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => {
 	const classes = useStyles();
 	const [affairs, setAffairs] = useState<Affair[]>([]);
 	const [itemTitle, setItemTitle] = useState("");
 	const [filterTab, setFilterTab] = useState(0);
+	const data = AffairStore.instance.data;
 
 	const handleKeyDown = (event: { key: string; preventDefault: () => void; }) => {
 		if (event.key === 'Enter' && !_.isEmpty(itemTitle)) {
@@ -32,27 +33,17 @@ export const AffairsColumn = ({type, data, children}: AffairsColumnProps) => {
 			newAffair.title = itemTitle;
 			newAffair.type = type;
 
-			setAffairs([
-				...affairs,
-				newAffair
-			]);
 			setItemTitle("");
 			AffairStore.instance.create(newAffair);
 		}
 	}
 
-	useEffect(() => {
-		if (!_.isEmpty(data) && _.isArray(data)) {
-			setAffairs(data);
-		}
-	}, [data])
-
-	const handleChange = (affair: Affair) => {
+	/*const handleChange = (affair: Affair) => {
 		let index = affairs.findIndex(item => item.id === affair.id);
 		affairs[index] = affair;
 		setAffairs([...affairs]);
-		AffairStore.instance.update(affair);
-	}
+		AffairStore.instance.update(affair.id);
+	}*/
 
 	const handleDelete = (id: string) => {
 		setAffairs(affairs.filter(item => item.id !== id));
@@ -70,7 +61,8 @@ export const AffairsColumn = ({type, data, children}: AffairsColumnProps) => {
 
 	return <div style={{width: '25%'}}>
 		<div style={{display: 'flex', justifyContent: 'space-between'}}>
-			<Typography className={classes.typographyPaper}> {_.findKey(TODO_TYPE, (value) => value === type)}</Typography>
+			<Typography
+				className={classes.typographyPaper}> {_.findKey(AffairType, (value) => value === type)}</Typography>
 			<Tabs
 				TabIndicatorProps={{style: {bottom: 'auto'}}}
 				className={classes.filterTabs}
@@ -87,16 +79,16 @@ export const AffairsColumn = ({type, data, children}: AffairsColumnProps) => {
 		</div>
 		<Paper className={classes.paper} elevation={6}>
 			<TextField fullWidth
-								 label="Add a To Do" variant="outlined" size="small"
-								 onKeyPress={handleKeyDown}
-								 value={itemTitle}
-								 onChange={event => setItemTitle(event.target.value)}/>
+					   label="Add a To Do" variant="outlined" size="small"
+					   onKeyPress={handleKeyDown}
+					   value={itemTitle}
+					   onChange={event => setItemTitle(event.target.value)}/>
 			<List>
-				{affairs.filter(itemsFilter).map(item =>
-					<ToDoItem key={item.id} item={item} onChange={handleChange} onDelete={handleDelete} />)}
+				{data.filter(task => task?.type === type).filter(itemsFilter).map(item =>
+					<ToDoItem key={item.id} item={item} onDelete={handleDelete}/>)}
 			</List>
 			{children}
 		</Paper>
 	</div>;
-};
+});
 

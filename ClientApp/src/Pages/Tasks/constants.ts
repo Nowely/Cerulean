@@ -5,7 +5,7 @@ export enum STATUS {
     Failed = 3,
 }
 
-export enum TODO_TYPE {
+export enum AffairType {
     Daily = 0,
     Week = 1,
     Month = 2,

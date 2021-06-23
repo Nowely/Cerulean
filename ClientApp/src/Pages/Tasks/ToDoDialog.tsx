@@ -6,16 +6,16 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import {useState, useEffect} from "react";
 import {TextField} from "@material-ui/core";
 import {Affair} from "../../Models/Affair";
+import {observer} from "mobx-react";
 
 interface ToDoDialogProps {
 	value: Affair,
 	open: boolean,
 	onClose: () => void,
 	onDelete: (id: string) => void,
-	onSave: (affair: Affair) => void,
 }
 
-export const ToDoDialog = ({onClose, value: valueProp, open, onDelete, onSave}: ToDoDialogProps) => {
+export const ToDoDialog = observer(({onClose, value: valueProp, open, onDelete}: ToDoDialogProps) => {
 	const [value, setValue] = useState(valueProp);
 	useEffect(() => {
 		if (!open) {
@@ -39,7 +39,7 @@ export const ToDoDialog = ({onClose, value: valueProp, open, onDelete, onSave}: 
 				fullWidth
 				rows={4}
 				value={value.note}
-				onChange={(event => setValue({...value, note: event.target.value}))}
+				/*onChange={(event => setValue({...value, note: event.target.value}))}*/
 				variant="outlined"
 			/>
 		</DialogContent>
@@ -52,9 +52,8 @@ export const ToDoDialog = ({onClose, value: valueProp, open, onDelete, onSave}: 
 			}} variant="contained" color="secondary"> Delete </Button>
 			<Button autoFocus onClick={() => onClose()} color="primary"> Cancel </Button>
 			<Button onClick={() => {
-				onSave(value);
 				onClose();
 			}} variant="contained" color="primary"> Ok </Button>
 		</DialogActions>
 	</Dialog>;
-}
+})

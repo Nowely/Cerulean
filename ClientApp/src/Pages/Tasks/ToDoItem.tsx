@@ -10,21 +10,24 @@ import Divider from "@material-ui/core/Divider";
 import {useEffect, useState} from "react";
 import {ToDoDialog} from "./ToDoDialog";
 import {Affair} from "../../Models/Affair";
+import {AffairStore} from "../../Stores/AffairStore";
+import {observer} from "mobx-react";
 
 interface ToDoItemProps {
 	item: Affair,
-	onChange: (affair: Affair) => void,
 	onDelete: (id: string) => void,
 }
 
-export const ToDoItem = ({item, onChange, onDelete}: ToDoItemProps) => {
+export const ToDoItem = observer(({item, onDelete}: ToDoItemProps) => {
 	const [dialog, setDialog] = useState(false);
 	const [value, setValue] = useState(item);
 
 	const handleChange = (status: STATUS) => {
+		item.status = status;
+		//value.status = status;
+		AffairStore.instance.update(item.id);
 		let newValue = {...value, status, active: false};
-		setValue(newValue);
-		onChange(newValue);
+		//setValue(newValue);
 	}
 
 	useEffect(() => setValue(item), [item])
@@ -52,9 +55,8 @@ export const ToDoItem = ({item, onChange, onDelete}: ToDoItemProps) => {
 		<ToDoDialog
 			onDelete={onDelete}
 			open={dialog}
-			onSave={onChange}
 			onClose={() => setDialog(false)}
 			value={value}
 		/>
 	</>;
-};
+});

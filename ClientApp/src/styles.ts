@@ -1,5 +1,6 @@
 import { fade, makeStyles } from '@material-ui/core/styles';
 
+//TODO export like namespace?
 export const useStyles = makeStyles((theme) => ({
 	root: {
 		flexGrow: 1,
