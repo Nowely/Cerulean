@@ -10,6 +10,7 @@ import _ from 'lodash'
 import {STATUS, TODO_TYPE} from "./constants";
 import {ToDoItem} from "./ToDoItem";
 import {Affair} from "../../Models/Affair";
+import {AffairStore} from "../../Stores/AffairStore";
 
 interface AffairsColumnProps {
 	type: TODO_TYPE,
@@ -36,7 +37,7 @@ export const AffairsColumn = ({type, data, children}: AffairsColumnProps) => {
 				newAffair
 			]);
 			setItemTitle("");
-			Affair.create(newAffair);
+			AffairStore.instance.create(newAffair);
 		}
 	}
 
@@ -50,12 +51,12 @@ export const AffairsColumn = ({type, data, children}: AffairsColumnProps) => {
 		let index = affairs.findIndex(item => item.id === affair.id);
 		affairs[index] = affair;
 		setAffairs([...affairs]);
-		Affair.update(affair);
+		AffairStore.instance.update(affair);
 	}
 
 	const handleDelete = (id: string) => {
 		setAffairs(affairs.filter(item => item.id !== id));
-		Affair.delete(id);
+		AffairStore.instance.delete(id);
 	}
 
 	const itemsFilter = ((value: Affair) => {

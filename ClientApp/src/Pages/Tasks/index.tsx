@@ -2,6 +2,7 @@ import {AffairsColumn} from './AffairsColumn'
 import {TODO_TYPE} from "./constants";
 import {useEffect, useState} from "react";
 import {Affair} from "../../Models/Affair";
+import {AffairStore} from "../../Stores/AffairStore";
 
 interface TasksProps {
 }
@@ -14,7 +15,7 @@ export const Tasks = (props: TasksProps) => {
 	}
 
 	useEffect(() => {
-		Affair.get((response) => setTasks(response.data))
+		AffairStore.instance.get((response) => setTasks(response.data))
 	}, []);
 
 	//TODO убрать передачу data

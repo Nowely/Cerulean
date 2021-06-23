@@ -15,31 +15,21 @@ export class Affair {
     dueDate: string | null = null;
     tags: string[] = [];
 
-    static get = async (callback: { (response: any): void; call?: any; }) => {
-        try {
-            const response = await axios.get(`affair`);
-            callback.call(null, response);
-        } catch (e) {
-            console.error(e);
-        }
-    }
-    static create = async (affair : Affair) => {
-        try {
-            await axios.post(`affair`, {...affair});
-        } catch (e) {
-            console.error(e);
-        }
-    }
-    static update = async (affair: Affair) => {
+
+    update = async (affair: Affair) => {
+        debugger
+        let id = this.id
+        ///{...affair};
         try {
             await axios.put(`affair`, affair);
         } catch (e) {
             console.error(e);
         }
     }
-    static delete = async (id: string) => {
+
+    delete = async () => {
         try {
-            await axios.delete(`affair`, {params: {id}});
+            await axios.delete(`affair`, {params: {id: this.id}});
         } catch (e) {
             console.error(e);
         }
