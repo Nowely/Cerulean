@@ -9,6 +9,7 @@ interface Interface {
 	timer: Timer
 }
 
+//TODO remove example
 // Build a "user interface" that uses the observable state.
 const TimerView = observer(({ timer }: Interface) => (
 	<Button onClick={() => timer.reset()}>Seconds passed: {timer.secondsPassed}</Button>

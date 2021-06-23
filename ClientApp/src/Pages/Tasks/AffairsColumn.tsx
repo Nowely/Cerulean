@@ -1,15 +1,10 @@
 import {useStyles} from '../../styles'
-import Paper from "@material-ui/core/Paper";
-import TextField from '@material-ui/core/TextField';
-import List from '@material-ui/core/List';
-import Typography from '@material-ui/core/Typography';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
-import {ReactNode, useEffect, useState} from "react";
+import {ReactNode, useState} from "react";
+import {Paper, TextField, List, Typography, Tabs, Tab} from "@material-ui/core";
 import _ from 'lodash'
-import {STATUS, AffairType} from "./constants";
-import {ToDoItem} from "./ToDoItem";
 import {Affair} from "../../Models/Affair";
+import {AffairItem} from "./AffairItem";
+import {Status, AffairType} from "./constants";
 import {AffairStore} from "../../Stores/AffairStore";
 import {observer} from "mobx-react";
 
@@ -20,7 +15,6 @@ interface AffairsColumnProps {
 
 export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => {
 	const classes = useStyles();
-	const [affairs, setAffairs] = useState<Affair[]>([]);
 	const [itemTitle, setItemTitle] = useState("");
 	const [filterTab, setFilterTab] = useState(0);
 	const data = AffairStore.instance.data;
@@ -28,26 +22,14 @@ export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => 
 	const handleKeyDown = (event: { key: string; preventDefault: () => void; }) => {
 		if (event.key === 'Enter' && !_.isEmpty(itemTitle)) {
 			event.preventDefault();
-			let newAffair = new Affair();
 			//TODO
+			let newAffair = new Affair();
 			newAffair.title = itemTitle;
 			newAffair.type = type;
 
 			setItemTitle("");
 			AffairStore.instance.create(newAffair);
 		}
-	}
-
-	/*const handleChange = (affair: Affair) => {
-		let index = affairs.findIndex(item => item.id === affair.id);
-		affairs[index] = affair;
-		setAffairs([...affairs]);
-		AffairStore.instance.update(affair.id);
-	}*/
-
-	const handleDelete = (id: string) => {
-		setAffairs(affairs.filter(item => item.id !== id));
-		AffairStore.instance.delete(id);
 	}
 
 	const itemsFilter = ((value: Affair) => {
@@ -73,8 +55,8 @@ export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => 
 				aria-label="disabled tabs example"
 			>
 				{<Tab className={classes.filterTab} label="Active"/>}
-				<Tab className={classes.filterTab} value={STATUS.Completed} label="Completed"/>
-				<Tab className={classes.filterTab} value={STATUS.Failed} label="Failed"/>
+				<Tab className={classes.filterTab} value={Status.Completed} label="Completed"/>
+				<Tab className={classes.filterTab} value={Status.Failed} label="Failed"/>
 			</Tabs>
 		</div>
 		<Paper className={classes.paper} elevation={6}>
@@ -85,7 +67,7 @@ export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => 
 					   onChange={event => setItemTitle(event.target.value)}/>
 			<List>
 				{data.filter(task => task?.type === type).filter(itemsFilter).map(item =>
-					<ToDoItem key={item.id} item={item} onDelete={handleDelete}/>)}
+					<AffairItem key={item.id} item={item}/>)}
 			</List>
 			{children}
 		</Paper>

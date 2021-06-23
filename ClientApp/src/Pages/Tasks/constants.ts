@@ -1,4 +1,4 @@
-export enum STATUS {
+export enum Status {
     Absent = 0,
     Scheduled = 1,
     Completed = 2,

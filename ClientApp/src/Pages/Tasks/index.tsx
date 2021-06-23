@@ -5,6 +5,7 @@ import {AffairStore} from "../../Stores/AffairStore";
 
 export const Tasks = () => {
     useEffect(() => {
+        //TODO caching?
         AffairStore.instance.get();
     }, []);
 
