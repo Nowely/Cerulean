@@ -10,8 +10,8 @@ export default function App() {
 	let storage = Store.instance;
 
 	return <Layout>
-		<Route exact path='/' component={Tasks}/>
-		<Route path='/counter' component={Counter}/>
+		<Route key="Tasks" exact path='/' component={Tasks}/>
+		<Route key="Counter" path='/counter' component={Counter}/>
 	</Layout>;
 }
 App.displayName = App.name
