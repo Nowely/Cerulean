@@ -34,6 +34,16 @@ export const useStyles = makeStyles((theme) => ({
 		minHeight: 35,
 		marginRight: 0
 	},
+	routeTab: {
+		textTransform: 'none',
+		minWidth: 122,
+		fontSize: "medium",
+		marginLeft: theme.spacing(1),
+		'&:hover': {
+			color: '#40a9ff',
+			opacity: 1,
+		},
+	},
 	inline: {
 		display: 'inline',
 	},
