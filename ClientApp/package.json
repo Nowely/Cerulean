@@ -17,6 +17,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/faker": "^5.5.6",
     "@types/jest": "^26.0.23",
     "@types/lodash": "^4.14.170",
     "@types/node": "^15.12.3",
@@ -24,6 +25,8 @@
     "@types/react-dom": "^17.0.8",
     "@types/react-router-dom": "^5.1.7",
     "@types/uuid": "^8.3.0",
+    "faker": "^5.5.3",
+    "json-server": "^0.16.3",
     "ajv": "^8.6.0",
     "cross-env": "^7.0.3",
     "eslint": "^7.28.0",
@@ -43,7 +46,9 @@
     "build": "react-scripts build",
     "test": "cross-env CI=true react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "lint": "eslint ./src/"
+    "lint": "eslint ./src/",
+    "generate": "node ./src/fakedata.ts > ./src/data.json",
+    "server": "json-server --watch ./database/data.json"
   },
   "browserslist": {
     "production": [

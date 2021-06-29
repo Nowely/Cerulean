@@ -1,14 +1,15 @@
+//TODO change on server enums
 export enum Status {
-    Absent = 0,
-    Scheduled = 1,
-    Completed = 2,
-    Failed = 3,
+    Absent,
+    Scheduled,
+    Completed,
+    Failed,
 }
 
 export enum AffairType {
-    Daily = 0,
-    Week = 1,
-    Month = 2,
-    Year = 3,
     None,
+    Daily,
+    Week,
+    Month,
+    Year,
 }
