@@ -2,6 +2,7 @@
   "name": "cerulean",
   "version": "0.1.0",
   "private": true,
+  "proxy": "https://localhost:5001",
   "dependencies": {
     "@material-ui/core": "^4.11.4",
     "@material-ui/icons": "^4.11.2",
@@ -47,8 +48,8 @@
     "test": "cross-env CI=true react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "lint": "eslint ./src/",
-    "generate": "node ./src/fakedata.ts > ./src/data.json",
-    "server": "json-server --watch ./database/data.json"
+    "generate": "node ./src/fakedata.mjs > ./src/data.json",
+    "server": "json-server --watch ./src/data.js"
   },
   "browserslist": {
     "production": [

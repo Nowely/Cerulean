@@ -1,13 +1,14 @@
 import {Affair} from "./Models/Affair";
+import faker from 'faker';
+import {AffairType, Status} from "./Pages/Tasks/constants";
 
-var faker = require('faker');
-
-var {AffairType, Status} = require("./Pages/Tasks/constants");
-
-interface api {
+/*interface api {
 	affairs: Affair[],
 }
 let database: api = {
+	affairs: [],
+};*/
+let database = {
 	affairs: [],
 };
 
