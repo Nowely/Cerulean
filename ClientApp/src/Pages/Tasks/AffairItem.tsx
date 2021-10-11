@@ -3,9 +3,9 @@ import {observer} from "mobx-react";
 import {Affair} from "../../Models/Affair";
 import {AffairStore} from "../../Stores/AffairStore";
 import {Status} from "./constants";
-import {ListItem, ListItemText, ListItemSecondaryAction, Divider, ButtonGroup, IconButton} from "@material-ui/core";
-import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
-import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
+import {ListItem, ListItemText, ListItemSecondaryAction, Divider, ButtonGroup, IconButton} from "@mui/material";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import {AffairDialog} from "./AffairDialog";
 
 interface AffairItemProps {

@@ -2,7 +2,7 @@ import {useState, useEffect} from "react";
 import {observer} from "mobx-react";
 import {Affair} from "../../Models/Affair";
 import {AffairStore} from "../../Stores/AffairStore";
-import {Button, Dialog,	DialogActions,	DialogContent,	DialogTitle, TextField} from '@material-ui/core';
+import {Button, Dialog,	DialogActions,	DialogContent,	DialogTitle, TextField} from '@mui/material';
 
 interface AffairDialogProps {
 	item: Affair,
@@ -20,7 +20,6 @@ export const AffairDialog = observer(({onClose, item, open}: AffairDialogProps) 
 	}, [item, open]);
 
 	return <Dialog
-		disableBackdropClick
 		disableEscapeKeyDown
 		fullWidth={true}
 		maxWidth="sm"

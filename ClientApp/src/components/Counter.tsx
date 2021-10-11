@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Button, Container, Typography} from "@material-ui/core";
+import {Button, Container, Typography} from "@mui/material"
 import {observer} from "mobx-react";
 import {Timer} from "../Models/Timer";
 

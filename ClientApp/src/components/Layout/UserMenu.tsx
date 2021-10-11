@@ -1,7 +1,5 @@
-import {IconButton} from "@material-ui/core";
-import PersonRoundedIcon from "@material-ui/icons/PersonRounded";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
+import {IconButton, Menu, MenuItem} from "@mui/material";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import React, {MouseEvent, useState} from "react";
 
 export const UserMenu = () => {
