@@ -1,12 +1,11 @@
 ﻿using Cerulean.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cerulean.Data
-{
-    public class Context : DbContext
-    {
-        public Context(DbContextOptions<Context> options) : base(options) { }
+namespace Cerulean.Data;
 
-        public DbSet<Affair> Affair { get; set; }
-    }
+public class Context : DbContext
+{
+    public Context(DbContextOptions<Context> options) : base(options) { }
+
+    public DbSet<Affair> Affair { get; set; }
 }
