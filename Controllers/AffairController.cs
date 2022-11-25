@@ -25,7 +25,7 @@ public class AffairController : Controller {
 
 	[HttpPut]
 	public int Update([FromBody] Affair affair) {
-		affair.ModifiedOn = DateTime.Now;
+		affair.ModifiedOn = DateTime.UtcNow;
 		_context.Affair.Update(affair);
 		return _context.SaveChanges();
 	}
