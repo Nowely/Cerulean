@@ -16,9 +16,9 @@
 
 ## Используемые технологии
 
-* c# 9 with .NET 5 and Entity Framework core
-* React with Material UI
-* Postgres 13
+* C# with Entity Framework core
+* React with Ant UI
+* Postgres
 * ...
 
 ## Description
