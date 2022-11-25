@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,11 +21,8 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
 	app.UseDeveloperExceptionPage();
-}
-else
-{
+else {
 	app.UseExceptionHandler("/Error");
 	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 	app.UseHsts();
@@ -36,21 +33,16 @@ app.UseStaticFiles();
 app.UseSpaStaticFiles();
 app.UseRouting();
 
-app.UseEndpoints(endpoints =>
-{
+app.UseEndpoints(endpoints => {
 	endpoints.MapControllerRoute(
-		name: "default",
-		pattern: "{controller}/{action=Index}/{id?}");
+		"default",
+		"{controller}/{action=Index}/{id?}");
 });
 
-app.UseSpa(spa =>
-{
+app.UseSpa(spa => {
 	spa.Options.SourcePath = "ClientApp";
 
-	if (app.Environment.IsDevelopment())
-	{
-		spa.UseReactDevelopmentServer(npmScript: "start");
-	}
+	if (app.Environment.IsDevelopment()) spa.UseReactDevelopmentServer("start");
 });
 
 CreateDbIfNotExists(app);
@@ -58,17 +50,14 @@ CreateDbIfNotExists(app);
 app.Run();
 
 //TODO can change on extension
-void CreateDbIfNotExists(IHost host)
-{
+void CreateDbIfNotExists(IHost host) {
 	using var scope = host.Services.CreateScope();
 	var services = scope.ServiceProvider;
-	try
-	{
+	try {
 		var context = services.GetRequiredService<Context>();
 		DbInitializer.Initialize(context);
 	}
-	catch (Exception ex)
-	{
+	catch (Exception ex) {
 		var logger = services.GetRequiredService<ILogger<Program>>();
 		logger.LogError(ex, "An error occurred creating the DB.");
 	}

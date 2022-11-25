@@ -2,7 +2,7 @@
 
 ![](History/image1.jpg)
 
-Учебный проект на C# / React / Postrgres  для управления задачами. 
+Учебный проект на C# / React / Postrgres для управления задачами.
 
 ## Features
 
@@ -14,7 +14,7 @@
 * Добавление задач с помощью кнопки "Enter"
 * Рабочая навигация по вкладкам!
 
-## Используемые технологии 
+## Используемые технологии
 
 * c# 9 with .NET 5 and Entity Framework core
 * React with Material UI
