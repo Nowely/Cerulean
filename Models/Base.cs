@@ -3,6 +3,6 @@
 public class Base
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public DateTimeOffset CreateOn { get; set; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset ModifiedOn { get; set; } = DateTimeOffset.UtcNow;
+    public DateTime CreateOn { get; set; } = DateTime.UtcNow;
+    public DateTime ModifiedOn { get; set; } = DateTime.UtcNow;
 }

@@ -33,7 +33,7 @@ public class AffairController : Controller
     [HttpPut]
     public int Update([FromBody]Affair affair)
     {
-        affair.ModifiedOn = DateTimeOffset.Now;
+        affair.ModifiedOn = DateTime.Now;
         _context.Affair.Update(affair);
         return _context.SaveChanges();
     }
