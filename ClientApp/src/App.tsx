@@ -8,8 +8,8 @@ import {Tasks} from "./Pages/Tasks";
 export default function App() {
 
 	return <Layout>
-		<Route key="Tasks" exact path='/' component={Tasks}/>
-		<Route key="Counter" path='/counter' component={Counter}/>
+		<Route key="Tasks" path='/' element={<Tasks/>}/>
+		<Route key="Counter" path='/counter' element={<Counter/>}/>
 	</Layout>;
 }
 App.displayName = App.name
