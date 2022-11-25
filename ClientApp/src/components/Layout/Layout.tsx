@@ -79,11 +79,9 @@ export const Layout = ({children}: LayoutProps) => {
                     <UserMenu/>
                 </Toolbar>
             </AppBar>
-            <Container maxWidth={false} disableGutters={true} className={classes.container}>
-                <Routes>
-                    {children}
-                </Routes>
-            </Container>
+            <Routes>
+                {children}
+            </Routes>
         </Root>
     );
 };
