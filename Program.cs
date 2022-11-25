@@ -15,7 +15,7 @@ builder.Services.AddDbContext<Context>(options =>
 	options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddControllersWithViews();
-builder.Services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
+builder.Services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/dist"; });
 
 var app = builder.Build();
 
@@ -39,11 +39,14 @@ app.UseEndpoints(endpoints => {
 		"{controller}/{action=Index}/{id?}");
 });
 
-app.UseSpa(spa => {
-	spa.Options.SourcePath = "ClientApp";
-
-	if (app.Environment.IsDevelopment()) spa.UseReactDevelopmentServer("start");
-});
+if (app.Environment.IsDevelopment())
+	app.UseSpa(spa => {
+		spa.UseProxyToSpaDevelopmentServer("http://127.0.0.1:5173");
+		//if (app.Environment.IsDevelopment()) spa.UseReactDevelopmentServer("start");
+	});
+else {
+	app.MapFallbackToFile("index.html");
+}
 
 CreateDbIfNotExists(app);
 
