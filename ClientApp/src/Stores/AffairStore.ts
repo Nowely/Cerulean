@@ -28,7 +28,7 @@ export class AffairStore {
         }
     }
 
-    create = async (affair : Affair) => {
+    create = async (affair: Affair) => {
         this.data.push(affair);
         try {
             await axios.post(`affair`, {...affair});
@@ -37,11 +37,10 @@ export class AffairStore {
         }
     }
 
-    update = async (id: string, newState?: Affair) => {
-        let affair = this.data.find(value => value.id === id);
-        if (newState)
-            Object.assign(affair, newState);
-
+    update = async (id: string, newState: Partial<Affair>) => {
+        const affair = this.data.find(value => value.id === id);
+        if (!affair) return;
+        Object.assign(affair, newState);
 
         try {
             await axios.put(`affair`, affair);
