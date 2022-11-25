@@ -1,14 +1,13 @@
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client'
 import {BrowserRouter} from 'react-router-dom';
 import App from './App';
 
-const baseUrl: string = document.getElementsByTagName('base')[0].getAttribute('href') ?? "/";
-const rootElement: HTMLElement | null = document.getElementById('root');
+const baseUrl = document.getElementsByTagName('base')[0].getAttribute('href') ?? "/";
 
-ReactDOM.render(
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <BrowserRouter basename={baseUrl}>
         <App/>
-    </BrowserRouter>,
-    rootElement);
+    </BrowserRouter>
+)
 
 
