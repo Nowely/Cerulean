@@ -7,6 +7,8 @@ public class Context : DbContext {
 	public Context(DbContextOptions<Context> options) : base(options) { }
 
 	public DbSet<Affair> Affair { get; set; }
+	public DbSet<Page> Page { get; set; }
+	public DbSet<User> User { get; set; }
 
 	/*protected override void OnModelCreating(ModelBuilder modelBuilder) {
 		base.OnModelCreating(modelBuilder);

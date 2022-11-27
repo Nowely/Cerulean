@@ -4,22 +4,13 @@ import axios from "axios";
 import _ from "lodash";
 
 export class AffairStore {
-    //region Singleton
-    private static _instance: AffairStore;
+    data: Affair[] = [];
 
-    private constructor() {
+    constructor() {
         makeAutoObservable(this)
     }
 
-    static get instance(): AffairStore {
-        return this._instance || (this._instance = new this());
-    }
-
-    //endregion
-
-    data: Affair[] = [];
-
-    get = async () => {
+    async get() {
         try {
             const response = await axios.get(`affair`);
             this.data = response.data;
@@ -28,7 +19,7 @@ export class AffairStore {
         }
     }
 
-    create = async (affair: Affair) => {
+    async create(affair: Affair) {
         this.data.push(affair);
         try {
             await axios.post(`affair`, {...affair});
@@ -37,7 +28,7 @@ export class AffairStore {
         }
     }
 
-    update = async (id: string, newState: Partial<Affair>) => {
+    async update(id: string, newState: Partial<Affair>) {
         const affair = this.data.find(value => value.id === id);
         if (!affair) return;
         Object.assign(affair, newState);
@@ -49,7 +40,7 @@ export class AffairStore {
         }
     }
 
-    delete = async (id: string) => {
+    async delete(id: string) {
         _.remove(this.data, (value) => value.id === id);
         try {
             await axios.delete(`affair`, {params: {id}});

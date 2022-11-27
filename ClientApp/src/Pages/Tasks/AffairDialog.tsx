@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {Affair} from "../../Models/Affair";
 import {AffairStore} from "../../Stores/AffairStore";
 import {Button, Dialog,	DialogActions,	DialogContent,	DialogTitle, TextField} from '@mui/material';
+import {store} from "../../Stores/Store";
 
 interface AffairDialogProps {
 	item: Affair,
@@ -42,12 +43,12 @@ export const AffairDialog = observer(({onClose, item, open}: AffairDialogProps) 
 		<DialogActions>
 			{/*TODO убрать костыль со стилем*/}
 			<Button style={{right: 349}} onClick={() => {
-				AffairStore.instance.delete(value.id);
+				store.affairs.delete(value.id)
 				onClose();
 			}} variant="contained" color="secondary"> Delete </Button>
 			<Button autoFocus onClick={() => onClose()} color="primary"> Cancel </Button>
 			<Button onClick={() => {
-				AffairStore.instance.update(value.id, value)
+				store.affairs.update(value)
 				onClose();
 			}} variant="contained" color="primary"> Save </Button>
 		</DialogActions>

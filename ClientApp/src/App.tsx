@@ -1,7 +1,7 @@
 import 'fontsource-roboto';
 import React from 'react';
 import {Route} from 'react-router';
-import Layout from './components/Layout';
+import Layout from './components/Screen';
 import {Counter} from './components/Counter';
 import {Tasks} from "./Pages/Tasks";
 import {Board} from "./components/Board";

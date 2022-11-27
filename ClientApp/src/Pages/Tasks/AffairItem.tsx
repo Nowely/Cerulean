@@ -7,6 +7,7 @@ import {ListItem, ListItemText, ListItemSecondaryAction, Divider, ButtonGroup, I
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import {AffairDialog} from "./AffairDialog";
+import {store} from "../../Stores/Store";
 
 interface AffairItemProps {
 	item: Affair,
@@ -17,7 +18,7 @@ export const AffairItem = observer(({item}: AffairItemProps) => {
 	const [value, setValue] = useState(item);
 
 	const handleChange = (status: Status) => {
-		AffairStore.instance.update(item.id, {...item, active: false, status});
+		store.affairs.update({...item, active: false, status});
 	}
 
 	useEffect(() => setValue(item), [item])

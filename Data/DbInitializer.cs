@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Cerulean.Models;
 using Type = Cerulean.Models.Type;
 
@@ -6,6 +7,7 @@ namespace Cerulean.Data;
 
 public static class DbInitializer {
 	public static void Initialize(Context context) {
+		context.Database.EnsureDeleted();
 		context.Database.EnsureCreated();
 
 		if (context.Affair.Any()) return; // DB has been seeded
@@ -84,6 +86,17 @@ public static class DbInitializer {
 		};
 
 		foreach (var affair in affairs) context.Affair.Add(affair);
+
+		context.User.Add(new() {
+			Pages = new(new[] {
+				new Page() { Title = "Home" },
+				new Page() { Title = "Tasks" }
+			})
+		});
+
+		/*context.Page.Add(new Page() {
+			Title = "Home"
+		});*/
 
 		context.SaveChanges();
 	}

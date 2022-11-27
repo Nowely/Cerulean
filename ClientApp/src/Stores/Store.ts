@@ -1,19 +1,27 @@
-import {makeAutoObservable} from "mobx";
+import {makeAutoObservable, toJS} from "mobx";
 import {AffairStore} from "./AffairStore";
+import {Service} from "./Service";
+import {Affair} from "../Models/Affair";
+import {Page} from "../Models/Page";
+import {User} from "../Models/User";
 
-export class Store {
-    //region Singleton
-    private static _instance: Store;
+class Store {
+    //affair = new AffairStore()
+    affairs = new Service<Affair>('affair')
+    pages = new Service<Page>('page')
+    users = new Service<User>('user')
 
-    private constructor() {
+    constructor() {
         makeAutoObservable(this)
+        this.init()
     }
 
-    static get instance(): Store {
-        return this._instance || (this._instance = new this());
+    async init() {
+        await this.users.get()
+        await this.pages.get()
+        console.log(toJS(this.pages.data))
     }
 
-    //endregion
-
-    affair: AffairStore = AffairStore.instance;
 }
+
+export const store = new Store()

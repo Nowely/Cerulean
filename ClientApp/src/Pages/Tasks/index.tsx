@@ -3,6 +3,7 @@ import {AffairType} from "./constants";
 import {useEffect} from "react";
 import {AffairStore} from "../../Stores/AffairStore";
 import {Container} from "@mui/material";
+import {store} from "../../Stores/Store";
 
 const classes = {
     container: `Layout-container`,
@@ -11,7 +12,7 @@ const classes = {
 export const Tasks = () => {
     useEffect(() => {
         //TODO caching?
-        AffairStore.instance.get();
+        store.affairs.get();
     }, []);
 
     return <Container maxWidth={false} disableGutters={true} className={classes.container}>

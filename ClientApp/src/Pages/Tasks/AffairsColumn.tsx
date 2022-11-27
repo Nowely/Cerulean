@@ -7,6 +7,7 @@ import {AffairItem} from "./AffairItem";
 import {Status, AffairType} from "./constants";
 import {AffairStore} from "../../Stores/AffairStore";
 import {observer} from "mobx-react";
+import {store} from "../../Stores/Store";
 
 const PREFIX = 'AffairsColumn';
 
@@ -52,7 +53,7 @@ export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => 
 
 	const [itemTitle, setItemTitle] = useState("");
 	const [filterTab, setFilterTab] = useState(0);
-	const data = AffairStore.instance.data;
+	const data = store.affairs.data;
 
 	const handleKeyDown = (event: { key: string; preventDefault: () => void; }) => {
 		if (event.key === 'Enter' && !_.isEmpty(itemTitle)) {
@@ -63,7 +64,7 @@ export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => 
 			newAffair.type = type;
 
 			setItemTitle("");
-			AffairStore.instance.create(newAffair);
+			store.affairs.create(newAffair);
 		}
 	}
 

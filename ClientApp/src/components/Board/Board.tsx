@@ -4,15 +4,16 @@ import {observer, useLocalObservable} from "mobx-react";
 import {AffairType} from "../../Pages/Tasks/constants";
 import _ from "lodash";
 import {Column} from "./components/Column";
+import {store} from "../../Stores/Store";
+import {useEffect} from "react";
 
 
 export const Board = observer(() => {
-    const a = useLocalObservable(() => ({
-        count: 123,
-    }))
+    useEffect(() => {
+        //TODO caching?
+        store.affairs.get();
+    }, []);
 
-    const data = AffairStore.instance.data;
-    console.log(data)
     return (
         <div style={{marginTop: 10}}>
             <Row gutter={[16, 8]}>
@@ -50,10 +51,6 @@ const Header = ({type}: { type: AffairType }) => {
             <Button type='text' size='small'>
                 {_.findKey(AffairType, (value) => value === type)}
             </Button>
-
-            <Segmented
-                style={{marginLeft: 58}}
-                size='small' options={['Active', 'Completed', 'Failed']} />
         </Col>
     )
 }
