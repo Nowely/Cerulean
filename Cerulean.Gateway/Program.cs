@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.AddNpgsqlDbContext<Context>("postgresdb");
+builder.AddNpgsqlDbContext<Context>("Postgres");
 
 // Add services to the container.
 

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Cerulean.Controllers;
 
 [Route("[controller]")]
-public class UserController : Controller {
+public class UserController : ControllerBase {
 	private readonly Context _context;
 
 	public UserController(Context context) {

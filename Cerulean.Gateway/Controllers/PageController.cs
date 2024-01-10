@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Cerulean.Controllers;
 
 [Route("[controller]")]
-public class PageController : Controller {
+public class PageController : ControllerBase {
 	private readonly Context _context;
 
 	public PageController(Context context) {
