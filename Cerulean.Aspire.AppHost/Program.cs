@@ -2,7 +2,13 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("CeruleanDB").AddDatabase("Postgres");
 
-builder.AddProject<Projects.Cerulean_Gateway>("cerulean")
-	   .WithReference(postgres);
+var gateway =  builder.AddProject<Projects.Cerulean_Gateway>("Gateway")
+					  .WithReference(postgres);
+
+builder.AddNpmApp("Client", "../reactapp1.client", "dev")
+	   .WithReference(gateway)
+	   //.WithReference(cache)
+	   .WithServiceBinding(containerPort: 3000, scheme: "https", env: "PORT")
+	   /*.AsDockerfileInManifest()*/;
 
 builder.Build().Run();

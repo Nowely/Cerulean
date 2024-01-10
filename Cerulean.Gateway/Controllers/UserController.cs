@@ -15,11 +15,7 @@ public class UserController : ControllerBase {
 	}
 
 	[HttpGet]
-	public IEnumerable<User> Get() {
-		var a =_context.User.ToList();
-
-		return a;
-	}
+	public IEnumerable<User> Get() => _context.User.ToList();
 
 	[HttpPost]
 	public int Create([FromBody] User value) {
