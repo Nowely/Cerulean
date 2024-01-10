@@ -1,5 +1,4 @@
 import 'fontsource-roboto';
-import React from 'react';
 import {Route} from 'react-router';
 import Layout from './components/Screen';
 import {Counter} from './components/Counter';

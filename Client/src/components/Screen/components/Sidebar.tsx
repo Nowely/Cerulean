@@ -33,7 +33,7 @@ export const Sidebar = observer(() => {
 				items={[{
 					key: `1`,
 					label: `Pages`,
-					children: store.pages.data.map(v => ({key: v.id, label: v.title}))
+					children: store.pages.data?.map(v => ({key: v.id, label: v.title}))
 				}]}
 			/>
 			<Button block type="text" icon={<PlusOutlined/>} style={{flexFlow: "column"}}>

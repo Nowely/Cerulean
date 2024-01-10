@@ -17,8 +17,8 @@ class Store {
     }
 
     async init() {
-        await this.users.get()
-        await this.pages.get()
+        //await this.users.get()
+        //await this.pages.get()
         console.log(toJS(this.pages.data))
     }
 
