@@ -1,5 +1,8 @@
-﻿namespace Cerulean.Models;
+﻿using System.Text.Json.Serialization;
 
+namespace Cerulean.Models;
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Status {
 	Absent = 0,
 	Scheduled = 1,
@@ -7,6 +10,7 @@ public enum Status {
 	Failed = 3
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Type {
 	Daily = 0,
 	Week = 1,

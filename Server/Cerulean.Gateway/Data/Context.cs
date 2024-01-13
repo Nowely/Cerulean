@@ -10,13 +10,19 @@ public class Context : DbContext {
 	public DbSet<Page> Page { get; set; }
 	public DbSet<User> User { get; set; }
 
-	/*protected override void OnModelCreating(ModelBuilder modelBuilder) {
+	protected override void OnModelCreating(ModelBuilder modelBuilder) {
 		base.OnModelCreating(modelBuilder);
-		modelBuilder.Entity<Affair>()
-			.Property(x => x.Tags)
-			.HasConversion(new ValueConverter<List<string>, string>(
-				v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
-				v => JsonSerializer.Deserialize<List<string>>(v, JsonSerializerOptions.Default)
-				));
-	}*/
+
+		var affairConfiguration = modelBuilder.Entity<Affair>();
+
+		affairConfiguration
+			.Property(x => x.Status)
+			.HasConversion<string>()
+			.HasMaxLength(30);
+
+		affairConfiguration
+			.Property(x => x.Type)
+			.HasConversion<string>()
+			.HasMaxLength(30);
+	}
 }
