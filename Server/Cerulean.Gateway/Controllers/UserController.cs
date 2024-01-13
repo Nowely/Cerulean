@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Cerulean.Data;
+﻿using Cerulean.Data;
 using Cerulean.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +13,9 @@ public class UserController : ControllerBase {
 	}
 
 	[HttpGet]
-	public IEnumerable<User> Get() => _context.User.ToList();
+	public IEnumerable<User> Get() {
+		return _context.User.ToList();
+	}
 
 	[HttpPost]
 	public int Create([FromBody] User value) {

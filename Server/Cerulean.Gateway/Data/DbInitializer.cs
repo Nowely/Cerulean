@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Cerulean.Models;
+﻿using Cerulean.Models;
 using Type = Cerulean.Models.Type;
 
 namespace Cerulean.Data;
@@ -87,10 +85,10 @@ public static class DbInitializer {
 
 		foreach (var affair in affairs) context.Affair.Add(affair);
 
-		context.User.Add(new() {
-			Pages = new(new[] {
-				new Page() { Title = "Home" },
-				new Page() { Title = "Tasks" }
+		context.User.Add(new User {
+			Pages = new List<Page>(new[] {
+				new Page { Title = "Home" },
+				new Page { Title = "Tasks" }
 			})
 		});
 

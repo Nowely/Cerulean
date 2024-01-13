@@ -17,6 +17,6 @@ public class Context : DbContext {
 			.HasConversion(new ValueConverter<List<string>, string>(
 				v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
 				v => JsonSerializer.Deserialize<List<string>>(v, JsonSerializerOptions.Default)
-				)); 
+				));
 	}*/
 }

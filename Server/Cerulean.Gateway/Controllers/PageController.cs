@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Cerulean.Data;
+﻿using Cerulean.Data;
 using Cerulean.Models;
 using Microsoft.AspNetCore.Mvc;
 

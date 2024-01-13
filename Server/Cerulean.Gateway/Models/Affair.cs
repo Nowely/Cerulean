@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Cerulean.Models;
+﻿namespace Cerulean.Models;
 
 public enum Status {
 	Absent = 0,

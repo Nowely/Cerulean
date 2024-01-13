@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Cerulean.Data;
+﻿using Cerulean.Data;
 using Cerulean.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +13,9 @@ public class AffairController : ControllerBase {
 	}
 
 	[HttpGet]
-	public IEnumerable<Affair> Get() => _context.Affair.ToList();
+	public IEnumerable<Affair> Get() {
+		return _context.Affair.ToList();
+	}
 
 	[HttpPost]
 	public int Create([FromBody] Affair affair) {

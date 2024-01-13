@@ -21,8 +21,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+if (app.Environment.IsDevelopment()) {
 	app.UseSwagger();
 	app.UseSwaggerUI();
 }
@@ -46,8 +45,7 @@ void CreateDbIfNotExists(IHost host) {
 	try {
 		var context = services.GetRequiredService<Context>();
 		DbInitializer.Initialize(context);
-	}
-	catch (Exception ex) {
+	} catch (Exception ex) {
 		var logger = services.GetRequiredService<ILogger<Program>>();
 		logger.LogError(ex, "An error occurred creating the DB.");
 	}
