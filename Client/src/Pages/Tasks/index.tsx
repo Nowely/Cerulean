@@ -1,7 +1,6 @@
 import {AffairsColumn} from './AffairsColumn'
 import {AffairType} from "./constants";
 import {useEffect} from "react";
-import {AffairStore} from "../../Stores/AffairStore";
 import {Container} from "@mui/material";
 import {store} from "../../Stores/Store";
 

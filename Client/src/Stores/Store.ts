@@ -1,5 +1,4 @@
 import {makeAutoObservable, toJS} from "mobx";
-import {AffairStore} from "./AffairStore";
 import {Service} from "./Service";
 import {Affair} from "../Models/Affair";
 import {Page} from "../Models/Page";

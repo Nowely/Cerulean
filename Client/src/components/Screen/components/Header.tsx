@@ -1,5 +1,4 @@
 import {Breadcrumb, Layout} from "antd";
-import React from "react";
 
 export const Header = () => {
 	return (

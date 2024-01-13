@@ -1,6 +1,5 @@
 import {makeAutoObservable} from "mobx";
 import axios from "axios";
-import _ from "lodash";
 
 export class Service<T extends { id: string }> {
 	data: T[] = []
@@ -42,7 +41,7 @@ export class Service<T extends { id: string }> {
 	async delete(id: string) {
 		try {
 			await axios.delete(this.url, {params: {id}});
-			_.remove(this.data, (value) => value.id === id);
+			this.data = this.data.filter((value) => value.id !== id)
 		} catch (e) {
 			console.error(e);
 		}

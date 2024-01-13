@@ -1,7 +1,6 @@
 import {useState, useEffect} from "react";
 import {observer} from "mobx-react";
 import {Affair} from "../../Models/Affair";
-import {AffairStore} from "../../Stores/AffairStore";
 import {Button, Dialog,	DialogActions,	DialogContent,	DialogTitle, TextField} from '@mui/material';
 import {store} from "../../Stores/Store";
 

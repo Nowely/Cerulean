@@ -1,9 +1,8 @@
-import React, {ReactNode} from "react";
-import {Button, Layout} from "antd";
+import {ReactNode} from "react";
+import {Layout} from "antd";
 import {Routes} from "react-router-dom";
 import {Sidebar} from "./components/Sidebar";
 import {Header} from "./components/Header";
-import {PlusOutlined} from "@ant-design/icons";
 
 const {Content} = Layout;
 

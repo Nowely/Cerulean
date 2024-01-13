@@ -1,7 +1,6 @@
 import {makeAutoObservable} from "mobx";
 import {Affair} from "../Models/Affair";
 import axios from "axios";
-import _ from "lodash";
 
 export class AffairStore {
     data: Affair[] = [];
@@ -41,7 +40,7 @@ export class AffairStore {
     }
 
     async delete(id: string) {
-        _.remove(this.data, (value) => value.id === id);
+		this.data = this.data.filter((value) => value.id !== id)
         try {
             await axios.delete(`affair`, {params: {id}});
         } catch (e) {

@@ -1,11 +1,9 @@
 import {Button, Layout, Menu} from "antd";
-import React from "react";
 import {PlusOutlined} from "@ant-design/icons";
-import {css} from "@emotion/css";
 import {observer} from "mobx-react";
 import {store} from "../../../Stores/Store";
 
-const className = css`
+/*const className = css`
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -19,7 +17,7 @@ const cn = css`
   display: block;
   flex-shrink: 0;
   flex-grow: 0;
-`
+`*/
 
 export const Sidebar = observer(() => {
 

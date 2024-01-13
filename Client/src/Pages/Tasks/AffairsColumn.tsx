@@ -1,11 +1,9 @@
 import {ReactNode, useState} from "react";
 import {styled} from '@mui/material/styles';
 import {Paper, TextField, List, Typography, Tabs, Tab} from "@mui/material";
-import _ from 'lodash'
 import {Affair} from "../../Models/Affair";
 import {AffairItem} from "./AffairItem";
 import {Status, AffairType} from "./constants";
-import {AffairStore} from "../../Stores/AffairStore";
 import {observer} from "mobx-react";
 import {store} from "../../Stores/Store";
 
@@ -53,13 +51,13 @@ export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => 
 
     const [itemTitle, setItemTitle] = useState("");
     const [filterTab, setFilterTab] = useState(0);
-    const data = [] //TODO store.affairs.data;
+    const data: Affair[] = [] //TODO store.affairs.data;
 
     const handleKeyDown = (event: { key: string; preventDefault: () => void; }) => {
-        if (event.key === 'Enter' && !_.isEmpty(itemTitle)) {
+        if (event.key === 'Enter' && itemTitle !== "") {
             event.preventDefault();
             //TODO
-            let newAffair = new Affair();
+            const newAffair = new Affair();
             newAffair.title = itemTitle;
             newAffair.type = type;
 
@@ -81,7 +79,7 @@ export const AffairsColumn = observer(({type, children}: AffairsColumnProps) => 
         <Root style={{width: '25%'}}>
             <div style={{display: 'flex', justifyContent: 'space-between'}}>
                 <Typography
-                    className={classes.typographyPaper}> {_.findKey(AffairType, (value) => value === type)}</Typography>
+                    className={classes.typographyPaper}> {Object.keys(AffairType)[type]}</Typography>
                 <Tabs
                     TabIndicatorProps={{style: {bottom: 'auto'}}}
                     className={classes.filterTabs}

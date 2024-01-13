@@ -1,7 +1,6 @@
 import {useEffect, useState} from "react";
 import {observer} from "mobx-react";
 import {Affair} from "../../Models/Affair";
-import {AffairStore} from "../../Stores/AffairStore";
 import {Status} from "./constants";
 import {ListItem, ListItemText, ListItemSecondaryAction, Divider, ButtonGroup, IconButton} from "@mui/material";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
