@@ -1,10 +1,10 @@
-using Cerulean.Data;
+using Cerulean.Service.Affairs.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.AddNpgsqlDbContext<Context>("Postgres");
+builder.AddNpgsqlDbContext<AffairContext>("Postgres");
 
 // Add services to the container.
 
@@ -37,16 +37,3 @@ app.MapFallbackToFile("/index.html");
 //CreateDbIfNotExists(app);
 
 app.Run();
-
-//TODO can change on extension
-void CreateDbIfNotExists(IHost host) {
-	using var scope = host.Services.CreateScope();
-	var services = scope.ServiceProvider;
-	try {
-		var context = services.GetRequiredService<Context>();
-		DbInitializer.Initialize(context);
-	} catch (Exception ex) {
-		var logger = services.GetRequiredService<ILogger<Program>>();
-		logger.LogError(ex, "An error occurred creating the DB.");
-	}
-}

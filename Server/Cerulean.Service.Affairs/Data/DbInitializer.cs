@@ -1,10 +1,10 @@
-﻿using Cerulean.Models;
-using Type = Cerulean.Models.Type;
+﻿using Cerulean.Service.Affairs.Models;
+using Type = Cerulean.Service.Affairs.Models.Type;
 
-namespace Cerulean.Data;
+namespace Cerulean.Service.Affairs.Data;
 
 public static class DbInitializer {
-	public static void Initialize(Context context) {
+	public static void Initialize(AffairContext context) {
 		context.Database.EnsureDeleted();
 		context.Database.EnsureCreated();
 

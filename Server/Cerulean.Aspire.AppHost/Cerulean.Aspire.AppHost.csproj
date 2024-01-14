@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cerulean.Gateway\Cerulean.Gateway.csproj"/>
+    <ProjectReference Include="..\Cerulean.Service.Affairs\Cerulean.Service.Affairs.csproj" />
   </ItemGroup>
 
 </Project>

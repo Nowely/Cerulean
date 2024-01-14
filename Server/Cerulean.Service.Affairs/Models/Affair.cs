@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Cerulean.Models;
+namespace Cerulean.Service.Affairs.Models;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Status {

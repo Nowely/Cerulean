@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Aspire.AppHost", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cerulean.Aspire.ServiceDefaults", "Server\Cerulean.Aspire.ServiceDefaults\Cerulean.Aspire.ServiceDefaults.csproj", "{836FC1F6-FDFD-43EF-A84F-9E1B6C3ACD99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Gateway", "Server\Cerulean.Gateway\Cerulean.Gateway.csproj", "{5258CE01-A152-48BA-9347-C40A5A4B40F9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Service.Affairs", "Server\Cerulean.Service.Affairs\Cerulean.Service.Affairs.csproj", "{5258CE01-A152-48BA-9347-C40A5A4B40F9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".SolutionItems", ".SolutionItems", "{18B9211D-FA26-415D-98E6-981CDEA28FE7}"
 	ProjectSection(SolutionItems) = preProject
@@ -21,6 +21,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{1EE34AAD-19D3-4952-801B-C85F45E487F4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{CA3C9DDC-4B14-4841-B5D4-5D82DEC1AFA8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Service", "Service", "{DA4A7E6D-07C1-469B-AE36-3B5AD04FEC05}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,9 +51,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{5258CE01-A152-48BA-9347-C40A5A4B40F9} = {1EE34AAD-19D3-4952-801B-C85F45E487F4}
 		{CA3C9DDC-4B14-4841-B5D4-5D82DEC1AFA8} = {1EE34AAD-19D3-4952-801B-C85F45E487F4}
 		{8B53FDF8-B010-4C60-9943-B2D3A270BD05} = {CA3C9DDC-4B14-4841-B5D4-5D82DEC1AFA8}
 		{836FC1F6-FDFD-43EF-A84F-9E1B6C3ACD99} = {CA3C9DDC-4B14-4841-B5D4-5D82DEC1AFA8}
+		{DA4A7E6D-07C1-469B-AE36-3B5AD04FEC05} = {1EE34AAD-19D3-4952-801B-C85F45E487F4}
+		{5258CE01-A152-48BA-9347-C40A5A4B40F9} = {DA4A7E6D-07C1-469B-AE36-3B5AD04FEC05}
 	EndGlobalSection
 EndGlobal
