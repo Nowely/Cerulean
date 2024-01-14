@@ -24,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{CA3C9D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Service", "Service", "{DA4A7E6D-07C1-469B-AE36-3B5AD04FEC05}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Service.Identity", "Server\Cerulean.Service.Identity\Cerulean.Service.Identity.csproj", "{6CEB4282-5B32-449C-825B-1B11908A825F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{2F343C48-11E1-4E64-B8A9-1F0A2A016544}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F343C48-11E1-4E64-B8A9-1F0A2A016544}.Release|Any CPU.ActiveCfg = Debug|Any CPU
 		{2F343C48-11E1-4E64-B8A9-1F0A2A016544}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{6CEB4282-5B32-449C-825B-1B11908A825F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CEB4282-5B32-449C-825B-1B11908A825F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CEB4282-5B32-449C-825B-1B11908A825F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CEB4282-5B32-449C-825B-1B11908A825F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -56,5 +62,6 @@ Global
 		{836FC1F6-FDFD-43EF-A84F-9E1B6C3ACD99} = {CA3C9DDC-4B14-4841-B5D4-5D82DEC1AFA8}
 		{DA4A7E6D-07C1-469B-AE36-3B5AD04FEC05} = {1EE34AAD-19D3-4952-801B-C85F45E487F4}
 		{5258CE01-A152-48BA-9347-C40A5A4B40F9} = {DA4A7E6D-07C1-469B-AE36-3B5AD04FEC05}
+		{6CEB4282-5B32-449C-825B-1B11908A825F} = {DA4A7E6D-07C1-469B-AE36-3B5AD04FEC05}
 	EndGlobalSection
 EndGlobal
