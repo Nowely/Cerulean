@@ -8,13 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0-preview.2.23619.3"/>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1"/>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
+    <ProjectReference Include="..\Cerulean.Aspire.ServiceDefaults\Cerulean.Aspire.ServiceDefaults.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cerulean.Aspire.ServiceDefaults\Cerulean.Aspire.ServiceDefaults.csproj"/>
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0-preview.2.23619.3" />
   </ItemGroup>
 
 </Project>
