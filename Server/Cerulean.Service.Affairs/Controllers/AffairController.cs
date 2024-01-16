@@ -13,7 +13,7 @@ public class AffairController : ControllerBase {
 	}
 
 	[HttpGet]
-	public IEnumerable<Affair> Get() {
+	public IEnumerable<Affair> Get([FromQuery]AffairFilter filter) {
 		return _affairContext.Affair.ToList();
 	}
 

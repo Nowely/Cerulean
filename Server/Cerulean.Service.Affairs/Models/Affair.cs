@@ -18,6 +18,7 @@ public enum Type {
 	Year = 3
 }
 
+[GenerateAutoFilter]
 public class Affair : Base {
 	public string Title { get; set; }
 	public string Note { get; set; }
