@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "api:update": "npx openapi-typescript http://localhost:5154/swagger/v1/swagger.json -o ./src/shared/utils/useApi/api/v1.d.ts"
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",
@@ -21,8 +22,10 @@
     "lodash": "^4.17.21",
     "mobx": "^6.7.0",
     "mobx-react": "^7.6.0",
+    "openapi-fetch": "^0.8.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-query": "^3.39.3",
     "react-router-dom": "^6.4.3",
     "uuid": "^9.0.0"
   },
@@ -37,6 +40,7 @@
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "openapi-typescript": "^6.7.3",
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
   }
