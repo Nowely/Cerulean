@@ -28,7 +28,7 @@ public static class AffairApi {
 	}
 
 	public static async CreateResponse CreateItem([AsParameters] CreateRequest request) {
-		var entity = request.affair.ToEntity();
+		var entity = request.Affair.ToEntity();
 
 		request.Context.Affair.Add(entity);
 
@@ -37,10 +37,10 @@ public static class AffairApi {
 	}
 
 	public static async UpdateResponse UpdateItem([AsParameters] UpdateRequest request) {
-		var entity = await request.Context.Affair.FindAsync(request.affair.Id);
+		var entity = await request.Context.Affair.FindAsync(request.Affair.Id);
 		if (entity is null) return NotFound();
 
-		request.affair.ApplyUpdateTo(entity);
+		request.Affair.ApplyUpdateTo(entity);
 		request.Context.Affair.Update(entity);
 
 		await request.Context.SaveChangesAsync();
@@ -48,7 +48,7 @@ public static class AffairApi {
 	}
 
 	public static async DeleteResponse DeleteItem([AsParameters] DeleteRequest request) {
-		var entities = request.ids.Select(id => new Affair {Id = id});
+		var entities = request.Ids.Select(id => new Affair {Id = id});
 
 		request.Context.Affair.RemoveRange(entities);
 
