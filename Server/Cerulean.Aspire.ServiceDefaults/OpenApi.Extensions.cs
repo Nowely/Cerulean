@@ -1,5 +1,4 @@
-﻿using AutoFilterer.Swagger;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -9,18 +8,16 @@ public static partial class Extensions {
 	public static IHostApplicationBuilder AddDefaultOpenApi(this IHostApplicationBuilder builder) {
 		// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 		builder.Services.AddEndpointsApiExplorer();
-		builder.Services.AddSwaggerGen(options => {
-			options.UseAutoFiltererParameters();
-		});
+		builder.Services.AddOpenApiDocument();
 
 		return builder;
 	}
 
 	public static IApplicationBuilder UseDefaultOpenApi(this WebApplication app) {
-		if (app.Environment.IsDevelopment()) {
-			app.UseSwagger();
-			app.UseSwaggerUI();
-		}
+		if (!app.Environment.IsDevelopment()) return app;
+
+		app.UseOpenApi();
+		app.UseSwaggerUi();
 
 		return app;
 	}

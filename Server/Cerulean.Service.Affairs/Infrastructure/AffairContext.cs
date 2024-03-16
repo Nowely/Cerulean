@@ -7,7 +7,7 @@ public sealed class AffairContext : DbContext {
 	public AffairContext(DbContextOptions<AffairContext> options) : base(options) {
 		Database.EnsureDeleted();
 		Database.EnsureCreated();
-		DbInitializer.Initialize(this);
+		//DbInitializer.Initialize(this);
 	}
 
 	public DbSet<Affair> Affair { get; set; }

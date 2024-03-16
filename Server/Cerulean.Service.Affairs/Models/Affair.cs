@@ -18,7 +18,6 @@ public enum Type {
 	Year = 3
 }
 
-[GenerateAutoFilter]
 public class Affair : Base {
 	public string Title { get; set; }
 	public string Note { get; set; }
@@ -33,3 +32,12 @@ public class Affair : Base {
 	public DateTimeOffset? DueDate { get; set; }
 	public List<string> Tags { get; set; } = new();
 }
+
+public class AffairShort : Base {
+	public string Title { get; set; }
+	public string Note { get; set; }
+	public bool Active { get; set; }
+
+	public string SuperTitle { get; set; }
+}
+
