@@ -1,4 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+      <RootNamespace>Cerulean.Shared</RootNamespace>
+    </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Riok.Mapperly" />
     </ItemGroup>

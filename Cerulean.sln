@@ -30,11 +30,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Service.Identity",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Service.WebApp", "Server\Cerulean.Service.WebApp\Cerulean.Service.WebApp.csproj", "{93F679A4-F0A7-44A2-AA3C-3190C3C8CD44}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Shared", "Server\Cerulean.Shared\Cerulean.Shared.csproj", "{8BDA8B40-F395-4696-9839-58B9B59CB4E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Library.Shared", "Server\Cerulean.Library.Shared\Cerulean.Library.Shared.csproj", "{8BDA8B40-F395-4696-9839-58B9B59CB4E5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{35186465-9F6D-4BBC-A6E1-735EA8795F76}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Filtration", "Server\Filtration\Filtration.csproj", "{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Library.Filtration", "Server\Cerulean.Library.Filtration\Cerulean.Library.Filtration.csproj", "{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,17 +1,21 @@
+using Cerulean.Library.Filtration;
+using Cerulean.Library.Filtration.Enums;
+using Cerulean.Library.Filtration.Operators;
+
 namespace Cerulean.Service.Affairs.Models.Affair;
 
 public record AffairFilter {
-	public StringFilter? Name { get; init; }
-	public NumberFilter<int>? Age { get; init; }
-	public EnumFilter<Status>? Enum { get; init; }
-	public DateFilter<DateTime>? Birthday { get; init; }
+	public StringOperator? Name { get; init; }
+	public NumberOperator<int>? Age { get; init; }
+	public EnumOperator<Status>? Enum { get; init; }
+	public DateOperator<DateTime>? Birthday { get; init; }
 
 	public FilterGroup<AffairFilter>[]? Groups { get; set; }
 
-	public static AffairFilter ForName(StringComparison type, string? value) =>
+	public static AffairFilter ForName(StringOperatorType type, string? value) =>
 		new() { Name = new(type, value) };
 
-	public static AffairFilter ForAge(NumberComparison type, int value) =>
+	public static AffairFilter ForAge(NumberOperatorType type, int value) =>
 		new() { Age = new(type, value) };
 
 	public static AffairFilter WithSubGroups(FilterGroup<AffairFilter>[] groups) =>
