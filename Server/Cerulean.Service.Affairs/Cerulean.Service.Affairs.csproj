@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
     <ProjectReference Include="..\Cerulean.Aspire.ServiceDefaults\Cerulean.Aspire.ServiceDefaults.csproj"/>
-    <ProjectReference Include="..\Cerulean.Core\Cerulean.Core.csproj" />
+    <ProjectReference Include="..\Cerulean.Shared\Cerulean.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

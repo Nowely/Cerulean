@@ -1,17 +1,19 @@
 using Cerulean.Service.Affairs.Models.Affair;
+using Cerulean.Service.Affairs.Models.Affair.Dto;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.AspNetCore.Http.TypedResults;
 
 namespace Cerulean.Service.Affairs.API;
 
+using GetAllResponse = Task<Results<Ok<AffairGet[]>, BadRequest<string>>>;
+using CreateResponse = Task<Created<AffairGet>>;
+using UpdateResponse = Task<Results<Created<AffairGet>, NotFound>>;
+using DeleteResponse = Task<Results<NoContent, NotFound>>;
+
 public static class AffairApi {
 	public static IEndpointRouteBuilder MapAffairApi(this IEndpointRouteBuilder app) {
-		// Routes for querying catalog items.
 		app.MapGet("/", GetAllItems);
-		app.MapGet("/short", GetAllShortItems);
-		// Routes for modifying catalog items.
 		app.MapPut("/", UpdateItem);
 		app.MapPost("/", CreateItem);
 		app.MapDelete("/", DeleteItem);
@@ -19,41 +21,38 @@ public static class AffairApi {
 		return app;
 	}
 
-	public static async Task<Results<Ok<Affair[]>, BadRequest<string>>> GetAllItems([AsParameters] Services services) {
-		var affairs = await services.Context.Affair.ToArrayAsync();
+	public static async GetAllResponse GetAllItems([AsParameters] GetAllRequest request) {
+		var affairs = await request.Context.Affair.ToDto().ToArrayAsync();
+
 		return Ok(affairs);
 	}
 
-	public static async Task<Results<Ok<AffairGet[]>, BadRequest<string>>> GetAllShortItems([AsParameters] Services services) {
-		var affairs = await services.Context.Affair.ProjectToDto().ToArrayAsync();
-		return Ok(affairs);
+	public static async CreateResponse CreateItem([AsParameters] CreateRequest request) {
+		var entity = request.affair.ToEntity();
+
+		request.Context.Affair.Add(entity);
+
+		await request.Context.SaveChangesAsync();
+		return Created("", entity.ToDto());
 	}
 
-	public static async Task<Created> CreateItem(
-		[AsParameters] Services services,
-		[FromBody] Affair affair
-	) {
-		services.Context.Affair.Add(affair);
-		var result = await services.Context.SaveChangesAsync();
-		return Created("");
+	public static async UpdateResponse UpdateItem([AsParameters] UpdateRequest request) {
+		var entity = await request.Context.Affair.FindAsync(request.affair.Id);
+		if (entity is null) return NotFound();
+
+		request.affair.ApplyUpdateTo(entity);
+		request.Context.Affair.Update(entity);
+
+		await request.Context.SaveChangesAsync();
+		return Created("", entity.ToDto());
 	}
 
-	public static async Task<Results<Created, NotFound<string>>> UpdateItem(
-		[AsParameters] Services services,
-		[FromBody] Affair affair
-	) {
-		services.Context.Affair.Update(affair);
-		var result = await services.Context.SaveChangesAsync();
-		return Created("");
-	}
+	public static async DeleteResponse DeleteItem([AsParameters] DeleteRequest request) {
+		var entities = request.ids.Select(id => new Affair {Id = id});
 
+		request.Context.Affair.RemoveRange(entities);
 
-	public static async Task<Results<NoContent, NotFound>> DeleteItem(
-		[AsParameters] Services services,
-		[FromBody] Affair affair
-	) {
-		services.Context.Affair.Remove(affair);
-		var result = await services.Context.SaveChangesAsync();
+		await request.Context.SaveChangesAsync();
 		return NoContent();
 	}
 }

@@ -1,6 +1,29 @@
 ﻿using System.Text.Json.Serialization;
+using Cerulean.Shared;
 
 namespace Cerulean.Service.Affairs.Models.Affair;
+
+public class Affair : IModifiable, ICreatable {
+	public Guid Id { get; set; }
+	public DateTime CreatedAt { get; set; }
+	public DateTime ModifiedAt { get; set; }
+
+	public string Title { get; set; }
+	public string Note { get; set; }
+	public bool Active { get; set; }
+	public Status Status { get; set; }
+
+	public Type Type { get; set; }
+
+
+	//public List<> Checklist { get; set; } TODO
+
+	//public Difficulty? Difficulty { get; set; } TODO
+
+	//public string Color TODO
+	public DateTimeOffset? DueDate { get; set; }
+	public List<string> Tags { get; set; } = new();
+}
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Status {
@@ -16,19 +39,4 @@ public enum Type {
 	Week = 1,
 	Month = 2,
 	Year = 3
-}
-
-public class Affair : Base {
-	public string Title { get; set; }
-	public string Note { get; set; }
-	public bool Active { get; set; }
-	public Status Status { get; set; }
-
-	public Type Type { get; set; }
-
-	//public List<> Checklist { get; set; } TODO
-	//public Difficulty? Difficulty { get; set; } TODO
-	//public string Color TODO
-	public DateTimeOffset? DueDate { get; set; }
-	public List<string> Tags { get; set; } = new();
 }
