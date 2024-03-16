@@ -1,4 +1,4 @@
-using Cerulean.Service.Affairs.Models;
+using Cerulean.Service.Affairs.Models.Affair;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +24,7 @@ public static class AffairApi {
 		return Ok(affairs);
 	}
 
-	public static async Task<Results<Ok<AffairShort[]>, BadRequest<string>>> GetAllShortItems([AsParameters] Services services) {
+	public static async Task<Results<Ok<AffairGet[]>, BadRequest<string>>> GetAllShortItems([AsParameters] Services services) {
 		var affairs = await services.Context.Affair.ProjectToDto().ToArrayAsync();
 		return Ok(affairs);
 	}

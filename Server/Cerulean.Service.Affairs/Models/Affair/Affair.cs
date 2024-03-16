@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Cerulean.Service.Affairs.Models;
+namespace Cerulean.Service.Affairs.Models.Affair;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Status {
@@ -32,12 +32,3 @@ public class Affair : Base {
 	public DateTimeOffset? DueDate { get; set; }
 	public List<string> Tags { get; set; } = new();
 }
-
-public class AffairShort : Base {
-	public string Title { get; set; }
-	public string Note { get; set; }
-	public bool Active { get; set; }
-
-	public string SuperTitle { get; set; }
-}
-

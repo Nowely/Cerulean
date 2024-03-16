@@ -1,4 +1,7 @@
-namespace Cerulean.Service.Affairs.Models.Filter;
+using Cerulean.Service.Affairs.Models.Affair;
+using Cerulean.Service.Affairs.Models.Domain;
+
+namespace Cerulean.Service.Affairs.Models;
 
 class MyClass {
 	static void Main() {

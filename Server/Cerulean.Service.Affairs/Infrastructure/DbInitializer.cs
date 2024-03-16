@@ -1,5 +1,6 @@
-﻿using Cerulean.Service.Affairs.Models;
-using Type = Cerulean.Service.Affairs.Models.Type;
+﻿using Cerulean.Service.Affairs.Models.Affair;
+using Cerulean.Service.Affairs.Models.Domain;
+using Type = Cerulean.Service.Affairs.Models.Affair.Type;
 
 namespace Cerulean.Service.Affairs.Data;
 

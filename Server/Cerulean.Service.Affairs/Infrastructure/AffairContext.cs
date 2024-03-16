@@ -1,4 +1,5 @@
-﻿using Cerulean.Service.Affairs.Models;
+﻿using Cerulean.Service.Affairs.Models.Affair;
+using Cerulean.Service.Affairs.Models.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cerulean.Service.Affairs.Data;
