@@ -2,6 +2,7 @@
 using AutoFilterer.Extensions;
 using System;
 using System.Linq.Expressions;
+using Cerulean.Library.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Attributes;
 

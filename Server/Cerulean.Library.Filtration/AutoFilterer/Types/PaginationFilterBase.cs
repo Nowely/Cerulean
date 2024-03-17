@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace AutoFilterer.Types;
 
-public class PaginationFilterBase : OrderableFilterBase, IOrderablePaginationFilter
+/*public class PaginationFilterBase : OrderableFilterBase, IOrderablePaginationFilter
 {
     [IgnoreFilter]
     public virtual int Page { get; set; } = 1;
@@ -30,4 +30,4 @@ public class PaginationFilterBase : OrderableFilterBase, IOrderablePaginationFil
 
     public virtual IQueryable<T> ApplyFilterWithoutPaginationAndOrdering<T>(IQueryable<T> query)
         => base.ApplyFilterWithoutOrdering(query);
-}
+}*/

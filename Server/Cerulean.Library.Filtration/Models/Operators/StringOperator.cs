@@ -1,8 +1,8 @@
 using System.Linq.Expressions;
 using Cerulean.Library.Filtration.Enums;
-using AutoFilterer;
 using AutoFilterer.Abstractions;
 using AutoFilterer.Attributes;
+using Cerulean.Library.Filtration.AutoFilterer;
 
 namespace Cerulean.Library.Filtration.Models.Operators;
 

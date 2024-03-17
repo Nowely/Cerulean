@@ -1,38 +1,26 @@
-﻿using AutoFilterer.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
+using Cerulean.Library.Filtration.AutoFilterer.Types;
 
-namespace AutoFilterer;
-public class ExpressionBuildContext
-{
-    public ExpressionBuildContext(
-        Expression expressionBody,
-        PropertyInfo targetProperty,
-        PropertyInfo filterProperty,
-        Expression filterPropertyExpression,
-        IFilter filterObject,
-        object propertyValue)
-    {
-        ExpressionBody = expressionBody;
-        TargetProperty = targetProperty;
-        FilterProperty = filterProperty;
-        FilterPropertyExpression = filterPropertyExpression;
-        FilterObject = filterObject;
-        FilterObjectPropertyValue = propertyValue;
-    }
+namespace Cerulean.Library.Filtration.AutoFilterer;
 
-    public Expression ExpressionBody { get; }
+public class ExpressionBuildContext(
+	Expression expressionBody,
+	PropertyInfo targetProperty,
+	PropertyInfo filterProperty,
+	Expression filterPropertyExpression,
+	IMyFilter filterObject,
+	object propertyValue
+) {
+	public Expression ExpressionBody { get; } = expressionBody;
 
-    public PropertyInfo TargetProperty { get; }
+	public PropertyInfo TargetProperty { get; } = targetProperty;
 
-    public PropertyInfo FilterProperty { get; }
+	public PropertyInfo FilterProperty { get; } = filterProperty;
 
-    public Expression FilterPropertyExpression { get; }
+	public Expression FilterPropertyExpression { get; } = filterPropertyExpression;
 
-    public IFilter FilterObject { get; }
+	public IMyFilter FilterObject { get; } = filterObject;
 
-    public object FilterObjectPropertyValue { get; }
+	public object FilterObjectPropertyValue { get; } = propertyValue;
 }

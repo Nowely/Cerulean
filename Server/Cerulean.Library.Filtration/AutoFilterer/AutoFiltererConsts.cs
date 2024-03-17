@@ -2,7 +2,7 @@
 
 namespace AutoFilterer;
 
-public static class AutoFiltererConsts
+/*public static class AutoFiltererConsts
 {
     public static bool IgnoreExceptions
     {
@@ -11,4 +11,4 @@ public static class AutoFiltererConsts
             FilterBase.IgnoreExceptions = value;
         }
     }
-}
+}*/

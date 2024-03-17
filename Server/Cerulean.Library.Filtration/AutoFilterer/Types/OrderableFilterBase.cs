@@ -8,6 +8,7 @@ using System.Linq;
 
 namespace AutoFilterer.Types;
 
+/*
 public class OrderableFilterBase : FilterBase, IOrderable
 {
     [IgnoreFilter] public virtual Sorting SortBy { get; set; }
@@ -28,3 +29,4 @@ public class OrderableFilterBase : FilterBase, IOrderable
     public virtual IQueryable<TSource> ApplyFilterWithoutOrdering<TSource>(IQueryable<TSource> source)
         => base.ApplyFilterTo(source);
 }
+*/

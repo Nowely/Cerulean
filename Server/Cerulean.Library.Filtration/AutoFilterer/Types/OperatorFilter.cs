@@ -6,6 +6,7 @@ using AutoFilterer.Attributes;
 using AutoFilterer.Extensions;
 using System.Linq.Expressions;
 using System.Reflection;
+using Cerulean.Library.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Types;
 

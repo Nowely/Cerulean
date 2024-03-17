@@ -7,6 +7,7 @@ using AutoFilterer.Extensions;
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
+using Cerulean.Library.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Types;
 

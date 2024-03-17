@@ -1,4 +1,5 @@
-﻿using AutoFilterer.Abstractions;
+﻿/*
+using AutoFilterer.Abstractions;
 using System;
 using System.Linq;
 
@@ -121,3 +122,4 @@ public static class QueryExtensions
         return filter.ApplyFilterWithoutPagination(source);
     }
 }
+*/

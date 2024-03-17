@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Cerulean.Library.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Attributes;
 

@@ -15,7 +15,7 @@ namespace AutoFilterer.Types;
 /// <summary>
 /// Base class of filter Data Transfer Objects.
 /// </summary>
-public class FilterBase : IFilter
+/*public class FilterBase : IFilter
 {
     public static bool IgnoreExceptions { get; set; } = true;
 
@@ -102,4 +102,4 @@ public class FilterBase : IFilter
 
         return finalExpression;
     }
-}
+}*/
