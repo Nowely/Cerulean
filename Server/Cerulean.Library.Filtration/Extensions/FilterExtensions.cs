@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Linq.Expressions;
-using System.Reflection;
 using AutoFilterer;
 using AutoFilterer.Attributes;
 using AutoFilterer.Extensions;
@@ -13,68 +11,45 @@ public static class FilterExtensions {
 	public static IQueryable<TEntity> ApplyMyFilter<TEntity>(IQueryable<TEntity> query, IMyFilter filter) {
 		var parameter = Expression.Parameter(typeof(TEntity), "x");
 
-		var exp = BuildExpression(typeof(TEntity), parameter, filter);
-		if (exp == null)
-			return query;
+		var body = BuildBodyExpression(typeof(TEntity), parameter, filter);
 
-		if (exp is MemberExpression or ParameterExpression)
-			return query;
+		if (body is MemberExpression or ParameterExpression) return query;
 
-		var lambda = Expression.Lambda<Func<TEntity, bool>>(exp, parameter);
+		var lambda = Expression.Lambda<Func<TEntity, bool>>(body, parameter);
 		return query.Where(lambda);
 	}
 
-	private static Expression BuildExpression(Type entityType, Expression body, IMyFilter filter) {
-		var finalExpression = body;
-		var type = filter.GetType();
+	private static Expression BuildBodyExpression(Type entityType, Expression body, IMyFilter filter) {
+		var bodyExpression = body;
+		var filterType = filter.GetType();
 
-		foreach (var filterProperty in type.GetProperties()) {
-			try {
-				var filterPropertyValue = filterProperty.GetValue(filter);
-				var filterPropertyExpression = Expression.Property(Expression.Constant(filter), filterProperty);
+		foreach (var filterProperty in filterType.GetProperties()) {
+			var filterPropertyValue = filterProperty.GetValue(filter);
+			var filterPropertyExpression = Expression.Property(Expression.Constant(filter), filterProperty);
 
-				if (filterPropertyValue == null || filterProperty.GetCustomAttribute<IgnoreFilterAttribute>() != null) {
-					continue;
-				}
+			if (filterPropertyValue is null) continue;
 
-				var attributes = filterProperty.GetCustomAttributes<CompareToAttribute>(inherit: true);
+			var attribute = new CompareToAttribute(filterProperty.Name);
 
-				if (!attributes.Any()) {
-					attributes = new[] { new CompareToAttribute(filterProperty.Name) };
-				}
+			var targetProperty = entityType.GetProperty(filterProperty.Name);
+			if (targetProperty == null) continue;
 
-				Expression innerExpression = null;
+			var bodyParameter = bodyExpression is MemberExpression ? bodyExpression : body;
 
-				foreach (var attribute in attributes) {
-					foreach (var targetPropertyName in attribute.PropertyNames) {
-						var targetProperty = entityType.GetProperty(targetPropertyName);
-						if (targetProperty == null)
-							continue;
+			var context = new ExpressionBuildContext(
+				bodyParameter,
+				targetProperty,
+				filterProperty,
+				filterPropertyExpression,
+				filter,
+				filterPropertyValue
+			);
+			var expression = attribute.BuildExpressionForProperty(context);
 
-						var bodyParameter = finalExpression is MemberExpression ? finalExpression : body;
-
-						var context = new ExpressionBuildContext(
-							bodyParameter,
-							targetProperty,
-							filterProperty,
-							filterPropertyExpression,
-							filter,
-							filterPropertyValue
-						);
-						var expression = attribute.BuildExpressionForProperty(context);
-
-						innerExpression = innerExpression.Combine(expression, attribute.CombineWith);
-					}
-				}
-
-				var combined = finalExpression.Combine(innerExpression, CombineType.And);
-				finalExpression = combined.Combine(body, CombineType.And);
-			} catch (Exception ex) {
-				Debug.WriteLine(ex?.ToString());
-				throw;
-			}
+			var combined = bodyExpression.Combine(expression, CombineType.And);
+			bodyExpression = combined.Combine(body, CombineType.And);
 		}
 
-		return finalExpression;
+		return bodyExpression;
 	}
 }
