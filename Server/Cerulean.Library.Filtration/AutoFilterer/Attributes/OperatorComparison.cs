@@ -10,9 +10,9 @@ using Cerulean.Library.Filtration.AutoFilterer;
 namespace AutoFilterer.Attributes;
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-public class OperatorComparisonAttribute : FilteringOptionsBaseAttribute
+public class OperatorComparison : FilteringOptionsBaseAttribute
 {
-    public OperatorComparisonAttribute(OperatorType operatorType)
+    public OperatorComparison(OperatorType operatorType)
     {
         this.OperatorType = operatorType;
     }
@@ -57,25 +57,25 @@ public class OperatorComparisonAttribute : FilteringOptionsBaseAttribute
 
     #region Static
 
-    public static OperatorComparisonAttribute Equal { get; }
-    public static OperatorComparisonAttribute NotEqual { get; }
-    public static OperatorComparisonAttribute GreaterThan { get; }
-    public static OperatorComparisonAttribute GreaterThanOrEqual { get; }
-    public static OperatorComparisonAttribute LessThan { get; }
-    public static OperatorComparisonAttribute LessThanOrEqual { get; }
-    public static OperatorComparisonAttribute IsNull { get; }
-    public static OperatorComparisonAttribute IsNotNull { get; }
+    public static OperatorComparison Equal { get; }
+    public static OperatorComparison NotEqual { get; }
+    public static OperatorComparison GreaterThan { get; }
+    public static OperatorComparison GreaterThanOrEqual { get; }
+    public static OperatorComparison LessThan { get; }
+    public static OperatorComparison LessThanOrEqual { get; }
+    public static OperatorComparison IsNull { get; }
+    public static OperatorComparison IsNotNull { get; }
 
-    static OperatorComparisonAttribute()
+    static OperatorComparison()
     {
-        Equal = new OperatorComparisonAttribute(OperatorType.Equal);
-        NotEqual = new OperatorComparisonAttribute(OperatorType.NotEqual);
-        GreaterThan = new OperatorComparisonAttribute(OperatorType.GreaterThan);
-        GreaterThanOrEqual = new OperatorComparisonAttribute(OperatorType.GreaterThanOrEqual);
-        LessThan = new OperatorComparisonAttribute(OperatorType.LessThan);
-        LessThanOrEqual = new OperatorComparisonAttribute(OperatorType.LessThanOrEqual);
-        IsNull = new OperatorComparisonAttribute(OperatorType.IsNull);
-        IsNotNull = new OperatorComparisonAttribute(OperatorType.IsNotNull);
+        Equal = new OperatorComparison(OperatorType.Equal);
+        NotEqual = new OperatorComparison(OperatorType.NotEqual);
+        GreaterThan = new OperatorComparison(OperatorType.GreaterThan);
+        GreaterThanOrEqual = new OperatorComparison(OperatorType.GreaterThanOrEqual);
+        LessThan = new OperatorComparison(OperatorType.LessThan);
+        LessThanOrEqual = new OperatorComparison(OperatorType.LessThanOrEqual);
+        IsNull = new OperatorComparison(OperatorType.IsNull);
+        IsNotNull = new OperatorComparison(OperatorType.IsNotNull);
     }
 
     #endregion

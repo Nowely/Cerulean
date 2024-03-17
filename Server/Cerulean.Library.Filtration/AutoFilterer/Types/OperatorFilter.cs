@@ -30,36 +30,36 @@ public class OperatorFilter<T> : IFilterableType
         if (Eq != null)
         {
             expression = expression.Combine(
-                OperatorComparisonAttribute.Equal.BuildExpression(
+                OperatorComparison.Equal.BuildExpression(
                     ContextFor(context, nameof(Eq), Eq)
                 ),
                 CombineWith);
         }
 
         if (Gt != null)
-            expression = expression.Combine(OperatorComparisonAttribute.GreaterThan.BuildExpression(ContextFor(context, nameof(Gt), Gt)), CombineWith);
+            expression = expression.Combine(OperatorComparison.GreaterThan.BuildExpression(ContextFor(context, nameof(Gt), Gt)), CombineWith);
 
         if (Lt != null)
-            expression = expression.Combine(OperatorComparisonAttribute.LessThan.BuildExpression(ContextFor(context, nameof(Lt), Lt)), CombineWith);
+            expression = expression.Combine(OperatorComparison.LessThan.BuildExpression(ContextFor(context, nameof(Lt), Lt)), CombineWith);
 
         if (Gte != null)
-            expression = expression.Combine(OperatorComparisonAttribute.GreaterThanOrEqual.BuildExpression(ContextFor(context, nameof(Gte), Gte)), CombineWith);
+            expression = expression.Combine(OperatorComparison.GreaterThanOrEqual.BuildExpression(ContextFor(context, nameof(Gte), Gte)), CombineWith);
 
         if (Lte != null)
-            expression = expression.Combine(OperatorComparisonAttribute.LessThanOrEqual.BuildExpression(ContextFor(context, nameof(Lte), Lte)), CombineWith);
+            expression = expression.Combine(OperatorComparison.LessThanOrEqual.BuildExpression(ContextFor(context, nameof(Lte), Lte)), CombineWith);
 
         if (Not != null)
-            expression = expression.Combine(OperatorComparisonAttribute.NotEqual.BuildExpression(ContextFor(context, nameof(Not), Not)), CombineWith);
+            expression = expression.Combine(OperatorComparison.NotEqual.BuildExpression(ContextFor(context, nameof(Not), Not)), CombineWith);
 
         if (IsNull != null)
         {
             if (IsNull.Value)
             {
-                expression = expression.Combine(OperatorComparisonAttribute.IsNull.BuildExpression(ContextFor(context, nameof(IsNull), null)), CombineWith);
+                expression = expression.Combine(OperatorComparison.IsNull.BuildExpression(ContextFor(context, nameof(IsNull), null)), CombineWith);
             }
             else
             {
-                expression = expression.Combine(OperatorComparisonAttribute.IsNotNull.BuildExpression(ContextFor(context, nameof(IsNull), null)), CombineWith);
+                expression = expression.Combine(OperatorComparison.IsNotNull.BuildExpression(ContextFor(context, nameof(IsNull), null)), CombineWith);
             }
         }
         
@@ -67,11 +67,11 @@ public class OperatorFilter<T> : IFilterableType
         {
             if (IsNotNull.Value)
             {
-                expression = expression.Combine(OperatorComparisonAttribute.IsNotNull.BuildExpression(ContextFor(context, nameof(IsNotNull), null)), CombineWith);
+                expression = expression.Combine(OperatorComparison.IsNotNull.BuildExpression(ContextFor(context, nameof(IsNotNull), null)), CombineWith);
             }
             else
             {
-                expression = expression.Combine(OperatorComparisonAttribute.IsNull.BuildExpression(ContextFor(context, nameof(IsNotNull), null)), CombineWith);
+                expression = expression.Combine(OperatorComparison.IsNull.BuildExpression(ContextFor(context, nameof(IsNotNull), null)), CombineWith);
             }
         }
 

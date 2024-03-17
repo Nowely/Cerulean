@@ -3,6 +3,7 @@ using Cerulean.Library.Filtration.AutoFilterer.Types;
 using Cerulean.Library.Filtration.Enums;
 using Cerulean.Library.Filtration.Models.Operators;
 using Cerulean.Library.Filtration.Extensions;
+using Xunit;
 
 namespace Cerulean.Library.Filtration.Unit.Tests;
 

@@ -125,7 +125,7 @@ public class CompareToAttribute : FilteringOptionsBaseAttribute
         }
         else
         {
-            return OperatorComparisonAttribute.Equal.BuildExpression(context);
+            return OperatorComparison.Equal.BuildExpression(context);
         }
     }
 }

@@ -93,16 +93,16 @@ public class StringFilter : IFilterableType
         Expression expression = null;
 
         if (Eq != null)
-            expression = expression.Combine(OperatorComparisonAttribute.Equal.BuildExpression(ContextFor(context, nameof(Eq), Eq)), CombineWith);
+            expression = expression.Combine(OperatorComparison.Equal.BuildExpression(ContextFor(context, nameof(Eq), Eq)), CombineWith);
 
         if (Not != null)
-            expression = expression.Combine(OperatorComparisonAttribute.NotEqual.BuildExpression(ContextFor(context, nameof(Not), Not)), CombineWith);
+            expression = expression.Combine(OperatorComparison.NotEqual.BuildExpression(ContextFor(context, nameof(Not), Not)), CombineWith);
 
         if (IsNull != null)
-            expression = expression.Combine(OperatorComparisonAttribute.IsNull.BuildExpression(ContextFor(context, nameof(IsNull), null)), CombineWith);
+            expression = expression.Combine(OperatorComparison.IsNull.BuildExpression(ContextFor(context, nameof(IsNull), null)), CombineWith);
 
         if (IsNotNull != null)
-            expression = expression.Combine(OperatorComparisonAttribute.IsNotNull.BuildExpression(ContextFor(context, nameof(IsNotNull), null)), CombineWith);
+            expression = expression.Combine(OperatorComparison.IsNotNull.BuildExpression(ContextFor(context, nameof(IsNotNull), null)), CombineWith);
         
         if (Equals != null)
             expression = expression.Combine(new StringFilterOptionsAttribute(StringFilterOption.Equals) { Comparison = Compare }.BuildExpression(ContextFor(context, nameof(Equals), Equals)), CombineWith);
