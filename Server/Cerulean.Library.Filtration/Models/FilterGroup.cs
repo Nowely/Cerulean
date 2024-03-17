@@ -1,6 +1,6 @@
 using Cerulean.Library.Filtration.Enums;
 
-namespace Cerulean.Library.Filtration;
+namespace Cerulean.Library.Filtration.Models;
 
 public record FilterGroup<T> {
 	public CombineType Type { get; set; }

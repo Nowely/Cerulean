@@ -1,10 +1,10 @@
-using Cerulean.Library.Filtration;
 using Cerulean.Library.Filtration.Enums;
+using Cerulean.Library.Filtration.Models;
 using Cerulean.Service.Affairs.Models.Affair;
 
 namespace Cerulean.Service.Affairs.Models;
 
-class MyClass {
+class ExampleFilter {
 	static void Main() {
 		var filter = new FilterGroup<AffairFilter> {
 			Type = CombineType.And,

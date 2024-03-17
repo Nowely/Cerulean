@@ -1,6 +1,6 @@
-using Cerulean.Library.Filtration;
 using Cerulean.Library.Filtration.Enums;
-using Cerulean.Library.Filtration.Operators;
+using Cerulean.Library.Filtration.Models;
+using Cerulean.Library.Filtration.Models.Operators;
 
 namespace Cerulean.Service.Affairs.Models.Affair;
 

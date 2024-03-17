@@ -36,6 +36,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{3518
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Library.Filtration", "Server\Cerulean.Library.Filtration\Cerulean.Library.Filtration.csproj", "{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cerulean.Library.Filtration.Unit.Tests", "Server\Cerulean.Library.Filtration.Unit.Tests\Cerulean.Library.Filtration.Unit.Tests.csproj", "{6EBF6104-D56A-47A8-8893-7947B114D20D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +76,10 @@ Global
 		{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EBF6104-D56A-47A8-8893-7947B114D20D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EBF6104-D56A-47A8-8893-7947B114D20D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EBF6104-D56A-47A8-8893-7947B114D20D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EBF6104-D56A-47A8-8893-7947B114D20D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -89,5 +95,6 @@ Global
 		{35186465-9F6D-4BBC-A6E1-735EA8795F76} = {1EE34AAD-19D3-4952-801B-C85F45E487F4}
 		{8BDA8B40-F395-4696-9839-58B9B59CB4E5} = {35186465-9F6D-4BBC-A6E1-735EA8795F76}
 		{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD} = {35186465-9F6D-4BBC-A6E1-735EA8795F76}
+		{6EBF6104-D56A-47A8-8893-7947B114D20D} = {35186465-9F6D-4BBC-A6E1-735EA8795F76}
 	EndGlobalSection
 EndGlobal
