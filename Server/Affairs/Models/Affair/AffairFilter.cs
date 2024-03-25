@@ -1,6 +1,6 @@
-using Library.Filtration.Enums;
-using Library.Filtration.Models;
-using Library.Filtration.Models.Operators;
+using Tools.Filtration.Enums;
+using Tools.Filtration.Models;
+using Tools.Filtration.Models.Operators;
 
 namespace Affairs.Models.Affair;
 

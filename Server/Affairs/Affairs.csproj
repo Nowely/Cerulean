@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
-    <ProjectReference Include="..\Library.ServiceDefaults\Library.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\Library.Shared\Library.Shared.csproj" />
-    <ProjectReference Include="..\Library.Filtration\Library.Filtration.csproj" />
+    <ProjectReference Include="..\Tools.ServiceDefaults\Tools.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Tools.Shared\Tools.Shared.csproj" />
+    <ProjectReference Include="..\Tools.Filtration\Tools.Filtration.csproj" />
   </ItemGroup>
 
   <ItemGroup>

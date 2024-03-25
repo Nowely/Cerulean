@@ -5,7 +5,7 @@ VisualStudioVersion = 17.9.34414.90
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.AppHost", "Server\Aspire.AppHost\Aspire.AppHost.csproj", "{8B53FDF8-B010-4C60-9943-B2D3A270BD05}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Library.ServiceDefaults", "Server\Library.ServiceDefaults\Library.ServiceDefaults.csproj", "{836FC1F6-FDFD-43EF-A84F-9E1B6C3ACD99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tools.ServiceDefaults", "Server\Tools.ServiceDefaults\Tools.ServiceDefaults.csproj", "{836FC1F6-FDFD-43EF-A84F-9E1B6C3ACD99}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Affairs", "Server\Affairs\Affairs.csproj", "{5258CE01-A152-48BA-9347-C40A5A4B40F9}"
 EndProject
@@ -26,13 +26,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity", "Server\Identity
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "Server\WebApp\WebApp.csproj", "{93F679A4-F0A7-44A2-AA3C-3190C3C8CD44}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Shared", "Server\Library.Shared\Library.Shared.csproj", "{8BDA8B40-F395-4696-9839-58B9B59CB4E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.Shared", "Server\Tools.Shared\Tools.Shared.csproj", "{8BDA8B40-F395-4696-9839-58B9B59CB4E5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Libraries", ".Libraries", "{35186465-9F6D-4BBC-A6E1-735EA8795F76}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Tools", ".Tools", "{35186465-9F6D-4BBC-A6E1-735EA8795F76}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Filtration", "Server\Library.Filtration\Library.Filtration.csproj", "{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.Filtration", "Server\Tools.Filtration\Tools.Filtration.csproj", "{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library.Filtration.UnitTests", "Server\Library.Filtration.UnitTests\Library.Filtration.UnitTests.csproj", "{6EBF6104-D56A-47A8-8893-7947B114D20D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.Filtration.UnitTests", "Server\Tools.Filtration.UnitTests\Tools.Filtration.UnitTests.csproj", "{6EBF6104-D56A-47A8-8893-7947B114D20D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

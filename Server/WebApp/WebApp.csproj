@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
     <ItemGroup>
-      <ProjectReference Include="..\Library.ServiceDefaults\Library.ServiceDefaults.csproj" />
+      <ProjectReference Include="..\Tools.ServiceDefaults\Tools.ServiceDefaults.csproj" />
     </ItemGroup>
 
 </Project>
