@@ -1,6 +1,6 @@
 using Affairs.Models.Affair;
-using Cerulean.Library.Filtration.Enums;
-using Cerulean.Library.Filtration.Models;
+using Library.Filtration.Enums;
+using Library.Filtration.Models;
 
 namespace Affairs.Models;
 

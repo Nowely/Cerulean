@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
     <ItemGroup>
-      <ProjectReference Include="..\Cerulean.Aspire.ServiceDefaults\Cerulean.Aspire.ServiceDefaults.csproj" />
+      <ProjectReference Include="..\Library.ServiceDefaults\Library.ServiceDefaults.csproj" />
     </ItemGroup>
 
 </Project>
