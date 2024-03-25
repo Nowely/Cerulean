@@ -20,13 +20,14 @@ public record StringOperator(StringOperatorType Type, string? Value) : IFilterab
 		var innerProperty = originalContext.FilterProperty.PropertyType.GetProperty(nameof(Value));
 		var innerPropertyExpression = Expression.Property(originalContext.FilterPropertyExpression, innerProperty);
 
-		return new ExpressionBuildContext(
+		return new(
 			originalContext.ExpressionBody,
 			originalContext.TargetProperty,
 			innerProperty,
 			innerPropertyExpression,
 			originalContext.FilterObject,
-			value);
+			value
+			);
 	}
 
 	private ExpressionBuildContext ContextForConstant(ExpressionBuildContext originalContext, string value) {

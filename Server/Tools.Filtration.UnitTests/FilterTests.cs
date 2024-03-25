@@ -33,8 +33,7 @@ public class FilterTests {
 		var filter = new ModelFilter_OneString {
 			Name = new(StringOperatorType.Is, users[index].Name)
 		};
-		var filteredQuery = FilterExtensions.ApplyMyFilter(query, filter);
-		//var filteredQuery = query.ApplyMyFilter(filter);
+		var filteredQuery = query.ApplyFilter(filter);
 
 		var result = filteredQuery.ToArray();
 
@@ -51,7 +50,7 @@ public class FilterTests {
 		var filter = new ModelFilter_TwoString {
 			Name = new(StringOperatorType.Is, users[index].Name)
 		};
-		var filteredQuery = FilterExtensions.ApplyMyFilter(query, filter);
+		var filteredQuery = query.ApplyFilter(filter);
 
 		var result = filteredQuery.ToArray();
 
@@ -69,7 +68,7 @@ public class FilterTests {
 			Name = new(StringOperatorType.Is, users[index].Name),
 			LastName = new(StringOperatorType.Is, users[index].LastName)
 		};
-		var filteredQuery = FilterExtensions.ApplyMyFilter(query, filter);
+		var filteredQuery = query.ApplyFilter(filter);
 
 		var result = filteredQuery.ToArray();
 
