@@ -1,7 +1,4 @@
-﻿#if LEGACY_NAMESPACE
-using AutoFilterer.Enums;
-#endif
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace AutoFilterer.Extensions;
 

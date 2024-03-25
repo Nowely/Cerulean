@@ -31,7 +31,7 @@ public class FilterTests {
 		var index = Random.Next(1, users.Length);
 
 		var filter = new ModelFilter_OneString {
-			Name = new StringOperator(StringOperatorType.Is, users[index].Name)
+			Name = new(StringOperatorType.Is, users[index].Name)
 		};
 		var filteredQuery = FilterExtensions.ApplyMyFilter(query, filter);
 		//var filteredQuery = query.ApplyMyFilter(filter);
@@ -49,7 +49,7 @@ public class FilterTests {
 		var index = Random.Next(1, users.Length);
 
 		var filter = new ModelFilter_TwoString {
-			Name = new StringOperator(StringOperatorType.Is, users[index].Name)
+			Name = new(StringOperatorType.Is, users[index].Name)
 		};
 		var filteredQuery = FilterExtensions.ApplyMyFilter(query, filter);
 
@@ -66,8 +66,8 @@ public class FilterTests {
 		var index = Random.Next(1, users.Length);
 
 		var filter = new ModelFilter_TwoString {
-			Name = new StringOperator(StringOperatorType.Is, users[index].Name),
-			LastName = new StringOperator(StringOperatorType.Is, users[index].LastName)
+			Name = new(StringOperatorType.Is, users[index].Name),
+			LastName = new(StringOperatorType.Is, users[index].LastName)
 		};
 		var filteredQuery = FilterExtensions.ApplyMyFilter(query, filter);
 
