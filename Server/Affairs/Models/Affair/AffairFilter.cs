@@ -2,7 +2,7 @@ using Cerulean.Library.Filtration.Enums;
 using Cerulean.Library.Filtration.Models;
 using Cerulean.Library.Filtration.Models.Operators;
 
-namespace Cerulean.Service.Affairs.Models.Affair;
+namespace Affairs.Models.Affair;
 
 public record AffairFilter {
 	public StringOperator? Name { get; init; }

@@ -1,4 +1,4 @@
-namespace Cerulean.Service.Affairs.Models.Affair.Dto;
+namespace Affairs.Models.Affair.Dto;
 
 public class AffairUpdate {
 	public Guid Id { get; set; }

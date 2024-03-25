@@ -1,10 +1,10 @@
-using Cerulean.Service.Affairs.Models.Affair;
-using Cerulean.Service.Affairs.Models.Affair.Dto;
+using Affairs.Models.Affair;
+using Affairs.Models.Affair.Dto;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.AspNetCore.Http.TypedResults;
 
-namespace Cerulean.Service.Affairs.API;
+namespace Affairs.API;
 
 using GetAllResponse = Task<Results<Ok<AffairGet[]>, BadRequest<string>>>;
 using CreateResponse = Task<Created<AffairGet>>;

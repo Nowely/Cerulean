@@ -1,8 +1,8 @@
+using Affairs.Models.Affair;
 using Cerulean.Library.Filtration.Enums;
 using Cerulean.Library.Filtration.Models;
-using Cerulean.Service.Affairs.Models.Affair;
 
-namespace Cerulean.Service.Affairs.Models;
+namespace Affairs.Models;
 
 class ExampleFilter {
 	static void Main() {

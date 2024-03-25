@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Cerulean.Shared;
 
-namespace Cerulean.Service.Affairs.Models.Affair;
+namespace Affairs.Models.Affair;
 
 public class Affair : IModifiable, ICreatable {
 	public Guid Id { get; set; }
@@ -13,7 +13,7 @@ public class Affair : IModifiable, ICreatable {
 	public bool Active { get; set; }
 	public Status Status { get; set; }
 
-	public Type Type { get; set; }
+	public AffairType Type { get; set; }
 
 
 	//public List<> Checklist { get; set; } TODO
@@ -34,7 +34,7 @@ public enum Status {
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum Type {
+public enum AffairType {
 	Daily = 0,
 	Week = 1,
 	Month = 2,

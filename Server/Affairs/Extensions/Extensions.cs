@@ -1,6 +1,6 @@
-﻿using Cerulean.Service.Affairs.Data;
+﻿using Affairs.Infrastructure;
 
-namespace Cerulean.Service.Affairs.Extensions;
+namespace Affairs.Extensions;
 
 public static class Extensions
 {

@@ -1,7 +1,7 @@
-using Cerulean.Service.Affairs.Models.Affair.Dto;
+using Affairs.Models.Affair.Dto;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Cerulean.Service.Affairs.API;
+namespace Affairs.API;
 
 public record GetAllRequest : AffairServices {
 

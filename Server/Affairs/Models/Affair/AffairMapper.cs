@@ -1,7 +1,7 @@
-using Cerulean.Service.Affairs.Models.Affair.Dto;
+using Affairs.Models.Affair.Dto;
 using Riok.Mapperly.Abstractions;
 
-namespace Cerulean.Service.Affairs.Models.Affair;
+namespace Affairs.Models.Affair;
 
 [Mapper]
 public static partial class AffairMapper {

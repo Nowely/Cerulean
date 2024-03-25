@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cerulean.Service.Affairs\Cerulean.Service.Affairs.csproj" />
+    <ProjectReference Include="..\Affairs\Affairs.csproj" />
   </ItemGroup>
 
 </Project>

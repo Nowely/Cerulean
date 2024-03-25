@@ -1,6 +1,6 @@
-using Cerulean.Service.Affairs.Data;
+using Affairs.Infrastructure;
 
-namespace Cerulean.Service.Affairs.API;
+namespace Affairs.API;
 
 public record AffairServices {
 	public AffairContext Context { get; set; }

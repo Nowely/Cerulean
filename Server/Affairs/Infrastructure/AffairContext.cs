@@ -1,8 +1,8 @@
-﻿using Cerulean.Service.Affairs.Models.Affair;
-using Cerulean.Service.Affairs.Models.Domain;
+﻿using Affairs.Models.Affair;
+using Affairs.Models.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cerulean.Service.Affairs.Data;
+namespace Affairs.Infrastructure;
 
 public sealed class AffairContext : DbContext {
 	public AffairContext(DbContextOptions<AffairContext> options) : base(options) {

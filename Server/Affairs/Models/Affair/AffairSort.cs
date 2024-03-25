@@ -1,4 +1,4 @@
-namespace Cerulean.Service.Affairs.Models.Affair;
+namespace Affairs.Models.Affair;
 
 public enum AffairSortField {
 	Name,

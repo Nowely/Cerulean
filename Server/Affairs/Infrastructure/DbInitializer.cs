@@ -1,8 +1,7 @@
-﻿using Cerulean.Service.Affairs.Models.Affair;
-using Cerulean.Service.Affairs.Models.Domain;
-using Type = Cerulean.Service.Affairs.Models.Affair.Type;
+﻿using Affairs.Models.Affair;
+using Affairs.Models.Domain;
 
-namespace Cerulean.Service.Affairs.Data;
+namespace Affairs.Infrastructure;
 
 public static class DbInitializer {
 	public static void Initialize(AffairContext context) {
@@ -17,70 +16,70 @@ public static class DbInitializer {
 				Note = "",
 				Active = false,
 				Status = Status.Failed,
-				Type = Type.Year
+				Type = AffairType.Year
 			},
 			new() {
 				Title = "Перейти рубикон",
 				Note = "Пройти «точку невозврата»",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Year
+				Type = AffairType.Year
 			},
 			new() {
 				Title = "Buy a new board game",
 				Note = "Eldritch Horror",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Week
+				Type = AffairType.Week
 			},
 			new() {
 				Title = "Прочитать одну книгу",
 				Note = "",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Week
+				Type = AffairType.Week
 			},
 			new() {
 				Title = "Прослушать одну книгу",
 				Note = "",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Week
+				Type = AffairType.Week
 			},
 			new() {
 				Title = "Улучшить дизайн",
 				Note = "",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Month
+				Type = AffairType.Month
 			},
 			new() {
 				Title = "Улушчить код",
 				Note = "",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Month
+				Type = AffairType.Month
 			},
 			new() {
 				Title = "Улучшить структуру",
 				Note = "",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Month
+				Type = AffairType.Month
 			},
 			new() {
 				Title = "Подумать над добавлением новой функциональности",
 				Note = "",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Month
+				Type = AffairType.Month
 			},
 			new() {
 				Title = "Обновить Readme",
 				Note = "",
 				Active = true,
 				Status = Status.Absent,
-				Type = Type.Daily
+				Type = AffairType.Daily
 			}
 		};
 

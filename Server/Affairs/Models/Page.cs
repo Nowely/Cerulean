@@ -1,4 +1,4 @@
-﻿namespace Cerulean.Service.Affairs.Models.Domain;
+﻿namespace Affairs.Models.Domain;
 
 public class Page {
 	public string? Title { get; set; }

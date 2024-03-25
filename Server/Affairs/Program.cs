@@ -1,4 +1,4 @@
-using Cerulean.Service.Affairs.API;
+using Affairs.API;
 
 var builder = WebApplication.CreateBuilder(args);
 

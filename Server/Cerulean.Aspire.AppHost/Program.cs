@@ -2,7 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("CeruleanDB").AddDatabase("Postgres");
 
-var gateway = builder.AddProject<Projects.Cerulean_Service_Affairs>("Gateway")
+var gateway = builder.AddProject<Projects.Affairs>("Gateway")
 					 .WithReference(postgres);
 
 builder.AddNpmApp("Client", "../../Client", "dev")
