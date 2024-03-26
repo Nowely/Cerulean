@@ -184,10 +184,10 @@ public class FilterTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_Match_Success(Model_TwoString[] users) {
+	public void StringOperatorType_IsMatch_Success(Model_TwoString[] users) {
 		var query = users.AsQueryable();
 		var filter = new ModelFilter_TwoString {
-			Name = new(StringOperatorType.Match, $"^{nameof(Model_TwoString.Name)}+")
+			Name = new(StringOperatorType.IsMatch, $"^{nameof(Model_TwoString.Name)}+")
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);
@@ -197,10 +197,10 @@ public class FilterTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_NotMatch_Success(Model_TwoString[] users) {
+	public void StringOperatorType_IsNotMatch_Success(Model_TwoString[] users) {
 		var query = users.AsQueryable();
 		var filter = new ModelFilter_TwoString {
-			Name = new(StringOperatorType.NotMatch, $"^{nameof(Model_TwoString.Name)}+")
+			Name = new(StringOperatorType.IsNotMatch, $"^{nameof(Model_TwoString.Name)}+")
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);

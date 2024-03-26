@@ -24,8 +24,8 @@ public record StringOperator(StringOperatorType Type, string? Value = null) : IF
 			StringOperatorType.NotStartsWith => Not(Call(targetProperty, "StartsWith", [], filterProperty)),
 			StringOperatorType.EndsWith => Call(targetProperty, "EndsWith", [], filterProperty),
 			StringOperatorType.NotEndsWith => Not(Call(targetProperty, "EndsWith", [], filterProperty)),
-			StringOperatorType.Match => Call(typeof(Regex), "IsMatch", [], targetProperty, filterProperty),
-			StringOperatorType.NotMatch => Not(Call(typeof(Regex), "IsMatch", [], targetProperty, filterProperty)),
+			StringOperatorType.IsMatch => Call(typeof(Regex), "IsMatch", [], targetProperty, filterProperty),
+			StringOperatorType.IsNotMatch => Not(Call(typeof(Regex), "IsMatch", [], targetProperty, filterProperty)),
 			_ => null
 		};
 	}

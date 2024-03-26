@@ -10,8 +10,8 @@ public enum StringOperatorType {
 	NotStartsWith,
 	EndsWith,
 	NotEndsWith,
-	Match,
-	NotMatch,
+	IsMatch,
+	IsNotMatch,
 	/// <summary> Apply IsNullOrWhiteSpace </summary>
 	IsEmpty,
 	/// <summary> Apply not IsNullOrWhiteSpace </summary>
