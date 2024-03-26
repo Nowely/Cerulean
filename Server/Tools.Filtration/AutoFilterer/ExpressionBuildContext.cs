@@ -4,23 +4,14 @@ using Tools.Filtration.AutoFilterer.Types;
 
 namespace Tools.Filtration.AutoFilterer;
 
-public class ExpressionBuildContext(
-	Expression expressionBody,
-	PropertyInfo targetProperty,
-	PropertyInfo filterProperty,
-	Expression filterPropertyExpression,
-	IMyFilter filterObject,
-	object propertyValue
-) {
-	public Expression ExpressionBody { get; } = expressionBody;
+public record ExpressionBuildContext(
+	Expression? CurrentBody,
 
-	public PropertyInfo TargetProperty { get; } = targetProperty;
+	PropertyInfo TargetProperty,
+	PropertyInfo FilterProperty,
 
-	public PropertyInfo FilterProperty { get; } = filterProperty;
-
-	public Expression FilterPropertyExpression { get; } = filterPropertyExpression;
-
-	public IMyFilter FilterObject { get; } = filterObject;
-
-	public object FilterObjectPropertyValue { get; } = propertyValue;
-}
+	Expression FilterPropertyExpression,
+	IMyFilter Filter,
+	object FilterPropertyValue,
+	Expression? ParameterExpression = null
+);

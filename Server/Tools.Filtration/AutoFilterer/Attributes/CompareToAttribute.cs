@@ -1,12 +1,7 @@
-﻿#if LEGACY_NAMESPACE
-using AutoFilterer.Enums;
-#endif
-using AutoFilterer.Abstractions;
+﻿using AutoFilterer.Abstractions;
 using System.Collections;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System;
 using Tools.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Attributes;
@@ -51,10 +46,29 @@ public class CompareToAttribute : FilteringOptionsBaseAttribute
         }
     }
 
-    public override Expression BuildExpression(ExpressionBuildContext context)
+	public virtual Expression BuildExpressionForProperty(ExpressionBuildContext context)
+	{
+		if (FilterableType != null)
+		{
+			return ((IFilterableType)Activator.CreateInstance(FilterableType)).BuildExpression(context);
+		}
+
+		var attribute = context.FilterProperty
+							   .GetCustomAttributes<FilteringOptionsBaseAttribute>()
+							   .FirstOrDefault(x => !(x is CompareToAttribute));
+
+		if (attribute != null)
+		{
+			return attribute.BuildExpression(context);
+		}
+
+		return BuildDefaultExpression(context);
+	}
+
+	public override Expression BuildExpression(ExpressionBuildContext context)
     {
         // TODO: Decide to use context.ExpressionBody itself of use a local variable 'expressionBody'.
-        var expressionBody = context.ExpressionBody;
+        var expressionBody = context.CurrentBody;
 
         for (int i = 0; i < PropertyNames.Length; i++)
         {
@@ -66,8 +80,8 @@ public class CompareToAttribute : FilteringOptionsBaseAttribute
                                     _targetProperty,
                                     context.FilterProperty,
                                     context.FilterPropertyExpression,
-                                    context.FilterObject,
-                                    context.FilterObjectPropertyValue);
+                                    context.Filter,
+                                    context.FilterPropertyValue);
 
             if (FilterableType != null)
             {
@@ -82,40 +96,25 @@ public class CompareToAttribute : FilteringOptionsBaseAttribute
         return expressionBody;
     }
 
-    public virtual Expression BuildExpressionForProperty(ExpressionBuildContext context)
+	public virtual Expression BuildDefaultExpression(ExpressionBuildContext context)
     {
-        if (FilterableType != null)
+        if (context.FilterPropertyValue is IFilter filter)
         {
-            return ((IFilterableType)Activator.CreateInstance(FilterableType)).BuildExpression(context);
-        }
-
-        var attribute = context.FilterProperty.GetCustomAttributes<FilteringOptionsBaseAttribute>().FirstOrDefault(x => !(x is CompareToAttribute));
-
-        if (attribute != null)
-        {
-            return attribute.BuildExpression(context);
-        }
-
-        return BuildDefaultExpression(context);
-    }
-
-    public virtual Expression BuildDefaultExpression(ExpressionBuildContext context)
-    {
-        if (context.FilterObjectPropertyValue is IFilter filter)
-        {
-            if (typeof(ICollection).IsAssignableFrom(context.TargetProperty.PropertyType) || (context.TargetProperty.PropertyType.IsConstructedGenericType && typeof(IEnumerable).IsAssignableFrom(context.TargetProperty.PropertyType)))
+            if (typeof(ICollection).IsAssignableFrom(context.TargetProperty.PropertyType)
+				|| (context.TargetProperty.PropertyType.IsConstructedGenericType
+					&& typeof(IEnumerable).IsAssignableFrom(context.TargetProperty.PropertyType)))
             {
                 return Singleton<CollectionFilterAttribute>.Instance.BuildExpression(context);
             }
             else
             {
-                var parameter = Expression.Property(context.ExpressionBody, context.TargetProperty.Name);
+                var parameter = Expression.Property(context.CurrentBody, context.TargetProperty.Name);
 
                 return filter.BuildExpression(context.TargetProperty.PropertyType, parameter);
             }
         }
 
-        if (context.FilterObjectPropertyValue is IFilterableType filterableProperty)
+        if (context.FilterPropertyValue is IFilterableType filterableProperty)
         {
             return filterableProperty.BuildExpression(context);
         }

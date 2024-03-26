@@ -66,7 +66,7 @@ public class Range<T> : IRange<T>, IRange, IEquatable<string>, IFormattable
         {
             BinaryExpression minExp = default, maxExp = default;
 
-            var propertyExpression = Expression.Property(context.ExpressionBody, context.TargetProperty.Name);
+            var propertyExpression = Expression.Property(context.CurrentBody, context.TargetProperty.Name);
             if (context.TargetProperty.PropertyType.IsNullable())
             {
                 propertyExpression = Expression.Property(propertyExpression, nameof(Nullable<bool>.Value));

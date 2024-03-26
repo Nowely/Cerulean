@@ -84,11 +84,11 @@ public class OperatorFilter<T> : IFilterableType
         var innerPropertyExpression = Expression.Property(originalContext.FilterPropertyExpression, innerProperty);
 
         return new ExpressionBuildContext(
-            originalContext.ExpressionBody,
+            originalContext.CurrentBody,
             originalContext.TargetProperty,
             innerProperty,
             innerPropertyExpression,
-            originalContext.FilterObject,
+            originalContext.Filter,
             value);
     }
 }

@@ -17,7 +17,7 @@ public abstract class FilteringOptionsBaseAttribute : Attribute, IFilterableType
 
         if (context.FilterProperty is null)
         {
-            return Expression.Constant(context.FilterObjectPropertyValue);
+            return Expression.Constant(context.FilterPropertyValue);
         }
 
         if (context.FilterProperty.PropertyType.IsNullable())

@@ -162,22 +162,22 @@ public class StringFilter : IFilterableType
         var innerPropertyExpression = Expression.Property(originalContext.FilterPropertyExpression, innerProperty);
 
         return new ExpressionBuildContext(
-            originalContext.ExpressionBody,
+            originalContext.CurrentBody,
             originalContext.TargetProperty,
             innerProperty,
             innerPropertyExpression,
-            originalContext.FilterObject,
+            originalContext.Filter,
             value);
     }
 
     private ExpressionBuildContext ContextForConstant(ExpressionBuildContext originalContext, string value)
     {
         return new ExpressionBuildContext(
-            originalContext.ExpressionBody,
+            originalContext.CurrentBody,
             originalContext.TargetProperty,
             null,
             Expression.Constant(value),
-            originalContext.FilterObject,
+            originalContext.Filter,
             value);
     }
 }

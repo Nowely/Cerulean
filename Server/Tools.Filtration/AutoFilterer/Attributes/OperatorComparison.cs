@@ -1,7 +1,4 @@
-﻿#if LEGACY_NAMESPACE
-using AutoFilterer.Enums;
-#endif
-using AutoFilterer.Extensions;
+﻿using AutoFilterer.Extensions;
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -21,8 +18,8 @@ public class OperatorComparison : FilteringOptionsBaseAttribute
 
     public override Expression BuildExpression(ExpressionBuildContext context)
     {
-        var prop = Expression.Property(context.ExpressionBody, context.TargetProperty.Name);
-
+        var prop = Expression.Property(context.ParameterExpression, context.TargetProperty.Name);
+		//ExpressionType
         var filterProp = BuildFilterExpression(context);
 
         var targetIsNullable = context.TargetProperty.PropertyType.IsNullable() || context.TargetProperty.PropertyType == typeof(string);
@@ -47,9 +44,9 @@ public class OperatorComparison : FilteringOptionsBaseAttribute
             case OperatorType.LessThanOrEqual:
                 return Expression.LessThanOrEqual(prop, filterProp);
             case OperatorType.IsNull:
-                return targetIsNullable ? Expression.Equal(Expression.Property(context.ExpressionBody, context.TargetProperty.Name), Expression.Constant(null)) : null;
+                return targetIsNullable ? Expression.Equal(Expression.Property(context.CurrentBody, context.TargetProperty.Name), Expression.Constant(null)) : null;
             case OperatorType.IsNotNull:
-                return targetIsNullable ? Expression.Not(Expression.Equal(Expression.Property(context.ExpressionBody, context.TargetProperty.Name), Expression.Constant(null))) : null;
+                return targetIsNullable ? Expression.Not(Expression.Equal(Expression.Property(context.CurrentBody, context.TargetProperty.Name), Expression.Constant(null))) : null;
         }
 
         return Expression.Empty();

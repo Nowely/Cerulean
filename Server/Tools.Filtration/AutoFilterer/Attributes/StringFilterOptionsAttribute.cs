@@ -44,7 +44,7 @@ public class StringFilterOptionsAttribute : FilteringOptionsBaseAttribute
 
         var comparison = Expression.Call(
                               method: method,
-                              instance: Expression.Property(context.ExpressionBody, context.TargetProperty.Name),
+                              instance: Expression.Property(context.CurrentBody, context.TargetProperty.Name),
                               arguments: new Expression[] { filterProp, Expression.Constant(Comparison) });
 
         return comparison;
@@ -58,7 +58,7 @@ public class StringFilterOptionsAttribute : FilteringOptionsBaseAttribute
 
         var comparison = Expression.Call(
                             method: method,
-                            instance: Expression.Property(context.ExpressionBody, context.TargetProperty.Name),
+                            instance: Expression.Property(context.CurrentBody, context.TargetProperty.Name),
                             arguments: new[] { filterProp });
 
         return comparison;

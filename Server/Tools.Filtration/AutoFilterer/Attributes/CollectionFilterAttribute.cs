@@ -25,16 +25,16 @@ public class CollectionFilterAttribute : FilteringOptionsBaseAttribute
 
     public override Expression BuildExpression(ExpressionBuildContext context)
     {
-        var expressionBody = context.ExpressionBody;
+        var expressionBody = context.CurrentBody;
 
-        if (context.FilterObjectPropertyValue is IFilter filter)
+        if (context.FilterPropertyValue is IFilter filter)
         {
             var type = context.TargetProperty.PropertyType.GetGenericArguments().FirstOrDefault();
 
             var parameter = Expression.Parameter(type, "a"); // TODO: Change parameter name according to nested execution level.
 
             var innerLambda = Expression.Lambda(filter.BuildExpression(type, body: parameter), parameter);
-            var prop = Expression.Property(context.ExpressionBody, context.TargetProperty.Name);
+            var prop = Expression.Property(context.CurrentBody, context.TargetProperty.Name);
             var methodInfo = typeof(Enumerable).GetMethods().LastOrDefault(x => x.Name == FilterOption.ToString());
             var method = methodInfo.MakeGenericMethod(type);
 

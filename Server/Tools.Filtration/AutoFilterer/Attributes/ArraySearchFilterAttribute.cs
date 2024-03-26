@@ -16,7 +16,7 @@ public class ArraySearchFilterAttribute : FilteringOptionsBaseAttribute
         }
 
         var type = context.TargetProperty.PropertyType;
-        var prop = Expression.Property(context.ExpressionBody, context.TargetProperty.Name);
+        var prop = Expression.Property(context.CurrentBody, context.TargetProperty.Name);
 
         var containsMethod = typeof(Enumerable).GetMethods().FirstOrDefault(x => x.Name == nameof(Enumerable.Contains)).MakeGenericMethod(type);
 
@@ -24,8 +24,8 @@ public class ArraySearchFilterAttribute : FilteringOptionsBaseAttribute
                                                 method: containsMethod,
                                                 arguments: new Expression[]
                                                 {
-                                                        Expression.Property(Expression.Constant(context.FilterObject), context.FilterProperty),
-                                                        Expression.Property(context.ExpressionBody, context.TargetProperty)
+                                                        Expression.Property(Expression.Constant(context.Filter), context.FilterProperty),
+                                                        Expression.Property(context.CurrentBody, context.TargetProperty)
                                                 });
 
         return containsExpression;

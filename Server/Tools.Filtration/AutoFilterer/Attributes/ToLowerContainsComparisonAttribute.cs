@@ -21,7 +21,7 @@ public class ToLowerContainsComparisonAttribute : FilteringOptionsBaseAttribute
         var comparison = Expression.Equal(
                     Expression.Call(
                         method: containsMethod,
-                        instance: Expression.Call(method: toLowerMethod, instance: Expression.Property(context.ExpressionBody, context.TargetProperty.Name)
+                        instance: Expression.Call(method: toLowerMethod, instance: Expression.Property(context.CurrentBody, context.TargetProperty.Name)
                             ),
                         arguments: new[] { Expression.Call(method: toLowerMethod, instance: context.FilterPropertyExpression) }),
                     Expression.Constant(true));

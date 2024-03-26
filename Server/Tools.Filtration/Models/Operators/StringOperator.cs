@@ -21,22 +21,23 @@ public record StringOperator(StringOperatorType Type, string? Value) : IFilterab
 		var innerPropertyExpression = Expression.Property(originalContext.FilterPropertyExpression, innerProperty);
 
 		return new(
-			originalContext.ExpressionBody,
+			originalContext.CurrentBody,
 			originalContext.TargetProperty,
 			innerProperty,
 			innerPropertyExpression,
-			originalContext.FilterObject,
-			value
+			originalContext.Filter,
+			value,
+			originalContext.ParameterExpression
 			);
 	}
 
 	private ExpressionBuildContext ContextForConstant(ExpressionBuildContext originalContext, string value) {
 		return new ExpressionBuildContext(
-			originalContext.ExpressionBody,
+			originalContext.CurrentBody,
 			originalContext.TargetProperty,
 			null,
 			Expression.Constant(value),
-			originalContext.FilterObject,
+			originalContext.Filter,
 			value);
 	}
 

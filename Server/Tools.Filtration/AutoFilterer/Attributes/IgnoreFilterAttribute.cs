@@ -10,6 +10,6 @@ public class IgnoreFilterAttribute : FilteringOptionsBaseAttribute
 {
     public override Expression BuildExpression(ExpressionBuildContext context)
     {
-        return context.ExpressionBody;
+        return context.CurrentBody;
     }
 }
