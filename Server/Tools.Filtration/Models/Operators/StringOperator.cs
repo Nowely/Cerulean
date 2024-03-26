@@ -1,40 +1,34 @@
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using AutoFilterer.Abstractions;
-using AutoFilterer.Attributes;
 using Tools.Filtration.AutoFilterer;
 using Tools.Filtration.Enums;
+using static System.Linq.Expressions.Expression;
 
 namespace Tools.Filtration.Models.Operators;
 
-public record StringOperator(StringOperatorType Type, string? Value) : IFilterableType {
-	public Expression BuildExpression(ExpressionBuildContext context) =>
-		Type switch {
-			StringOperatorType.Is => OperatorComparison.Equal.BuildExpression(ContextFor(context, Value)),
-			StringOperatorType.IsNot => OperatorComparison.NotEqual.BuildExpression(ContextFor(context, Value)),
-			StringOperatorType.IsEmpty => OperatorComparison.IsNull.BuildExpression(ContextFor(context, null)),
-			StringOperatorType.IsNotEmpty => OperatorComparison.IsNotNull.BuildExpression(ContextFor(context, null)),
+public record StringOperator(StringOperatorType Type, string? Value = null) : IFilterableType {
+	public Expression? BuildExpression(ExpressionBuildContext context) {
+		var targetProperty = Property(context.ParameterExpression, context.TargetProperty.Name);
+		var innerProperty = context.FilterProperty.PropertyType.GetProperty(nameof(Value));
+		var filterProperty = Property(context.FilterPropertyExpression, innerProperty);
+
+		return Type switch {
+			StringOperatorType.Is => MakeBinary(ExpressionType.Equal, targetProperty, filterProperty),
+			StringOperatorType.IsNot => MakeBinary(ExpressionType.NotEqual, targetProperty, filterProperty),
+			StringOperatorType.IsEmpty => Call(typeof(string), "IsNullOrWhiteSpace", [], targetProperty),
+			StringOperatorType.IsNotEmpty => Not(Call(typeof(string), "IsNullOrWhiteSpace", [], targetProperty)),
+			StringOperatorType.Contains => Call(targetProperty, "Contains", [], filterProperty),
+			StringOperatorType.NotContains => Not(Call(targetProperty, "Contains", [], filterProperty)),
+			StringOperatorType.StartsWith => Call(targetProperty, "StartsWith", [], filterProperty),
+			StringOperatorType.NotStartsWith => Not(Call(targetProperty, "StartsWith", [], filterProperty)),
+			StringOperatorType.EndsWith => Call(targetProperty, "EndsWith", [], filterProperty),
+			StringOperatorType.NotEndsWith => Not(Call(targetProperty, "EndsWith", [], filterProperty)),
+			StringOperatorType.Match => Call(typeof(Regex), "IsMatch", [], targetProperty, filterProperty),
+			StringOperatorType.NotMatch => Not(Call(typeof(Regex), "IsMatch", [], targetProperty, filterProperty)),
 			_ => null
 		};
-
-	private ExpressionBuildContext ContextFor(ExpressionBuildContext originalContext, string value) {
-		var innerProperty = originalContext.FilterProperty.PropertyType.GetProperty(nameof(Value));
-		var innerPropertyExpression = Expression.Property(originalContext.FilterPropertyExpression, innerProperty);
-
-		return originalContext with {
-			FilterProperty = innerProperty,
-			FilterPropertyExpression = innerPropertyExpression
-		};
 	}
-
-	/*private ExpressionBuildContext ContextForConstant(ExpressionBuildContext originalContext, string value) {
-		return new ExpressionBuildContext(
-			originalContext.CurrentBody,
-			originalContext.TargetProperty,
-			null,
-			Expression.Constant(value),
-			originalContext.Filter,
-			value);
-	}*/
 
 	/*if (Type == StringOperatorType.Is)
 			expression =

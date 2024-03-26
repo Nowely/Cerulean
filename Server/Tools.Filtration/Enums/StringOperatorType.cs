@@ -7,7 +7,13 @@ public enum StringOperatorType {
 	Contains,
 	NotContains,
 	StartsWith,
+	NotStartsWith,
 	EndsWith,
+	NotEndsWith,
+	Match,
+	NotMatch,
+	/// <summary> Apply IsNullOrWhiteSpace </summary>
 	IsEmpty,
+	/// <summary> Apply not IsNullOrWhiteSpace </summary>
 	IsNotEmpty,
 }
