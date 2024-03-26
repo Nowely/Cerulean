@@ -16,16 +16,16 @@ public record StringOperator(StringOperatorType Type, string? Value = null) : IF
 		return Type switch {
 			StringOperatorType.Is => MakeBinary(ExpressionType.Equal, targetProperty, filterProperty),
 			StringOperatorType.IsNot => MakeBinary(ExpressionType.NotEqual, targetProperty, filterProperty),
-			StringOperatorType.IsEmpty => Call(typeof(string), "IsNullOrWhiteSpace", [], targetProperty),
-			StringOperatorType.IsNotEmpty => Not(Call(typeof(string), "IsNullOrWhiteSpace", [], targetProperty)),
-			StringOperatorType.Contains => Call(targetProperty, "Contains", [], filterProperty),
-			StringOperatorType.NotContains => Not(Call(targetProperty, "Contains", [], filterProperty)),
-			StringOperatorType.StartsWith => Call(targetProperty, "StartsWith", [], filterProperty),
-			StringOperatorType.NotStartsWith => Not(Call(targetProperty, "StartsWith", [], filterProperty)),
-			StringOperatorType.EndsWith => Call(targetProperty, "EndsWith", [], filterProperty),
-			StringOperatorType.NotEndsWith => Not(Call(targetProperty, "EndsWith", [], filterProperty)),
-			StringOperatorType.IsMatch => Call(typeof(Regex), "IsMatch", [], targetProperty, filterProperty),
-			StringOperatorType.IsNotMatch => Not(Call(typeof(Regex), "IsMatch", [], targetProperty, filterProperty)),
+			StringOperatorType.IsEmpty => Call(typeof(string), nameof(string.IsNullOrWhiteSpace), [], targetProperty),
+			StringOperatorType.IsNotEmpty => Not(Call(typeof(string), nameof(string.IsNullOrWhiteSpace), [], targetProperty)),
+			StringOperatorType.Contains => Call(targetProperty, nameof(string.Contains), [], filterProperty),
+			StringOperatorType.NotContains => Not(Call(targetProperty, nameof(string.Contains), [], filterProperty)),
+			StringOperatorType.StartsWith => Call(targetProperty, nameof(string.StartsWith), [], filterProperty),
+			StringOperatorType.NotStartsWith => Not(Call(targetProperty, nameof(string.StartsWith), [], filterProperty)),
+			StringOperatorType.EndsWith => Call(targetProperty, nameof(string.EndsWith), [], filterProperty),
+			StringOperatorType.NotEndsWith => Not(Call(targetProperty, nameof(string.EndsWith), [], filterProperty)),
+			StringOperatorType.IsMatch => Call(typeof(Regex), nameof(Regex.IsMatch), [], targetProperty, filterProperty),
+			StringOperatorType.IsNotMatch => Not(Call(typeof(Regex), nameof(Regex.IsMatch), [], targetProperty, filterProperty)),
 			_ => null
 		};
 	}
