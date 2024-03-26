@@ -20,18 +20,13 @@ public record StringOperator(StringOperatorType Type, string? Value) : IFilterab
 		var innerProperty = originalContext.FilterProperty.PropertyType.GetProperty(nameof(Value));
 		var innerPropertyExpression = Expression.Property(originalContext.FilterPropertyExpression, innerProperty);
 
-		return new(
-			originalContext.CurrentBody,
-			originalContext.TargetProperty,
-			innerProperty,
-			innerPropertyExpression,
-			originalContext.Filter,
-			value,
-			originalContext.ParameterExpression
-			);
+		return originalContext with {
+			FilterProperty = innerProperty,
+			FilterPropertyExpression = innerPropertyExpression
+		};
 	}
 
-	private ExpressionBuildContext ContextForConstant(ExpressionBuildContext originalContext, string value) {
+	/*private ExpressionBuildContext ContextForConstant(ExpressionBuildContext originalContext, string value) {
 		return new ExpressionBuildContext(
 			originalContext.CurrentBody,
 			originalContext.TargetProperty,
@@ -39,7 +34,7 @@ public record StringOperator(StringOperatorType Type, string? Value) : IFilterab
 			Expression.Constant(value),
 			originalContext.Filter,
 			value);
-	}
+	}*/
 
 	/*if (Type == StringOperatorType.Is)
 			expression =

@@ -167,7 +167,8 @@ public class StringFilter : IFilterableType
             innerProperty,
             innerPropertyExpression,
             originalContext.Filter,
-            value);
+			//TODO this is a placeholder
+            new StringFilter());
     }
 
     private ExpressionBuildContext ContextForConstant(ExpressionBuildContext originalContext, string value)
@@ -178,6 +179,7 @@ public class StringFilter : IFilterableType
             null,
             Expression.Constant(value),
             originalContext.Filter,
-            value);
+			//TODO this is a placeholder
+            new StringFilter());
     }
 }

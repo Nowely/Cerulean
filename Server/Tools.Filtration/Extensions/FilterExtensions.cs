@@ -20,18 +20,17 @@ public static class FilterExtensions {
 	private static Expression<Func<TEntity, bool>>? BuildLambdaExpression<TEntity>(IMyFilter filter) {
 		var parameter = Expression.Parameter(typeof(TEntity), "x");
 		var body = BuildBodyExpression(typeof(TEntity), filter, parameter);
-		//if (body is MemberExpression or ParameterExpression) return null;
-		if (body is null) return null;
 
-		return Expression.Lambda<Func<TEntity, bool>>(body, parameter);
+		return body is null
+			? null
+			: Expression.Lambda<Func<TEntity, bool>>(body, parameter);
 	}
 
 	private static Expression? BuildBodyExpression(Type targetType, IMyFilter filter, Expression parameter) {
 		Expression? bodyExpression = null;
 
 		foreach (var (filterProperty, targetProperty) in GetPropertyPairs(targetType, filter)) {
-			object? filterPropertyValue = filterProperty.GetValue(filter);
-			if (filterPropertyValue is null) continue;
+			if (filterProperty.GetValue(filter) is not IFilterableType filterPropertyValue) continue;
 
 			var filterPropertyExpression = Expression.Property(Expression.Constant(filter), filterProperty);
 
@@ -45,13 +44,7 @@ public static class FilterExtensions {
 				parameter
 			);
 
-			Expression? expression = null;
-
-			if (context.FilterPropertyValue is IFilterableType filterableProperty)
-			{
-				expression =  filterableProperty.BuildExpression(context);
-			}
-
+			var expression = filterPropertyValue.BuildExpression(context);
 			bodyExpression = bodyExpression.Combine(expression, CombineType.And);
 		}
 

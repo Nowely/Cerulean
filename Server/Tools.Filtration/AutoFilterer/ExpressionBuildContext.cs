@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
+using AutoFilterer.Abstractions;
 using Tools.Filtration.AutoFilterer.Types;
 
 namespace Tools.Filtration.AutoFilterer;
@@ -12,6 +13,6 @@ public record ExpressionBuildContext(
 
 	Expression FilterPropertyExpression,
 	IMyFilter Filter,
-	object FilterPropertyValue,
+	IFilterableType FilterPropertyValue,
 	Expression? ParameterExpression = null
 );

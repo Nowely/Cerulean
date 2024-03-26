@@ -89,6 +89,7 @@ public class OperatorFilter<T> : IFilterableType
             innerProperty,
             innerPropertyExpression,
             originalContext.Filter,
-            value);
+			//TODO this is a placeholder
+            new StringFilter());
     }
 }
