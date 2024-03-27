@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
 using Tools.Filtration.AutoFilterer;
 
@@ -15,5 +14,5 @@ namespace AutoFilterer.Abstractions;
 /// </summary>
 public interface IFilterableType
 {
-    Expression BuildExpression(ExpressionBuildContext context);
+    Expression? BuildExpression(ExpressionBuildContext context);
 }

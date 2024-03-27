@@ -92,7 +92,7 @@ public class StringFilter : IFilterableType
     {
         Expression expression = null;
 
-        if (Eq != null)
+        /*if (Eq != null)
             expression = expression.Combine(OperatorComparison.Equal.BuildExpression(ContextFor(context, nameof(Eq), Eq)), CombineWith);
 
         if (Not != null)
@@ -151,7 +151,7 @@ public class StringFilter : IFilterableType
                 expression = expression.Combine(new StringFilterOptionsAttribute(StringFilterOption.Equals) { Comparison = Compare }
                 .BuildExpression(ContextForConstant(context, string.Empty)), CombineWith);
             }
-        }
+        }*/
         
         return expression;
     }
