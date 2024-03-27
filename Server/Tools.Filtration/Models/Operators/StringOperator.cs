@@ -7,11 +7,12 @@ using static System.Linq.Expressions.Expression;
 
 namespace Tools.Filtration.Models.Operators;
 
-public record StringFilterOption(StringComparison? Comparison);
+//TODO pass options
+public record StringFilterOption(StringComparison? Comparison, RegexOptions RegexOptions);
 
 public record StringOperator(StringOperatorType Type, string? Value = null) : IFilterableType {
 	public Expression? BuildExpression(ExpressionBuildContext context) {
-		//TODO to context
+		//TODO move to context
 		var target = Property(context.ParameterExpression, context.TargetProperty.Name);
 		var innerProperty = context.FilterProperty.PropertyType.GetProperty(nameof(Value));
 		var filter = Property(context.FilterPropertyExpression, innerProperty);
