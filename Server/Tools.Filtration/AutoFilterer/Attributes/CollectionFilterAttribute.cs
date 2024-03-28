@@ -10,7 +10,7 @@ using Tools.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Attributes;
 
-public class CollectionFilterAttribute : FilteringOptionsBaseAttribute
+public class CollectionFilterAttribute
 {
     public CollectionFilterAttribute()
     {
@@ -23,7 +23,7 @@ public class CollectionFilterAttribute : FilteringOptionsBaseAttribute
 
     public CollectionFilterType FilterOption { get; set; }
 
-    public override Expression BuildExpression(ExpressionBuildContext context)
+    public Expression BuildExpression(ExpressionBuildContext context)
     {
         var expressionBody = context.CurrentBody;
 

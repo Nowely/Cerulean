@@ -15,8 +15,8 @@ public class OrderableBase : IOrderable
     private static readonly MethodInfo orderBy = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderBy));
     private static readonly MethodInfo orderByDescending = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderByDescending));
 
-    [IgnoreFilter] public virtual Sorting SortBy { get; set; }
-    [IgnoreFilter] public virtual string Sort { get; }
+    public virtual Sorting SortBy { get; set; }
+    public virtual string Sort { get; }
 
     public virtual IOrderedQueryable<TSource> ApplyOrder<TSource>(IQueryable<TSource> queryable)
     {
@@ -33,7 +33,7 @@ public class OrderableBase : IOrderable
         var property = GetMemberExpression(parameter, orderable.Sort);
         var lambda = Expression.Lambda(property, parameter);
 
-        var attribute = orderable.GetType().GetCustomAttribute<PossibleSortingsAttribute>();
+        /*var attribute = orderable.GetType().GetCustomAttribute<PossibleSortingsAttribute>();
         if (attribute != null && !attribute.PropertyNames.Contains(orderable.Sort))
             throw new ArgumentException($"{orderable.Sort} field is not allowed to sort! Check PossibleSortings Attribute at top of filter object.", paramName: "Sort: " + orderable.Sort);
 
@@ -44,7 +44,7 @@ public class OrderableBase : IOrderable
 
             case Sorting.Descending:
                 return orderByDescending.MakeGenericMethod(typeof(TSource), property.Type).Invoke(null, parameters: new object[] { source, lambda }) as IOrderedQueryable<TSource>;
-        }
+        }*/
 
         throw new InvalidOperationException("Invalid Sorting type in ApplyOrder method");
     }

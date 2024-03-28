@@ -6,9 +6,9 @@ using Tools.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Attributes;
 
-public class ArraySearchFilterAttribute : FilteringOptionsBaseAttribute
+public class ArraySearchFilterAttribute
 {
-    public override Expression BuildExpression(ExpressionBuildContext context)
+    public Expression BuildExpression(ExpressionBuildContext context)
     {
         if (context.FilterProperty is ICollection list && list.Count == 0)
         {

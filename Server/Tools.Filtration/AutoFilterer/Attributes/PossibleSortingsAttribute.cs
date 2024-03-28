@@ -5,7 +5,7 @@ using System.Reflection;
 namespace AutoFilterer.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-public class PossibleSortingsAttribute : OrderingOptionsBaseAttribute
+public class PossibleSortingsAttribute
 {
     public PossibleSortingsAttribute(params string[] propertyNames)
     {
@@ -26,8 +26,8 @@ public class PossibleSortingsAttribute : OrderingOptionsBaseAttribute
         {
             this.PropertyNames = typeMetaData
                                     .GetProperties()
-                                    .Where(x => x.CanWrite && x.GetCustomAttribute<IgnoreFilterAttribute>() == null)
-                                    .SelectMany(s => s.GetCustomAttribute<CompareToAttribute>()?.PropertyNames ?? new[] { s.Name })
+                                     //.Where(x => x.CanWrite && x.GetCustomAttribute<IgnoreFilterAttribute>() == null)
+                                    .SelectMany(s => /*s.GetCustomAttribute<CompareToAttribute>()?.PropertyNames ??*/ new[] { s.Name })
                                     .ToArray();
         }
     }

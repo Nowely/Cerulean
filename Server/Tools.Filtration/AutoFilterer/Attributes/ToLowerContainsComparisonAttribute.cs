@@ -10,9 +10,9 @@ namespace AutoFilterer.Attributes;
 /// <summary>
 /// This class generates contains query, for string fields.
 /// </summary>
-public class ToLowerContainsComparisonAttribute : FilteringOptionsBaseAttribute
+public class ToLowerContainsComparisonAttribute
 {
-    public override Expression BuildExpression(ExpressionBuildContext context)
+    public Expression BuildExpression(ExpressionBuildContext context)
     {
         var containsMethod = typeof(string).GetMethod(nameof(string.Contains), types: new[] { typeof(string) });
 

@@ -1,7 +1,4 @@
-﻿#if LEGACY_NAMESPACE
-using AutoFilterer.Enums;
-#endif
-using AutoFilterer.Abstractions;
+﻿using AutoFilterer.Abstractions;
 using AutoFilterer.Attributes;
 using AutoFilterer.Extensions;
 using System;

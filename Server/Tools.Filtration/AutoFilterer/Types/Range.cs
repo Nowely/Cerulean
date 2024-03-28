@@ -7,7 +7,7 @@ using Tools.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Types;
 
-public class Range<T> : IRange<T>, IRange, IEquatable<string>, IFormattable
+public class Range<T> : IEquatable<string>, IFormattable
     where T : struct, IComparable
 {
     public Range()
@@ -30,8 +30,8 @@ public class Range<T> : IRange<T>, IRange, IEquatable<string>, IFormattable
     public virtual T? Min { get; set; }
     public virtual T? Max { get; set; }
 
-    IComparable IRange.Min => Min;
-    IComparable IRange.Max => Max;
+    /*IComparable IRange.Min => Min;
+    IComparable IRange.Max => Max;*/
 
     public static implicit operator Range<T>(string val)
     {
@@ -67,10 +67,10 @@ public class Range<T> : IRange<T>, IRange, IEquatable<string>, IFormattable
             BinaryExpression minExp = default, maxExp = default;
 
             var propertyExpression = Expression.Property(context.CurrentBody, context.TargetProperty.Name);
-            if (context.TargetProperty.PropertyType.IsNullable())
+            /*if (context.TargetProperty.PropertyType.IsNullable())
             {
                 propertyExpression = Expression.Property(propertyExpression, nameof(Nullable<bool>.Value));
-            }
+            }*/
 
             if (Min != null)
             {
