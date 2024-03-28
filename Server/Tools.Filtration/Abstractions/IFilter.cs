@@ -3,7 +3,7 @@
 namespace Tools.Filtration.Abstractions;
 
 /// <summary>
-/// Base type of AutoFilterer.
+/// Base type of References.
 /// </summary>
 public interface IFilter
 {

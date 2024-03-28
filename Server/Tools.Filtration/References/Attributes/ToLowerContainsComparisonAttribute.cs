@@ -1,14 +1,14 @@
 ﻿using System.Linq.Expressions;
 using Tools.Filtration.Models;
 
-namespace AutoFilterer.Attributes;
+namespace Tools.Filtration.References.Attributes;
 
 /// <summary>
 /// This class generates contains query, for string fields.
 /// </summary>
 public class ToLowerContainsComparisonAttribute
 {
-    public Expression BuildExpression(ExpressionBuildContext context)
+    /*public Expression BuildExpression(ExpressionBuildContext context)
     {
         var containsMethod = typeof(string).GetMethod(nameof(string.Contains), types: new[] { typeof(string) });
 
@@ -23,5 +23,5 @@ public class ToLowerContainsComparisonAttribute
                     Expression.Constant(true));
 
         return comparison;
-    }
+    }*/
 }

@@ -2,7 +2,7 @@
 using Tools.Filtration.Abstractions;
 using Tools.Filtration.Models;
 
-namespace AutoFilterer.Attributes;
+namespace Tools.Filtration.References.Attributes;
 
 [Flags]
 public enum CollectionFilterType
@@ -24,7 +24,7 @@ public class CollectionFilterAttribute
 
     public CollectionFilterType FilterOption { get; set; }
 
-    public Expression BuildExpression(ExpressionBuildContext context)
+    /*public Expression BuildExpression(ExpressionBuildContext context)
     {
         var expressionBody = context.CurrentBody;
 
@@ -47,5 +47,5 @@ public class CollectionFilterAttribute
         }
 
         return expressionBody;
-    }
+    }*/
 }

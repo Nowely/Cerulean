@@ -2,11 +2,11 @@
 using System.Linq.Expressions;
 using Tools.Filtration.Models;
 
-namespace AutoFilterer.Attributes;
+namespace Tools.Filtration.References.Attributes;
 
 public class ArraySearchFilterAttribute
 {
-    public Expression BuildExpression(ExpressionBuildContext context)
+    /*public Expression BuildExpression(ExpressionBuildContext context)
     {
         if (context.FilterProperty is ICollection list && list.Count == 0)
         {
@@ -27,5 +27,5 @@ public class ArraySearchFilterAttribute
                                                 });
 
         return containsExpression;
-    }
+    }*/
 }

@@ -1,5 +1,5 @@
 ﻿
-namespace AutoFilterer.Attributes;
+namespace Tools.Filtration.References.Attributes;
 
 public class PossibleSortingsAttribute
 {
