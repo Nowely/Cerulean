@@ -3,7 +3,7 @@ using AutoFilterer.Abstractions;
 using System;
 using System.Linq;
 
-namespace AutoFilterer.Extensions;
+namespace Tools.Filtration.Extensions;
 
 public static class QueryExtensions
 {

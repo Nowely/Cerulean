@@ -2,7 +2,7 @@
 using System.Reflection;
 using Tools.Filtration.Models;
 
-namespace AutoFilterer.Abstractions;
+namespace Tools.Filtration.Abstractions;
 
 /// <summary>
 /// Any property type which is able to <see cref="BuildExpression(Expression, PropertyInfo, PropertyInfo, MemberExpression)"/> over source property.

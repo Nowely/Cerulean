@@ -1,7 +1,7 @@
 ﻿
 using Tools.Filtration.Enums;
 
-namespace AutoFilterer.Abstractions;
+namespace Tools.Filtration.Abstractions;
 
 public interface IOrderable
 {

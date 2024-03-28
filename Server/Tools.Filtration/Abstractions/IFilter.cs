@@ -1,8 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
-namespace AutoFilterer.Abstractions;
+namespace Tools.Filtration.Abstractions;
 
 /// <summary>
 /// Base type of AutoFilterer.

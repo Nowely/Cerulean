@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Tools.Filtration.Enums;
 
-namespace AutoFilterer.Extensions;
+namespace Tools.Filtration.Extensions;
 
 public static class ExpressionExtensions {
 	public static Expression Combine(this Expression left, Expression right, CombineType combineType) {

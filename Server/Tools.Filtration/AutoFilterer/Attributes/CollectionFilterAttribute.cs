@@ -1,5 +1,5 @@
-﻿using AutoFilterer.Abstractions;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
+using Tools.Filtration.Abstractions;
 using Tools.Filtration.Models;
 
 namespace AutoFilterer.Attributes;
