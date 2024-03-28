@@ -1,15 +1,15 @@
-﻿using AutoFilterer.Abstractions;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
+using AutoFilterer.Abstractions;
 using Tools.Filtration.Enums;
 
-namespace AutoFilterer.Types;
+namespace Tools.Filtration.Models;
 
 
 public class OrderableBase : IOrderable
 {
-    private static readonly MethodInfo orderBy = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderBy));
-    private static readonly MethodInfo orderByDescending = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderByDescending));
+    private static readonly MethodInfo OrderBy = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderBy));
+    private static readonly MethodInfo OrderByDescending = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderByDescending));
 
     public virtual SortDirection SortBy { get; set; }
     public virtual string Sort { get; }
@@ -45,7 +45,6 @@ public class OrderableBase : IOrderable
         throw new InvalidOperationException("Invalid Sorting type in ApplyOrder method");
     }
 
-    // TODO: AutoFilterer.Dynamics feature.
     private static MemberExpression GetMemberExpression(Expression parameter, string name)
     {
         if (!name.Contains("."))
