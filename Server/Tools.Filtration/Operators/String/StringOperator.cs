@@ -4,7 +4,7 @@ using Tools.Filtration.Abstractions;
 using Tools.Filtration.Enums;
 using static System.Linq.Expressions.Expression;
 
-namespace Tools.Filtration.Models.Operators;
+namespace Tools.Filtration.Operators.String;
 
 //TODO pass options
 public record StringFilterOption(StringComparison? Comparison, RegexOptions RegexOptions);

@@ -1,6 +1,9 @@
 using Tools.Filtration.Enums;
 using Tools.Filtration.Models;
-using Tools.Filtration.Models.Operators;
+using Tools.Filtration.Operators.Date;
+using Tools.Filtration.Operators.Enum;
+using Tools.Filtration.Operators.Number;
+using Tools.Filtration.Operators.String;
 
 namespace Affairs.Models.Affair;
 

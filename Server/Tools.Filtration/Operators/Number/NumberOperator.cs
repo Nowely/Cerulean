@@ -1,9 +1,8 @@
 using System.Linq.Expressions;
 using Tools.Filtration.Abstractions;
-using Tools.Filtration.Enums;
 using static System.Linq.Expressions.Expression;
 
-namespace Tools.Filtration.Models.Operators;
+namespace Tools.Filtration.Operators.Number;
 
 public record NumberOperator<T>(NumberOperatorType Type, T? Value = default) : IFilterOperator {
 	private Expression Filter => Property(Expression.Constant(this), nameof(Value));

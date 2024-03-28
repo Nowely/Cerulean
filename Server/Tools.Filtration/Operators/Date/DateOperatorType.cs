@@ -1,4 +1,4 @@
-namespace Tools.Filtration.Enums;
+namespace Tools.Filtration.Operators.Date;
 
 public enum DateOperatorType {
 	Is,

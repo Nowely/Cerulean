@@ -1,4 +1,4 @@
-namespace Tools.Filtration.Enums;
+namespace Tools.Filtration.Operators.Number;
 
 public enum NumberOperatorType {
 	/// <summary> Alias == </summary>

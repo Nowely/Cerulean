@@ -2,7 +2,7 @@ using AutoFixture.Xunit2;
 using Tools.Filtration.Abstractions;
 using Tools.Filtration.Enums;
 using Tools.Filtration.Extensions;
-using Tools.Filtration.Models.Operators;
+using Tools.Filtration.Operators.String;
 using Xunit;
 
 namespace Tools.Filtration.UnitTests;

@@ -1,4 +1,4 @@
-namespace Tools.Filtration.Enums;
+namespace Tools.Filtration.Operators.String;
 
 //Right is string
 public enum StringOperatorType {

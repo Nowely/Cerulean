@@ -1,4 +1,4 @@
-namespace Tools.Filtration.Enums;
+namespace Tools.Filtration.Operators.Enum;
 
 //Right is array of enum state / tags
 public enum EnumOperatorType {
