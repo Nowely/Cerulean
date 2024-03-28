@@ -13,5 +13,6 @@ public record ExpressionBuildContext(
 	Expression FilterPropertyExpression,
 	IMyFilter Filter,
 	IFilterableType FilterPropertyValue,
-	Expression? ParameterExpression = null
+	Expression ParameterExpression,
+	Expression TargetExpression
 );

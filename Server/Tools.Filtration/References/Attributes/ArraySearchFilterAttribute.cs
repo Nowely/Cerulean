@@ -6,7 +6,7 @@ namespace Tools.Filtration.References.Attributes;
 
 public class ArraySearchFilterAttribute
 {
-    /*public Expression BuildExpression(ExpressionBuildContext context)
+    /*public Expression BuildExpressionFor(ExpressionBuildContext context)
     {
         if (context.FilterProperty is ICollection list && list.Count == 0)
         {

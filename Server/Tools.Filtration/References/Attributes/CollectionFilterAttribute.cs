@@ -24,7 +24,7 @@ public class CollectionFilterAttribute
 
     public CollectionFilterType FilterOption { get; set; }
 
-    /*public Expression BuildExpression(ExpressionBuildContext context)
+    /*public Expression BuildExpressionFor(ExpressionBuildContext context)
     {
         var expressionBody = context.CurrentBody;
 
@@ -34,7 +34,7 @@ public class CollectionFilterAttribute
 
             var parameter = Expression.Parameter(type, "a"); // TODO: Change parameter name according to nested execution level.
 
-            var innerLambda = Expression.Lambda(filter.BuildExpression(type, body: parameter), parameter);
+            var innerLambda = Expression.Lambda(filter.BuildExpressionFor(type, body: parameter), parameter);
             var prop = Expression.Property(context.CurrentBody, context.TargetProperty.Name);
             var methodInfo = typeof(Enumerable).GetMethods().LastOrDefault(x => x.Name == FilterOption.ToString());
             var method = methodInfo.MakeGenericMethod(type);

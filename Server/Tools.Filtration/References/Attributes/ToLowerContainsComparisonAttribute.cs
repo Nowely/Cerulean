@@ -8,7 +8,7 @@ namespace Tools.Filtration.References.Attributes;
 /// </summary>
 public class ToLowerContainsComparisonAttribute
 {
-    /*public Expression BuildExpression(ExpressionBuildContext context)
+    /*public Expression BuildExpressionFor(ExpressionBuildContext context)
     {
         var containsMethod = typeof(string).GetMethod(nameof(string.Contains), types: new[] { typeof(string) });
 
