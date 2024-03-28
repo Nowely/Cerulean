@@ -6,7 +6,7 @@ using Tools.Filtration.Enums;
 namespace Tools.Filtration.Models;
 
 
-public class OrderableBase : IOrderable
+internal class OrderableBase : IOrderable
 {
     private static readonly MethodInfo OrderBy = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderBy));
     private static readonly MethodInfo OrderByDescending = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderByDescending));

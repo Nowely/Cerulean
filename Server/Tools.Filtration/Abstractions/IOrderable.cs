@@ -3,7 +3,7 @@ using Tools.Filtration.Enums;
 
 namespace Tools.Filtration.Abstractions;
 
-public interface IOrderable
+internal interface IOrderable
 {
   SortDirection SortBy { get; set; }
 
