@@ -3,7 +3,6 @@ using System.Reflection;
 using AutoFilterer.Abstractions;
 using AutoFilterer.Extensions;
 using Tools.Filtration.Abstractions;
-using Tools.Filtration.AutoFilterer;
 using Tools.Filtration.Enums;
 using Tools.Filtration.Models;
 
