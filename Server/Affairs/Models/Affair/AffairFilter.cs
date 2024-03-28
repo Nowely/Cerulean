@@ -1,13 +1,14 @@
-using Tools.Filtration.Enums;
+using Tools.Filtration.Abstractions;
 using Tools.Filtration.Models;
 using Tools.Filtration.Operators.Date;
 using Tools.Filtration.Operators.Enum;
 using Tools.Filtration.Operators.Number;
 using Tools.Filtration.Operators.String;
+using Tools.Filtration.Types;
 
 namespace Affairs.Models.Affair;
 
-public record AffairFilter {
+public record AffairFilter: IFilter {
 	public StringOperator? Name { get; init; }
 	public NumberOperator<int>? Age { get; init; }
 	public EnumOperator<Status>? Enum { get; init; }

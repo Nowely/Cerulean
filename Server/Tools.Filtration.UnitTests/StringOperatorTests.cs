@@ -11,7 +11,7 @@ public class StringModel {
 	public required string String { get; set; }
 }
 
-public class StringFilter: IMyFilter {
+public class StringFilter: IFilter {
 	public StringOperator? String { get; set; }
 }
 

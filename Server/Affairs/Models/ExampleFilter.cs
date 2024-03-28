@@ -3,6 +3,7 @@ using Tools.Filtration.Enums;
 using Tools.Filtration.Models;
 using Tools.Filtration.Operators.Number;
 using Tools.Filtration.Operators.String;
+using Tools.Filtration.Types;
 
 namespace Affairs.Models;
 
