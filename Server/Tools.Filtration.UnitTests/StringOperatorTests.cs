@@ -1,5 +1,5 @@
 using AutoFixture.Xunit2;
-using Tools.Filtration.AutoFilterer.Types;
+using Tools.Filtration.Abstractions;
 using Tools.Filtration.Enums;
 using Tools.Filtration.Extensions;
 using Tools.Filtration.Models.Operators;

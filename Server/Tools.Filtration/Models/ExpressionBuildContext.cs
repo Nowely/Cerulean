@@ -1,9 +1,9 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
 using AutoFilterer.Abstractions;
-using Tools.Filtration.AutoFilterer.Types;
+using Tools.Filtration.Abstractions;
 
-namespace Tools.Filtration.AutoFilterer;
+namespace Tools.Filtration.Models;
 
 public record ExpressionBuildContext(
 	Expression? CurrentBody,

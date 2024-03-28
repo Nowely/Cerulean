@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
-using Tools.Filtration.AutoFilterer;
+using Tools.Filtration.Models;
 
 namespace AutoFilterer.Abstractions;
 

@@ -1,10 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
-
+﻿
 namespace AutoFilterer.Attributes;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 public class PossibleSortingsAttribute
 {
     public PossibleSortingsAttribute(params string[] propertyNames)

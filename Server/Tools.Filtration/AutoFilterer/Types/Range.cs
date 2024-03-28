@@ -1,9 +1,5 @@
-﻿using AutoFilterer.Abstractions;
-using AutoFilterer.Extensions;
-using System;
-using System.Linq.Expressions;
-using System.Reflection;
-using Tools.Filtration.AutoFilterer;
+﻿using System.Linq.Expressions;
+using Tools.Filtration.Models;
 
 namespace AutoFilterer.Types;
 

@@ -2,9 +2,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using AutoFilterer.Abstractions;
 using AutoFilterer.Extensions;
+using Tools.Filtration.Abstractions;
 using Tools.Filtration.AutoFilterer;
-using Tools.Filtration.AutoFilterer.Types;
 using Tools.Filtration.Enums;
+using Tools.Filtration.Models;
 
 namespace Tools.Filtration.Extensions;
 
