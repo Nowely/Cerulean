@@ -1,11 +1,10 @@
 using System.Linq.Expressions;
 using System.Reflection;
-using AutoFilterer;
 using AutoFilterer.Abstractions;
-using AutoFilterer.Attributes;
 using AutoFilterer.Extensions;
 using Tools.Filtration.AutoFilterer;
 using Tools.Filtration.AutoFilterer.Types;
+using Tools.Filtration.Enums;
 
 namespace Tools.Filtration.Extensions;
 

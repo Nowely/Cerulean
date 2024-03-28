@@ -7,15 +7,17 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Tools.Filtration.Enums;
 
 namespace AutoFilterer.Types;
+
 
 public class OrderableBase : IOrderable
 {
     private static readonly MethodInfo orderBy = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderBy));
     private static readonly MethodInfo orderByDescending = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderByDescending));
 
-    public virtual Sorting SortBy { get; set; }
+    public virtual SortDirection SortBy { get; set; }
     public virtual string Sort { get; }
 
     public virtual IOrderedQueryable<TSource> ApplyOrder<TSource>(IQueryable<TSource> queryable)

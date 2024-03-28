@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Tools.Filtration.Enums;
 
 namespace AutoFilterer.Extensions;
 

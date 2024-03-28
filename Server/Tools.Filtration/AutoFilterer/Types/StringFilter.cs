@@ -8,6 +8,7 @@ using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using Tools.Filtration.AutoFilterer;
+using Tools.Filtration.Enums;
 
 namespace AutoFilterer.Types;
 

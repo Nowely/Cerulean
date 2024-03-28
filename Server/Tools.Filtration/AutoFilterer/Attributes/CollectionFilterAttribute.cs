@@ -10,6 +10,13 @@ using Tools.Filtration.AutoFilterer;
 
 namespace AutoFilterer.Attributes;
 
+[Flags]
+public enum CollectionFilterType
+{
+	Any,
+	All,
+}
+
 public class CollectionFilterAttribute
 {
     public CollectionFilterAttribute()

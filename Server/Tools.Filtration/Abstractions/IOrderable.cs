@@ -1,9 +1,11 @@
 ﻿
+using Tools.Filtration.Enums;
+
 namespace AutoFilterer.Abstractions;
 
 public interface IOrderable
 {
-  Sorting SortBy { get; set; }
+  SortDirection SortBy { get; set; }
 
    string Sort { get; }
 
