@@ -10,13 +10,13 @@ namespace Tools.Filtration.UnitTests;
 public record Model_OneString(string Name);
 
 public class ModelFilter_OneString: IMyFilter {
-	public StringOperator Name { get; set; }
+	public required StringOperator Name { get; init; }
 }
 
 
 public class Model_TwoString {
-	public string Name { get; set; }
-	public string LastName { get; set;}
+	public required string Name { get; set; }
+	public required string LastName { get; set;}
 }
 
 public class ModelFilter_TwoString: IMyFilter {

@@ -21,12 +21,12 @@ public class NumberModel {
 public class NumberFilter: IMyFilter {
 	public NumberOperator<int>? Int { get; set; }
 	public NumberOperator<int?>? NInt { get; set; }
-	public NumberOperator<double> Double { get; set; }
-	public NumberOperator<double?> NDouble { get; set; }
-	public NumberOperator<decimal> Decimal { get; set; }
-	public NumberOperator<decimal?> NDecimal { get; set; }
-	public NumberOperator<float> Float { get; set; }
-	public NumberOperator<float?> NFloat { get; set; }
+	public NumberOperator<double>? Double { get; set; }
+	public NumberOperator<double?>? NDouble { get; set; }
+	public NumberOperator<decimal>? Decimal { get; set; }
+	public NumberOperator<decimal?>? NDecimal { get; set; }
+	public NumberOperator<float>? Float { get; set; }
+	public NumberOperator<float?>? NFloat { get; set; }
 }
 
 public class NumberOperatorTests {

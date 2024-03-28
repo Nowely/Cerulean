@@ -12,7 +12,7 @@ public class OrderableBase : IOrderable
     private static readonly MethodInfo OrderByDescending = typeof(Queryable).GetMethods().First(x => x.Name == nameof(Queryable.OrderByDescending));
 
     public virtual SortDirection SortBy { get; set; }
-    public virtual string Sort { get; }
+    public virtual string Sort { get; } = String.Empty;
 
     public virtual IOrderedQueryable<TSource> ApplyOrder<TSource>(IQueryable<TSource> queryable)
     {
@@ -26,8 +26,8 @@ public class OrderableBase : IOrderable
 
         var parameter = Expression.Parameter(typeof(TSource), "o");
 
-        var property = GetMemberExpression(parameter, orderable.Sort);
-        var lambda = Expression.Lambda(property, parameter);
+        /*var property = GetMemberExpression(parameter, orderable.Sort);
+        var lambda = Expression.Lambda(property, parameter);*/
 
         /*var attribute = orderable.GetType().GetCustomAttribute<PossibleSortingsAttribute>();
         if (attribute != null && !attribute.PropertyNames.Contains(orderable.Sort))
@@ -45,7 +45,7 @@ public class OrderableBase : IOrderable
         throw new InvalidOperationException("Invalid Sorting type in ApplyOrder method");
     }
 
-    private static MemberExpression GetMemberExpression(Expression parameter, string name)
+    /*private static MemberExpression GetMemberExpression(Expression parameter, string name)
     {
         if (!name.Contains("."))
             return Expression.Property(parameter, name);
@@ -57,5 +57,5 @@ public class OrderableBase : IOrderable
         }
 
         return expression as MemberExpression;
-    }
+    }*/
 }

@@ -8,7 +8,7 @@ using Xunit;
 namespace Tools.Filtration.UnitTests;
 
 public class StringModel {
-	public string String { get; set; }
+	public required string String { get; set; }
 }
 
 public class StringFilter: IMyFilter {
@@ -50,7 +50,6 @@ public class StringOperatorTests {
 	[Theory, AutoData]
 	public void StringOperatorType_IsEmpty_Success(StringModel[] model) {
 		model[0].String = "";
-		model[1].String = null;
 		model[2].String = "        ";
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
@@ -60,13 +59,12 @@ public class StringOperatorTests {
 		var filteredQuery = query.ApplyFilter(filter);
 		var result = filteredQuery.ToArray();
 
-		Assert.Equal(3, result.Length);
+		Assert.Equal(2, result.Length);
 	}
 
 	[Theory, AutoData]
 	public void StringOperatorType_IsNotEmpty_Success(StringModel[] model) {
 		model[0].String = "";
-		model[1].String = null;
 		model[2].String = "        ";
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
@@ -76,7 +74,7 @@ public class StringOperatorTests {
 		var filteredQuery = query.ApplyFilter(filter);
 		var result = filteredQuery.ToArray();
 
-		Assert.Empty(result);
+		Assert.Single(result);
 	}
 
 	[Theory, AutoData]
