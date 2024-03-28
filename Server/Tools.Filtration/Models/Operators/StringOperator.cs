@@ -9,7 +9,7 @@ namespace Tools.Filtration.Models.Operators;
 //TODO pass options
 public record StringFilterOption(StringComparison? Comparison, RegexOptions RegexOptions);
 
-public record StringOperator(StringOperatorType Type, string? Value = null) : IFilterableType {
+public record StringOperator(StringOperatorType Type, string? Value = null) : IFilterOperator {
 	private Expression Filter => Property(Expression.Constant(this), nameof(Value));
 
 	public Expression? BuildExpressionFor(MemberExpression target) => Type switch {

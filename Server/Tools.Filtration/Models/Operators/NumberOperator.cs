@@ -5,7 +5,7 @@ using static System.Linq.Expressions.Expression;
 
 namespace Tools.Filtration.Models.Operators;
 
-public record NumberOperator<T>(NumberOperatorType Type, T? Value = default) : IFilterableType {
+public record NumberOperator<T>(NumberOperatorType Type, T? Value = default) : IFilterOperator {
 	private Expression Filter => Property(Expression.Constant(this), nameof(Value));
 
 	public Expression? BuildExpressionFor(MemberExpression target) => Type switch {
@@ -23,9 +23,6 @@ public record NumberOperator<T>(NumberOperatorType Type, T? Value = default) : I
 		_ => null
 	};
 
-	private static BinaryExpression IsEmpty(Expression target) => //Or(
-		//Equal(target, Constant(null)),
-		Equal(target, Constant(default(T)))
-	//)
+	private static BinaryExpression IsEmpty(Expression target) => Equal(target, Constant(default(T)))
 	;
 }

@@ -1,6 +1,4 @@
 ﻿using System.Linq.Expressions;
-using System.Reflection;
-using Tools.Filtration.Models;
 
 namespace Tools.Filtration.Abstractions;
 
@@ -12,7 +10,7 @@ namespace Tools.Filtration.Abstractions;
 /// </item>
 /// </list>
 /// </summary>
-public interface IFilterableType
+public interface IFilterOperator
 {
     Expression? BuildExpressionFor(MemberExpression target);
 }

@@ -27,12 +27,13 @@ public static class FilterExtensions {
 		Expression? bodyExpression = null;
 
 		foreach (var (filterProperty, targetProperty) in GetPropertyPairs(targetType, filter)) {
-			if (filterProperty.GetValue(filter) is not IFilterableType filterOperator) continue;
+			if (filterProperty.GetValue(filter) is not IFilterOperator filterOperator) continue;
 
 			var target = Expression.Property(parameter, targetProperty.Name);
 
 			var expression = filterOperator.BuildExpressionFor(target);
-			bodyExpression = bodyExpression.Combine(expression, CombineType.And);
+			if(expression is not null)
+				bodyExpression = expression.Combine(bodyExpression, CombineType.And);
 		}
 
 		return bodyExpression;
