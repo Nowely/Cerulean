@@ -4,8 +4,9 @@ using Afftration.Enums;
 namespace Afftration.Extensions;
 
 public static class ExpressionExtensions {
-	public static Expression Combine(this Expression left, Expression? right, CombineType combineType) {
+	public static Expression? Combine(this Expression? left, Expression? right, CombineType combineType) {
 		if (right == null) return left;
+		if (left == null) return right;
 
 		return combineType switch {
 			CombineType.And => Expression.AndAlso(left, right),

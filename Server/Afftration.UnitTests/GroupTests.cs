@@ -1,10 +1,6 @@
 using AutoFixture.Xunit2;
-using Afftration.Abstractions;
 using Afftration.Enums;
 using Afftration.Extensions;
-using Afftration.Models;
-using Afftration.Operators.Date;
-using Afftration.Operators.Enum;
 using Afftration.Operators.Number;
 using Afftration.Operators.String;
 using Afftration.Types;
@@ -52,6 +48,27 @@ public class GroupTests {
 
 		Assert.Single(result);
 		Assert.Equal(result.First(), affairs[0]);
+	}
+
+	[Theory, AutoData]
+	public void FilterGroup_CombineTypeOr_Success(Affair[] affairs) {
+		affairs[0].Name = "Aurora";
+		affairs[1].Age = 4;
+		var query = affairs.AsQueryable();
+		var filter = new FilterGroup<AffairFilter> {
+			Type = CombineType.Or,
+			Where = [
+				AffairFilter.ForName(StringOperatorType.Is, "Aurora"),
+				AffairFilter.ForAge(NumberOperatorType.Equal, 4),
+			]
+		};
+
+		var filteredQuery = query.ApplyFilter(filter);
+		var result = filteredQuery.ToArray();
+
+		Assert.Equal(2, result.Length);
+		Assert.Equal(result[0], affairs[0]);
+		Assert.Equal(result[1], affairs[1]);
 	}
 
 	/*[Theory, AutoData]

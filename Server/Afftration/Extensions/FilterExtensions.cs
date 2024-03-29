@@ -31,7 +31,7 @@ public static class FilterExtensions {
 		return body is null ? null : Expression.Lambda<Func<TEntity, bool>>(body, parameter);
 	}
 
-	private static Expression? BuildBodyExpression(Type targetType, IFilter filter, Expression parameter) {
+	internal static Expression? BuildBodyExpression(Type targetType, IFilter filter, Expression parameter) {
 		Expression? bodyExpression = null;
 
 		foreach (var (filterProperty, targetProperty) in GetPropertyPairs(targetType, filter)) {
@@ -40,8 +40,7 @@ public static class FilterExtensions {
 			var target = Expression.Property(parameter, targetProperty.Name);
 
 			var expression = filterOperator.BuildExpressionFor(target);
-			if (expression is not null)
-				bodyExpression = expression.Combine(bodyExpression, CombineType.And);
+			bodyExpression = expression.Combine(bodyExpression, CombineType.And);
 		}
 
 		return bodyExpression;

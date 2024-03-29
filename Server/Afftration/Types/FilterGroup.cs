@@ -21,22 +21,16 @@ public record FilterGroup<T> where T : IFilter {
 	}
 
 	private Expression? BuildBodyExpression(Type targetType, Expression parameter) {
-		Expression? bodyExpression = null;
-
-		foreach (var (filterProperty, targetProperty) in GetPropertyPairs(targetType, this)) {
-			if (filterProperty.GetValue(this) is not IFilterOperator filterOperator) continue;
-
-			var target = Expression.Property(parameter, targetProperty.Name);
-
-			var expression = filterOperator.BuildExpressionFor(target);
-			if (expression is not null)
-				bodyExpression = expression.Combine(bodyExpression, Type);
-		}
-
-		return bodyExpression;
+		return Where
+			   .Select(filterModel => FilterExtensions.BuildBodyExpression(targetType, filterModel, parameter))
+			   .OfType<Expression>()
+			   .Aggregate<Expression?, Expression?>(
+				   null,
+				   (current, expression) => expression.Combine(current, Type)
+			   );
 	}
 
-	private static IEnumerable<PropertyPair> GetPropertyPairs<TFilterModel>(
+	/*private static IEnumerable<PropertyPair> GetPropertyPairs<TFilterModel>(
 		Type targetType, FilterGroup<TFilterModel> filter
 	) where TFilterModel : IFilter =>
 		filter
@@ -44,5 +38,5 @@ public record FilterGroup<T> where T : IFilter {
 			.GetProperties()
 			.Select(filterProperty =>
 				(filterProperty, targetProperty: targetType.GetProperty(filterProperty.Name)))
-			.Where(tuple => tuple.targetProperty is not null)!;
+			.Where(tuple => tuple.targetProperty is not null)!;*/
 }
