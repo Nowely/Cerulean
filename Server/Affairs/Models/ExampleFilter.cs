@@ -1,9 +1,9 @@
 using Affairs.Models.Affair;
-using Tools.Filtration.Enums;
-using Tools.Filtration.Models;
-using Tools.Filtration.Operators.Number;
-using Tools.Filtration.Operators.String;
-using Tools.Filtration.Types;
+using Afftration.Enums;
+using Afftration.Models;
+using Afftration.Operators.Number;
+using Afftration.Operators.String;
+using Afftration.Types;
 
 namespace Affairs.Models;
 

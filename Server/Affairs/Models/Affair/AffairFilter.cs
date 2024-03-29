@@ -1,10 +1,11 @@
+using Afftration.Abstractions;
+using Afftration.Models;
+using Afftration.Operators.Date;
+using Afftration.Operators.Enum;
+using Afftration.Operators.Number;
+using Afftration.Operators.String;
+using Afftration.Types;
 using Tools.Filtration.Abstractions;
-using Tools.Filtration.Models;
-using Tools.Filtration.Operators.Date;
-using Tools.Filtration.Operators.Enum;
-using Tools.Filtration.Operators.Number;
-using Tools.Filtration.Operators.String;
-using Tools.Filtration.Types;
 
 namespace Affairs.Models.Affair;
 
