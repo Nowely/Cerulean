@@ -20,7 +20,7 @@ public record FilterGroup<T> where T : IFilter {
 		return body is null ? null : Expression.Lambda<Func<TEntity, bool>>(body, parameter);
 	}
 
-	private Expression? BuildBodyExpression(Type targetType, Expression parameter) {
+	public Expression? BuildBodyExpression(Type targetType, Expression parameter) {
 		return Where
 			   .Select(filterModel => FilterExtensions.BuildBodyExpression(targetType, filterModel, parameter))
 			   .OfType<Expression>()
@@ -29,14 +29,4 @@ public record FilterGroup<T> where T : IFilter {
 				   (current, expression) => expression.Combine(current, Type)
 			   );
 	}
-
-	/*private static IEnumerable<PropertyPair> GetPropertyPairs<TFilterModel>(
-		Type targetType, FilterGroup<TFilterModel> filter
-	) where TFilterModel : IFilter =>
-		filter
-			.GetType()
-			.GetProperties()
-			.Select(filterProperty =>
-				(filterProperty, targetProperty: targetType.GetProperty(filterProperty.Name)))
-			.Where(tuple => tuple.targetProperty is not null)!;*/
 }

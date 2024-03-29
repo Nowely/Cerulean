@@ -71,16 +71,41 @@ public class GroupTests {
 		Assert.Equal(result[1], affairs[1]);
 	}
 
-	/*[Theory, AutoData]
-	public void FilterGroup_Success1(Affair[] affairs) {
+	[Theory, AutoData]
+	public void FilterSubGroup_CombineTypeAnd_Success(Affair[] affairs) {
 		affairs[0].Name = "Aurora";
 		affairs[0].Age = 4;
 		var query = affairs.AsQueryable();
 		var filter = new FilterGroup<AffairFilter> {
 			Type = CombineType.And,
 			Where = [
-				AffairFilter.ForName(StringOperatorType.Is, "Aurora"),
-				AffairFilter.ForAge(NumberOperatorType.Equal, 4),
+				AffairFilter.WithSubGroups([
+					new() {
+						Type = CombineType.And,
+						Where = [
+							AffairFilter.ForName(StringOperatorType.Is, "Aurora"),
+							AffairFilter.ForAge(NumberOperatorType.Equal, 4),
+						]
+					}
+				])
+			]
+		};
+
+		var filteredQuery = query.ApplyFilter(filter);
+		var result = filteredQuery.ToArray();
+
+		Assert.Single(result);
+		Assert.Equal(result.First(), affairs[0]);
+	}
+
+	[Theory, AutoData]
+	public void FilterSubGroup_CombineTypeOr_Success(Affair[] affairs) {
+		affairs[0].Name = "Aurora";
+		affairs[1].Age = 4;
+		var query = affairs.AsQueryable();
+		var filter = new FilterGroup<AffairFilter> {
+			Type = CombineType.And,
+			Where = [
 				AffairFilter.WithSubGroups([
 					new() {
 						Type = CombineType.Or,
@@ -92,5 +117,12 @@ public class GroupTests {
 				])
 			]
 		};
-	}*/
+
+		var filteredQuery = query.ApplyFilter(filter);
+		var result = filteredQuery.ToArray();
+
+		Assert.Equal(2, result.Length);
+		Assert.Equal(result[0], affairs[0]);
+		Assert.Equal(result[1], affairs[1]);
+	}
 }

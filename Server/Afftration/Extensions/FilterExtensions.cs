@@ -8,7 +8,7 @@ using Tools.Filtration.Abstractions;
 
 namespace Afftration.Extensions;
 
-using PropertyPair = (PropertyInfo filterProperty, PropertyInfo targetProperty);
+using PropertyPair = (PropertyInfo filterProperty, PropertyInfo? targetProperty);
 
 public static class FilterExtensions {
 	public static IQueryable<TEntity> ApplyFilter<TEntity, TFilterModel>(
@@ -35,12 +35,24 @@ public static class FilterExtensions {
 		Expression? bodyExpression = null;
 
 		foreach (var (filterProperty, targetProperty) in GetPropertyPairs(targetType, filter)) {
-			if (filterProperty.GetValue(filter) is not IFilterOperator filterOperator) continue;
+			if (filterProperty.GetValue(filter) is IFilterOperator filterOperator) {
 
-			var target = Expression.Property(parameter, targetProperty.Name);
+				var target = Expression.Property(parameter, targetProperty!.Name);
 
-			var expression = filterOperator.BuildExpressionFor(target);
-			bodyExpression = expression.Combine(bodyExpression, CombineType.And);
+				var expression = filterOperator.BuildExpressionFor(target);
+				bodyExpression = expression.Combine(bodyExpression, CombineType.And);
+			} else if (filterProperty.GetValue(filter) is object[] filterGroups) {
+				foreach (var group in filterGroups) {
+					var methodInfo = group.GetType().GetMethod("BuildBodyExpression");
+					object? result = methodInfo?.Invoke(group, [targetType, parameter]);
+					var combineType = group.GetType().GetProperty("Type")?.GetValue(filter);
+					if (result is Expression expression && combineType is CombineType type) {
+						bodyExpression = expression.Combine(bodyExpression, type);
+					}
+					//var expression = group.BuildBodyExpression(targetType, parameter);
+					//bodyExpression = expression.Combine(bodyExpression, CombineType.And);
+				}
+			}
 		}
 
 		return bodyExpression;
@@ -52,5 +64,5 @@ public static class FilterExtensions {
 			.GetProperties()
 			.Select(filterProperty =>
 				(filterProperty, targetProperty: targetType.GetProperty(filterProperty.Name)))
-			.Where(tuple => tuple.targetProperty is not null)!;
+			/*.Where(tuple => tuple.targetProperty is not null || tuple.filterProperty is FilterGroup<IFilter>[])!*/;
 }
