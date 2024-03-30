@@ -4,8 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Affairs.API;
 
-public record GetAllRequest : AffairServices {
-	[FromQuery]
+public record GetByIdRequest : AffairServices {
+	public Guid Id { get; set; }
+}
+
+public record GetAllPostRequest : AffairServices {
+	[FromBody]
 	public AffairFilter? Filter { get; set; }
 }
 
