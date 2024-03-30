@@ -6,9 +6,8 @@ namespace Tools.ServiceDefaults;
 
 public static partial class Extensions {
 	public static IHostApplicationBuilder AddDefaultOpenApi(this IHostApplicationBuilder builder) {
-		// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 		builder.Services.AddEndpointsApiExplorer();
-		builder.Services.AddOpenApiDocument();
+		builder.Services.AddSwaggerGen();
 
 		return builder;
 	}
@@ -16,8 +15,8 @@ public static partial class Extensions {
 	public static IApplicationBuilder UseDefaultOpenApi(this WebApplication app) {
 		if (!app.Environment.IsDevelopment()) return app;
 
-		app.UseOpenApi();
-		app.UseSwaggerUi();
+		app.UseSwagger();
+		app.UseSwaggerUI();
 
 		return app;
 	}
