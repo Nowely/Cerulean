@@ -1,29 +1,16 @@
+using Affairs.Infrastructure;
 using Affairs.Models.Affair;
 using Affairs.Models.Affair.Dto;
-using Microsoft.AspNetCore.Mvc;
+using Affairs.Models.Requests;
 
 namespace Affairs.API;
 
-public record GetByIdRequest : AffairServices {
-	public Guid Id { get; set; }
-}
+public record GetByIdRequest : IdRequest<AffairContext>;
 
-public record GetAllPostRequest : AffairServices {
-	[FromBody]
-	public AffairFilter? Filter { get; set; }
-}
+public record GetAllPostRequest : FilterableRequest<AffairContext, AffairFilter>;
 
-public record CreateRequest : AffairServices {
-	[FromBody]
-	public required AffairAdd Affair { get; set; }
-}
+public record CreateRequest : DtoRequest<AffairContext, AffairAdd>;
 
-public record UpdateRequest : AffairServices {
-	[FromBody]
-	public required AffairUpdate Affair { get; set; }
-}
+public record UpdateRequest : DtoRequest<AffairContext, AffairUpdate>;
 
-public record DeleteRequest : AffairServices {
-	[FromBody]
-	public required Guid[] Ids { get; set; }
-}
+public record DeleteRequest : IdsRequest<AffairContext, Guid>;

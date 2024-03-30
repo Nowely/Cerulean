@@ -25,7 +25,8 @@ public static class AffairApi {
 	}
 
 	public static async GetResponse GetById([AsParameters] GetByIdRequest request) {
-		var affairs = await request.Context.Affair
+		var affairs = await request.Db
+								   .Affair
 								   .ToDto()
 								   .FirstOrDefaultAsync(affair => affair.Id == request.Id);
 
@@ -33,7 +34,8 @@ public static class AffairApi {
 	}
 
 	public static async GetAllResponse GetByFilter([AsParameters] GetAllPostRequest request) {
-		var affairs = await request.Context.Affair
+		var affairs = await request.Db
+								   .Affair
 								   .ApplyFilter(request.Filter)
 								   .ToDto()
 								   .ToArrayAsync();
@@ -42,31 +44,31 @@ public static class AffairApi {
 	}
 
 	public static async CreateResponse Create([AsParameters] CreateRequest request) {
-		var entity = request.Affair.ToEntity();
+		var entity = request.Dto.ToEntity();
 
-		request.Context.Affair.Add(entity);
+		request.Db.Affair.Add(entity);
 
-		await request.Context.SaveChangesAsync();
+		await request.Db.SaveChangesAsync();
 		return Created("", entity.ToDto());
 	}
 
 	public static async UpdateResponse Update([AsParameters] UpdateRequest request) {
-		var entity = await request.Context.Affair.FindAsync(request.Affair.Id);
+		var entity = await request.Db.Affair.FindAsync(request.Dto.Id);
 		if (entity is null) return NotFound();
 
-		request.Affair.ApplyUpdateTo(entity);
-		request.Context.Affair.Update(entity);
+		request.Dto.ApplyUpdateTo(entity);
+		request.Db.Affair.Update(entity);
 
-		await request.Context.SaveChangesAsync();
+		await request.Db.SaveChangesAsync();
 		return Created("", entity.ToDto());
 	}
 
 	public static async DeleteResponse Delete([AsParameters] DeleteRequest request) {
 		var entities = request.Ids.Select(id => new Affair {Id = id});
 
-		request.Context.Affair.RemoveRange(entities);
+		request.Db.Affair.RemoveRange(entities);
 
-		await request.Context.SaveChangesAsync();
+		await request.Db.SaveChangesAsync();
 		return NoContent();
 	}
 }
