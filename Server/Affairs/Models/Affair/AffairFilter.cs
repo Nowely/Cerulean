@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Afftration.Operators.String;
-using Afftration.Types;
+using Afilter.Operators.String;
+using Afilter.Types;
 using Tools.Filtration.Abstractions;
 
 namespace Affairs.Models.Affair;
