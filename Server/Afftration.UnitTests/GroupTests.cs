@@ -26,7 +26,7 @@ public record AffairFilter : IFilter {
 	public static AffairFilter ForName(StringOperatorType type, string? value) => new() { Name = new(type, value) };
 	public static AffairFilter ForAge(NumberOperatorType type, int value) => new() { Age = new(type, value) };
 
-	public static AffairFilter WithSubGroups(FilterGroup<AffairFilter>[] groups) => new() { Groups = groups };
+	public static AffairFilter WithGroups(FilterGroup<AffairFilter>[] groups) => new() { Groups = groups };
 }
 
 public class GroupTests {
@@ -79,7 +79,7 @@ public class GroupTests {
 		var filter = new FilterGroup<AffairFilter> {
 			Type = CombineType.And,
 			Where = [
-				AffairFilter.WithSubGroups([
+				AffairFilter.WithGroups([
 					new() {
 						Type = CombineType.And,
 						Where = [
@@ -106,7 +106,7 @@ public class GroupTests {
 		var filter = new FilterGroup<AffairFilter> {
 			Type = CombineType.And,
 			Where = [
-				AffairFilter.WithSubGroups([
+				AffairFilter.WithGroups([
 					new() {
 						Type = CombineType.Or,
 						Where = [
