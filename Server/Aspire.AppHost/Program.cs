@@ -10,10 +10,10 @@ var affairs = builder
 var clientWeb = builder
 			  .AddProject<Projects.ClientWeb>("ClientWeb");
 
-//TODO to ClientWeb
-/*builder
+builder
 	.AddNpmApp("Client", "../../Client", "dev")
-	.WithReference(affairs)
-	.WithEndpoint(3000, scheme: "https", env: "PORT");*/
+	.WithReference(clientWeb)
+	.WithEndpoint(3000, scheme: "https", env: "PORT")
+	.ExcludeFromManifest();
 
 builder.Build().Run();
