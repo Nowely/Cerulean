@@ -7,7 +7,9 @@ namespace Tools.ServiceDefaults;
 public static partial class Extensions {
 	public static IHostApplicationBuilder AddDefaultOpenApi(this IHostApplicationBuilder builder) {
 		builder.Services.AddEndpointsApiExplorer();
-		builder.Services.AddSwaggerGen();
+		builder.Services.AddSwaggerGen(options => {
+			//options.IncludeXmlComments();
+		});
 
 		return builder;
 	}
