@@ -7,9 +7,6 @@ namespace Affairs.API;
 public record GetAllRequest : AffairServices {
 	[FromQuery]
 	public AffairFilter? Filter { get; set; }
-
-	[FromBody]
-	public AffairFilter? Filter1 { get; set; }
 }
 
 public record CreateRequest : AffairServices {
