@@ -20,6 +20,7 @@ public record NumberOperator<T>(NumberOperatorType Type, T? Value = default) : I
 
 			NumberOperatorType.IsEmpty => IsEmpty(target),
 			NumberOperatorType.IsNotEmpty => Not(IsEmpty(target)),
+
 			_ => null
 		};
 	}
