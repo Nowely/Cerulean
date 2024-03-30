@@ -7,8 +7,6 @@ using Tools.Filtration.Abstractions;
 
 namespace Afilter.Types;
 
-using PropertyPair = (PropertyInfo filterProperty, PropertyInfo targetProperty);
-
 public record FilterGroup<T> where T : IFilter {
 	public CombineType Type { get; set; }
 	public required T[] Where { get; set; }

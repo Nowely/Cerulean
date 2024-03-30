@@ -11,7 +11,7 @@ public enum CollectionFilterType
 	All,
 }
 
-public class CollectionFilterAttribute
+internal class CollectionFilterAttribute
 {
     public CollectionFilterAttribute()
     {

@@ -1,7 +1,7 @@
 ﻿
 namespace Afilter.References.Attributes;
 
-public class PossibleSortingsAttribute
+internal class PossibleSortingsAttribute
 {
     public PossibleSortingsAttribute(params string[] propertyNames)
     {

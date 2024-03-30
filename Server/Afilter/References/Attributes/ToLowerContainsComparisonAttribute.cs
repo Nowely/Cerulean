@@ -6,7 +6,7 @@ namespace Afilter.References.Attributes;
 /// <summary>
 /// This class generates contains query, for string fields.
 /// </summary>
-public class ToLowerContainsComparisonAttribute
+internal class ToLowerContainsComparisonAttribute
 {
     /*public Expression BuildExpressionFor(ExpressionBuildContext context)
     {

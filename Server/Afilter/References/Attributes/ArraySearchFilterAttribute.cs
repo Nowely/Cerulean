@@ -4,7 +4,7 @@ using Afilter.Models;
 
 namespace Afilter.References.Attributes;
 
-public class ArraySearchFilterAttribute
+internal class ArraySearchFilterAttribute
 {
     /*public Expression BuildExpressionFor(ExpressionBuildContext context)
     {
