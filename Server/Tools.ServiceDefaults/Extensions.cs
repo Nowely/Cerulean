@@ -8,7 +8,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-namespace Cerulean.Aspire.ServiceDefaults;
+namespace Tools.ServiceDefaults;
 
 public static partial class Extensions {
 	public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder) {

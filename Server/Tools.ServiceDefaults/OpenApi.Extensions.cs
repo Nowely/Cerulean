@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Cerulean.Aspire.ServiceDefaults;
+namespace Tools.ServiceDefaults;
 
 public static partial class Extensions {
 	public static IHostApplicationBuilder AddDefaultOpenApi(this IHostApplicationBuilder builder) {

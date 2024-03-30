@@ -1,4 +1,4 @@
-using Cerulean.Aspire.ServiceDefaults;
+using Tools.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
