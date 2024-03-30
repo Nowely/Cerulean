@@ -42,17 +42,15 @@ public static class FilterExtensions {
 				var expression = filterOperator.BuildExpressionFor(target);
 				bodyExpression = expression.Combine(bodyExpression, CombineType.And);
 			} else if (filterProperty.GetValue(filter) is object[] filterGroups) {
-				foreach (var group in filterGroups) {
+				foreach (object group in filterGroups) {
 					var methodInfo = group.GetType().GetMethod("BuildBodyExpression");
 					object? result = methodInfo?.Invoke(group, [targetType, parameter]);
-					var combineType = group.GetType().GetProperty("Type")?.GetValue(filter);
-					if (result is Expression expression && combineType is CombineType type) {
-						bodyExpression = expression.Combine(bodyExpression, type);
+					if (result is Expression expression) {
+						bodyExpression = expression.Combine(bodyExpression, CombineType.Or);
 					}
-					//var expression = group.BuildBodyExpression(targetType, parameter);
-					//bodyExpression = expression.Combine(bodyExpression, CombineType.And);
 				}
 			}
+
 		}
 
 		return bodyExpression;

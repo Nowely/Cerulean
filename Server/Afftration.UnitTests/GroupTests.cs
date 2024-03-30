@@ -110,7 +110,7 @@ public class GroupTests {
 					new() {
 						Type = CombineType.Or,
 						Where = [
-							AffairFilter.ForName(StringOperatorType.Is, ""),
+							AffairFilter.ForName(StringOperatorType.Is, "Aurora"),
 							AffairFilter.ForAge(NumberOperatorType.Equal, 4),
 						]
 					}
