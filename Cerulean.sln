@@ -24,7 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{1EE34A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity", "Server\Identity\Identity.csproj", "{6CEB4282-5B32-449C-825B-1B11908A825F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "Server\WebApp\WebApp.csproj", "{93F679A4-F0A7-44A2-AA3C-3190C3C8CD44}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientWeb", "Server\ClientWeb\ClientWeb.csproj", "{93F679A4-F0A7-44A2-AA3C-3190C3C8CD44}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.Shared", "Server\Tools.Shared\Tools.Shared.csproj", "{8BDA8B40-F395-4696-9839-58B9B59CB4E5}"
 EndProject

@@ -1,12 +1,19 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var postgres = builder.AddPostgres("CeruleanDB").AddDatabase("Postgres");
+var postgres = builder.AddPostgres("Postgres").WithPgAdmin();
+var affairDb = postgres.AddDatabase("AffairDb");
 
-var gateway = builder.AddProject<Projects.Affairs>("Gateway")
-					 .WithReference(postgres);
+var affairs = builder
+			  .AddProject<Projects.Affairs>("Affairs")
+			  .WithReference(affairDb);
 
-builder.AddNpmApp("Client", "../../Client", "dev")
-	   .WithReference(gateway)
-	   .WithEndpoint(3000, scheme: "https", env: "PORT");
+var clientWeb = builder
+			  .AddProject<Projects.ClientWeb>("ClientWeb");
+
+//TODO to ClientWeb
+/*builder
+	.AddNpmApp("Client", "../../Client", "dev")
+	.WithReference(affairs)
+	.WithEndpoint(3000, scheme: "https", env: "PORT");*/
 
 builder.Build().Run();

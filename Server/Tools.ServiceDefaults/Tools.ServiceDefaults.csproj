@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <IsAspireSharedProject>true</IsAspireSharedProject>
-    <RootNamespace>Cerulean.Aspire.ServiceDefaults</RootNamespace>
+    <RootNamespace>Tools.ServiceDefaults</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
