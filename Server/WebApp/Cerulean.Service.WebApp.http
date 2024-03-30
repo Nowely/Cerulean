@@ -1,0 +1,6 @@
+@Cerulean.Service.WebApp_HostAddress = http://localhost:5191
+
+GET {{Cerulean.Service.WebApp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
