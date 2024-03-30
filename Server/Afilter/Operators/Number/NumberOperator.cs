@@ -5,23 +5,24 @@ using static System.Linq.Expressions.Expression;
 namespace Afilter.Operators.Number;
 
 public record NumberOperator<T>(NumberOperatorType Type, T? Value = default) : IFilterOperator {
-	private Expression Filter => Property(Expression.Constant(this), nameof(Value));
+	public Expression? BuildExpressionFor(MemberExpression target) {
+		var filter = Property(Expression.Constant(this), nameof(Value));
 
-	public Expression? BuildExpressionFor(MemberExpression target) => Type switch {
-		NumberOperatorType.Equal => Equal(target, Filter),
-		NumberOperatorType.NotEqual => NotEqual(target, Filter),
+		return Type switch {
+			NumberOperatorType.Equal => Equal(target, filter),
+			NumberOperatorType.NotEqual => NotEqual(target, filter),
 
-		NumberOperatorType.Greater => GreaterThan(target, Filter),
-		NumberOperatorType.GreaterOrEqual => GreaterThanOrEqual(target, Filter),
+			NumberOperatorType.Greater => GreaterThan(target, filter),
+			NumberOperatorType.GreaterOrEqual => GreaterThanOrEqual(target, filter),
 
-		NumberOperatorType.Less => LessThan(target, Filter),
-		NumberOperatorType.LessOrEqual => LessThanOrEqual(target, Filter),
+			NumberOperatorType.Less => LessThan(target, filter),
+			NumberOperatorType.LessOrEqual => LessThanOrEqual(target, filter),
 
-		NumberOperatorType.IsEmpty => IsEmpty(target),
-		NumberOperatorType.IsNotEmpty => Not(IsEmpty(target)),
-		_ => null
-	};
+			NumberOperatorType.IsEmpty => IsEmpty(target),
+			NumberOperatorType.IsNotEmpty => Not(IsEmpty(target)),
+			_ => null
+		};
+	}
 
-	private static BinaryExpression IsEmpty(Expression target) => Equal(target, Constant(default(T)))
-	;
+	private static BinaryExpression IsEmpty(Expression target) => Equal(target, Constant(default(T)));
 }
