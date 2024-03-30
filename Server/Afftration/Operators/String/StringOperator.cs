@@ -10,29 +10,31 @@ namespace Afftration.Operators.String;
 public record StringFilterOption(StringComparison? Comparison, RegexOptions RegexOptions);
 
 public record StringOperator(StringOperatorType Type, string? Value = null) : IFilterOperator {
-	private Expression Filter => Property(Expression.Constant(this), nameof(Value));
+	public Expression? BuildExpressionFor(MemberExpression target) {
+		var filter = Property(Expression.Constant(this), nameof(Value));
 
-	public Expression? BuildExpressionFor(MemberExpression target) => Type switch {
-		StringOperatorType.Is => Is(target, Filter),
-		StringOperatorType.IsNot => Not(Is(target, Filter)),
+		return Type switch {
+			StringOperatorType.Is => Is(target, filter),
+			StringOperatorType.IsNot => Not(Is(target, filter)),
 
-		StringOperatorType.IsEmpty => IsEmpty(target),
-		StringOperatorType.IsNotEmpty => Not(IsEmpty(target)),
+			StringOperatorType.IsEmpty => IsEmpty(target),
+			StringOperatorType.IsNotEmpty => Not(IsEmpty(target)),
 
-		StringOperatorType.Contains => Contains(target, Filter),
-		StringOperatorType.NotContains => Not(Contains(target, Filter)),
+			StringOperatorType.Contains => Contains(target, filter),
+			StringOperatorType.NotContains => Not(Contains(target, filter)),
 
-		StringOperatorType.StartsWith => StartsWith(target, Filter),
-		StringOperatorType.NotStartsWith => Not(StartsWith(target, Filter)),
+			StringOperatorType.StartsWith => StartsWith(target, filter),
+			StringOperatorType.NotStartsWith => Not(StartsWith(target, filter)),
 
-		StringOperatorType.EndsWith => EndsWith(target, Filter),
-		StringOperatorType.NotEndsWith => Not(EndsWith(target, Filter)),
+			StringOperatorType.EndsWith => EndsWith(target, filter),
+			StringOperatorType.NotEndsWith => Not(EndsWith(target, filter)),
 
-		StringOperatorType.IsMatch => IsMatch(target, Filter),
-		StringOperatorType.IsNotMatch => Not(IsMatch(target, Filter)),
+			StringOperatorType.IsMatch => IsMatch(target, filter),
+			StringOperatorType.IsNotMatch => Not(IsMatch(target, filter)),
 
-		_ => null
-	};
+			_ => null
+		};
+	}
 
 	private static BinaryExpression Is(Expression target, Expression filter) =>
 		MakeBinary(ExpressionType.Equal, target, filter);

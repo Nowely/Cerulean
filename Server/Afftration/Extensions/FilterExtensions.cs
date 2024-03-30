@@ -19,7 +19,8 @@ public static class FilterExtensions {
 		return lambda is null ? query : query.Where(lambda);
 	}
 
-	public static IQueryable<TEntity> ApplyFilter<TEntity>(this IQueryable<TEntity> query, IFilter filter) {
+	public static IQueryable<TEntity> ApplyFilter<TEntity>(this IQueryable<TEntity> query, IFilter? filter) {
+		if (filter is null) return query;
 		var lambda = BuildLambdaExpression<TEntity>(filter);
 		return lambda is null ? query : query.Where(lambda);
 	}

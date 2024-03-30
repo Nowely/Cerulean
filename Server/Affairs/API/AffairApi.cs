@@ -1,5 +1,6 @@
 using Affairs.Models.Affair;
 using Affairs.Models.Affair.Dto;
+using Afftration.Extensions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.AspNetCore.Http.TypedResults;
@@ -22,7 +23,9 @@ public static class AffairApi {
 	}
 
 	public static async GetAllResponse GetAllItems([AsParameters] GetAllRequest request) {
-		var affairs = await request.Context.Affair.ToDto().ToArrayAsync();
+		var affairs = await request.Context.Affair
+								   .ApplyFilter(request.Filter)
+								   .ToDto().ToArrayAsync();
 
 		return Ok(affairs);
 	}
