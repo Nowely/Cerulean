@@ -3,5 +3,5 @@ using Affairs.Infrastructure;
 namespace Affairs.API;
 
 public record AffairServices {
-	public AffairContext Context { get; set; }
+	public required AffairContext Context { get; set; }
 }

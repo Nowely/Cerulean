@@ -11,9 +11,9 @@ public sealed class AffairContext : DbContext {
 		//DbInitializer.Initialize(this);
 	}
 
-	public DbSet<Affair> Affair { get; set; }
-	public DbSet<Page> Page { get; set; }
-	public DbSet<User> User { get; set; }
+	public DbSet<Affair> Affair => Set<Affair>();
+	public DbSet<Page> Page => Set<Page>();
+	public DbSet<User> User => Set<User>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder) {
 		base.OnModelCreating(modelBuilder);

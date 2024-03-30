@@ -9,15 +9,15 @@ public record GetAllRequest : AffairServices {
 
 public record CreateRequest : AffairServices {
 	[FromBody]
-	public AffairAdd Affair { get; set; }
+	public required AffairAdd Affair { get; set; }
 }
 
 public record UpdateRequest : AffairServices {
 	[FromBody]
-	public AffairUpdate Affair { get; set; }
+	public required AffairUpdate Affair { get; set; }
 }
 
 public record DeleteRequest : AffairServices {
 	[FromBody]
-	public Guid[] Ids { get; set; }
+	public required Guid[] Ids { get; set; }
 }
