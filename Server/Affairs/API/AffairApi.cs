@@ -15,8 +15,8 @@ using DeleteResponse = Task<Results<NoContent, NotFound>>;
 
 public static class AffairApi {
 	public static IEndpointRouteBuilder MapAffairApi(this IEndpointRouteBuilder app) {
-		app.MapGet("/{id:guid}", Get);
-		app.MapPost("/all", GetAll);
+		app.MapGet("/{id:guid}", GetById);
+		app.MapPost("/filter", GetByFilter);
 		app.MapPut("/", Update);
 		app.MapPost("/", Create);
 		app.MapDelete("/", Delete);
@@ -24,7 +24,7 @@ public static class AffairApi {
 		return app;
 	}
 
-	public static async GetResponse Get([AsParameters] GetByIdRequest request) {
+	public static async GetResponse GetById([AsParameters] GetByIdRequest request) {
 		var affairs = await request.Context.Affair
 								   .ToDto()
 								   .FirstOrDefaultAsync(affair => affair.Id == request.Id);
@@ -32,7 +32,7 @@ public static class AffairApi {
 		return Ok(affairs);
 	}
 
-	public static async GetAllResponse GetAll([AsParameters] GetAllPostRequest request) {
+	public static async GetAllResponse GetByFilter([AsParameters] GetAllPostRequest request) {
 		var affairs = await request.Context.Affair
 								   .ApplyFilter(request.Filter)
 								   .ToDto()
