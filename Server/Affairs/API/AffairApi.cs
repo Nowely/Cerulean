@@ -7,12 +7,6 @@ using static Microsoft.AspNetCore.Http.TypedResults;
 
 namespace Affairs.API;
 
-using GetResponse = Task<Results<Ok<AffairGet>, BadRequest<string>>>;
-using GetAllResponse = Task<Results<Ok<AffairGet[]>, BadRequest<string>>>;
-using CreateResponse = Task<Created<AffairGet>>;
-using UpdateResponse = Task<Results<Created<AffairGet>, NotFound>>;
-using DeleteResponse = Task<Results<NoContent, NotFound>>;
-
 public static class AffairApi {
 	public static IEndpointRouteBuilder MapAffairApi(this IEndpointRouteBuilder app) {
 		app.MapGet("/{id:guid}", GetById);
@@ -24,35 +18,38 @@ public static class AffairApi {
 		return app;
 	}
 
-	public static async GetResponse GetById([AsParameters] GetByIdRequest request) {
-		var affairs = await request.Db
-								   .Affair
-								   .ToDto()
-								   .FirstOrDefaultAsync(affair => affair.Id == request.Id);
-
-		return Ok(affairs);
+	public static async Task<Results<Ok<AffairGet>, NotFound, BadRequest<string>>> GetById(
+		[AsParameters] GetByIdRequest request) {
+		var affair = await request.Db
+								  .Affair
+								  .ToDto()
+								  .FirstOrDefaultAsync(affair => affair.Id == request.Id);
+		return Response.Get(affair);
 	}
 
-	public static async GetAllResponse GetByFilter([AsParameters] GetAllPostRequest request) {
+	public static async Task<Results<Ok<AffairGet[]>, BadRequest<string>>> GetByFilter(
+		[AsParameters] GetAllPostRequest request) {
 		var affairs = await request.Db
 								   .Affair
 								   .ApplyFilter(request.Filter)
 								   .ToDto()
 								   .ToArrayAsync();
 
-		return Ok(affairs);
+		return Response.Get(affairs, []);
 	}
 
-	public static async CreateResponse Create([AsParameters] CreateRequest request) {
+	public static async Task<Results<Created<AffairGet>, BadRequest<string>>> Create(
+		[AsParameters] CreateRequest request) {
 		var entity = request.Dto.ToEntity();
 
 		request.Db.Affair.Add(entity);
 
 		await request.Db.SaveChangesAsync();
-		return Created("", entity.ToDto());
+		return Response.Create(entity.ToDto());
 	}
 
-	public static async UpdateResponse Update([AsParameters] UpdateRequest request) {
+	public static async Task<Results<Created<AffairGet>, NotFound, BadRequest<string>>> Update(
+		[AsParameters] UpdateRequest request) {
 		var entity = await request.Db.Affair.FindAsync(request.Dto.Id);
 		if (entity is null) return NotFound();
 
@@ -60,15 +57,16 @@ public static class AffairApi {
 		request.Db.Affair.Update(entity);
 
 		await request.Db.SaveChangesAsync();
-		return Created("", entity.ToDto());
+		return Response.Update(entity.ToDto());
 	}
 
-	public static async DeleteResponse Delete([AsParameters] DeleteRequest request) {
-		var entities = request.Ids.Select(id => new Affair {Id = id});
+	public static async Task<Results<NoContent, NotFound, BadRequest<string>>> Delete(
+		[AsParameters] DeleteRequest request) {
+		var entities = request.Ids.Select(id => new Affair { Id = id });
 
 		request.Db.Affair.RemoveRange(entities);
 
 		await request.Db.SaveChangesAsync();
-		return NoContent();
+		return Response.Delete();
 	}
 }
