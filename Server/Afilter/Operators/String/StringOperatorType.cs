@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
+using Afilter.Internals;
+
 namespace Afilter.Operators.String;
 
-//Right is string
+[JsonConverter(typeof(JsonStringOrNumberEnumConverter<StringOperatorType>))]
 public enum StringOperatorType {
 	Is,
 	IsNot,
@@ -12,8 +15,10 @@ public enum StringOperatorType {
 	NotEndsWith,
 	IsMatch,
 	IsNotMatch,
+
 	/// <summary> Apply IsNullOrWhiteSpace </summary>
 	IsEmpty,
+
 	/// <summary> Apply not IsNullOrWhiteSpace </summary>
 	IsNotEmpty,
 }

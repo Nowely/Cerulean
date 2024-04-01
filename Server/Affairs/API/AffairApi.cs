@@ -51,7 +51,7 @@ public static class AffairApi {
 	public static async Task<Results<Created<AffairGet>, NotFound, BadRequest<string>>> Update(
 		[AsParameters] UpdateRequest request) {
 		var entity = await request.Db.Affair.FindAsync(request.Dto.Id);
-		if (entity is null) return Response.Update<>(null);
+		if (entity is null) return Response.Update<AffairGet>(null);
 
 		request.Dto.ApplyUpdateTo(entity);
 		request.Db.Affair.Update(entity);
