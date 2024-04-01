@@ -3,7 +3,7 @@ using Affairs.Models.Affair.Dto;
 using Afilter.Extensions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.AspNetCore.Http.TypedResults;
+using Tools.API;
 
 namespace Affairs.API;
 
@@ -51,7 +51,7 @@ public static class AffairApi {
 	public static async Task<Results<Created<AffairGet>, NotFound, BadRequest<string>>> Update(
 		[AsParameters] UpdateRequest request) {
 		var entity = await request.Db.Affair.FindAsync(request.Dto.Id);
-		if (entity is null) return NotFound();
+		if (entity is null) return Response.Update<>(null);
 
 		request.Dto.ApplyUpdateTo(entity);
 		request.Db.Affair.Update(entity);

@@ -1,19 +1,20 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace Affairs.API;
+namespace Tools.API;
 
 public static class Response {
 	public static Results<Ok<TGet>, NotFound, BadRequest<string>>
-		Get<TGet>(TGet? result) => result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
+		Get<TGet>(TGet? value) => value is null ? TypedResults.NotFound() : TypedResults.Ok(value);
 
 	public static Results<Ok<TGet>, BadRequest<string>>
-		Get<TGet>(TGet? result, TGet @default) => TypedResults.Ok(result ?? @default);
+		Get<TGet>(TGet? value, TGet @default) => TypedResults.Ok(value ?? @default);
 
 	public static Results<Created<TGet>, BadRequest<string>>
-		Create<TGet>(TGet result) => TypedResults.Created("", result);
+		Create<TGet>(TGet value) => TypedResults.Created("", value);
 
 	public static Results<Created<TUpdate>, NotFound, BadRequest<string>>
-		Update<TUpdate>(TUpdate? result) => result is null ? TypedResults.NotFound() : TypedResults.Created("", result);
+		Update<TUpdate>(TUpdate? value) => value is null ? TypedResults.NotFound() : TypedResults.Created("", value);
 
 	public static Results<NoContent, NotFound, BadRequest<string>>
 		Delete(bool isDeleted = true) => isDeleted ? TypedResults.NoContent() : TypedResults.NotFound();

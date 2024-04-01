@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afilter", "Server\Afilter\A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afilter.UnitTests", "Server\Afilter.UnitTests\Afilter.UnitTests.csproj", "{6EBF6104-D56A-47A8-8893-7947B114D20D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.API", "Server\Tools.API\Tools.API.csproj", "{C6C0D84A-D261-49CB-B194-D71AFD2BB9C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -76,6 +78,10 @@ Global
 		{6EBF6104-D56A-47A8-8893-7947B114D20D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EBF6104-D56A-47A8-8893-7947B114D20D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EBF6104-D56A-47A8-8893-7947B114D20D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6C0D84A-D261-49CB-B194-D71AFD2BB9C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6C0D84A-D261-49CB-B194-D71AFD2BB9C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6C0D84A-D261-49CB-B194-D71AFD2BB9C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6C0D84A-D261-49CB-B194-D71AFD2BB9C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -90,5 +96,6 @@ Global
 		{93F679A4-F0A7-44A2-AA3C-3190C3C8CD44} = {1EE34AAD-19D3-4952-801B-C85F45E487F4}
 		{836FC1F6-FDFD-43EF-A84F-9E1B6C3ACD99} = {35186465-9F6D-4BBC-A6E1-735EA8795F76}
 		{8B53FDF8-B010-4C60-9943-B2D3A270BD05} = {1EE34AAD-19D3-4952-801B-C85F45E487F4}
+		{C6C0D84A-D261-49CB-B194-D71AFD2BB9C3} = {35186465-9F6D-4BBC-A6E1-735EA8795F76}
 	EndGlobalSection
 EndGlobal
