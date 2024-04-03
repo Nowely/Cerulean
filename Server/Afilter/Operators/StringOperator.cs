@@ -31,6 +31,14 @@ public enum StringOperatorType {
 //TODO pass options
 public record StringFilterOption(StringComparison? Comparison, RegexOptions RegexOptions);
 
+public record StringOperator<TEnum>(TEnum Type, string? Value = null) : IFilterOperator
+	where TEnum : struct, System.Enum {
+	public Expression? BuildExpressionFor(MemberExpression target) =>
+		Type.MapByName<StringOperatorType, TEnum>() is { } type
+			? new StringOperator(type, Value).BuildExpressionFor(target)
+			: null;
+}
+
 public record StringOperator(StringOperatorType Type, string? Value = null) : IFilterOperator {
 	private Expression Filter => Property(Expression.Constant(this), nameof(Value));
 
@@ -74,14 +82,4 @@ public record StringOperator(StringOperatorType Type, string? Value = null) : IF
 
 	private static MethodCallExpression IsMatch(Expression target, Expression filter) =>
 		Call(typeof(Regex), nameof(Regex.IsMatch), [], target, filter);
-}
-
-public record StringOperator<TEnum>(TEnum Type, string? Value = null) : IFilterOperator
-	where TEnum : struct, System.Enum {
-	public Expression? BuildExpressionFor(MemberExpression target) {
-		var type = Type.MapByName<StringOperatorType, TEnum>();
-		return type.HasValue
-			? new StringOperator(type.Value, Value).BuildExpressionFor(target)
-			: null;
-	}
 }
