@@ -1,5 +1,9 @@
+using System.Text.Json.Serialization;
+using Afilter.Internals;
+
 namespace Afilter.Operators.Number;
 
+[JsonConverter(typeof(JsonStringOrNumberEnumConverter<NumberOperatorType>))]
 public enum NumberOperatorType {
 	/// <summary> Alias == </summary>
 	Equal,

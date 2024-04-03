@@ -36,13 +36,15 @@ public static class FilterExtensions {
 		Expression? bodyExpression = null;
 
 		foreach (var (filterProperty, targetProperty) in GetPropertyPairs(targetType, filter)) {
+			//In case for IFilterOperator
 			if (filterProperty.GetValue(filter) is IFilterOperator filterOperator) {
-
 				var target = Expression.Property(parameter, targetProperty!.Name);
 
 				var expression = filterOperator.BuildExpressionFor(target);
 				bodyExpression = expression.Combine(bodyExpression, CombineType.And);
-			} else if (filterProperty.GetValue(filter) is object[] filterGroups) {
+			}
+			//In case for filter group
+			else if (filterProperty.GetValue(filter) is object[] filterGroups) {
 				foreach (object group in filterGroups) {
 					var methodInfo = group.GetType().GetMethod("BuildBodyExpression");
 					object? result = methodInfo?.Invoke(group, [targetType, parameter]);
