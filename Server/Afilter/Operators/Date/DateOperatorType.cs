@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Afilter.Internals;
 
-namespace Afilter.Operators.Date;
+namespace Afilter.Operators;
 
 [JsonConverter(typeof(JsonStringOrNumberEnumConverter<DateOperatorType>))]
 public enum DateOperatorType {

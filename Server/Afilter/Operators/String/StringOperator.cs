@@ -1,11 +1,10 @@
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
-using Afilter.Enums;
 using Afilter.Abstractions;
 using Afilter.Extensions;
 using static System.Linq.Expressions.Expression;
 
-namespace Afilter.Operators.String;
+namespace Afilter.Operators;
 
 //TODO pass options
 public record StringFilterOption(StringComparison? Comparison, RegexOptions RegexOptions);

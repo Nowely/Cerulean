@@ -1,8 +1,7 @@
-using AutoFixture.Xunit2;
 using Afilter.Enums;
+using AutoFixture.Xunit2;
 using Afilter.Extensions;
-using Afilter.Operators.Number;
-using Afilter.Operators.String;
+using Afilter.Operators;
 using Afilter.Types;
 using Tools.Filtration.Abstractions;
 using Xunit;

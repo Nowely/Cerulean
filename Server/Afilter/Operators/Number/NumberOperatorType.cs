@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Afilter.Internals;
 
-namespace Afilter.Operators.Number;
+namespace Afilter.Operators;
 
 [JsonConverter(typeof(JsonStringOrNumberEnumConverter<NumberOperatorType>))]
 public enum NumberOperatorType {

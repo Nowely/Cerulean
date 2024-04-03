@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Afilter.Operators.String;
+using Afilter.Operators;
 using Afilter.Types;
 using Tools.Filtration.Abstractions;
 

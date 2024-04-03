@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Afilter.Internals;
 
-namespace Afilter.Operators.Enum;
+namespace Afilter.Operators;
 
 //Right is array of enum state / tags
 [JsonConverter(typeof(JsonStringOrNumberEnumConverter<EnumOperatorType>))]

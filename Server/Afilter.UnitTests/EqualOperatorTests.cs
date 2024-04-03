@@ -1,6 +1,6 @@
 using AutoFixture.Xunit2;
 using Afilter.Extensions;
-using Afilter.Operators.Bool;
+using Afilter.Operators;
 using Tools.Filtration.Abstractions;
 using Xunit;
 

@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using Afilter.Abstractions;
 using static System.Linq.Expressions.Expression;
 
-namespace Afilter.Operators.Number;
+namespace Afilter.Operators;
 
 public record NumberOperator<T>(NumberOperatorType Type, T? Value = default) : IFilterOperator {
 	private Expression Filter => Property(Expression.Constant(this), nameof(Value));
