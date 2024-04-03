@@ -15,3 +15,6 @@ public enum DateOperatorType {
 	IsEmpty,
 	IsNotEmpty
 }
+
+//TODO value for DateOperator
+public record DateOperator<T>(DateOperatorType Type);

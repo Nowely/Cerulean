@@ -1,8 +1,28 @@
 using System.Linq.Expressions;
+using System.Text.Json.Serialization;
 using Afilter.Abstractions;
+using Afilter.Internals;
 using static System.Linq.Expressions.Expression;
 
 namespace Afilter.Operators;
+
+[JsonConverter(typeof(JsonStringOrNumberEnumConverter<NumberOperatorType>))]
+public enum NumberOperatorType {
+	/// <summary> Alias == </summary>
+	Equal,
+	/// <summary> Alias != </summary>
+	NotEqual,
+	/// <summary> Alias &lt; </summary>
+	Less,
+	/// <summary> Alias &lt;= </summary>
+	LessOrEqual,
+	/// <summary> Alias > </summary>
+	Greater,
+	/// <summary> Alias >= </summary>
+	GreaterOrEqual,
+	IsEmpty,
+	IsNotEmpty
+}
 
 public record NumberOperator<T>(NumberOperatorType Type, T? Value = default) : IFilterOperator {
 	private Expression Filter => Property(Expression.Constant(this), nameof(Value));

@@ -1,10 +1,32 @@
 using System.Linq.Expressions;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Afilter.Abstractions;
 using Afilter.Extensions;
+using Afilter.Internals;
 using static System.Linq.Expressions.Expression;
 
 namespace Afilter.Operators;
+
+[JsonConverter(typeof(JsonStringOrNumberEnumConverter<StringOperatorType>))]
+public enum StringOperatorType {
+	Is,
+	IsNot,
+	Contains,
+	NotContains,
+	StartsWith,
+	NotStartsWith,
+	EndsWith,
+	NotEndsWith,
+	IsMatch,
+	IsNotMatch,
+
+	/// <summary> Apply IsNullOrWhiteSpace </summary>
+	IsEmpty,
+
+	/// <summary> Apply not IsNullOrWhiteSpace </summary>
+	IsNotEmpty,
+}
 
 //TODO pass options
 public record StringFilterOption(StringComparison? Comparison, RegexOptions RegexOptions);
