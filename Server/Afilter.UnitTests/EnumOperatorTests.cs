@@ -15,10 +15,10 @@ public enum MyEnum {
 
 [Flags]
 public enum MyFlagEnum {
-	State1,
-	State2,
-	State3,
-	State4
+	State1 = 0,
+	State2 = 1,
+	State3 = 2,
+	State4 = 4
 }
 
 public class EnumModel {
@@ -139,7 +139,7 @@ public class EnumOperatorTests {
 		models[0].FlagEnum = MyFlagEnum.State2 | MyFlagEnum.State3;
 		var query = models.AsQueryable();
 		var filter = new EnumFilter() {
-			FlagEnum = new (EnumOperatorType.Is, [MyFlagEnum.State2]),
+			FlagEnum = new (EnumOperatorType.Is, [MyFlagEnum.State2, MyFlagEnum.State3]),
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);

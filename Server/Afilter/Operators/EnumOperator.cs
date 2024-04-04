@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using Afilter.Abstractions;
 using Afilter.Internals;
@@ -30,14 +30,23 @@ public record EnumOperator<T>(EnumOperatorType Type, T[]? Value = null) : IFilte
 		_ => null
 	};
 
-	//TODO flag case
-	private static MethodCallExpression Is(Expression target, Expression filter) =>
-		Call(
+	private Expression Is(Expression target, Expression filter) {
+		if (typeof(T).GetCustomAttribute<FlagsAttribute>() is not null && Value is not null) {
+			var flags = Value
+					  .Select(value => Convert(Constant(value), typeof(byte)))
+					  .Aggregate<Expression>(Or);
+
+			var flag = And(Convert(target, typeof(byte)), flags);
+			return NotEqual(flag, Convert(Constant(0), typeof(byte)));
+		}
+
+		return Call(
 			typeof(Enumerable)
 				.GetMethods()
 				.First(x => x.Name == nameof(Enumerable.Contains))
 				.MakeGenericMethod(typeof(T))
 			, filter, target);
+	}
 
 	private static BinaryExpression IsEmpty(Expression target) => Equal(target, Constant(default(T)));
 }
