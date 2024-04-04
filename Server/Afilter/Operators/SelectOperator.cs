@@ -8,8 +8,8 @@ using static System.Linq.Expressions.Expression;
 namespace Afilter.Operators;
 
 //Right is array of enum state / tags
-[JsonConverter(typeof(JsonStringOrNumberEnumConverter<EnumOperatorType>))]
-public enum EnumOperatorType {
+[JsonConverter(typeof(JsonStringOrNumberEnumConverter<SelectOperatorType>))]
+public enum SelectOperatorType {
 	Is,
 	IsNot,
 	IsEmpty,
@@ -17,15 +17,15 @@ public enum EnumOperatorType {
 }
 
 //Это любые типы перечислений, когда предоставляется на выбор несколько состояний.
-public record SelectOperator<T>(EnumOperatorType Type, T[]? Value = null) : IFilterOperator {
+public record SelectOperator<T>(SelectOperatorType Type, T[]? Value = null) : IFilterOperator {
 	private Expression Filter => Property(Expression.Constant(this), nameof(Value));
 
 	public Expression? BuildExpressionFor(MemberExpression target) => Type switch {
-		EnumOperatorType.Is => Is(target, Filter),
-		EnumOperatorType.IsNot => Not(Is(target, Filter)),
+		SelectOperatorType.Is => Is(target, Filter),
+		SelectOperatorType.IsNot => Not(Is(target, Filter)),
 
-		EnumOperatorType.IsEmpty => IsEmpty(target),
-		EnumOperatorType.IsNotEmpty => Not(IsEmpty(target)),
+		SelectOperatorType.IsEmpty => IsEmpty(target),
+		SelectOperatorType.IsNotEmpty => Not(IsEmpty(target)),
 
 		_ => null
 	};

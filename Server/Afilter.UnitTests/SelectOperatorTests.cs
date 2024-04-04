@@ -43,7 +43,7 @@ public class SelectOperatorTests {
 		models[index].Enum = MyEnum.State2;
 		var query = models.AsQueryable();
 		var filter = new EnumFilter() {
-			Enum = new (EnumOperatorType.Is, [MyEnum.State2]),
+			Enum = new (SelectOperatorType.Is, [MyEnum.State2]),
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);
@@ -60,7 +60,7 @@ public class SelectOperatorTests {
 		models[index].Enum = MyEnum.State2;
 		var query = models.AsQueryable();
 		var filter = new EnumFilter() {
-			Enum = new (EnumOperatorType.IsNot, [MyEnum.State2]),
+			Enum = new (SelectOperatorType.IsNot, [MyEnum.State2]),
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);
@@ -76,7 +76,7 @@ public class SelectOperatorTests {
 		models[1].Enum = MyEnum.State3;
 		var query = models.AsQueryable();
 		var filter = new EnumFilter() {
-			Enum = new (EnumOperatorType.Is, [MyEnum.State2, MyEnum.State3]),
+			Enum = new (SelectOperatorType.Is, [MyEnum.State2, MyEnum.State3]),
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);
@@ -94,7 +94,7 @@ public class SelectOperatorTests {
 		models[1].Enum = MyEnum.State3;
 		var query = models.AsQueryable();
 		var filter = new EnumFilter() {
-			Enum = new (EnumOperatorType.IsNot, [MyEnum.State2, MyEnum.State3]),
+			Enum = new (SelectOperatorType.IsNot, [MyEnum.State2, MyEnum.State3]),
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);
@@ -109,7 +109,7 @@ public class SelectOperatorTests {
 		models[0].Enum = MyEnum.State1;
 		var query = models.AsQueryable();
 		var filter = new EnumFilter() {
-			Enum = new (EnumOperatorType.IsEmpty),
+			Enum = new (SelectOperatorType.IsEmpty),
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);
@@ -124,7 +124,7 @@ public class SelectOperatorTests {
 		models[0].NEnum = null;
 		var query = models.AsQueryable();
 		var filter = new EnumFilter() {
-			NEnum = new (EnumOperatorType.IsEmpty),
+			NEnum = new (SelectOperatorType.IsEmpty),
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);
@@ -139,7 +139,7 @@ public class SelectOperatorTests {
 		models[0].FlagEnum = MyFlagEnum.State2 | MyFlagEnum.State3;
 		var query = models.AsQueryable();
 		var filter = new EnumFilter() {
-			FlagEnum = new (EnumOperatorType.Is, [MyFlagEnum.State2, MyFlagEnum.State3]),
+			FlagEnum = new (SelectOperatorType.Is, [MyFlagEnum.State2, MyFlagEnum.State3]),
 		};
 
 		var filteredQuery = query.ApplyFilter(filter);
