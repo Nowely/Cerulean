@@ -17,7 +17,7 @@ public enum EnumOperatorType {
 }
 
 //Это любые типы перечислений, когда предоставляется на выбор несколько состояний.
-public record EnumOperator<T>(EnumOperatorType Type, T[]? Value = null) : IFilterOperator {
+public record SelectOperator<T>(EnumOperatorType Type, T[]? Value = null) : IFilterOperator {
 	private Expression Filter => Property(Expression.Constant(this), nameof(Value));
 
 	public Expression? BuildExpressionFor(MemberExpression target) => Type switch {

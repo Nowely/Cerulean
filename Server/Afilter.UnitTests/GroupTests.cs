@@ -17,7 +17,7 @@ public record AffairFilter : IFilter {
 	public StringOperator? Name { get; init; }
 
 	public NumberOperator<int>? Age { get; init; }
-	//public EnumOperator<Status>? Enum { get; init; }
+	//public SelectOperator<Status>? Enum { get; init; }
 	//public DateOperator<DateTime>? Birthday { get; init; }
 
 	public FilterGroup<AffairFilter>[]? Groups { get; set; }

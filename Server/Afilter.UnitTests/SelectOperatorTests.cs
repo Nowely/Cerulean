@@ -28,16 +28,16 @@ public class EnumModel {
 }
 
 public class EnumFilter: IFilter {
-	public EnumOperator<MyEnum>? Enum { get; set; }
-	public EnumOperator<MyEnum?>? NEnum { get; set; }
-	public EnumOperator<MyFlagEnum>? FlagEnum { get; set; }
+	public SelectOperator<MyEnum>? Enum { get; set; }
+	public SelectOperator<MyEnum?>? NEnum { get; set; }
+	public SelectOperator<MyFlagEnum>? FlagEnum { get; set; }
 }
 
-public class EnumOperatorTests {
+public class SelectOperatorTests {
 	private static readonly Random Random = new();
 
 	[Theory, AutoData]
-	public void EqualOperator_IsState2_Success(EnumModel[] models) {
+	public void SelectOperator_IsState2_Success(EnumModel[] models) {
 		foreach (var model in models) model.Enum = MyEnum.State1;
 		int index = Random.Next(1, models.Length);
 		models[index].Enum = MyEnum.State2;
@@ -54,7 +54,7 @@ public class EnumOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_IsNotState2_Success(EnumModel[] models) {
+	public void SelectOperator_IsNotState2_Success(EnumModel[] models) {
 		foreach (var model in models) model.Enum = MyEnum.State1;
 		int index = Random.Next(1, models.Length);
 		models[index].Enum = MyEnum.State2;
@@ -70,7 +70,7 @@ public class EnumOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_IsState2AndState3_Success(EnumModel[] models) {
+	public void SelectOperator_IsState2AndState3_Success(EnumModel[] models) {
 		foreach (var model in models) model.Enum = MyEnum.State1;
 		models[0].Enum = MyEnum.State2;
 		models[1].Enum = MyEnum.State3;
@@ -88,7 +88,7 @@ public class EnumOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_IsNotState2AndState3_Success(EnumModel[] models) {
+	public void SelectOperator_IsNotState2AndState3_Success(EnumModel[] models) {
 		foreach (var model in models) model.Enum = MyEnum.State1;
 		models[0].Enum = MyEnum.State2;
 		models[1].Enum = MyEnum.State3;
@@ -104,7 +104,7 @@ public class EnumOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_IsEmpty_Success(EnumModel[] models) {
+	public void SelectOperator_IsEmpty_Success(EnumModel[] models) {
 		foreach (var model in models) model.Enum = MyEnum.State2;
 		models[0].Enum = MyEnum.State1;
 		var query = models.AsQueryable();
@@ -119,7 +119,7 @@ public class EnumOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_IsEmptyNullable_Success(EnumModel[] models) {
+	public void SelectOperator_IsEmptyNullable_Success(EnumModel[] models) {
 		foreach (var model in models) model.NEnum = MyEnum.State1;
 		models[0].NEnum = null;
 		var query = models.AsQueryable();
@@ -134,7 +134,7 @@ public class EnumOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_IsFlag_Success(EnumModel[] models) {
+	public void SelectOperator_IsFlag_Success(EnumModel[] models) {
 		foreach (var model in models) model.FlagEnum = MyFlagEnum.State1;
 		models[0].FlagEnum = MyFlagEnum.State2 | MyFlagEnum.State3;
 		var query = models.AsQueryable();
