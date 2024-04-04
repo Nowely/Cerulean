@@ -1,6 +1,4 @@
-using System.Linq.Expressions;
-
-namespace Tools.Filtration.Abstractions;
+namespace Afilter.Abstractions;
 
 /// <summary>
 /// Base type of References.

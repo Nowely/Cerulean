@@ -1,9 +1,9 @@
+using Afilter.Abstractions;
 using Afilter.Enums;
 using AutoFixture.Xunit2;
 using Afilter.Extensions;
 using Afilter.Operators;
 using Afilter.Types;
-using Tools.Filtration.Abstractions;
 using Xunit;
 
 namespace Afilter.UnitTests;

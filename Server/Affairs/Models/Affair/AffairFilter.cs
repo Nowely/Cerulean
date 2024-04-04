@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
+using Afilter.Abstractions;
 using Afilter.Operators;
 using Afilter.Types;
-using Tools.Filtration.Abstractions;
 
 namespace Affairs.Models.Affair;
 

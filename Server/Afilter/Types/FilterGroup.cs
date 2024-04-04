@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
+using Afilter.Abstractions;
 using Afilter.Enums;
 using Afilter.Extensions;
-using Tools.Filtration.Abstractions;
 
 namespace Afilter.Types;
 
@@ -18,7 +18,7 @@ public record FilterGroup<T> where T : IFilter {
 
 	public Expression? BuildBodyExpression(Type targetType, Expression parameter) {
 		return Where
-			   .Select(filterModel => FilterExtensions.BuildBodyExpression(targetType, filterModel, parameter))
+			   .Select(filterModel => ExpressionHelper.BuildBody(targetType, filterModel, parameter))
 			   .OfType<Expression>()
 			   .Aggregate<Expression?, Expression?>(
 				   null,
