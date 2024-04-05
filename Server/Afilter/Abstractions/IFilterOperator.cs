@@ -8,3 +8,7 @@ namespace Afilter.Abstractions;
 public interface IFilterOperator {
 	Expression? BuildExpressionFor(MemberExpression target);
 }
+
+public interface IFilterGroup {
+	Expression? BuildExpressionFor(Type targetType, Expression parameter);
+}

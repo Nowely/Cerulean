@@ -5,22 +5,27 @@ using Afilter.Types;
 namespace Afilter.Extensions;
 
 public static class FilterExtensions {
-	public static IQueryable<TEntity> ApplyFilter<TEntity, TFilterModel>(
-		this IQueryable<TEntity> query,
-		FilterGroup<TFilterModel> filter
-	) where TFilterModel : IFilter {
-		var lambda = filter.BuildLambdaExpression<TEntity, TFilterModel>();
-		return lambda is null ? query : query.Where(lambda);
-	}
-
-	public static IQueryable<TEntity> ApplyFilter<TEntity>(this IQueryable<TEntity> query, IFilter? filter) {
+	public static IQueryable<TElement> ApplyFilter<TElement>(this IQueryable<TElement> query, IFilterGroup? filter) {
 		if (filter is null) return query;
 
-		var parameter = Expression.Parameter(typeof(TEntity), "x");
-		var body = ExpressionHelper.BuildBody(typeof(TEntity), filter, parameter);
+		var parameter = Expression.Parameter(typeof(TElement), "x");
+		var body = filter.BuildExpressionFor(typeof(TElement), parameter);
+		//var body = ExpressionHelper.BuildBody(typeof(TElement), filter, parameter);
+
+		if (body is null) return query;
+		var lambda =  Expression.Lambda<Func<TElement, bool>>(body, parameter);
+
+		return query.Where(lambda);
+	}
+
+	public static IQueryable<TElement> ApplyFilter<TElement>(this IQueryable<TElement> query, IFilter? filter) {
+		if (filter is null) return query;
+
+		var parameter = Expression.Parameter(typeof(TElement), "x");
+		var body = ExpressionHelper.BuildBody(typeof(TElement), filter, parameter);
 		if (body is null) return query;
 
-		var lambda = Expression.Lambda<Func<TEntity, bool>>(body, parameter);
+		var lambda = Expression.Lambda<Func<TElement, bool>>(body, parameter);
 		return query.Where(lambda);
 	}
 }
