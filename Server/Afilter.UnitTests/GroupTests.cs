@@ -28,9 +28,9 @@ public record AffairFilter : IFilterModel {
 	public static AffairFilter WithGroups(FilterGroup<AffairFilter>[] groups) => new() { Groups = groups };
 }
 
-public class GroupTests {
+public class FilterGroupTests {
 	[Theory, AutoData]
-	public void FilterGroup_CombineTypeAnd_Success(Affair[] affairs) {
+	public void CombineTypeAnd_Success(Affair[] affairs) {
 		affairs[0].Name = "Aurora";
 		affairs[0].Age = 4;
 		var query = affairs.AsQueryable();
@@ -50,7 +50,7 @@ public class GroupTests {
 	}
 
 	[Theory, AutoData]
-	public void FilterGroup_CombineTypeOr_Success(Affair[] affairs) {
+	public void CombineTypeOr_Success(Affair[] affairs) {
 		affairs[0].Name = "Aurora";
 		affairs[1].Age = 4;
 		var query = affairs.AsQueryable();
@@ -71,7 +71,7 @@ public class GroupTests {
 	}
 
 	[Theory, AutoData]
-	public void FilterSubGroup_CombineTypeAnd_Success(Affair[] affairs) {
+	public void SubGroup_CombineTypeAnd_Success(Affair[] affairs) {
 		affairs[0].Name = "Aurora";
 		affairs[0].Age = 4;
 		var query = affairs.AsQueryable();
@@ -98,7 +98,7 @@ public class GroupTests {
 	}
 
 	[Theory, AutoData]
-	public void FilterSubGroup_CombineTypeOr_Success(Affair[] affairs) {
+	public void SubGroup_CombineTypeOr_Success(Affair[] affairs) {
 		affairs[0].Name = "Aurora";
 		affairs[1].Age = 4;
 		var query = affairs.AsQueryable();

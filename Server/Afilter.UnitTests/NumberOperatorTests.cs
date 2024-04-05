@@ -32,7 +32,7 @@ public class NumberOperatorTests {
 	private static readonly Random Random = new();
 
 	[Theory, AutoData]
-	public void NumberOperator_TwoOfTwoFields_Success(NumberModel[] model) {
+	public void TwoOfTwoFields_Success(NumberModel[] model) {
 		var query = model.AsQueryable();
 		int index = Random.Next(1, model.Length);
 		var filter = new NumberFilter {
@@ -47,7 +47,7 @@ public class NumberOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void NumberOperatorType_IsEmpty_Success(NumberModel[] model) {
+	public void IsEmpty_Success(NumberModel[] model) {
 		model[0].Int = default(int);
 		model[1].Int = 0;
 		var query = model.AsQueryable();
@@ -62,7 +62,7 @@ public class NumberOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void NumberOperatorType_IsNotEmpty_Success(NumberModel[] model) {
+	public void IsNotEmpty_Success(NumberModel[] model) {
 		model[0].Int = default(int);
 		model[1].Int = 0;
 		var query = model.AsQueryable();
@@ -77,7 +77,7 @@ public class NumberOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void NumberOperatorType_Greater_Success(NumberModel[] model) {
+	public void Greater_Success(NumberModel[] model) {
 		model[0].Int = 1;
 		model[1].Int = 2;
 		model[2].Int = 3;
@@ -93,7 +93,7 @@ public class NumberOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void NumberOperatorType_GreaterOrEqual_Success(NumberModel[] model) {
+	public void GreaterOrEqual_Success(NumberModel[] model) {
 		model[0].Int = 1;
 		model[1].Int = 2;
 		model[2].Int = 3;
@@ -109,7 +109,7 @@ public class NumberOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void NumberOperatorType_Less_Success(NumberModel[] model) {
+	public void Less_Success(NumberModel[] model) {
 		model[0].Int = 1;
 		model[1].Int = 2;
 		model[2].Int = 3;
@@ -125,7 +125,7 @@ public class NumberOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void NumberOperatorType_LessOrEqual_Success(NumberModel[] model) {
+	public void LessOrEqual_Success(NumberModel[] model) {
 		model[0].Int = 1;
 		model[1].Int = 2;
 		model[2].Int = 3;

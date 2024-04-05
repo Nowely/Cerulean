@@ -18,7 +18,7 @@ public class StringOperatorTests {
 	private static readonly Random Random = new();
 
 	[Theory, AutoData]
-	public void StringOperator_Is_Success(StringModel[] model) {
+	public void Is_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		int index = Random.Next(1, model.Length);
 		var filter = new StringFilter {
@@ -33,7 +33,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperator_IsNot_Success(StringModel[] model) {
+	public void IsNot_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		int index = Random.Next(1, model.Length);
 		var filter = new StringFilter {
@@ -47,7 +47,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_IsEmpty_Success(StringModel[] model) {
+	public void IsEmpty_Success(StringModel[] model) {
 		model[0].String = "";
 		model[2].String = "        ";
 		var query = model.AsQueryable();
@@ -62,7 +62,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_IsNotEmpty_Success(StringModel[] model) {
+	public void IsNotEmpty_Success(StringModel[] model) {
 		model[0].String = "";
 		model[2].String = "        ";
 		var query = model.AsQueryable();
@@ -77,7 +77,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_Contains_Success(StringModel[] model) {
+	public void Contains_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
 			String = new(StringOperatorType.Contains, nameof(StringModel.String))
@@ -90,7 +90,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_NotContains_Success(StringModel[] model) {
+	public void NotContains_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
 			String = new(StringOperatorType.NotContains, nameof(StringModel.String))
@@ -103,7 +103,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_StartsWith_Success(StringModel[] model) {
+	public void StartsWith_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
 			String = new(StringOperatorType.StartsWith, nameof(StringModel.String))
@@ -116,7 +116,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_NotStartsWith_Success(StringModel[] model) {
+	public void NotStartsWith_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
 			String = new(StringOperatorType.NotStartsWith, nameof(StringModel.String))
@@ -129,7 +129,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_EndsWith_Success(StringModel[] model) {
+	public void EndsWith_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
 			String = new(StringOperatorType.EndsWith, nameof(StringModel.String))
@@ -142,7 +142,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_NotEndsWith_Success(StringModel[] model) {
+	public void NotEndsWith_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
 			String = new(StringOperatorType.NotEndsWith, nameof(StringModel.String))
@@ -155,7 +155,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_IsMatch_Success(StringModel[] model) {
+	public void IsMatch_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
 			String = new(StringOperatorType.IsMatch, $"^{nameof(StringModel.String)}+")
@@ -168,7 +168,7 @@ public class StringOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperatorType_IsNotMatch_Success(StringModel[] model) {
+	public void IsNotMatch_Success(StringModel[] model) {
 		var query = model.AsQueryable();
 		var filter = new StringFilter {
 			String = new(StringOperatorType.IsNotMatch, $"^{nameof(StringModel.String)}+")
