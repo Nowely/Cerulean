@@ -27,7 +27,7 @@ public class EnumModel {
 	public MyFlagEnum FlagEnum { get; set; }
 }
 
-public class EnumFilter: IFilter {
+public class EnumFilter: IFilterModel {
 	public SelectOperator<MyEnum>? Enum { get; set; }
 	public SelectOperator<MyEnum?>? NEnum { get; set; }
 	public SelectOperator<MyFlagEnum>? FlagEnum { get; set; }

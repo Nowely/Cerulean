@@ -11,7 +11,7 @@ public class ArrayModel {
 	public string[]? NStringArray { get; set; }
 }
 
-public class ArrayFilter: IFilter {
+public class ArrayFilter: IFilterModel {
 	public ArrayOperator<string[]>? StringArray { get; set; }
 	public ArrayOperator<string[]>? NStringArray { get; set; }
 }

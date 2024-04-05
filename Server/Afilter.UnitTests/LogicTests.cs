@@ -8,7 +8,7 @@ namespace Afilter.UnitTests;
 
 public record Model_OneString(string Name);
 
-public class ModelFilter_OneString: IFilter {
+public class ModelFilter_OneString: IFilterModel {
 	public required StringOperator Name { get; init; }
 }
 
@@ -18,7 +18,7 @@ public class Model_TwoString {
 	public required string LastName { get; set;}
 }
 
-public class ModelFilter_TwoString: IFilter {
+public class ModelFilter_TwoString: IFilterModel {
 	public StringOperator? Name { get; set; }
 	public StringOperator? LastName { get; set; }
 }

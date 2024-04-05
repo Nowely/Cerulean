@@ -11,7 +11,7 @@ public class BoolModel {
 	public bool? NBool { get; set; }
 }
 
-public class BoolFilter: IFilter {
+public class BoolFilter: IFilterModel {
 	public EqualOperator<bool>? Bool { get; set; }
 	public EqualOperator<bool?>? NBool { get; set; }
 }

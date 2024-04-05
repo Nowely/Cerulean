@@ -17,7 +17,7 @@ public class NumberModel {
 	public float? NFloat { get; set; }
 }
 
-public class NumberFilter: IFilter {
+public class NumberFilter: IFilterModel {
 	public NumberOperator<int>? Int { get; set; }
 	public NumberOperator<int?>? NInt { get; set; }
 	public NumberOperator<double>? Double { get; set; }

@@ -14,7 +14,7 @@ public enum ShortStringOperatorType {
 	StartsWith,
 }
 
-public record AffairFilter : IFilter{
+public record AffairFilter : IFilterModel{
 	public StringOperator? Title { get; init; }
 	public StringOperator<ShortStringOperatorType>? Note { get; init; }
 

@@ -10,7 +10,7 @@ public class StringModel {
 	public required string String { get; set; }
 }
 
-public class StringFilter: IFilter {
+public class StringFilter: IFilterModel {
 	public StringOperator? String { get; set; }
 }
 

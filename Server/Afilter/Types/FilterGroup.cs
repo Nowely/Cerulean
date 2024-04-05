@@ -5,7 +5,7 @@ using Afilter.Extensions;
 
 namespace Afilter.Types;
 
-public record FilterGroup<T> : IFilterGroup where T : IFilter {
+public record FilterGroup<T> : IFilterGroup where T : IFilterModel {
 	public CombineType Type { get; set; }
 	public required T[] Where { get; set; }
 

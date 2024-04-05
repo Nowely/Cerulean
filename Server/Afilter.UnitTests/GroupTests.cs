@@ -13,7 +13,7 @@ public record Affair {
 	public int Age { get; set; }
 }
 
-public record AffairFilter : IFilter {
+public record AffairFilter : IFilterModel {
 	public StringOperator? Name { get; init; }
 
 	public NumberOperator<int>? Age { get; init; }
