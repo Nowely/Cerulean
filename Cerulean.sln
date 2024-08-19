@@ -36,7 +36,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afilter.UnitTests", "Server
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.API", "Server\Tools.API\Tools.API.csproj", "{C6C0D84A-D261-49CB-B194-D71AFD2BB9C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.Generator.Dto", "Server\Tools.Generator.Dto\Tools.Generator.Dto.csproj", "{DA00DFB7-F43E-48C6-9D80-3CD2B7945257}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoDto.Generator", "Server\AutoDto.Generator\AutoDto.Generator.csproj", "{DA00DFB7-F43E-48C6-9D80-3CD2B7945257}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerators", "Server\SourceGenerators1\SourceGenerators\SourceGenerators.csproj", "{D3239167-FD8F-4237-A708-4D0D767DC165}"
 EndProject
@@ -45,6 +45,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerators.Tests", "Server\SourceGenerators1\SourceGenerators.Tests\SourceGenerators.Tests.csproj", "{99A5E4FA-DD4E-44C3-A4FC-61CE2DD412B1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GeneratorExample", "GeneratorExample", "{97BF2D7D-485A-4EE0-9F9C-4EC000510FA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoDto.Abstractions", "Server\AutoDto.Abstractions\AutoDto.Abstractions.csproj", "{87730A52-3115-4F29-AC18-AE43BFE28E12}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -108,6 +110,10 @@ Global
 		{99A5E4FA-DD4E-44C3-A4FC-61CE2DD412B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99A5E4FA-DD4E-44C3-A4FC-61CE2DD412B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99A5E4FA-DD4E-44C3-A4FC-61CE2DD412B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87730A52-3115-4F29-AC18-AE43BFE28E12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87730A52-3115-4F29-AC18-AE43BFE28E12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87730A52-3115-4F29-AC18-AE43BFE28E12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87730A52-3115-4F29-AC18-AE43BFE28E12}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -128,5 +134,6 @@ Global
 		{D3239167-FD8F-4237-A708-4D0D767DC165} = {97BF2D7D-485A-4EE0-9F9C-4EC000510FA9}
 		{02F35F83-BE8B-4BE4-ADC9-B4DC84CCF220} = {97BF2D7D-485A-4EE0-9F9C-4EC000510FA9}
 		{99A5E4FA-DD4E-44C3-A4FC-61CE2DD412B1} = {97BF2D7D-485A-4EE0-9F9C-4EC000510FA9}
+		{87730A52-3115-4F29-AC18-AE43BFE28E12} = {35186465-9F6D-4BBC-A6E1-735EA8795F76}
 	EndGlobalSection
 EndGlobal

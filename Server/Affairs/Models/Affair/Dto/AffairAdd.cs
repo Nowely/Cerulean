@@ -1,9 +1,8 @@
-using Tools.Shared;
+using AutoDto.Abstractions;
 
 namespace Affairs.Models.Affair.Dto;
 
-[AutoDto(
-	Props = [nameof(Affair.Title), nameof(Affair.Note)],
-	Type = typeof(Affair)
+[AutoDto(typeof(Affair),
+	Pick = [nameof(Affair.Title), nameof(Affair.Note)]
 	)]
 public partial class AffairAdd;

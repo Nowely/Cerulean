@@ -1,13 +1,13 @@
-using Tools.Shared;
+using AutoDto.Abstractions;
 
 namespace Affairs.Models.Affair.Dto;
 
-[AutoDto(
-	Props = [nameof(Affair.Id), nameof(Affair.CreatedAt), nameof(Affair.ModifiedAt), nameof(Affair.Title),
-	nameof(Affair.Note), nameof(Affair.Active)],
-	Type = typeof(Affair)
+[AutoDto(typeof(Affair),
+	Pick = [
+		nameof(Affair.Id), nameof(Affair.CreatedAt), nameof(Affair.ModifiedAt), nameof(Affair.Title),
+		nameof(Affair.Note), nameof(Affair.Active)
+	]
 )]
 public partial class AffairGet {
 	public string SuperTitle { get; set; } = string.Empty;
-	public Guid Id { get; set; }
 }

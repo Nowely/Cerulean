@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
-using Tools.Generator.Dto.Extensions;
+using AutoDto.Generator.Extensions;
 
-namespace Tools.Generator.Dto;
+namespace AutoDto.Generator;
 
 /// <summary> Генератор, который на основе модели генерирует его суб модель с аналогичными именами и комментариями </summary>
 [Generator]

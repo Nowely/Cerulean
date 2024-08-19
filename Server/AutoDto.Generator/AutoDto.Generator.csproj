@@ -19,6 +19,11 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.0"/>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.3.0"/>
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AutoDto.Abstractions\AutoDto.Abstractions.csproj" />
+  </ItemGroup>
+
 <!--  <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
