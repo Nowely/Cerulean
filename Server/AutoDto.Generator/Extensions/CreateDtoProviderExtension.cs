@@ -7,17 +7,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace AutoDto.Generator.Extensions;
 
 internal static class CreateDtoProviderExtension {
-	/// <summary>
-	/// Fully qualified metadata name аттрибута, который используется для идентификации класса участвующего в процессе генерации дто.
-	/// <remarks> Цифра 1 в `1 обозначает, что это дженерик с одним принимаемым таким образом параметром </remarks>
-	/// </summary>
-	private const string DtoAttributeName = "ClassLibrary1.AutoDtoAttribute";
 	private const string AttributeName = nameof(AutoDtoAttribute);
 	private const string Namespace = nameof(Abstractions);
 	private const string LibraryName = nameof(AutoDto);
 	private const string QualifiedName = $"{LibraryName}.{Namespace}.{AttributeName}";
 
-	//TODO подписаться и брать исходный код домена
 	public static IncrementalValuesProvider<AutoDtoContext> CreateDtoProvider(
 		this IncrementalGeneratorInitializationContext context) {
 		return context.SyntaxProvider.ForAttributeWithMetadataName(
