@@ -1,13 +1,13 @@
+using Tools.Shared;
+
 namespace Affairs.Models.Affair.Dto;
 
-public class AffairGet {
-	public Guid Id { get; set; }
-	public DateTime CreatedAt { get; set; }
-	public DateTime ModifiedAt { get; set; }
-
-	public string Title { get; set; } = string.Empty;
-	public string Note { get; set; } = string.Empty;
-	public bool Active { get; set; }
-
+[AutoDto(
+	Props = [nameof(Affair.Id), nameof(Affair.CreatedAt), nameof(Affair.ModifiedAt), nameof(Affair.Title),
+	nameof(Affair.Note), nameof(Affair.Active)],
+	Type = typeof(Affair)
+)]
+public partial class AffairGet {
 	public string SuperTitle { get; set; } = string.Empty;
+	public Guid Id { get; set; }
 }

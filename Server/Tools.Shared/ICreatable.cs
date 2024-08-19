@@ -1,4 +1,4 @@
-namespace Cerulean.Shared;
+namespace Tools.Shared;
 
 //TODO interception
 public interface ICreatable {
