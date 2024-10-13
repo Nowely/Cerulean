@@ -1,6 +1,6 @@
 using Affairs.Models.Affair;
 using Affairs.Models.Affair.Dto;
-using Afilter.Extensions;
+using AutoDto.Extensions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Tools.API;

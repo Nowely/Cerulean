@@ -30,9 +30,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.Shared", "Server\Tool
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Tools", ".Tools", "{35186465-9F6D-4BBC-A6E1-735EA8795F76}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afilter", "Server\Afilter\Afilter.csproj", "{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoDto", "Server\AutoDto\AutoDto.csproj", "{ADF1E525-9CB1-46B1-9CF1-BC5CE3F87DAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afilter.UnitTests", "Server\Afilter.UnitTests\Afilter.UnitTests.csproj", "{6EBF6104-D56A-47A8-8893-7947B114D20D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoDto.UnitTests", "Server\AutoDto.UnitTests\AutoDto.UnitTests.csproj", "{6EBF6104-D56A-47A8-8893-7947B114D20D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools.API", "Server\Tools.API\Tools.API.csproj", "{C6C0D84A-D261-49CB-B194-D71AFD2BB9C3}"
 EndProject

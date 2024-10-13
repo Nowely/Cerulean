@@ -1,4 +1,4 @@
-using Afilter.Abstractions;
+using AutoDto.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Affairs.Models.Requests;

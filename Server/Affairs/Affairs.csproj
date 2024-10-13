@@ -5,7 +5,7 @@
     <ProjectReference Include="..\AutoDto.Generator\AutoDto.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Tools.ServiceDefaults\Tools.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Tools.Shared\Tools.Shared.csproj" />
-    <ProjectReference Include="..\Afilter\Afilter.csproj" />
+    <ProjectReference Include="..\AutoDto\AutoDto.csproj" />
   </ItemGroup>
 
   <ItemGroup>
