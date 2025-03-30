@@ -6,6 +6,9 @@
     <File Path="Directory.Packages.props" />
     <File Path="Directory.Build.props" />
   </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs\Валидация через парсинг.md" />
+  </Folder>
   <Folder Name="/Server/">
     <Project Path="Server\Affairs\Affairs.csproj" Type="Classic C#" />
     <Project Path="Server\Aspire.AppHost\Aspire.AppHost.csproj" Type="Classic C#" />
