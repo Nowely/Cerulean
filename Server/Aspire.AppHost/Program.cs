@@ -1,14 +1,24 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
+var username = builder.AddParameter("keycloakAdmin");
+var password = builder.AddParameter("keycloakAdminPassword", secret: true);
+
+var keycloak = builder.AddKeycloak("keycloak", 8080, username, password)
+	.WithDataVolume();
+
 var postgres = builder.AddPostgres("Postgres").WithPgAdmin();
 var affairDb = postgres.AddDatabase("AffairDb");
 
 var affairs = builder
-			  .AddProject<Projects.Affairs>("Affairs")
+			  .AddProject<Projects.Affairs>(nameof(Projects.Affairs))
 			  .WithReference(affairDb);
 
 var clientWeb = builder
-			  .AddProject<Projects.ClientWeb>("ClientWeb");
+			  .AddProject<Projects.ClientWeb>(nameof(Projects.ClientWeb));
+
+var identity = builder
+	.AddProject<Projects.Identity>(nameof(Projects.Identity))
+	.WithReference(keycloak);
 
 builder
 	.AddNpmApp("Client", "../../Client", "dev")
