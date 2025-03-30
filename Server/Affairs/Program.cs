@@ -1,6 +1,10 @@
 using Affairs.API;
+using Affairs.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ProblemDetailsFiller>();
 
 builder.AddServiceDefaults();
 builder.AddDefaultOpenApi();
@@ -10,12 +14,17 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 app.UseDefaultOpenApi();
 
 app.MapDefaultEndpoints();
 
 app.UseHttpsRedirection();
 
-app.MapGroup("api/v1/affairs").MapAffairApi();
+app.MapAffairApiV1();
+app.MapNextApiV1();
+
+app.MapGet("/search", ([AsParameters] SearchRequest request) => "Hello");
 
 app.Run();
