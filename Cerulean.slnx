@@ -1,0 +1,30 @@
+﻿<Solution>
+  <Folder Name="/.SolutionItems/">
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+    <File Path=".editorconfig" />
+    <File Path="Directory.Packages.props" />
+    <File Path="Directory.Build.props" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs\Валидация через парсинг.md" />
+  </Folder>
+  <Folder Name="/Server/">
+    <Project Path="Server\Affairs\Affairs.csproj" Type="Classic C#" />
+    <Project Path="Server\Aspire.AppHost\Aspire.AppHost.csproj" Type="Classic C#" />
+    <Project Path="Server\ClientWeb\ClientWeb.csproj" Type="Classic C#" />
+    <Project Path="Server\Identity\Identity.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/Server/.Tools/">
+    <Project Path="Server\Afilter.Abstractions\Afilter.Abstractions.csproj" Type="Classic C#" />
+    <Project Path="Server\Afilter.Generator\Afilter.Generator.csproj" Type="Classic C#" />
+    <Project Path="Server\Afilter.UnitTests\Afilter.UnitTests.csproj" Type="Classic C#" />
+    <Project Path="Server\Afilter\Afilter.csproj" Type="Classic C#" />
+    <Project Path="Server\Tools.API\Tools.API.csproj" Type="Classic C#" />
+    <Project Path="Server\Tools.ServiceDefaults\Tools.ServiceDefaults.csproj" />
+    <Project Path="Server\Tools.Shared\Tools.Shared.csproj" Type="Classic C#" />
+  </Folder>
+  <Project Path="Client\Client.esproj" Type="{54A90642-561A-4BB1-A94E-469ADEE60C69}">
+    <Configuration Solution="Release|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+</Solution>

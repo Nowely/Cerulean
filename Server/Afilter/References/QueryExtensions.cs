@@ -3,7 +3,7 @@ using References.Abstractions;
 using System;
 using System.Linq;
 
-namespace Afilter.Extensions;
+namespace AutoDto.Extensions;
 
 public static class QueryExtensions
 {
@@ -30,7 +30,7 @@ public static class QueryExtensions
     }
 
     /// <summary>
-    /// Applies all filters from <see cref="IFilter"/> type. If your filter object implements Pagination and Ordering this method will apply OrderBy() and Skip().Take() automatically.
+    /// Applies all filters from <see cref="IFilterModel"/> type. If your filter object implements Pagination and Ordering this method will apply OrderBy() and Skip().Take() automatically.
     /// <list type="bullet">
     /// You can chain with other LINQ methods with ApplyFilter like:
     /// </list>
@@ -55,13 +55,13 @@ public static class QueryExtensions
     /// </param>
     /// </summary>
     /// <returns>Built and queried <see cref="IQueryable"/> result.</returns>
-    public static IQueryable<T> ApplyFilter<T>(this IQueryable<T> source, IFilter filter)
+    public static IQueryable<T> ApplyFilter<T>(this IQueryable<T> source, IFilterModel filter)
     {
         return filter.ApplyFilterTo(source);
     }
 
     /// <summary>
-    /// Applies all filters from <see cref="IFilter"/> type. If your filter object implements Pagination and Ordering this method will apply OrderBy() and Skip().Take() automatically.
+    /// Applies all filters from <see cref="IFilterModel"/> type. If your filter object implements Pagination and Ordering this method will apply OrderBy() and Skip().Take() automatically.
     /// <list type="bullet">
     /// You can chain with other LINQ methods with ApplyFilter like:
     /// </list>
@@ -86,7 +86,7 @@ public static class QueryExtensions
     /// </param>
     /// </summary>
     /// <returns>Built and queried <see cref="IQueryable"/> result.</returns>
-    public static IQueryable<T> ApplyFilter<T>(this IOrderedQueryable<T> source, IFilter filter)
+    public static IQueryable<T> ApplyFilter<T>(this IOrderedQueryable<T> source, IFilterModel filter)
     {
         return filter.ApplyFilterTo(source);
     }

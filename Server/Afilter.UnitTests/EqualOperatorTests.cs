@@ -11,7 +11,7 @@ public class BoolModel {
 	public bool? NBool { get; set; }
 }
 
-public class BoolFilter: IFilter {
+public class BoolFilter: IFilterModel {
 	public EqualOperator<bool>? Bool { get; set; }
 	public EqualOperator<bool?>? NBool { get; set; }
 }
@@ -20,7 +20,7 @@ public class EqualOperatorTests {
 	private static readonly Random Random = new();
 
 	[Theory, AutoData]
-	public void EqualOperator_True_Success(BoolModel[] model) {
+	public void True_Success(BoolModel[] model) {
 		foreach (var boolModel in model) boolModel.Bool = false;
 		int index = Random.Next(1, model.Length);
 		model[index].Bool = true;
@@ -37,7 +37,7 @@ public class EqualOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_False_Success(BoolModel[] model) {
+	public void False_Success(BoolModel[] model) {
 		foreach (var boolModel in model) boolModel.Bool = true;
 		int index = Random.Next(1, model.Length);
 		model[index].Bool = false;
@@ -54,7 +54,7 @@ public class EqualOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_NullableTrue_Success(BoolModel[] model) {
+	public void NullableTrue_Success(BoolModel[] model) {
 		foreach (var boolModel in model) boolModel.NBool = false;
 		int index = Random.Next(1, model.Length);
 		model[index].NBool = true;
@@ -71,7 +71,7 @@ public class EqualOperatorTests {
 	}
 
 	[Theory, AutoData]
-	public void EqualOperator_Null_Success(BoolModel[] model) {
+	public void Null_Success(BoolModel[] model) {
 		foreach (var boolModel in model) boolModel.NBool = false;
 		int index = Random.Next(1, model.Length);
 		model[index].NBool = null;

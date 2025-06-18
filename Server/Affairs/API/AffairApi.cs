@@ -8,12 +8,14 @@ using Tools.API;
 namespace Affairs.API;
 
 public static class AffairApi {
-	public static IEndpointRouteBuilder MapAffairApi(this IEndpointRouteBuilder app) {
-		app.MapGet("/{id:guid}", GetById);
-		app.MapPost("/filter", GetByFilter);
-		app.MapPut("/", Update);
-		app.MapPost("/", Create);
-		app.MapDelete("/", Delete);
+	public static IEndpointRouteBuilder MapAffairApiV1(this IEndpointRouteBuilder app) {
+		var group = app.MapGroup("api/v1/affairs");
+
+		group.MapGet("/{id:guid}", GetById);
+		group.MapPost("/filter", GetByFilter);
+		group.MapPut("/", Update);
+		group.MapPost("/", Create);
+		group.MapDelete("/", Delete);
 
 		return app;
 	}

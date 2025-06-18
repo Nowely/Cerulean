@@ -2,8 +2,8 @@ using System.Linq.Expressions;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Afilter.Abstractions;
-using Afilter.Extensions;
 using Afilter.Internals;
+using Afilter.Extensions;
 using static System.Linq.Expressions.Expression;
 
 namespace Afilter.Operators;

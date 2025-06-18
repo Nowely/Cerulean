@@ -1,15 +1,20 @@
 ﻿using System.Text.Json.Serialization;
-using Cerulean.Shared;
+using Tools.Shared;
 
 namespace Affairs.Models.Affair;
 
+/// <summary> Сущность задачи </summary>
 public class Affair : IModifiable, ICreatable {
 	public Guid Id { get; set; }
 	public DateTime CreatedAt { get; set; }
 	public DateTime ModifiedAt { get; set; }
 
+	/// <summary> Название </summary>
 	public string Title { get; set; } = string.Empty;
+
+	/// <summary> Заметка </summary>
 	public string Note { get; set; } = string.Empty;
+
 	public bool Active { get; set; }
 	public Status Status { get; set; }
 

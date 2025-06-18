@@ -1,30 +1,42 @@
 using System.Linq.Expressions;
 using Afilter.Abstractions;
 using Afilter.Enums;
+using Afilter.Types;
 using PropertyPair = (System.Reflection.PropertyInfo filterProperty, System.Reflection.PropertyInfo? targetProperty);
 
 namespace Afilter.Extensions;
 
 internal static class ExpressionHelper {
-	internal static Expression? BuildBody(Type targetType, IFilter filter, Expression parameter) {
+	internal static Expression<Func<TElement, bool>>? BuildLambda<TElement>(object? filter) {
+		if (filter is null) return null;
+
+		var parameter = Expression.Parameter(typeof(TElement), "x");
+		var body = filter switch {
+			IFilterModel filterModel => BuildBody(typeof(TElement), filterModel, parameter),
+			IFilterGroup filterGroup => filterGroup.BuildExpressionFor(typeof(TElement), parameter),
+			_ => throw new ArgumentOutOfRangeException(nameof(filter), filter, null)
+		};
+
+		return body is null ? null : Expression.Lambda<Func<TElement, bool>>(body, parameter);
+	}
+
+	internal static Expression? BuildBody(Type targetType, IFilterModel filter, Expression parameter) {
 		Expression? bodyExpression = null;
 
 		foreach (var (filterProperty, targetProperty) in GetPropertyPairs(targetType, filter)) {
-			//In case for IFilterOperator
-			if (filterProperty.GetValue(filter) is IFilterOperator filterOperator) {
-				var target = Expression.Property(parameter, targetProperty!.Name);
-
-				var expression = filterOperator.BuildExpressionFor(target);
-				bodyExpression = expression.Combine(bodyExpression, CombineType.And);
-			}
-			//In case for filter group
-			else if (filterProperty.GetValue(filter) is object[] filterGroups) {
-				foreach (object group in filterGroups) {
-					var methodInfo = group.GetType().GetMethod("BuildBodyExpression");
-					object? result = methodInfo?.Invoke(group, [targetType, parameter]);
-					if (result is Expression expression) {
-						bodyExpression = expression.Combine(bodyExpression, CombineType.Or);
+			switch (filterProperty.GetValue(filter)) {
+				case IFilterOperator filterOperator: {
+					var property = Expression.Property(parameter, targetProperty!.Name);
+					var expression = filterOperator.BuildExpressionFor(property);
+					bodyExpression = bodyExpression.Combine(expression, CombineType.And);
+					break;
+				}
+				case IFilterGroup[] filterGroups: {
+					foreach (var group in filterGroups) {
+						var expression = group.BuildExpressionFor(targetType, parameter);
+						bodyExpression = bodyExpression.Combine(expression, CombineType.Or);
 					}
+					break;
 				}
 			}
 		}
@@ -32,7 +44,7 @@ internal static class ExpressionHelper {
 		return bodyExpression;
 
 
-		static IEnumerable<PropertyPair> GetPropertyPairs(Type targetType, IFilter filter) =>
+		static IEnumerable<PropertyPair> GetPropertyPairs(Type targetType, object filter) =>
 			filter
 				.GetType()
 				.GetProperties()

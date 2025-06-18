@@ -8,7 +8,7 @@ namespace Afilter.UnitTests;
 
 public record Model_OneString(string Name);
 
-public class ModelFilter_OneString: IFilter {
+public class ModelFilter_OneString: IFilterModel {
 	public required StringOperator Name { get; init; }
 }
 
@@ -18,7 +18,7 @@ public class Model_TwoString {
 	public required string LastName { get; set;}
 }
 
-public class ModelFilter_TwoString: IFilter {
+public class ModelFilter_TwoString: IFilterModel {
 	public StringOperator? Name { get; set; }
 	public StringOperator? LastName { get; set; }
 }
@@ -27,7 +27,7 @@ public class LogicTests {
 	private static readonly Random Random = new();
 
 	[Theory, AutoData]
-	public void StringOperator_OneOfOneField_Success(Model_OneString[] models) {
+	public void OneOfOneField_Success(Model_OneString[] models) {
 		var query = models.AsQueryable();
 		int index = Random.Next(1, models.Length);
 		var filter = new ModelFilter_OneString {
@@ -42,7 +42,7 @@ public class LogicTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperator_OneOfTwoFields_Success(Model_TwoString[] models) {
+	public void OneOfTwoFields_Success(Model_TwoString[] models) {
 		var query = models.AsQueryable();
 		int index = Random.Next(1, models.Length);
 		var filter = new ModelFilter_TwoString {
@@ -57,7 +57,7 @@ public class LogicTests {
 	}
 
 	[Theory, AutoData]
-	public void StringOperator_TwoOfTwoFields_Success(Model_TwoString[] models) {
+	public void TwoOfTwoFields_Success(Model_TwoString[] models) {
 		var query = models.AsQueryable();
 		int index = Random.Next(1, models.Length);
 		var filter = new ModelFilter_TwoString {

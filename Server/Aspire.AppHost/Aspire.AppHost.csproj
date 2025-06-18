@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.1.0" />
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsAspireHost>true</IsAspireHost>
@@ -7,12 +9,16 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
-    <PackageReference Include="Aspire.Npgsql" />
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Keycloak" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Affairs\Affairs.csproj" />
+    <ProjectReference Include="..\Affairs\Affairs.csproj"  />
     <ProjectReference Include="..\ClientWeb\ClientWeb.csproj" />
+    <ProjectReference Include="..\Identity\Identity.csproj" />
   </ItemGroup>
 
 </Project>

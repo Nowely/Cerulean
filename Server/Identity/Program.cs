@@ -4,6 +4,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddAuthentication()
+	.AddKeycloakJwtBearer(
+		serviceName: "keycloak",
+		realm: "Cerulean",
+		configureOptions: options =>
+		{
+			options.RequireHttpsMetadata = false;
+			//options.Audience = "weather.api";
+		});
+
+builder.Services.AddAuthorizationBuilder();
+
 var app = builder.Build();
 
 
@@ -24,7 +36,8 @@ app.MapGet("/weatherforecast", () => {
 								.ToArray();
 	   return forecast;
    })
-   .WithName("GetWeatherForecast");
+   .WithName("GetWeatherForecast")
+   .RequireAuthorization();
 
 app.Run();
 

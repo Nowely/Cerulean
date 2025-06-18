@@ -1,6 +1,8 @@
+using Afilter.Abstractions;
+
 namespace Affairs.Models.Affair.Dto;
 
-public class AffairAdd {
-	public string Title { get; set; } = string.Empty;
-	public string Note { get; set; } = string.Empty;
-}
+[AutoDto(typeof(Affair),
+	Pick = [nameof(Affair.Title), nameof(Affair.Note)]
+	)]
+public partial class AffairAdd;
