@@ -24,11 +24,6 @@
     <Project Path="Server\Tools.ServiceDefaults\Tools.ServiceDefaults.csproj" />
     <Project Path="Server\Tools.Shared\Tools.Shared.csproj" Type="Classic C#" />
   </Folder>
-  <Folder Name="/Server/GeneratorExample/">
-    <Project Path="Server\SourceGenerators1\SourceGenerators.Sample\SourceGenerators.Sample.csproj" Type="Classic C#" />
-    <Project Path="Server\SourceGenerators1\SourceGenerators.Tests\SourceGenerators.Tests.csproj" Type="Classic C#" />
-    <Project Path="Server\SourceGenerators1\SourceGenerators\SourceGenerators.csproj" Type="Classic C#" />
-  </Folder>
   <Project Path="Client\Client.esproj" Type="{54A90642-561A-4BB1-A94E-469ADEE60C69}">
     <Configuration Solution="Release|Any CPU" Project="Debug|Any CPU" />
   </Project>
