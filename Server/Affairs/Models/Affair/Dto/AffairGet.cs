@@ -1,4 +1,4 @@
-using AutoDto.Abstractions;
+using Afilter.Abstractions;
 
 namespace Affairs.Models.Affair.Dto;
 

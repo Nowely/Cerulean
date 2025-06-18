@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using AutoDto.Abstractions;
-using AutoDto.Operators;
-using AutoDto.Types;
+using Afilter.Abstractions;
+using Afilter.Operators;
+using Afilter.Types;
 
 namespace Affairs.Models.Affair;
 

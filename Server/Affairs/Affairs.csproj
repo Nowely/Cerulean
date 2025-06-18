@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
-    <ProjectReference Include="..\AutoDto.Abstractions\AutoDto.Abstractions.csproj" />
+    <ProjectReference Include="..\Afilter.Abstractions\Afilter.Abstractions.csproj" />
     <ProjectReference Include="..\Tools.API\Tools.API.csproj" />
-    <ProjectReference Include="..\AutoDto.Generator\AutoDto.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Afilter.Generator\Afilter.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Tools.ServiceDefaults\Tools.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Tools.Shared\Tools.Shared.csproj" />
-    <ProjectReference Include="..\AutoDto\AutoDto.csproj" />
+    <ProjectReference Include="..\Afilter\Afilter.csproj" />
   </ItemGroup>
 
   <ItemGroup>

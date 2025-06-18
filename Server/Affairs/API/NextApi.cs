@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Affairs.Infrastructure;
 using Affairs.Models.Affair;
 using Affairs.Models.Affair.Dto;
-using AutoDto.Extensions;
+using Afilter.Extensions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
