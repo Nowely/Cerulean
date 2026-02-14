@@ -1,19 +1,19 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <AspireVersion>9.1.0</AspireVersion>
+    <AspireVersion>13.1.0</AspireVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Version together with Aspire -->
     <PackageVersion Include="Aspire.Hosting" Version="$(AspireVersion)" />
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(AspireVersion)" />
-    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="9.0.0-preview.5.24551.3" />
-    <PackageVersion Include="Aspire.Hosting.NodeJs" Version="$(AspireVersion)" />
+    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.0.0-preview.1.25560.3" />
+    <PackageVersion Include="Aspire.Hosting.JavaScript" Version="$(AspireVersion)" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(AspireVersion)" />
-    <PackageVersion Include="Aspire.Keycloak.Authentication" Version="9.0.0-preview.5.24551.3" />
+    <PackageVersion Include="Aspire.Keycloak.Authentication" Version="13.0.1-preview.1.25575.3" />
     <PackageVersion Include="Aspire.Npgsql" Version="$(AspireVersion)" />
     <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(AspireVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="$(AspireVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.2.0" />
     <!-- Open Telemetry -->
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />

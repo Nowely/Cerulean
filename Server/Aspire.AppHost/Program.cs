@@ -21,7 +21,7 @@ var identity = builder
 	.WithReference(keycloak);
 
 builder
-	.AddNpmApp("Client", "../../Client", "dev")
+	.AddJavaScriptApp("Client", "../../Client", "dev")
 	.WithReference(clientWeb)
 	.WithEndpoint(3000, scheme: "https", env: "PORT")
 	.ExcludeFromManifest();
