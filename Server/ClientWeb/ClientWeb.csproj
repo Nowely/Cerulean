@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
-    <ItemGroup>
-      <ProjectReference Include="..\..\Client\Client.esproj" >
-        <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      </ProjectReference>
-      <ProjectReference Include="..\Tools.ServiceDefaults\Tools.ServiceDefaults.csproj" />
-    </ItemGroup>
-
-</Project>
