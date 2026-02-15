@@ -1,5 +1,4 @@
 using Affairs.Models.Affair;
-using Affairs.Models.Affair.Dto;
 using Afilter.Extensions;
 using Facet.Extensions;
 using Microsoft.AspNetCore.Http.HttpResults;
