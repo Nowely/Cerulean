@@ -1,15 +1,13 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Scalar.AspNetCore;
 
 namespace Tools.ServiceDefaults;
 
 public static partial class Extensions {
 	public static IHostApplicationBuilder AddDefaultOpenApi(this IHostApplicationBuilder builder) {
-		builder.Services.AddEndpointsApiExplorer();
-		builder.Services.AddSwaggerGen(options => {
-			//options.IncludeXmlComments();
-		});
+		builder.Services.AddOpenApi();
 
 		return builder;
 	}
@@ -17,8 +15,11 @@ public static partial class Extensions {
 	public static IApplicationBuilder UseDefaultOpenApi(this WebApplication app) {
 		if (!app.Environment.IsDevelopment()) return app;
 
-		app.UseSwagger();
-		app.UseSwaggerUI();
+		// Serve OpenAPI JSON document
+		app.MapOpenApi();
+
+		// Serve Scalar UI (modern Swagger UI alternative)
+		app.MapScalarApiReference();
 
 		return app;
 	}
