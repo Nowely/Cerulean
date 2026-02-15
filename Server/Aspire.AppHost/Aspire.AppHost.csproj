@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Affairs\Affairs.csproj"  />
-    <ProjectReference Include="..\ClientWeb\ClientWeb.csproj" />
     <ProjectReference Include="..\Identity\Identity.csproj" />
   </ItemGroup>
 

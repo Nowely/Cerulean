@@ -13,16 +13,12 @@ var affairs = builder
 			  .AddProject<Projects.Affairs>(nameof(Projects.Affairs))
 			  .WithReference(affairDb);
 
-var clientWeb = builder
-			  .AddProject<Projects.ClientWeb>(nameof(Projects.ClientWeb));
-
 var identity = builder
 	.AddProject<Projects.Identity>(nameof(Projects.Identity))
 	.WithReference(keycloak);
 
 builder
 	.AddJavaScriptApp("Client", "../../Client", "dev")
-	.WithReference(clientWeb)
 	.WithEndpoint(3000, scheme: "https", env: "PORT")
 	.ExcludeFromManifest();
 
