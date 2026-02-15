@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
-      <PackageReference Include="Riok.Mapperly" />
+      <PackageReference Include="Facet" />
+      <PackageReference Include="Facet.Extensions" />
     </ItemGroup>
 
 </Project>

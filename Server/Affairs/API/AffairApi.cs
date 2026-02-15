@@ -1,6 +1,7 @@
 using Affairs.Models.Affair;
 using Affairs.Models.Affair.Dto;
 using Afilter.Extensions;
+using Facet.Extensions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Tools.API;
@@ -24,8 +25,9 @@ public static class AffairApi {
 		[AsParameters] GetByIdRequest request) {
 		var affair = await request.Db
 								  .Affair
-								  .ToDto()
+								  .Select(AffairGet.Projection)
 								  .FirstOrDefaultAsync(affair => affair.Id == request.Id);
+
 		return Response.Get(affair);
 	}
 
@@ -34,7 +36,7 @@ public static class AffairApi {
 		var affairs = await request.Db
 								   .Affair
 								   .ApplyFilter(request.Filter)
-								   .ToDto()
+								   .Select(AffairGet.Projection)
 								   .ToArrayAsync();
 
 		return Response.Get(affairs, []);
@@ -42,12 +44,12 @@ public static class AffairApi {
 
 	public static async Task<Results<Created<AffairGet>, BadRequest<string>>> Create(
 		[AsParameters] CreateRequest request) {
-		var entity = request.Dto.ToEntity();
+		var entity = request.Dto.ToSource<Affair>();
 
 		request.Db.Affair.Add(entity);
 
 		await request.Db.SaveChangesAsync();
-		return Response.Create(entity.ToDto());
+		return Response.Create(entity.ToFacet<AffairGet>());
 	}
 
 	public static async Task<Results<Created<AffairGet>, NotFound, BadRequest<string>>> Update(
@@ -55,11 +57,11 @@ public static class AffairApi {
 		var entity = await request.Db.Affair.FindAsync(request.Dto.Id);
 		if (entity is null) return Response.Update<AffairGet>(null);
 
-		request.Dto.ApplyUpdateTo(entity);
+		request.Dto.ApplyFacet(entity);
 		request.Db.Affair.Update(entity);
 
 		await request.Db.SaveChangesAsync();
-		return Response.Update(entity.ToDto());
+		return Response.Update(entity.ToFacet<AffairGet>());
 	}
 
 	public static async Task<Results<NoContent, NotFound, BadRequest<string>>> Delete(

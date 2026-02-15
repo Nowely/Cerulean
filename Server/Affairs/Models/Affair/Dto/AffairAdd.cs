@@ -1,8 +1,6 @@
-using Afilter.Abstractions;
+using Facet;
 
 namespace Affairs.Models.Affair.Dto;
 
-[AutoDto(typeof(Affair),
-	Pick = [nameof(Affair.Title), nameof(Affair.Note)]
-	)]
-public partial class AffairAdd;
+[Facet(typeof(Affair), Include = [nameof(Affair.Title), nameof(Affair.Note)])]
+public partial record AffairAdd;

@@ -1,7 +1,6 @@
+using Facet;
+
 namespace Affairs.Models.Affair.Dto;
 
-public class AffairUpdate {
-	public Guid Id { get; set; }
-	public string? Title { get; set; }
-	public string? Note { get; set; }
-}
+[Facet(typeof(Affair), Include = [nameof(Id), nameof(Title),  nameof(Note)])]
+public partial record AffairUpdate;
