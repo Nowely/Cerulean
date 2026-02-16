@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Creation (Form) - TaskChat User Flow</title>
+  <link rel="stylesheet" href="../flow-theme.css">
+</head>
+<body>
+  <div class="container" data-flow-root>
+    <header>
+      <h1>Task Creation via Form</h1>
+      <p class="summary">Create detailed tasks using the full task form with all fields.</p>
+      <p class="meta">Updated: February 17, 2026 | Interactive flow format</p>
+    </header>
+
+    <section class="panel">
+      <h2>Preconditions</h2>
+      <ul>
+        <li>App running at http://localhost:3000</li>
+        <li>User has selected an active thread</li>
+        <li>Thread has multiple members available for task assignment</li>
+      </ul>
+    </section>
+
+    <section class="steps-shell">
+      <h2>Flow Steps</h2>
+      <div class="flow-nav">
+        <div class="flow-nav-top">
+          <button type="button" data-flow-prev>Previous</button>
+          <button type="button" class="primary" data-flow-next>Next</button>
+          <span class="flow-status" data-flow-status></span>
+          <label><input type="checkbox" data-flow-show-all> Show all steps</label>
+        </div>
+        <div class="flow-nav-index" data-flow-index></div>
+      </div>
+      <div class="steps-grid" data-flow-steps>
+        <article class="step-card" data-step-title="Open task form">
+          <div class="step-head">
+            <div class="step-number">1</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Type "/task" in the message input or click Quick Actions → "New Task" to open the task creation form.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Task form drawer slides up from bottom (mobile) or appears as modal (desktop) with title "New Task". Form displays all fields: Title (required, focused), Description (textarea), Status buttons (To Do selected by default), Priority buttons (Medium selected by default), Assignees (member avatars), Due Date (date picker), and Tags (comma-separated input). Create Task button is disabled until title is filled.</p>
+          </details>
+          <div class="ui-mock show-sidebar show-panel" data-default-classes="ui-mock show-sidebar show-panel">
+            <p class="wireframe-hint">Panel block represents the New Task form.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Quick Actions -> New Task</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Chat Area</div>
+                <div class="wf-line" contenteditable="true">Form opens over current thread.</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Task Form</div>
+                <div class="wf-line" contenteditable="true">Title (required, focused)</div>
+                <div class="wf-line" contenteditable="true">Status: To Do, Priority: Medium</div>
+                <div class="wf-line wf-muted" contenteditable="true">Create button disabled</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+        <article class="step-card" data-step-title="Fill form fields">
+          <div class="step-head">
+            <div class="step-number">2</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Fill in all task fields: Title: "Update color palette documentation", Description: "Document the new color tokens...", Priority: High, Assignee: Sarah Chen (click to select), Tags: "documentation, design-system"</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>All fields populate with entered values. High priority button becomes active/selected (green background). Sarah Chen's avatar shows with an "X" to remove. Tags display in the input field. Create Task button becomes enabled (bright green).</p>
+          </details>
+          <div class="ui-mock show-sidebar show-panel" data-default-classes="ui-mock show-sidebar show-panel">
+            <p class="wireframe-hint">Edit any field labels inline to iterate on form structure.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Thread members available</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Chat Area</div>
+                <div class="wf-line" contenteditable="true">Form stays open while editing.</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Task Form</div>
+                <div class="wf-line" contenteditable="true">Title: Update color palette documentation</div>
+                <div class="wf-line" contenteditable="true">Priority: High | Assignee: Sarah Chen</div>
+                <div class="wf-line" contenteditable="true">Tags: documentation, design-system</div>
+                <div class="wf-line" contenteditable="true">Create button enabled</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+        <article class="step-card" data-step-title="Submit task form">
+          <div class="step-head">
+            <div class="step-number">3</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Click the "Create Task" button to submit the form.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Toast notification appears: "Task created - Update color palette documentation". Task card immediately appears in the chat view with all details (title, description, status badge, priority badge, tags, assignee avatar). Form closes automatically. Sidebar thread item updates to show "You: Created task: Update color palette..." Thread task count increments (4 tasks → 5 tasks in header). System message may appear in chat noting task creation.</p>
+          </details>
+          <div class="ui-mock show-sidebar" data-default-classes="ui-mock show-sidebar">
+            <p class="wireframe-hint">Post-submit state: task card appears and thread metadata updates.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">You: Created task: Update color palette...</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Chat Area</div>
+                <div class="wf-item" contenteditable="true">Task card: Update color palette documentation</div>
+                <div class="wf-line" contenteditable="true">Toast: Task created - Update color palette documentation</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Task Form</div>
+                <div class="wf-line" contenteditable="true">Closed after submit</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Key Observations</h2>
+      <ul>
+        <li><strong>Form Validation:</strong> Create button remains disabled until required title field is filled</li>
+        <li><strong>Multi-select Assignees:</strong> Users can assign tasks to multiple thread members, shown as avatar chips with remove buttons</li>
+        <li><strong>Status Options:</strong> Five status options available: To Do, In Progress, Review, Done, Blocked</li>
+        <li><strong>Priority Levels:</strong> Four priority levels: Low, Medium, High, Urgent with visual color coding</li>
+        <li><strong>Tag Parsing:</strong> Tags are comma-separated and automatically parse on submission</li>
+        <li><strong>Due Date Format:</strong> Date picker uses dd.mm.yyyy format</li>
+        <li><strong>Default Values:</strong> Status defaults to "To Do", Priority defaults to "Medium"</li>
+        <li><strong>Notification System:</strong> Task assignees automatically receive assignment notifications (except task creator)</li>
+        <li><strong>Real-time Chat Integration:</strong> Created tasks appear as rich task cards in the message feed with all metadata</li>
+        <li><strong>Thread Updates:</strong> Sidebar reflects task creation in thread preview and task count</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p><a href="../index.html">← Back to all flows</a></p>
+      <p style="margin-top: 10px; font-size: 0.9em;">Interactive HTML flow format for fast iteration.</p>
+    </footer>
+  </div>
+  <script src="../flow-runtime.js"></script>
+</body>
+</html>
