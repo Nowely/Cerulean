@@ -429,7 +429,7 @@
     var activeIndex = 0;
 
     if (showAllCheckbox) {
-      showAllCheckbox.checked = true;
+      showAllCheckbox.checked = false;
     }
 
     if (chipContainer) {
