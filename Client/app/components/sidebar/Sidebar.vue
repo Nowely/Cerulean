@@ -2,6 +2,7 @@
 import { useAppStore, createThread } from '~/composables/useAppStore'
 import { useIsMobile } from '~/composables/useIsMobile'
 import SidebarHeader from '~/components/sidebar/SidebarHeader.vue'
+import SidebarFooter from '~/components/sidebar/SidebarFooter.vue'
 import ThreadItem from '~/components/sidebar/ThreadItem.vue'
 import type { Thread } from '~/types'
 
@@ -115,6 +116,8 @@ function openNewThread() {
         </div>
       </div>
     </div>
+
+    <SidebarFooter />
 
     <USlideover
       v-model:open="showNewThread"

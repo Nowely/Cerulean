@@ -1,8 +1,16 @@
 <script setup lang="ts">
+const colorMode = useColorMode()
+
+const themeColor = computed(() => {
+  if (colorMode.value === 'dark') return '#121519'
+  if (colorMode.value === 'light') return '#ffffff'
+  return colorMode.preference === 'dark' ? '#121519' : '#ffffff'
+})
+
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' },
-    { name: 'theme-color', content: '#121519' }
+    { name: 'theme-color', content: themeColor }
   ],
   link: [
     { rel: 'icon', href: '/favicon.ico' }
