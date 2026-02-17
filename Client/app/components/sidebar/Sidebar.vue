@@ -71,7 +71,10 @@ function openNewThread() {
   <div class="flex h-full flex-col bg-gray-50 dark:bg-gray-900">
     <SidebarHeader @new-thread="openNewThread" />
 
-    <div class="flex-1 overflow-y-auto" data-testid="thread-list">
+    <div
+      class="flex-1 overflow-y-auto"
+      data-testid="thread-list"
+    >
       <div class="flex flex-col gap-0.5 px-2 pb-4">
         <template v-if="pinnedThreads.length > 0">
           <p class="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
@@ -106,7 +109,9 @@ function openNewThread() {
           v-if="filteredThreads.length === 0"
           class="flex flex-col items-center gap-2 px-4 py-12 text-center"
         >
-          <p class="text-sm text-gray-500">No threads found</p>
+          <p class="text-sm text-gray-500">
+            No threads found
+          </p>
         </div>
       </div>
     </div>
@@ -118,8 +123,12 @@ function openNewThread() {
     >
       <template #content>
         <div class="p-4">
-          <h3 class="text-lg font-semibold mb-1">New Thread</h3>
-          <p class="text-sm text-gray-500 mb-4">Create a new project, group, or direct thread</p>
+          <h3 class="text-lg font-semibold mb-1">
+            New Thread
+          </h3>
+          <p class="text-sm text-gray-500 mb-4">
+            Create a new project, group, or direct thread
+          </p>
 
           <div class="flex flex-col gap-4">
             <input

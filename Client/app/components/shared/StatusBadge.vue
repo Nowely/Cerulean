@@ -12,20 +12,20 @@ withDefaults(defineProps<Props>(), {
 })
 
 const STATUS_ICONS: Record<TaskStatus, string> = {
-  todo: 'i-lucide-circle',
+  'todo': 'i-lucide-circle',
   'in-progress': 'i-lucide-clock',
-  review: 'i-lucide-eye',
-  done: 'i-lucide-check-circle-2',
-  blocked: 'i-lucide-ban'
+  'review': 'i-lucide-eye',
+  'done': 'i-lucide-check-circle-2',
+  'blocked': 'i-lucide-ban'
 }
 
 function getStatusColor(status: TaskStatus): string {
   const colors: Record<TaskStatus, string> = {
-    todo: 'var(--status-todo)',
+    'todo': 'var(--status-todo)',
     'in-progress': 'var(--status-in-progress)',
-    review: 'var(--status-review)',
-    done: 'var(--status-done)',
-    blocked: 'var(--status-blocked)'
+    'review': 'var(--status-review)',
+    'done': 'var(--status-done)',
+    'blocked': 'var(--status-blocked)'
   }
   return colors[status]
 }

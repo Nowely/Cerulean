@@ -178,11 +178,16 @@ function closeDrawer() {
   >
     <template #content>
       <div class="flex flex-col h-full">
-        <div v-if="task" class="flex-1 overflow-y-auto">
+        <div
+          v-if="task"
+          class="flex-1 overflow-y-auto"
+        >
           <div class="p-4 pb-0">
             <div class="flex items-start justify-between gap-2">
               <div class="flex-1">
-                <h3 class="text-base font-semibold leading-snug">{{ task.title }}</h3>
+                <h3 class="text-base font-semibold leading-snug">
+                  {{ task.title }}
+                </h3>
                 <p class="mt-1 text-[12px] text-gray-500">
                   Created by {{ creator?.name }} on
                   {{ new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
@@ -194,14 +199,20 @@ function closeDrawer() {
                   aria-label="Edit task"
                   @click="dispatch({ type: 'SET_EDITING_TASK', task })"
                 >
-                  <UIcon name="i-lucide-edit-3" class="h-4 w-4" />
+                  <UIcon
+                    name="i-lucide-edit-3"
+                    class="h-4 w-4"
+                  />
                 </button>
                 <button
                   class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                   aria-label="Delete task"
                   @click="handleDelete"
                 >
-                  <UIcon name="i-lucide-trash-2" class="h-4 w-4" />
+                  <UIcon
+                    name="i-lucide-trash-2"
+                    class="h-4 w-4"
+                  />
                 </button>
               </div>
             </div>
@@ -246,24 +257,38 @@ function closeDrawer() {
                   </UDropdownMenu>
                 </div>
 
-                <div v-if="task.dueDate" class="flex flex-col gap-1.5">
+                <div
+                  v-if="task.dueDate"
+                  class="flex flex-col gap-1.5"
+                >
                   <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Due Date</span>
                   <span
                     class="flex items-center gap-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm"
                     :class="overdue ? 'text-red-500' : dueSoon ? 'text-amber-500' : ''"
                   >
-                    <UIcon name="i-lucide-calendar" class="h-3.5 w-3.5" />
+                    <UIcon
+                      name="i-lucide-calendar"
+                      class="h-3.5 w-3.5"
+                    />
                     {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
                   </span>
                 </div>
               </div>
 
-              <div v-if="task.description" class="flex flex-col gap-1.5">
+              <div
+                v-if="task.description"
+                class="flex flex-col gap-1.5"
+              >
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Description</span>
-                <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{{ task.description }}</p>
+                <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  {{ task.description }}
+                </p>
               </div>
 
-              <div v-if="assignees.length > 0" class="flex flex-col gap-2">
+              <div
+                v-if="assignees.length > 0"
+                class="flex flex-col gap-2"
+              >
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Assignees</span>
                 <div class="flex flex-wrap gap-2">
                   <div
@@ -271,13 +296,19 @@ function closeDrawer() {
                     :key="user!.id"
                     class="flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-800 py-1 pl-1 pr-3"
                   >
-                    <UserAvatar :user="user" size="sm" />
+                    <UserAvatar
+                      :user="user"
+                      size="sm"
+                    />
                     <span class="text-sm">{{ user!.name }}</span>
                   </div>
                 </div>
               </div>
 
-              <div v-if="task.tags.length > 0" class="flex flex-col gap-2">
+              <div
+                v-if="task.tags.length > 0"
+                class="flex flex-col gap-2"
+              >
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Tags</span>
                 <div class="flex flex-wrap gap-1.5">
                   <span
@@ -290,7 +321,10 @@ function closeDrawer() {
                 </div>
               </div>
 
-              <div v-if="dependencies.length > 0" class="flex flex-col gap-2">
+              <div
+                v-if="dependencies.length > 0"
+                class="flex flex-col gap-2"
+              >
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Dependencies</span>
                 <div class="flex flex-col gap-1.5">
                   <button
@@ -299,14 +333,20 @@ function closeDrawer() {
                     class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-left text-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
                     @click="dispatch({ type: 'SET_ACTIVE_TASK', taskId: dep!.id })"
                   >
-                    <UIcon name="i-lucide-link-2" class="h-3.5 w-3.5 text-gray-500" />
+                    <UIcon
+                      name="i-lucide-link-2"
+                      class="h-3.5 w-3.5 text-gray-500"
+                    />
                     <span
                       class="flex-1"
                       :class="dep!.status === 'done' && 'line-through text-gray-500'"
                     >
                       {{ dep!.title }}
                     </span>
-                    <StatusBadge :status="dep!.status" :show-label="false" />
+                    <StatusBadge
+                      :status="dep!.status"
+                      :show-label="false"
+                    />
                   </button>
                 </div>
               </div>
@@ -317,7 +357,10 @@ function closeDrawer() {
                 </span>
 
                 <template v-if="subtasks.length > 0">
-                  <UProgress :value="progress" class="h-1.5" />
+                  <UProgress
+                    :value="progress"
+                    class="h-1.5"
+                  />
                   <div class="flex flex-col gap-1">
                     <button
                       v-for="sub in subtasks"

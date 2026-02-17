@@ -13,14 +13,14 @@ const unreadCount = computed(() =>
 )
 
 const NOTIF_ICONS: Record<string, string> = {
-  assignment: 'i-lucide-user-plus',
-  comment: 'i-lucide-message-square',
+  'assignment': 'i-lucide-user-plus',
+  'comment': 'i-lucide-message-square',
   'status-change': 'i-lucide-arrow-right',
   'due-soon': 'i-lucide-clock',
-  mention: 'i-lucide-bell'
+  'mention': 'i-lucide-bell'
 }
 
-function handleNotificationClick(notif: { id: string; threadId?: string; taskId?: string }) {
+function handleNotificationClick(notif: { id: string, threadId?: string, taskId?: string }) {
   dispatch({ type: 'MARK_NOTIFICATION_READ', id: notif.id })
   if (notif.threadId) {
     dispatch({ type: 'SET_ACTIVE_THREAD', threadId: notif.threadId })
@@ -74,7 +74,10 @@ function markAllRead() {
             data-testid="mark-all-read-btn"
             @click="markAllRead"
           >
-            <UIcon name="i-lucide-check-check" class="h-3.5 w-3.5" />
+            <UIcon
+              name="i-lucide-check-check"
+              class="h-3.5 w-3.5"
+            />
             Mark all read
           </button>
         </div>
@@ -85,8 +88,13 @@ function markAllRead() {
               v-if="notifications.length === 0"
               class="flex flex-col items-center gap-2 px-4 py-16 text-center"
             >
-              <UIcon name="i-lucide-bell" class="h-10 w-10 text-gray-300 dark:text-gray-600" />
-              <p class="text-sm text-gray-500">No notifications yet</p>
+              <UIcon
+                name="i-lucide-bell"
+                class="h-10 w-10 text-gray-300 dark:text-gray-600"
+              />
+              <p class="text-sm text-gray-500">
+                No notifications yet
+              </p>
             </div>
 
             <button
@@ -101,7 +109,10 @@ function markAllRead() {
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                 :class="!notif.read ? 'bg-primary-500/15 text-primary-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'"
               >
-                <UIcon :name="NOTIF_ICONS[notif.type] ?? 'i-lucide-bell'" class="h-4 w-4" />
+                <UIcon
+                  :name="NOTIF_ICONS[notif.type] ?? 'i-lucide-bell'"
+                  class="h-4 w-4"
+                />
               </div>
               <div class="flex min-w-0 flex-1 flex-col gap-0.5">
                 <div class="flex items-center justify-between gap-2">

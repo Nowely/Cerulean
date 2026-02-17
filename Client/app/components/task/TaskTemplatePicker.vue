@@ -66,7 +66,7 @@ function handleSelect(templateId: string) {
 
   dispatch({ type: 'ADD_TASK', task, message })
 
-  template.subtasks.forEach(sub => {
+  template.subtasks.forEach((sub) => {
     const subTask: Task = {
       id: generateId('task'),
       threadId,
@@ -115,8 +115,12 @@ function closeDrawer() {
   >
     <template #content>
       <div class="p-4">
-        <h3 class="text-lg font-semibold mb-1">Task Templates</h3>
-        <p class="text-sm text-gray-500 mb-4">Choose a template to quickly create a task</p>
+        <h3 class="text-lg font-semibold mb-1">
+          Task Templates
+        </h3>
+        <p class="text-sm text-gray-500 mb-4">
+          Choose a template to quickly create a task
+        </p>
 
         <div class="flex flex-col gap-2">
           <button
@@ -126,7 +130,10 @@ function closeDrawer() {
             @click="handleSelect(template.id)"
           >
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-500/10">
-              <UIcon :name="TEMPLATE_ICONS[template.id] ?? 'i-lucide-zap'" class="h-5 w-5 text-primary-500" />
+              <UIcon
+                :name="TEMPLATE_ICONS[template.id] ?? 'i-lucide-zap'"
+                class="h-5 w-5 text-primary-500"
+              />
             </div>
             <div class="flex flex-col gap-0.5">
               <span class="text-sm font-semibold">{{ template.name }}</span>

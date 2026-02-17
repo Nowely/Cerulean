@@ -16,7 +16,10 @@ const searchQuery = computed(() => state.value.searchQuery)
   <header class="flex flex-col gap-3 p-4 pb-2">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <UserAvatar :user="currentUser" size="md" />
+        <UserAvatar
+          :user="currentUser"
+          size="md"
+        />
         <div>
           <h1 class="text-sm font-semibold">
             TaskChat

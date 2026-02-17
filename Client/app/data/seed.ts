@@ -229,7 +229,7 @@ export const SEED_MESSAGES: Message[] = [
     id: 'm3',
     threadId: 't1',
     type: 'text',
-    content: "I've started working on the design tokens. Should we use the existing brand colors or go with something fresh?",
+    content: 'I\'ve started working on the design tokens. Should we use the existing brand colors or go with something fresh?',
     senderId: 'u2',
     timestamp: new Date(now - 1000 * 60 * 60 * 60).toISOString()
   },
@@ -237,7 +237,7 @@ export const SEED_MESSAGES: Message[] = [
     id: 'm4',
     threadId: 't1',
     type: 'text',
-    content: "Let's keep the primary blue but update the secondary palette. I'll share some references.",
+    content: 'Let\'s keep the primary blue but update the secondary palette. I\'ll share some references.',
     senderId: 'u1',
     timestamp: new Date(now - 1000 * 60 * 60 * 59).toISOString()
   },

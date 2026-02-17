@@ -33,7 +33,7 @@ function handleScroll() {
 }
 
 const groupedMessages = computed(() => {
-  const groups: { date: string; messages: typeof threadMessages.value }[] = []
+  const groups: { date: string, messages: typeof threadMessages.value }[] = []
   let currentDate = ''
 
   for (const msg of threadMessages.value) {
@@ -56,10 +56,10 @@ function shouldShowAvatar(messages: typeof threadMessages.value, idx: number): b
   if (!msg) return true
   const prevMsg = idx > 0 ? messages[idx - 1] : null
 
-  return !prevMsg ||
-    prevMsg.senderId !== msg.senderId ||
-    prevMsg.type !== msg.type ||
-    new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() > 1000 * 60 * 5
+  return !prevMsg
+    || prevMsg.senderId !== msg.senderId
+    || prevMsg.type !== msg.type
+    || new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() > 1000 * 60 * 5
 }
 </script>
 
@@ -71,14 +71,21 @@ function shouldShowAvatar(messages: typeof threadMessages.value, idx: number): b
       @scroll="handleScroll"
     >
       <div class="flex flex-col gap-1 py-4">
-        <div v-for="group in groupedMessages" :key="group.date" class="flex flex-col gap-1">
+        <div
+          v-for="group in groupedMessages"
+          :key="group.date"
+          class="flex flex-col gap-1"
+        >
           <div class="flex justify-center py-2 sticky top-0 z-10">
             <span class="rounded-full bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm px-3 py-1 text-[11px] font-medium text-gray-500">
               {{ group.date }}
             </span>
           </div>
 
-          <template v-for="(msg, idx) in group.messages" :key="msg.id">
+          <template
+            v-for="(msg, idx) in group.messages"
+            :key="msg.id"
+          >
             <SystemBubble
               v-if="msg.type === 'system' || msg.type === 'status-change' || msg.type === 'assignment'"
               :message="msg"
@@ -105,7 +112,10 @@ function shouldShowAvatar(messages: typeof threadMessages.value, idx: number): b
       aria-label="Scroll to bottom"
       @click="scrollToBottom"
     >
-      <UIcon name="i-lucide-arrow-down" class="h-5 w-5" />
+      <UIcon
+        name="i-lucide-arrow-down"
+        class="h-5 w-5"
+      />
     </button>
 
     <InputBar />

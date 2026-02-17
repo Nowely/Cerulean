@@ -74,7 +74,10 @@ const threadColor = computed(() => {
       class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white"
       :style="{ backgroundColor: threadColor }"
     >
-      <UIcon :name="THREAD_ICONS[thread.type]" class="h-5 w-5" />
+      <UIcon
+        :name="THREAD_ICONS[thread.type]"
+        class="h-5 w-5"
+      />
     </div>
     <div class="flex min-w-0 flex-1 flex-col">
       <div class="flex items-center justify-between gap-2">
@@ -92,7 +95,10 @@ const threadColor = computed(() => {
       </div>
       <div class="flex items-center justify-between gap-2">
         <p class="truncate text-[13px] text-gray-500">
-          <span v-if="senderName" class="text-gray-700 dark:text-gray-300">{{ senderName }}: </span>
+          <span
+            v-if="senderName"
+            class="text-gray-700 dark:text-gray-300"
+          >{{ senderName }}: </span>
           {{ previewText }}
         </p>
         <span

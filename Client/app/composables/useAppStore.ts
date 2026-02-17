@@ -24,26 +24,26 @@ function createInitialState(): AppState {
   }
 }
 
-type Action =
-  | { type: 'SET_ACTIVE_THREAD'; threadId: ThreadId | null }
-  | { type: 'SET_ACTIVE_TASK'; taskId: TaskId | null }
-  | { type: 'TOGGLE_SIDEBAR' }
-  | { type: 'SET_SIDEBAR'; open: boolean }
-  | { type: 'SET_SEARCH'; query: string }
-  | { type: 'SHOW_NOTIFICATIONS'; show: boolean }
-  | { type: 'SHOW_TASK_FORM'; show: boolean }
-  | { type: 'SHOW_TEMPLATES'; show: boolean }
-  | { type: 'SET_EDITING_TASK'; task: Task | null }
-  | { type: 'ADD_THREAD'; thread: Thread }
-  | { type: 'ADD_TASK'; task: Task; message: Message }
-  | { type: 'UPDATE_TASK'; task: Task; message?: Message }
-  | { type: 'DELETE_TASK'; taskId: TaskId }
-  | { type: 'ADD_MESSAGE'; message: Message }
-  | { type: 'ADD_NOTIFICATION'; notification: Notification }
-  | { type: 'MARK_NOTIFICATION_READ'; id: string }
-  | { type: 'MARK_ALL_NOTIFICATIONS_READ' }
-  | { type: 'CLEAR_UNREAD'; threadId: ThreadId }
-  | { type: 'RESET_STATE' }
+type Action
+  = | { type: 'SET_ACTIVE_THREAD', threadId: ThreadId | null }
+    | { type: 'SET_ACTIVE_TASK', taskId: TaskId | null }
+    | { type: 'TOGGLE_SIDEBAR' }
+    | { type: 'SET_SIDEBAR', open: boolean }
+    | { type: 'SET_SEARCH', query: string }
+    | { type: 'SHOW_NOTIFICATIONS', show: boolean }
+    | { type: 'SHOW_TASK_FORM', show: boolean }
+    | { type: 'SHOW_TEMPLATES', show: boolean }
+    | { type: 'SET_EDITING_TASK', task: Task | null }
+    | { type: 'ADD_THREAD', thread: Thread }
+    | { type: 'ADD_TASK', task: Task, message: Message }
+    | { type: 'UPDATE_TASK', task: Task, message?: Message }
+    | { type: 'DELETE_TASK', taskId: TaskId }
+    | { type: 'ADD_MESSAGE', message: Message }
+    | { type: 'ADD_NOTIFICATION', notification: Notification }
+    | { type: 'MARK_NOTIFICATION_READ', id: string }
+    | { type: 'MARK_ALL_NOTIFICATIONS_READ' }
+    | { type: 'CLEAR_UNREAD', threadId: ThreadId }
+    | { type: 'RESET_STATE' }
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {

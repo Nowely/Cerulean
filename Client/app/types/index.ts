@@ -14,7 +14,7 @@ export interface User {
 export interface Thread {
   id: ThreadId
   name: string
-  type: "project" | "direct" | "group"
+  type: 'project' | 'direct' | 'group'
   members: UserId[]
   lastActivity: string
   unreadCount: number
@@ -23,8 +23,8 @@ export interface Thread {
   icon?: string
 }
 
-export type TaskStatus = "todo" | "in-progress" | "review" | "done" | "blocked"
-export type TaskPriority = "low" | "medium" | "high" | "urgent"
+export type TaskStatus = 'todo' | 'in-progress' | 'review' | 'done' | 'blocked'
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 
 export interface Task {
   id: TaskId
@@ -44,14 +44,14 @@ export interface Task {
   templateId?: string
 }
 
-export type MessageType =
-  | "text"
-  | "task-created"
-  | "task-updated"
-  | "status-change"
-  | "assignment"
-  | "comment"
-  | "system"
+export type MessageType
+  = | 'text'
+    | 'task-created'
+    | 'task-updated'
+    | 'status-change'
+    | 'assignment'
+    | 'comment'
+    | 'system'
 
 export interface Message {
   id: MessageId
@@ -76,7 +76,7 @@ export interface TaskTemplate {
 
 export interface Notification {
   id: string
-  type: "assignment" | "mention" | "due-soon" | "status-change" | "comment"
+  type: 'assignment' | 'mention' | 'due-soon' | 'status-change' | 'comment'
   threadId: ThreadId
   taskId?: TaskId
   messageId?: MessageId

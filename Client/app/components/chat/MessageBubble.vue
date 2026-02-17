@@ -30,7 +30,10 @@ const isOwn = computed(() => props.message.senderId === state.value.currentUser.
       size="sm"
       class="mt-1"
     />
-    <div v-else-if="!isOwn" class="w-7 shrink-0" />
+    <div
+      v-else-if="!isOwn"
+      class="w-7 shrink-0"
+    />
 
     <div
       class="flex max-w-[80%] flex-col gap-0.5"

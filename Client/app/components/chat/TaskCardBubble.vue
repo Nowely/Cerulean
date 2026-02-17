@@ -54,17 +54,30 @@ function handleClick() {
 </script>
 
 <template>
-  <div v-if="task" class="flex gap-2 px-3" :class="isOwn ? 'flex-row-reverse' : 'flex-row'">
+  <div
+    v-if="task"
+    class="flex gap-2 px-3"
+    :class="isOwn ? 'flex-row-reverse' : 'flex-row'"
+  >
     <UserAvatar
       v-if="showAvatar && !isOwn"
       :user="sender"
       size="sm"
       class="mt-1"
     />
-    <div v-else-if="!isOwn" class="w-7 shrink-0" />
+    <div
+      v-else-if="!isOwn"
+      class="w-7 shrink-0"
+    />
 
-    <div class="flex max-w-[85%] flex-col gap-0.5" :class="isOwn ? 'items-end' : 'items-start'">
-      <span v-if="showAvatar && !isOwn" class="px-1 text-[11px] font-medium text-primary-500">
+    <div
+      class="flex max-w-[85%] flex-col gap-0.5"
+      :class="isOwn ? 'items-end' : 'items-start'"
+    >
+      <span
+        v-if="showAvatar && !isOwn"
+        class="px-1 text-[11px] font-medium text-primary-500"
+      >
         {{ sender?.name }}
       </span>
 
@@ -80,11 +93,19 @@ function handleClick() {
           />
           <div class="flex flex-1 flex-col gap-2 p-3">
             <div class="flex items-start justify-between gap-2">
-              <h3 class="text-sm font-semibold leading-snug">{{ task.title }}</h3>
-              <UIcon name="i-lucide-chevron-right" class="h-4 w-4 shrink-0 text-gray-400 mt-0.5" />
+              <h3 class="text-sm font-semibold leading-snug">
+                {{ task.title }}
+              </h3>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="h-4 w-4 shrink-0 text-gray-400 mt-0.5"
+              />
             </div>
 
-            <p v-if="task.description" class="text-[13px] leading-relaxed text-gray-500 line-clamp-2">
+            <p
+              v-if="task.description"
+              class="text-[13px] leading-relaxed text-gray-500 line-clamp-2"
+            >
               {{ task.description }}
             </p>
 
@@ -97,17 +118,29 @@ function handleClick() {
                 class="inline-flex items-center gap-1 text-[11px]"
                 :class="overdue ? 'text-red-500 font-medium' : dueSoon ? 'text-amber-500 font-medium' : 'text-gray-500'"
               >
-                <UIcon name="i-lucide-calendar" class="h-3 w-3" />
+                <UIcon
+                  name="i-lucide-calendar"
+                  class="h-3 w-3"
+                />
                 {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}
               </span>
 
-              <span v-if="subtasks.length > 0" class="inline-flex items-center gap-1 text-[11px] text-gray-500">
-                <UIcon name="i-lucide-list-checks" class="h-3 w-3" />
+              <span
+                v-if="subtasks.length > 0"
+                class="inline-flex items-center gap-1 text-[11px] text-gray-500"
+              >
+                <UIcon
+                  name="i-lucide-list-checks"
+                  class="h-3 w-3"
+                />
                 {{ completedSubtasks }}/{{ subtasks.length }}
               </span>
             </div>
 
-            <div v-if="task.tags.length > 0" class="flex flex-wrap gap-1">
+            <div
+              v-if="task.tags.length > 0"
+              class="flex flex-wrap gap-1"
+            >
               <span
                 v-for="tag in task.tags"
                 :key="tag"

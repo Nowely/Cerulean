@@ -141,7 +141,7 @@ function handleSubmit() {
     }
     dispatch({ type: 'ADD_TASK', task: newTask, message })
 
-    assignees.value.forEach(userId => {
+    assignees.value.forEach((userId) => {
       if (userId !== state.value.currentUser.id) {
         dispatch({
           type: 'ADD_NOTIFICATION',
@@ -198,7 +198,9 @@ function closeDrawer() {
     <template #content>
       <div class="flex flex-col h-full">
         <div class="p-4 pb-0">
-          <h3 class="text-lg font-semibold">{{ isEditing ? 'Edit Task' : 'New Task' }}</h3>
+          <h3 class="text-lg font-semibold">
+            {{ isEditing ? 'Edit Task' : 'New Task' }}
+          </h3>
           <p class="text-sm text-gray-500">
             {{ isEditing ? 'Update the task details below' : 'Create a new task in this thread' }}
           </p>
@@ -247,7 +249,10 @@ function closeDrawer() {
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'"
                   @click="status = s"
                 >
-                  <span class="h-2 w-2 rounded-full" :style="{ backgroundColor: getStatusColor(s) }" />
+                  <span
+                    class="h-2 w-2 rounded-full"
+                    :style="{ backgroundColor: getStatusColor(s) }"
+                  />
                   {{ config.label }}
                 </button>
               </div>
@@ -267,7 +272,10 @@ function closeDrawer() {
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'"
                   @click="priority = p"
                 >
-                  <span class="h-2 w-2 rounded-full" :style="{ backgroundColor: getPriorityColor(p) }" />
+                  <span
+                    class="h-2 w-2 rounded-full"
+                    :style="{ backgroundColor: getPriorityColor(p) }"
+                  />
                   {{ config.label }}
                 </button>
               </div>
@@ -287,9 +295,16 @@ function closeDrawer() {
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'"
                   @click="toggleAssignee(user!.id)"
                 >
-                  <UserAvatar :user="user" size="sm" />
+                  <UserAvatar
+                    :user="user"
+                    size="sm"
+                  />
                   <span>{{ user!.name }}</span>
-                  <UIcon v-if="assignees.includes(user!.id)" name="i-lucide-x" class="h-3 w-3 text-gray-400" />
+                  <UIcon
+                    v-if="assignees.includes(user!.id)"
+                    name="i-lucide-x"
+                    class="h-3 w-3 text-gray-400"
+                  />
                 </button>
               </div>
             </div>

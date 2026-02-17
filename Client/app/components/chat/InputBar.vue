@@ -92,12 +92,18 @@ function handleInput(e: Event) {
     v-if="activeThread"
     class="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
   >
-    <div v-if="showCommands" class="mb-2 flex flex-col gap-0.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-1">
+    <div
+      v-if="showCommands"
+      class="mb-2 flex flex-col gap-0.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-1"
+    >
       <button
         class="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
         @click="dispatch({ type: 'SHOW_TASK_FORM', show: true }); text = ''; showCommands = false"
       >
-        <UIcon name="i-lucide-list-todo" class="h-4 w-4 text-primary-500" />
+        <UIcon
+          name="i-lucide-list-todo"
+          class="h-4 w-4 text-primary-500"
+        />
         <span class="font-medium">/task</span>
         <span class="text-gray-500">Create a new task</span>
       </button>
@@ -105,7 +111,10 @@ function handleInput(e: Event) {
         class="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
         @click="dispatch({ type: 'SHOW_TEMPLATES', show: true }); text = ''; showCommands = false"
       >
-        <UIcon name="i-lucide-file-text" class="h-4 w-4 text-amber-500" />
+        <UIcon
+          name="i-lucide-file-text"
+          class="h-4 w-4 text-amber-500"
+        />
         <span class="font-medium">/template</span>
         <span class="text-gray-500">Use a task template</span>
       </button>
@@ -118,7 +127,10 @@ function handleInput(e: Event) {
             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
             aria-label="Quick actions"
           >
-            <UIcon name="i-lucide-plus" class="h-5 w-5" />
+            <UIcon
+              name="i-lucide-plus"
+              class="h-5 w-5"
+            />
           </button>
         </template>
         <template #content>
@@ -127,14 +139,20 @@ function handleInput(e: Event) {
               class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
               @click="dispatch({ type: 'SHOW_TASK_FORM', show: true })"
             >
-              <UIcon name="i-lucide-list-todo" class="h-4 w-4 text-primary-500" />
+              <UIcon
+                name="i-lucide-list-todo"
+                class="h-4 w-4 text-primary-500"
+              />
               New Task
             </button>
             <button
               class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
               @click="dispatch({ type: 'SHOW_TEMPLATES', show: true })"
             >
-              <UIcon name="i-lucide-file-text" class="h-4 w-4 text-amber-500" />
+              <UIcon
+                name="i-lucide-file-text"
+                class="h-4 w-4 text-amber-500"
+              />
               From Template
             </button>
           </div>
@@ -160,7 +178,10 @@ function handleInput(e: Event) {
         aria-label="Send message"
         @click="text.trim().startsWith('/') ? handleSlashCommand(text.trim()) : handleSend()"
       >
-        <UIcon name="i-lucide-send" class="h-5 w-5" />
+        <UIcon
+          name="i-lucide-send"
+          class="h-5 w-5"
+        />
       </button>
     </div>
   </div>
