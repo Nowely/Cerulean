@@ -75,38 +75,7 @@ const d = computed(() => darkMode.value)
             </div>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap">
-            <button
-              class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
-              :class="[
-                mobileMode
-                  ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
-                  : d
-                    ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'
-                    : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-              ]"
-              @click="mobileMode = !mobileMode"
-            >
-              <UIcon name="i-lucide-smartphone" class="h-4 w-4" />
-              {{ mobileMode ? 'Mobile ON' : 'Mobile' }}
-            </button>
-            <button
-              class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
-              :class="[
-                darkMode
-                  ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
-                  : d
-                    ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'
-                    : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-              ]"
-              @click="darkMode = !darkMode"
-            >
-              <UIcon :name="darkMode ? 'i-lucide-sun' : 'i-lucide-moon'" class="h-4 w-4" />
-              {{ darkMode ? 'Light' : 'Dark' }}
-            </button>
-            <div class="h-6 w-px" :class="d ? 'bg-gray-700' : 'bg-gray-200'" />
-            <span class="text-xs text-gray-400">{{ lastUpdated }}</span>
-          </div>
+          <span class="text-xs text-gray-400">{{ lastUpdated }}</span>
         </div>
       </header>
 
@@ -134,6 +103,8 @@ const d = computed(() => darkMode.value)
             :is-active="idx === activeStep"
             :mobile-mode="mobileMode"
             :dark-mode="darkMode"
+            @toggle-mobile="mobileMode = !mobileMode"
+            @toggle-dark="darkMode = !darkMode"
           />
         </template>
         <FlowStepCard
@@ -143,6 +114,8 @@ const d = computed(() => darkMode.value)
           :is-active="true"
           :mobile-mode="mobileMode"
           :dark-mode="darkMode"
+          @toggle-mobile="mobileMode = !mobileMode"
+          @toggle-dark="darkMode = !darkMode"
         />
       </div>
 
