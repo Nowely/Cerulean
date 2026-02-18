@@ -14,14 +14,14 @@ export interface Thread {
 
 export type MessageId = string
 
-export type MessageType =
-  | 'text'
-  | 'task-created'
-  | 'task-updated'
-  | 'status-change'
-  | 'assignment'
-  | 'comment'
-  | 'system'
+export type MessageType
+  = | 'text'
+    | 'task-created'
+    | 'task-updated'
+    | 'status-change'
+    | 'assignment'
+    | 'comment'
+    | 'system'
 
 export interface Message {
   id: MessageId
@@ -33,9 +33,4 @@ export interface Message {
   timestamp: string
   replyToId?: MessageId
   metadata?: Record<string, string>
-}
-
-export interface User {
-  id: string
-  name: string
 }

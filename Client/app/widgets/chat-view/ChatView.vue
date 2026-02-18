@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMessageStore, useThreadStore } from '~/entities/thread'
+import { useMessageStore, useThreadStore } from '~/shared/model'
 import { formatDate } from '~/shared/utils'
 import SystemBubble from './components/SystemBubble.vue'
 import TaskCardBubble from './components/TaskCardBubble.vue'

@@ -1,4 +1,4 @@
-import type { Thread, ThreadId } from './thread.types'
+import type { Thread, ThreadId } from '../types/thread'
 import { SEED_THREADS } from '~/shared/api/seed'
 
 const threads = ref<Thread[]>([])
@@ -20,8 +20,8 @@ export function useThreadStore() {
     if (!query) return sortedThreads.value
     const q = query.toLowerCase()
     return sortedThreads.value.filter(t =>
-      t.name.toLowerCase().includes(q) ||
-      t.category?.toLowerCase().includes(q)
+      t.name.toLowerCase().includes(q)
+      || t.category?.toLowerCase().includes(q)
     )
   }
 

@@ -1,7 +1,4 @@
-import type { User } from '~/shared/types'
-import type { Thread, Message } from '~/entities/thread'
-import type { Task, TaskTemplate } from '~/entities/task'
-import type { Notification } from '~/entities/user'
+import type { User, Thread, Message, Task, TaskTemplate, Notification } from '~/shared/types'
 
 export const SEED_USERS: User[] = [
   { id: 'u1', name: 'You', initials: 'YO', color: 'hsl(210 100% 52%)' },

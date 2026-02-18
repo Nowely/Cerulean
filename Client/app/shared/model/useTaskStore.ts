@@ -1,4 +1,4 @@
-import type { Task, TaskId, TaskTemplate } from './task.types'
+import type { Task, TaskId, TaskTemplate } from '../types/task'
 import { SEED_TASKS, SEED_TEMPLATES } from '~/shared/api/seed'
 
 const tasks = ref<Task[]>([])

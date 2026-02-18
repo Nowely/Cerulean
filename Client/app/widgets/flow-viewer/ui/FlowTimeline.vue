@@ -81,8 +81,15 @@ const d = computed(() => props.darkMode)
                     : 'bg-white text-gray-400 border-2 border-gray-300 group-hover:border-primary-400 group-hover:text-primary-500'
             ]"
           >
-            <UIcon v-if="idx < currentStep" name="i-lucide-check" class="h-4 w-4" />
-            <span v-else class="text-xs font-semibold">{{ idx + 1 }}</span>
+            <UIcon
+              v-if="idx < currentStep"
+              name="i-lucide-check"
+              class="h-4 w-4"
+            />
+            <span
+              v-else
+              class="text-xs font-semibold"
+            >{{ idx + 1 }}</span>
           </div>
 
           <div class="step-label mt-2 text-center max-w-[80px] md:max-w-[100px]">
@@ -116,7 +123,10 @@ const d = computed(() => props.darkMode)
           : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'"
         @click="goToStep(Math.max(0, currentStep - 1))"
       >
-        <UIcon name="i-lucide-chevron-left" class="h-4 w-4" />
+        <UIcon
+          name="i-lucide-chevron-left"
+          class="h-4 w-4"
+        />
         Previous
       </button>
 
@@ -146,7 +156,10 @@ const d = computed(() => props.darkMode)
         @click="goToStep(Math.min(steps.length - 1, currentStep + 1))"
       >
         Next
-        <UIcon name="i-lucide-chevron-right" class="h-4 w-4" />
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="h-4 w-4"
+        />
       </button>
     </div>
   </div>

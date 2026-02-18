@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAppInit } from '~/entities/app'
+import { useAppInit } from '~/shared/lib'
 import ToastContainer from '~/shared/ui/ToastContainer.vue'
 
 const colorMode = useColorMode()

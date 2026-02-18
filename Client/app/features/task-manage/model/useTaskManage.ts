@@ -1,7 +1,6 @@
-import { useTaskStore, createTaskFromInput } from '~/entities/task'
-import { useMessageStore, createMessage, useThreadStore } from '~/entities/thread'
-import { useUIStore } from '~/shared/model'
-import type { Task, TaskStatus, TaskPriority, TaskId, CreateTaskInput } from '~/entities/task'
+import { useTaskStore, useMessageStore, useThreadStore, useUIStore, createMessage } from '~/shared/model'
+import { createTaskFromInput } from '~/shared/lib'
+import type { Task, TaskStatus, TaskPriority, TaskId, CreateTaskInput } from '~/shared/types'
 
 interface EditTaskInput {
   id: string

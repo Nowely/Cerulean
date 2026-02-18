@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { useTaskStore, createTask, type Task, type TaskStatus, type TaskPriority } from '~/entities/task'
-import { useMessageStore, createMessage, useThreadStore } from '~/entities/thread'
-import { useUserStore, useNotificationStore, createNotification } from '~/entities/user'
-import { useUIStore } from '~/shared/model'
-import { STATUS_CONFIG, PRIORITY_CONFIG } from '~/entities/task'
+import { useTaskStore, useMessageStore, useThreadStore, useUserStore, useNotificationStore, useUIStore, createMessage, createNotification } from '~/shared/model'
+import { createTask, STATUS_CONFIG, PRIORITY_CONFIG } from '~/shared/lib'
+import type { Task, TaskStatus, TaskPriority } from '~/shared/types'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
 const taskStore = useTaskStore()

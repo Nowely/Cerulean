@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { useTaskStore, createTask } from '~/entities/task'
-import { useMessageStore, createMessage, useThreadStore } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
-import { useUIStore } from '~/shared/model'
+import { useTaskStore, useMessageStore, useThreadStore, useUserStore, useUIStore, createMessage } from '~/shared/model'
+import { createTask } from '~/shared/lib'
 
 const taskStore = useTaskStore()
 const messageStore = useMessageStore()

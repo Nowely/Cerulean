@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Message } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
-import { STATUS_CONFIG } from '~/entities/task'
+import type { Message } from '~/shared/types'
+import { useUserStore } from '~/shared/model'
+import { STATUS_CONFIG } from '~/shared/lib'
 
 interface Props {
   message: Message

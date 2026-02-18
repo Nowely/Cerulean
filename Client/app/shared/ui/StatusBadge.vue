@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { TaskStatus } from '~/entities/task'
-import { STATUS_CONFIG } from '~/entities/task'
+import type { TaskStatus } from '~/shared/types'
+import { STATUS_CONFIG } from '~/shared/lib'
 
 interface Props {
   status: TaskStatus

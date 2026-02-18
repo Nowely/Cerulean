@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { Message } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
-import { useTaskStore } from '~/entities/task'
+import type { Message } from '~/shared/types'
+import { useUserStore, useTaskStore } from '~/shared/model'
 import { formatTime, isDueOverdue, isDueSoon } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 import StatusBadge from '~/shared/ui/StatusBadge.vue'

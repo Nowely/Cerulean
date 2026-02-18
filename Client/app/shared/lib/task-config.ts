@@ -1,4 +1,4 @@
-import type { TaskStatus, TaskPriority } from '../model/task.types'
+import type { TaskStatus, TaskPriority } from '../types/task'
 
 export const STATUS_CONFIG: Record<TaskStatus, { label: string, color: string }> = {
   'todo': { label: 'To Do', color: 'bg-status-todo' },

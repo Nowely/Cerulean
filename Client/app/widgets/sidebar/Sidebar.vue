@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { useThreadStore } from '~/entities/thread'
+import { useThreadStore, useUIStore } from '~/shared/model'
 import { useThreadManage } from '~/features/thread-manage'
-import { useUIStore } from '~/shared/model'
 import { useIsMobile } from '~/shared/lib'
 import SidebarHeader from './components/SidebarHeader.vue'
 import SidebarFooter from './components/SidebarFooter.vue'
 import ThreadItem from './components/ThreadItem.vue'
-import type { Thread } from '~/entities/thread'
+import type { Thread } from '~/shared/types'
 
 const threadStore = useThreadStore()
 const uiStore = useUIStore()

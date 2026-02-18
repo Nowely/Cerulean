@@ -1,4 +1,4 @@
-import type { User, UserId, Notification } from './user.types'
+import type { User, UserId, Notification } from '../types/user'
 import { SEED_USERS, SEED_NOTIFICATIONS } from '~/shared/api/seed'
 import { generateId } from '~/shared/utils'
 
@@ -56,7 +56,7 @@ export function useNotificationStore() {
   }
 
   function markAllRead() {
-    notifications.value.forEach(n => { n.read = true })
+    notifications.value.forEach((n) => { n.read = true })
   }
 
   function setShowPanel(show: boolean) {

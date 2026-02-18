@@ -1,4 +1,4 @@
-import type { Task, CreateTaskInput } from './task.types'
+import type { Task, CreateTaskInput } from '../types/task'
 import { generateId } from '~/shared/utils'
 
 export function createTask(

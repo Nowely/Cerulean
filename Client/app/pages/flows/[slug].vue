@@ -42,7 +42,10 @@ const d = computed(() => darkMode.value)
     class="min-h-screen p-3 md:p-6"
     :class="d ? 'bg-gray-950' : 'bg-gray-100'"
   >
-    <div v-if="flow" class="mx-auto w-full max-w-5xl">
+    <div
+      v-if="flow"
+      class="mx-auto w-full max-w-5xl"
+    >
       <header
         class="rounded-xl p-5 md:p-6 shadow-sm mb-4"
         :class="d ? 'bg-gray-900' : 'bg-white'"
@@ -124,7 +127,10 @@ const d = computed(() => darkMode.value)
         :class="d ? 'bg-gray-900' : 'bg-white'"
       >
         <div class="flex items-center gap-2 mb-4">
-          <UIcon name="i-lucide-lightbulb" class="h-5 w-5 text-amber-500" />
+          <UIcon
+            name="i-lucide-lightbulb"
+            class="h-5 w-5 text-amber-500"
+          />
           <h2
             class="font-semibold"
             :class="d ? 'text-gray-100' : 'text-gray-900'"
@@ -171,7 +177,10 @@ const d = computed(() => darkMode.value)
           class="inline-flex items-center gap-2 text-sm font-medium transition-colors"
           :class="d ? 'text-primary-400 hover:text-primary-300' : 'text-primary-600 hover:text-primary-700'"
         >
-          <UIcon name="i-lucide-arrow-left" class="h-4 w-4" />
+          <UIcon
+            name="i-lucide-arrow-left"
+            class="h-4 w-4"
+          />
           Back to all flows
         </NuxtLink>
       </footer>

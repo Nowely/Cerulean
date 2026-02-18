@@ -75,7 +75,10 @@ const emit = defineEmits<{
     <div class="step-content p-4 space-y-4">
       <div class="action-section">
         <div class="flex items-center gap-2 mb-2">
-          <UIcon name="i-lucide-mouse-pointer-click" class="h-4 w-4 text-primary-500" />
+          <UIcon
+            name="i-lucide-mouse-pointer-click"
+            class="h-4 w-4 text-primary-500"
+          />
           <span
             class="text-xs font-semibold"
             :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
@@ -89,10 +92,16 @@ const emit = defineEmits<{
         </p>
       </div>
 
-      <details class="result-section group" :open="isActive">
+      <details
+        class="result-section group"
+        :open="isActive"
+      >
         <summary class="flex items-center gap-2 cursor-pointer list-none">
           <div class="flex items-center gap-2 flex-1">
-            <UIcon name="i-lucide-eye" class="h-4 w-4 text-amber-500" />
+            <UIcon
+              name="i-lucide-eye"
+              class="h-4 w-4 text-amber-500"
+            />
             <span
               class="text-xs font-semibold"
               :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
@@ -114,7 +123,10 @@ const emit = defineEmits<{
       <div class="mockup-section">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-layout" class="h-4 w-4 text-gray-500" />
+            <UIcon
+              name="i-lucide-layout"
+              class="h-4 w-4 text-gray-500"
+            />
             <span
               class="text-xs font-semibold"
               :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
@@ -132,7 +144,10 @@ const emit = defineEmits<{
               ]"
               @click="emit('toggle-mobile')"
             >
-              <UIcon name="i-lucide-smartphone" class="h-3.5 w-3.5" />
+              <UIcon
+                name="i-lucide-smartphone"
+                class="h-3.5 w-3.5"
+              />
               {{ mobileMode ? 'Mobile' : 'Desktop' }}
             </button>
             <button
@@ -144,7 +159,10 @@ const emit = defineEmits<{
               ]"
               @click="emit('toggle-dark')"
             >
-              <UIcon :name="darkMode ? 'i-lucide-sun' : 'i-lucide-moon'" class="h-3.5 w-3.5" />
+              <UIcon
+                :name="darkMode ? 'i-lucide-sun' : 'i-lucide-moon'"
+                class="h-3.5 w-3.5"
+              />
               {{ darkMode ? 'Light' : 'Dark' }}
             </button>
           </div>
@@ -163,7 +181,10 @@ const emit = defineEmits<{
         :class="darkMode ? 'bg-amber-900/20' : 'bg-amber-50'"
       >
         <div class="flex items-center gap-2 mb-2">
-          <UIcon name="i-lucide-lightbulb" class="h-4 w-4 text-amber-600" />
+          <UIcon
+            name="i-lucide-lightbulb"
+            class="h-4 w-4 text-amber-600"
+          />
           <span
             class="text-xs font-semibold"
             :class="darkMode ? 'text-amber-400' : 'text-amber-700'"

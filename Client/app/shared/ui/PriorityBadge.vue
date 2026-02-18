@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { TaskPriority } from '~/entities/task'
-import { PRIORITY_CONFIG } from '~/entities/task'
+import type { TaskPriority } from '~/shared/types'
+import { PRIORITY_CONFIG } from '~/shared/lib'
 
 interface Props {
   priority: TaskPriority

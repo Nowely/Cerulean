@@ -74,11 +74,17 @@ const d = computed(() => props.darkMode)
             :class="{ 'animate-pulse': isHighlighted('new-thread-btn') }"
             @click="handleInteract('new-thread-btn')"
           >
-            <UIcon name="i-lucide-plus" class="h-3.5 w-3.5" />
+            <UIcon
+              name="i-lucide-plus"
+              class="h-3.5 w-3.5"
+            />
           </button>
         </div>
 
-        <div v-if="wireframe.sidebar.search !== undefined" class="px-2 py-1.5">
+        <div
+          v-if="wireframe.sidebar.search !== undefined"
+          class="px-2 py-1.5"
+        >
           <div
             class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs"
             :class="[
@@ -87,17 +93,26 @@ const d = computed(() => props.darkMode)
               { 'ring-2 ring-primary-500 ring-offset-1': isHighlighted('search-input') }
             ]"
           >
-            <UIcon name="i-lucide-search" class="h-3.5 w-3.5 text-gray-400" />
+            <UIcon
+              name="i-lucide-search"
+              class="h-3.5 w-3.5 text-gray-400"
+            />
             <span
               v-if="wireframe.sidebar.search"
               :class="d ? 'text-gray-300' : 'text-gray-700'"
             >{{ wireframe.sidebar.search }}</span>
-            <span v-else class="text-gray-400">Search...</span>
+            <span
+              v-else
+              class="text-gray-400"
+            >Search...</span>
           </div>
         </div>
 
         <div class="thread-list px-2 py-1 space-y-0.5">
-          <template v-for="(item, i) in wireframe.sidebar.items" :key="i">
+          <template
+            v-for="(item, i) in wireframe.sidebar.items"
+            :key="i"
+          >
             <div
               v-if="item.startsWith('Pinned:') || item.startsWith('All Threads:')"
               class="px-2 pt-2 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-gray-400"
@@ -143,7 +158,10 @@ const d = computed(() => props.darkMode)
               class="h-7 w-7 rounded-md flex items-center justify-center"
               :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
             >
-              <UIcon name="i-lucide-menu" class="h-4 w-4 text-gray-500" />
+              <UIcon
+                name="i-lucide-menu"
+                class="h-4 w-4 text-gray-500"
+              />
             </button>
             <span
               class="font-medium text-sm"
@@ -162,7 +180,10 @@ const d = computed(() => props.darkMode)
               class="relative h-7 w-7 rounded-md flex items-center justify-center"
               :class="[d ? 'hover:bg-gray-800' : 'hover:bg-gray-100', { 'ring-2 ring-primary-500': isHighlighted('bell-icon') }]"
             >
-              <UIcon name="i-lucide-bell" class="h-4 w-4 text-gray-500" />
+              <UIcon
+                name="i-lucide-bell"
+                class="h-4 w-4 text-gray-500"
+              />
               <span class="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary-500 text-[9px] text-white flex items-center justify-center">4</span>
             </button>
           </div>
@@ -177,13 +198,21 @@ const d = computed(() => props.darkMode)
               class="h-12 w-12 rounded-full flex items-center justify-center mb-2"
               :class="d ? 'bg-gray-800' : 'bg-gray-100'"
             >
-              <UIcon name="i-lucide-message-square" class="h-6 w-6 text-gray-400" />
+              <UIcon
+                name="i-lucide-message-square"
+                class="h-6 w-6 text-gray-400"
+              />
             </div>
-            <p class="text-sm text-gray-500">No messages yet</p>
+            <p class="text-sm text-gray-500">
+              No messages yet
+            </p>
           </div>
 
           <template v-else>
-            <template v-for="(item, i) in wireframe.main?.items ?? []" :key="i">
+            <template
+              v-for="(item, i) in wireframe.main?.items ?? []"
+              :key="i"
+            >
               <div
                 v-if="item.startsWith('Today') || item.startsWith('Feb')"
                 class="flex justify-center py-1"
@@ -219,8 +248,14 @@ const d = computed(() => props.darkMode)
                         : d ? 'bg-gray-800' : 'bg-gray-100'
                   ]"
                 >
-                  <div v-if="item.startsWith('Task card:')" class="flex items-center gap-2 mb-1">
-                    <UIcon name="i-lucide-list-checks" class="h-3.5 w-3.5 text-primary-500" />
+                  <div
+                    v-if="item.startsWith('Task card:')"
+                    class="flex items-center gap-2 mb-1"
+                  >
+                    <UIcon
+                      name="i-lucide-list-checks"
+                      class="h-3.5 w-3.5 text-primary-500"
+                    />
                     <span
                       class="font-medium"
                       :class="d ? 'text-gray-100' : 'text-gray-900'"
@@ -258,7 +293,10 @@ const d = computed(() => props.darkMode)
             class="toast-notification flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-xs text-white ml-auto"
             :class="{ 'animate-pulse': isHighlighted('toast') }"
           >
-            <UIcon name="i-lucide-check-circle" class="h-4 w-4" />
+            <UIcon
+              name="i-lucide-check-circle"
+              class="h-4 w-4"
+            />
             {{ wireframe.main.toast.replace('Toast: ', '') }}
           </div>
         </div>
@@ -283,7 +321,10 @@ const d = computed(() => props.darkMode)
               class="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer"
               :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
             >
-              <UIcon name="i-lucide-list-todo" class="h-4 w-4 text-primary-500" />
+              <UIcon
+                name="i-lucide-list-todo"
+                class="h-4 w-4 text-primary-500"
+              />
               <span class="text-xs font-medium">/task</span>
               <span class="text-xs text-gray-400">Create a new task</span>
             </div>
@@ -291,7 +332,10 @@ const d = computed(() => props.darkMode)
               class="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer"
               :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
             >
-              <UIcon name="i-lucide-file-text" class="h-4 w-4 text-amber-500" />
+              <UIcon
+                name="i-lucide-file-text"
+                class="h-4 w-4 text-amber-500"
+              />
               <span class="text-xs font-medium">/template</span>
               <span class="text-xs text-gray-400">Use a task template</span>
             </div>
@@ -302,7 +346,10 @@ const d = computed(() => props.darkMode)
               class="h-8 w-8 rounded-full flex items-center justify-center text-gray-400"
               :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
             >
-              <UIcon name="i-lucide-plus" class="h-4 w-4" />
+              <UIcon
+                name="i-lucide-plus"
+                class="h-4 w-4"
+              />
             </button>
             <div
               class="flex-1 rounded-2xl px-3 py-2 text-xs flex items-center"
@@ -316,13 +363,19 @@ const d = computed(() => props.darkMode)
                 v-if="wireframe.main.composerValue"
                 :class="d ? 'text-gray-100' : 'text-gray-900'"
               >{{ wireframe.main.composerValue }}</span>
-              <span v-else class="text-gray-400">{{ wireframe.main.composer }}</span>
+              <span
+                v-else
+                class="text-gray-400"
+              >{{ wireframe.main.composer }}</span>
             </div>
             <button
               class="h-8 w-8 rounded-full flex items-center justify-center transition-colors"
               :class="wireframe.main.composerValue ? 'bg-primary-500 text-white' : 'text-gray-400'"
             >
-              <UIcon name="i-lucide-send" class="h-4 w-4" />
+              <UIcon
+                name="i-lucide-send"
+                class="h-4 w-4"
+              />
             </button>
           </div>
         </div>
@@ -342,7 +395,10 @@ const d = computed(() => props.darkMode)
           :class="d ? 'border-gray-700' : 'border-gray-200'"
         >
           <div class="flex items-center gap-2">
-            <UIcon :name="getPanelIcon(wireframe.panel.type)" class="h-4 w-4 text-gray-500" />
+            <UIcon
+              :name="getPanelIcon(wireframe.panel.type)"
+              class="h-4 w-4 text-gray-500"
+            />
             <span
               class="text-xs font-semibold"
               :class="d ? 'text-gray-300' : 'text-gray-700'"
@@ -353,12 +409,18 @@ const d = computed(() => props.darkMode)
             :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
             @click="showPanel = false"
           >
-            <UIcon name="i-lucide-x" class="h-3.5 w-3.5" />
+            <UIcon
+              name="i-lucide-x"
+              class="h-3.5 w-3.5"
+            />
           </button>
         </div>
 
         <div class="panel-content p-2 space-y-1">
-          <template v-for="(item, i) in wireframe.panel.items" :key="i">
+          <template
+            v-for="(item, i) in wireframe.panel.items"
+            :key="i"
+          >
             <div
               v-if="item.startsWith('Title:') || item.startsWith('Thread name:')"
               class="px-2 py-1.5 text-xs"
@@ -408,10 +470,16 @@ const d = computed(() => props.darkMode)
                 class="h-5 w-5 rounded-full flex items-center justify-center shrink-0"
                 :class="d ? 'bg-gray-800' : 'bg-gray-100'"
               >
-                <UIcon name="i-lucide-bell" class="h-3 w-3 text-gray-400" />
+                <UIcon
+                  name="i-lucide-bell"
+                  class="h-3 w-3 text-gray-400"
+                />
               </div>
               <div class="flex-1 min-w-0">
-                <div :class="d ? 'text-gray-300' : 'text-gray-700'" class="truncate">
+                <div
+                  :class="d ? 'text-gray-300' : 'text-gray-700'"
+                  class="truncate"
+                >
                   {{ item }}
                 </div>
               </div>
@@ -434,7 +502,10 @@ const d = computed(() => props.darkMode)
             : d ? 'border-gray-600 bg-gray-900 text-gray-400' : 'border-gray-300 bg-white text-gray-600'"
           @click="showSidebar = !showSidebar"
         >
-          <UIcon name="i-lucide-sidebar" class="h-3 w-3 inline mr-1" />
+          <UIcon
+            name="i-lucide-sidebar"
+            class="h-3 w-3 inline mr-1"
+          />
           Sidebar
         </button>
         <button
@@ -445,7 +516,10 @@ const d = computed(() => props.darkMode)
             : d ? 'border-gray-600 bg-gray-900 text-gray-400' : 'border-gray-300 bg-white text-gray-600'"
           @click="showPanel = !showPanel"
         >
-          <UIcon name="i-lucide-panel-right" class="h-3 w-3 inline mr-1" />
+          <UIcon
+            name="i-lucide-panel-right"
+            class="h-3 w-3 inline mr-1"
+          />
           Panel
         </button>
       </div>
@@ -454,7 +528,10 @@ const d = computed(() => props.darkMode)
         :class="d ? 'border-gray-600 bg-gray-900 text-gray-400' : 'border-gray-300 bg-white text-gray-600'"
         @click="showSidebar = wireframe.showSidebar ?? false; showPanel = wireframe.showPanel ?? false"
       >
-        <UIcon name="i-lucide-rotate-ccw" class="h-3 w-3 inline mr-1" />
+        <UIcon
+          name="i-lucide-rotate-ccw"
+          class="h-3 w-3 inline mr-1"
+        />
         Reset
       </button>
     </div>

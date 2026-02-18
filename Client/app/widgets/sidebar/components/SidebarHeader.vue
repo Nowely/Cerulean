@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { useUserStore } from '~/entities/user'
-import { useUIStore } from '~/shared/model'
+import { useUserStore, useUIStore } from '~/shared/model'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
 const emit = defineEmits<{

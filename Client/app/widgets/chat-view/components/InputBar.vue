@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { useThreadStore } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
-import { useUIStore } from '~/shared/model'
+import { useThreadStore, useUserStore, useUIStore } from '~/shared/model'
 import { useSendMessage } from '~/features/message-send'
 
 const userStore = useUserStore()

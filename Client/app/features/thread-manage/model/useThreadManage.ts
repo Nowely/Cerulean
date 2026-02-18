@@ -1,7 +1,6 @@
-import { useThreadStore, createThread } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
-import { useUIStore } from '~/shared/model'
-import type { Thread } from '~/entities/thread'
+import { useThreadStore, useUserStore, useUIStore } from '~/shared/model'
+import { createThread } from '~/shared/lib'
+import type { Thread } from '~/shared/types'
 
 interface CreateThreadInput {
   name: string

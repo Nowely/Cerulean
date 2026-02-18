@@ -1,6 +1,5 @@
-import { useMessageStore, createMessage, useThreadStore } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
-import type { MessageType, Message } from '~/entities/thread'
+import { useMessageStore, useThreadStore, useUserStore, createMessage } from '~/shared/model'
+import type { MessageType, Message } from '~/shared/types'
 
 interface SendMessageInput {
   content: string

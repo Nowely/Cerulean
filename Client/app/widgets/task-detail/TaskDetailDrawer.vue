@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useTaskStore, createTask, STATUS_CONFIG, PRIORITY_CONFIG, type TaskStatus, type TaskPriority } from '~/entities/task'
-import { useMessageStore, createMessage, useThreadStore } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
+import { useTaskStore, useMessageStore, useThreadStore, useUserStore, createMessage } from '~/shared/model'
+import { createTask, STATUS_CONFIG, PRIORITY_CONFIG } from '~/shared/lib'
+import type { TaskStatus, TaskPriority } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { isDueOverdue, isDueSoon } from '~/shared/utils'
 import StatusBadge from '~/shared/ui/StatusBadge.vue'

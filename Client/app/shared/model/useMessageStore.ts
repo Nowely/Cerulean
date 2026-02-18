@@ -1,4 +1,4 @@
-import type { Message, MessageId, MessageType } from './thread.types'
+import type { Message, MessageType } from '../types/thread'
 import { SEED_MESSAGES } from '~/shared/api/seed'
 import { generateId } from '~/shared/utils'
 

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { Thread } from '~/entities/thread'
-import { useMessageStore } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
+import type { Thread } from '~/shared/types'
+import { useMessageStore, useUserStore } from '~/shared/model'
 import { relativeTime } from '~/shared/utils'
 
 interface Props {

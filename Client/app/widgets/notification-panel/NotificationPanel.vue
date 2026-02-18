@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { useNotificationStore } from '~/entities/user'
-import { useThreadStore } from '~/entities/thread'
-import { useTaskStore } from '~/entities/task'
-import { useUIStore } from '~/shared/model'
+import { useNotificationStore, useThreadStore, useTaskStore, useUIStore } from '~/shared/model'
 import { relativeTime } from '~/shared/utils'
 
 const notificationStore = useNotificationStore()

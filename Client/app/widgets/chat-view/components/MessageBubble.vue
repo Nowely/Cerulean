@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Message } from '~/entities/thread'
-import { useUserStore } from '~/entities/user'
+import type { Message } from '~/shared/types'
+import { useUserStore } from '~/shared/model'
 import { formatTime } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 

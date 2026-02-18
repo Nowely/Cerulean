@@ -1,4 +1,4 @@
-import type { Thread } from './thread.types'
+import type { Thread } from '../types/thread'
 import { generateId } from '~/shared/utils'
 
 export function createThread(name: string, type: Thread['type'], currentUser: { id: string }): Thread {
