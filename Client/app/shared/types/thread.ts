@@ -1,15 +1,19 @@
 export type ThreadId = string
 
+export type ThreadKind = 'tasks' | 'shopping' | 'notes' | 'contacts' | 'chat'
+
 export interface Thread {
   id: ThreadId
   name: string
-  type: 'project' | 'direct' | 'group'
+  kind: ThreadKind
+  icon?: string
+  color?: string
   members: string[]
   lastActivity: string
   unreadCount: number
   pinned: boolean
   category?: string
-  icon?: string
+  itemCount?: number
 }
 
 export type MessageId = string

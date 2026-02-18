@@ -72,33 +72,39 @@
   --chart-3: 38 92% 50%;
   --chart-4: 262 83% 58%;
   --chart-5: 340 82% 52%;
+
+  --kind-tasks: 142 71% 45%;
+  --kind-shopping: 38 92% 50%;
+  --kind-notes: 262 83% 58%;
+  --kind-contacts: 199 89% 48%;
+  --kind-chat: 210 100% 52%;
 }
 
 .dark {
-  --background: 210 15% 8%;
-  --foreground: 210 20% 95%;
-  --card: 210 12% 12%;
-  --card-foreground: 210 20% 95%;
-  --popover: 210 12% 14%;
-  --popover-foreground: 210 20% 95%;
-  --primary: 210 100% 52%;
+  --background: 210 18% 11%;
+  --foreground: 210 15% 93%;
+  --card: 210 15% 14%;
+  --card-foreground: 210 15% 93%;
+  --popover: 210 15% 15%;
+  --popover-foreground: 210 15% 93%;
+  --primary: 152 55% 42%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 10% 18%;
-  --secondary-foreground: 210 20% 90%;
-  --muted: 210 10% 16%;
-  --muted-foreground: 210 12% 55%;
-  --accent: 210 10% 20%;
-  --accent-foreground: 210 20% 95%;
+  --secondary: 210 12% 17%;
+  --secondary-foreground: 210 15% 88%;
+  --muted: 210 12% 16%;
+  --muted-foreground: 210 10% 52%;
+  --accent: 210 12% 19%;
+  --accent-foreground: 210 15% 93%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --border: 210 10% 16%;
-  --input: 210 10% 18%;
-  --ring: 210 100% 52%;
+  --border: 210 12% 17%;
+  --input: 210 12% 17%;
+  --ring: 152 55% 42%;
 
   --status-todo: 215 20% 55%;
   --status-in-progress: 199 89% 58%;
   --status-review: 280 65% 70%;
-  --status-done: 142 71% 50%;
+  --status-done: 152 55% 50%;
   --status-blocked: 0 72% 58%;
 
   --priority-low: 215 20% 55%;
@@ -106,19 +112,25 @@
   --priority-high: 25 95% 58%;
   --priority-urgent: 0 72% 58%;
 
-  --bubble-own: 210 100% 52%;
+  --bubble-own: 152 55% 33%;
   --bubble-own-foreground: 0 0% 100%;
-  --bubble-other: 210 10% 18%;
-  --bubble-other-foreground: 210 20% 90%;
+  --bubble-other: 210 14% 18%;
+  --bubble-other-foreground: 210 15% 90%;
 
-  --sidebar-background: 210 14% 10%;
-  --sidebar-foreground: 210 20% 90%;
-  --sidebar-primary: 210 100% 52%;
+  --sidebar-background: 210 18% 13%;
+  --sidebar-foreground: 210 15% 88%;
+  --sidebar-primary: 152 55% 42%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 10% 14%;
-  --sidebar-accent-foreground: 210 20% 90%;
-  --sidebar-border: 210 10% 14%;
-  --sidebar-ring: 210 100% 52%;
+  --sidebar-accent: 210 14% 16%;
+  --sidebar-accent-foreground: 210 15% 88%;
+  --sidebar-border: 210 14% 15%;
+  --sidebar-ring: 152 55% 42%;
+
+  --kind-tasks: 152 55% 42%;
+  --kind-shopping: 38 92% 50%;
+  --kind-notes: 262 83% 58%;
+  --kind-contacts: 199 89% 48%;
+  --kind-chat: 210 100% 52%;
 }
 
 html, body, #__nuxt, #__layout {
@@ -132,6 +144,11 @@ html, body, #__nuxt, #__layout {
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button, a, input, textarea {
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
 }
 
 @layer utilities {

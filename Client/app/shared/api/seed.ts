@@ -1,4 +1,4 @@
-import type { User, Thread, Message, Task, TaskTemplate, Notification } from '~/shared/types'
+import type { User, Thread, Message, Task, TaskTemplate, Notification, ShoppingItem, Note, Contact } from '~/shared/types'
 
 export const SEED_USERS: User[] = [
   { id: 'u1', name: 'You', initials: 'YO', color: 'hsl(210 100% 52%)' },
@@ -12,52 +12,79 @@ export const SEED_THREADS: Thread[] = [
   {
     id: 't1',
     name: 'Website Redesign',
-    type: 'project',
+    kind: 'tasks',
     members: ['u1', 'u2', 'u3'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     unreadCount: 3,
     pinned: true,
-    category: 'Design'
+    category: 'Design',
   },
   {
     id: 't2',
     name: 'Mobile App Sprint',
-    type: 'project',
+    kind: 'tasks',
     members: ['u1', 'u3', 'u4'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     unreadCount: 1,
     pinned: true,
-    category: 'Engineering'
+    category: 'Engineering',
   },
   {
     id: 't3',
     name: 'Marketing Launch',
-    type: 'group',
+    kind: 'chat',
     members: ['u1', 'u2', 'u5'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     unreadCount: 0,
     pinned: false,
-    category: 'Marketing'
+    category: 'Marketing',
   },
   {
     id: 't4',
     name: 'Sarah Chen',
-    type: 'direct',
+    kind: 'chat',
     members: ['u1', 'u2'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
     unreadCount: 0,
-    pinned: false
+    pinned: false,
   },
   {
     id: 't5',
     name: 'Bug Triage',
-    type: 'project',
+    kind: 'tasks',
     members: ['u1', 'u2', 'u3', 'u4', 'u5'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     unreadCount: 5,
     pinned: false,
-    category: 'Engineering'
-  }
+    category: 'Engineering',
+  },
+  {
+    id: 't6',
+    name: 'Groceries',
+    kind: 'shopping',
+    members: ['u1'],
+    lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    unreadCount: 0,
+    pinned: true,
+  },
+  {
+    id: 't7',
+    name: 'Personal Notes',
+    kind: 'notes',
+    members: ['u1'],
+    lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
+    unreadCount: 0,
+    pinned: false,
+  },
+  {
+    id: 't8',
+    name: 'Team Contacts',
+    kind: 'contacts',
+    members: ['u1'],
+    lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+    unreadCount: 0,
+    pinned: false,
+  },
 ]
 
 const now = Date.now()
@@ -556,6 +583,117 @@ export const SEED_NOTIFICATIONS: Notification[] = [
     title: 'Due Soon',
     body: 'Build authentication flow is due in 2 days',
     timestamp: new Date(now - 1000 * 60 * 60 * 1).toISOString(),
-    read: false
-  }
+    read: false,
+  },
+]
+
+export const SEED_SHOPPING_ITEMS: ShoppingItem[] = [
+  { id: 'si1', threadId: 't6', text: 'Milk', checked: false, quantity: 2, category: 'Dairy', sortOrder: 0, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
+  { id: 'si2', threadId: 't6', text: 'Eggs', checked: true, quantity: 1, category: 'Dairy', sortOrder: 1, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
+  { id: 'si3', threadId: 't6', text: 'Bread', checked: false, quantity: 1, category: 'Bakery', sortOrder: 2, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
+  { id: 'si4', threadId: 't6', text: 'Chicken breast', checked: false, quantity: 2, category: 'Meat', sortOrder: 3, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
+  { id: 'si5', threadId: 't6', text: 'Bananas', checked: true, quantity: 1, category: 'Produce', sortOrder: 4, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
+  { id: 'si6', threadId: 't6', text: 'Spinach', checked: false, quantity: 1, category: 'Produce', sortOrder: 5, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
+  { id: 'si7', threadId: 't6', text: 'Olive oil', checked: false, quantity: 1, category: 'Pantry', sortOrder: 6, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() },
+  { id: 'si8', threadId: 't6', text: 'Pasta', checked: false, quantity: 3, category: 'Pantry', sortOrder: 7, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() },
+]
+
+export const SEED_NOTES: Note[] = [
+  {
+    id: 'n-1',
+    threadId: 't7',
+    title: 'Sprint Planning Notes',
+    content: 'Focus areas for next sprint:\n- Authentication improvements\n- Dashboard performance\n- Mobile responsive fixes\n\nCapacity: 40 story points',
+    pinned: true,
+    tags: ['work', 'sprint'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
+    updatedAt: new Date(now - 1000 * 60 * 60 * 2).toISOString(),
+  },
+  {
+    id: 'n-2',
+    threadId: 't7',
+    title: 'Design System Colors',
+    content: 'Primary: #00DC82 (green)\nSecondary: slate palette\nAccent: blue-500\n\nDark mode uses HSL shifts for all semantic tokens.',
+    color: 'hsl(262 83% 58%)',
+    pinned: false,
+    tags: ['design', 'reference'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 48).toISOString(),
+    updatedAt: new Date(now - 1000 * 60 * 60 * 48).toISOString(),
+  },
+  {
+    id: 'n-3',
+    threadId: 't7',
+    title: 'Meeting with Product',
+    content: 'Key takeaways:\n1. Launch date moved to March 15\n2. Need to prioritize mobile experience\n3. A/B test the onboarding flow\n4. Budget approved for new infrastructure',
+    pinned: false,
+    tags: ['meeting', 'product'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 72).toISOString(),
+    updatedAt: new Date(now - 1000 * 60 * 60 * 72).toISOString(),
+  },
+  {
+    id: 'n-4',
+    threadId: 't7',
+    title: 'Book Recommendations',
+    content: '- Designing Data-Intensive Applications\n- The Pragmatic Programmer\n- Refactoring UI\n- Staff Engineer by Will Larson',
+    pinned: false,
+    tags: ['personal', 'reading'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 96).toISOString(),
+    updatedAt: new Date(now - 1000 * 60 * 60 * 96).toISOString(),
+  },
+]
+
+export const SEED_CONTACTS: Contact[] = [
+  {
+    id: 'c1',
+    threadId: 't8',
+    name: 'Sarah Chen',
+    email: 'sarah.chen@example.com',
+    phone: '+1 (555) 123-4567',
+    company: 'Cerulean Inc.',
+    notes: 'Lead designer, prefers async communication',
+    tags: ['team', 'design'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 7).toISOString(),
+  },
+  {
+    id: 'c2',
+    threadId: 't8',
+    name: 'Alex Rivera',
+    email: 'alex.r@example.com',
+    phone: '+1 (555) 234-5678',
+    company: 'Cerulean Inc.',
+    notes: 'Full-stack developer, timezone UTC-5',
+    tags: ['team', 'engineering'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 7).toISOString(),
+  },
+  {
+    id: 'c3',
+    threadId: 't8',
+    name: 'Jordan Lee',
+    email: 'jordan.lee@example.com',
+    company: 'Cerulean Inc.',
+    tags: ['team', 'engineering'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 5).toISOString(),
+  },
+  {
+    id: 'c4',
+    threadId: 't8',
+    name: 'Morgan Park',
+    email: 'morgan.p@example.com',
+    phone: '+1 (555) 456-7890',
+    company: 'Cerulean Inc.',
+    notes: 'Marketing lead',
+    tags: ['team', 'marketing'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 5).toISOString(),
+  },
+  {
+    id: 'c5',
+    threadId: 't8',
+    name: 'Taylor Kim',
+    email: 'taylor.k@partner.io',
+    phone: '+1 (555) 567-8901',
+    company: 'Partner Agency',
+    notes: 'External contractor for Q1 campaign',
+    tags: ['external', 'marketing'],
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 3).toISOString(),
+  },
 ]

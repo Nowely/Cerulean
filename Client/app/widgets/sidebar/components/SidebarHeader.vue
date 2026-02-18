@@ -23,7 +23,7 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
         />
         <div>
           <h1 class="text-sm font-semibold">
-            TaskChat
+            Cerulean
           </h1>
           <p class="text-[11px] text-gray-500 dark:text-gray-400">
             {{ currentUser?.name }}
@@ -48,7 +48,7 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
         placeholder="Search threads..."
         :value="searchQuery"
         data-testid="thread-search-input"
-        class="h-9 w-full rounded-lg bg-gray-100 dark:bg-gray-800 pl-9 pr-3 text-sm outline-none ring-0 focus:ring-1 focus:ring-primary-500"
+        class="h-9 w-full rounded-lg bg-[hsl(var(--muted))] pl-9 pr-3 text-sm outline-none ring-0 focus:ring-1 focus:ring-[hsl(var(--ring))]"
         @input="uiStore.setSearch(($event.target as HTMLInputElement).value)"
       >
     </div>

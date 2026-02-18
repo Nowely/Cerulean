@@ -26,7 +26,7 @@ const taskCount = computed(() => {
 <template>
   <header
     v-if="threadStore.activeThread.value"
-    class="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3"
+    class="flex h-14 shrink-0 items-center justify-between border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3"
   >
     <div class="flex items-center gap-3">
       <button

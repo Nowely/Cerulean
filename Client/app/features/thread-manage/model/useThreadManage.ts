@@ -4,7 +4,7 @@ import type { Thread } from '~/shared/types'
 
 interface CreateThreadInput {
   name: string
-  type: Thread['type']
+  kind: Thread['kind']
 }
 
 export function useThreadManage() {
@@ -16,7 +16,7 @@ export function useThreadManage() {
     const currentUser = userStore.currentUser.value
     if (!currentUser) return null
 
-    const thread = createThread(input.name, input.type, currentUser)
+    const thread = createThread(input.name, input.kind, currentUser)
     threadStore.add(thread)
     threadStore.setActive(thread.id)
 

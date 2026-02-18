@@ -1,8 +1,20 @@
-import { useMessageStore, useNotificationStore, useTaskStore, useThreadStore, useUserStore } from '~/shared/model'
+import {
+  useMessageStore,
+  useNotificationStore,
+  useTaskStore,
+  useThreadStore,
+  useUserStore,
+  useShoppingStore,
+  useNoteStore,
+  useContactStore,
+} from '~/shared/model'
 import type { Notification } from '../types/user'
+import type { ShoppingItem } from '../types/shopping'
+import type { Note } from '../types/note'
+import type { Contact } from '../types/contact'
 
-const STORAGE_KEY = 'taskchat-fsd-state'
-const STORAGE_VERSION = 1
+const STORAGE_KEY = 'cerulean-workspace-state'
+const STORAGE_VERSION = 2
 
 interface PersistedState {
   version: number
@@ -10,6 +22,9 @@ interface PersistedState {
   thread: { activeThreadId: string | null }
   task: { activeTaskId: string | null }
   notification: { notifications: Notification[] }
+  shopping: { items: ShoppingItem[] }
+  notes: { notes: Note[] }
+  contacts: { contacts: Contact[] }
 }
 
 export function useAppInit() {
@@ -25,7 +40,8 @@ export function useAppInit() {
           return parsed
         }
       }
-    } catch {
+    }
+    catch {
       // ignore
     }
     return null
@@ -35,7 +51,8 @@ export function useAppInit() {
     if (import.meta.server) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    } catch {
+    }
+    catch {
       // ignore
     }
   }
@@ -48,12 +65,18 @@ export function useAppInit() {
     const threadStore = useThreadStore()
     const messageStore = useMessageStore()
     const taskStore = useTaskStore()
+    const shoppingStore = useShoppingStore()
+    const noteStore = useNoteStore()
+    const contactStore = useContactStore()
 
     userStore.init()
     notificationStore.init()
     threadStore.init()
     messageStore.init()
     taskStore.init()
+    shoppingStore.init()
+    noteStore.init()
+    contactStore.init()
 
     const persisted = loadPersistedState()
     if (persisted) {
@@ -69,6 +92,15 @@ export function useAppInit() {
       if (persisted.notification.notifications) {
         notificationStore.notifications.value = persisted.notification.notifications
       }
+      if (persisted.shopping?.items) {
+        shoppingStore.items.value = persisted.shopping.items
+      }
+      if (persisted.notes?.notes) {
+        noteStore.notes.value = persisted.notes.notes
+      }
+      if (persisted.contacts?.contacts) {
+        contactStore.contacts.value = persisted.contacts.contacts
+      }
     }
 
     if (import.meta.client) {
@@ -77,7 +109,10 @@ export function useAppInit() {
           userStore.currentUserId.value,
           threadStore.activeThreadId.value,
           taskStore.activeTaskId.value,
-          notificationStore.notifications.value
+          notificationStore.notifications.value,
+          shoppingStore.items.value,
+          noteStore.notes.value,
+          contactStore.contacts.value,
         ],
         () => {
           saveState({
@@ -85,10 +120,13 @@ export function useAppInit() {
             user: { currentUserId: userStore.currentUserId.value },
             thread: { activeThreadId: threadStore.activeThreadId.value },
             task: { activeTaskId: taskStore.activeTaskId.value },
-            notification: { notifications: notificationStore.notifications.value }
+            notification: { notifications: notificationStore.notifications.value },
+            shopping: { items: shoppingStore.items.value },
+            notes: { notes: noteStore.notes.value },
+            contacts: { contacts: contactStore.contacts.value },
           })
         },
-        { deep: true }
+        { deep: true },
       )
     }
 
@@ -97,6 +135,6 @@ export function useAppInit() {
 
   return {
     initialized,
-    init
+    init,
   }
 }

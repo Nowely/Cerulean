@@ -6,7 +6,7 @@ export interface WireframeSidebar {
   activeItem?: string
   showNewThreadDialog?: boolean
   newThreadName?: string
-  newThreadType?: 'project' | 'group' | 'direct'
+  newThreadKind?: 'tasks' | 'shopping' | 'notes' | 'contacts' | 'chat'
 }
 
 export interface WireframeMain {
