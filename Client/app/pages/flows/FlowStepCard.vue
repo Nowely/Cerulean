@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { FlowStep } from './flows.types'
-import FlowMockup from '~/components/flows/FlowMockup.vue'
+import type { FlowStep } from '~/shared/lib'
+import { FlowMockup } from '~/widgets/flow-viewer'
 
 defineProps<{
   step: FlowStep

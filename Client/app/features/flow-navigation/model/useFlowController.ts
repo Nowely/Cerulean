@@ -1,4 +1,4 @@
-import type { Flow, FlowStep, FlowInteraction } from '~/pages/flows/flows.types'
+import type { Flow, FlowStep, FlowInteraction } from '~/shared/lib'
 
 export function useFlowController(flow: Ref<Flow | null>) {
   const currentStep = ref(0)

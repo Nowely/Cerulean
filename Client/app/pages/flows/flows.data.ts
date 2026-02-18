@@ -1,4 +1,4 @@
-import type { Flow, FlowListItem } from './flows.types'
+import type { Flow, FlowListItem } from '~/shared/lib'
 
 export const flowList: FlowListItem[] = [
   {

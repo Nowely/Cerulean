@@ -3,7 +3,7 @@ import { useThreadStore } from '~/entities/thread'
 import { useTaskStore } from '~/entities/task'
 import { useUserStore, useNotificationStore } from '~/entities/user'
 import { useUIStore } from '~/shared/model'
-import { useIsMobile } from '~/composables/useIsMobile'
+import { useIsMobile } from '~/shared/lib'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 
 const threadStore = useThreadStore()

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDevViewport } from '~/composables/useIsMobile'
+import { useDevViewport } from '~/shared/lib'
 
 const colorMode = useColorMode()
 const isDev = import.meta.dev

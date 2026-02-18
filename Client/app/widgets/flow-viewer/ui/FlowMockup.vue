@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { WireframeItem } from '~/pages/flows/flows.types'
+import type { WireframeItem } from '~/shared/lib'
 
 const props = defineProps<{
   wireframe: WireframeItem

@@ -1,6 +1,7 @@
 import { useUserStore, useNotificationStore } from '~/entities/user'
 import { useThreadStore, useMessageStore } from '~/entities/thread'
 import { useTaskStore } from '~/entities/task'
+import type { Notification } from '~/entities/user'
 
 const STORAGE_KEY = 'taskchat-fsd-state'
 const STORAGE_VERSION = 1
@@ -10,7 +11,7 @@ interface PersistedState {
   user: { currentUserId: string | null }
   thread: { activeThreadId: string | null }
   task: { activeTaskId: string | null }
-  notification: { notifications: import('./user/model/user.types').Notification[] }
+  notification: { notifications: Notification[] }
 }
 
 export function useAppInit() {

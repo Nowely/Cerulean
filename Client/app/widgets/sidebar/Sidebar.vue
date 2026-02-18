@@ -2,7 +2,7 @@
 import { useThreadStore } from '~/entities/thread'
 import { useThreadManage } from '~/features/thread-manage'
 import { useUIStore } from '~/shared/model'
-import { useIsMobile } from '~/composables/useIsMobile'
+import { useIsMobile } from '~/shared/lib'
 import SidebarHeader from './components/SidebarHeader.vue'
 import SidebarFooter from './components/SidebarFooter.vue'
 import ThreadItem from './components/ThreadItem.vue'

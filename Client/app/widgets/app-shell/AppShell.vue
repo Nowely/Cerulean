@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useThreadStore } from '~/entities/thread'
 import { useUIStore } from '~/shared/model'
-import { useIsMobile } from '~/composables/useIsMobile'
+import { useIsMobile } from '~/shared/lib'
 import Sidebar from '~/widgets/sidebar/Sidebar.vue'
 import ChatHeader from '~/widgets/chat-view/components/ChatHeader.vue'
 import ChatView from '~/widgets/chat-view/ChatView.vue'

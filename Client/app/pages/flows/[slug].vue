@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Flow } from './flows.types'
+import type { Flow } from '~/shared/lib'
 import { getFlow } from './flows.data'
-import FlowTimeline from '~/components/flows/FlowTimeline.vue'
+import { FlowTimeline } from '~/widgets/flow-viewer'
 import FlowStepCard from './FlowStepCard.vue'
 
 const route = useRoute()

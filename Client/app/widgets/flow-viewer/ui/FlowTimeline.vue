@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FlowStep } from '~/pages/flows/flows.types'
+import type { FlowStep } from '~/shared/lib'
 
 const props = defineProps<{
   steps: FlowStep[]
