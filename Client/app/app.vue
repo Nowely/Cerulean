@@ -1,5 +1,13 @@
 <script setup lang="ts">
+import { useAppInit } from '~/entities/app-init'
+import ToastContainer from '~/shared/ui/ToastContainer.vue'
+
 const colorMode = useColorMode()
+const { init } = useAppInit()
+
+onMounted(() => {
+  init()
+})
 
 const themeColor = computed(() => {
   if (colorMode.value === 'dark') return '#121519'
