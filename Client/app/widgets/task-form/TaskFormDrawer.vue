@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { useTaskStore, createTask } from '~/entities/task/store'
-import { useMessageStore, createMessage } from '~/entities/message/store'
-import { useThreadStore } from '~/entities/thread/store'
-import { useUserStore } from '~/entities/user/store'
-import { useNotificationStore, createNotification } from '~/entities/notification/store'
-import { useUIStore } from '~/entities/ui/store'
-import { STATUS_CONFIG, PRIORITY_CONFIG } from '~/shared/config/task'
-import type { Task, TaskStatus, TaskPriority } from '~/shared/types'
+import { useTaskStore, createTask, type Task, type TaskStatus, type TaskPriority } from '~/entities/task'
+import { useMessageStore, createMessage, useThreadStore } from '~/entities/thread'
+import { useUserStore, useNotificationStore, createNotification } from '~/entities/user'
+import { useUIStore } from '~/shared/model'
+import { STATUS_CONFIG, PRIORITY_CONFIG } from '~/entities/task'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
 const taskStore = useTaskStore()
@@ -17,8 +14,8 @@ const notificationStore = useNotificationStore()
 const uiStore = useUIStore()
 const toast = useToast()
 
-const isEditing = computed(() => taskStore.editingTask !== null)
-const open = computed(() => uiStore.showTaskForm)
+const isEditing = computed(() => taskStore.editingTask.value !== null)
+const open = computed(() => uiStore.showTaskForm.value)
 
 const title = ref('')
 const description = ref('')
@@ -28,7 +25,7 @@ const assignees = ref<string[]>([])
 const dueDate = ref('')
 const tags = ref('')
 
-watch([() => taskStore.editingTask, open], ([editingTask, isOpen]) => {
+watch([() => taskStore.editingTask.value, open], ([editingTask, isOpen]) => {
   if (editingTask && isOpen) {
     title.value = editingTask.title
     description.value = editingTask.description ?? ''
@@ -71,7 +68,7 @@ function handleSubmit() {
     return
   }
 
-  if (!threadStore.activeThread) {
+  if (!threadStore.activeThread.value) {
     toast.add({
       title: 'Select a thread first',
       description: 'You need an active thread before creating a task.',
@@ -87,10 +84,10 @@ function handleSubmit() {
     .filter(Boolean)
 
   const now = new Date().toISOString()
-  const currentUser = userStore.currentUser
+  const currentUser = userStore.currentUser.value
 
-  if (isEditing.value && taskStore.editingTask) {
-    const editing = taskStore.editingTask
+  if (isEditing.value && taskStore.editingTask.value) {
+    const editing = taskStore.editingTask.value
     const updated: Task = {
       id: editing.id,
       threadId: editing.threadId,
@@ -128,7 +125,7 @@ function handleSubmit() {
     })
   } else {
     const newTask = createTask(
-      threadStore.activeThread.id,
+      threadStore.activeThread.value.id,
       title.value.trim(),
       currentUser?.id ?? '',
       {
@@ -143,20 +140,20 @@ function handleSubmit() {
     taskStore.add(newTask)
 
     const message = createMessage(
-      threadStore.activeThread.id,
+      threadStore.activeThread.value.id,
       `Created task: ${title.value.trim()}`,
       currentUser?.id ?? '',
       'task-created',
       newTask.id
     )
     messageStore.add(message)
-    threadStore.updateLastActivity(threadStore.activeThread.id, message.timestamp)
+    threadStore.updateLastActivity(threadStore.activeThread.value.id, message.timestamp)
 
     assignees.value.forEach((userId) => {
       if (userId !== currentUser?.id) {
         const notification = createNotification(
           'assignment',
-          threadStore.activeThread!.id,
+          threadStore.activeThread.value!.id,
           'New Assignment',
           `${currentUser?.name} assigned you to ${title.value.trim()}`,
           newTask.id
@@ -179,8 +176,8 @@ function handleSubmit() {
 }
 
 const members = computed(() => {
-  if (!threadStore.activeThread) return []
-  return threadStore.activeThread.members
+  if (!threadStore.activeThread.value) return []
+  return threadStore.activeThread.value.members
     .map(id => userStore.getUserById(id))
     .filter(Boolean)
 })

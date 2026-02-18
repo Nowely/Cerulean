@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useUserStore } from '~/entities/user/store'
-import { useUIStore } from '~/entities/ui/store'
+import { useUserStore } from '~/entities/user'
+import { useUIStore } from '~/shared/model'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
 const emit = defineEmits<{
@@ -10,8 +10,8 @@ const emit = defineEmits<{
 const userStore = useUserStore()
 const uiStore = useUIStore()
 
-const currentUser = computed(() => userStore.currentUser)
-const searchQuery = computed(() => uiStore.searchQuery)
+const currentUser = computed(() => userStore.currentUser.value)
+const searchQuery = computed(() => uiStore.searchQuery.value)
 </script>
 
 <template>

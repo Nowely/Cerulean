@@ -1,9 +1,6 @@
-import { useUserStore } from '~/entities/user/store'
-import { useThreadStore } from '~/entities/thread/store'
-import { useTaskStore } from '~/entities/task/store'
-import { useMessageStore } from '~/entities/message/store'
-import { useNotificationStore } from '~/entities/notification/store'
-import { useTemplateStore } from '~/entities/template/store'
+import { useUserStore, useNotificationStore } from '~/entities/user'
+import { useThreadStore, useMessageStore } from '~/entities/thread'
+import { useTaskStore } from '~/entities/task'
 
 const STORAGE_KEY = 'taskchat-fsd-state'
 const STORAGE_VERSION = 1
@@ -13,7 +10,7 @@ interface PersistedState {
   user: { currentUserId: string | null }
   thread: { activeThreadId: string | null }
   task: { activeTaskId: string | null }
-  notification: { notifications: import('~/shared/types').Notification[] }
+  notification: { notifications: import('./user/model/user.types').Notification[] }
 }
 
 export function useAppInit() {
@@ -38,17 +35,17 @@ export function useAppInit() {
   function saveState() {
     if (import.meta.server) return
     try {
-      const userStore = useUserStore()
-      const threadStore = useThreadStore()
-      const taskStore = useTaskStore()
-      const notificationStore = useNotificationStore()
+      const { currentUserId } = useUserStore()
+      const { activeThreadId } = useThreadStore()
+      const { activeTaskId } = useTaskStore()
+      const { notifications } = useNotificationStore()
 
       const state: PersistedState = {
         version: STORAGE_VERSION,
-        user: { currentUserId: userStore.currentUserId },
-        thread: { activeThreadId: threadStore.activeThreadId },
-        task: { activeTaskId: taskStore.activeTaskId },
-        notification: { notifications: notificationStore.notifications }
+        user: { currentUserId: currentUserId.value },
+        thread: { activeThreadId: activeThreadId.value },
+        task: { activeTaskId: activeTaskId.value },
+        notification: { notifications: notifications.value }
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
     } catch {
@@ -60,18 +57,16 @@ export function useAppInit() {
     if (initialized.value) return
 
     const userStore = useUserStore()
-    const threadStore = useThreadStore()
-    const taskStore = useTaskStore()
-    const messageStore = useMessageStore()
     const notificationStore = useNotificationStore()
-    const templateStore = useTemplateStore()
+    const threadStore = useThreadStore()
+    const messageStore = useMessageStore()
+    const taskStore = useTaskStore()
 
     userStore.init()
-    threadStore.init()
-    taskStore.init()
-    messageStore.init()
     notificationStore.init()
-    templateStore.init()
+    threadStore.init()
+    messageStore.init()
+    taskStore.init()
 
     const persisted = loadPersistedState()
     if (persisted) {
@@ -85,17 +80,22 @@ export function useAppInit() {
         taskStore.setActive(persisted.task.activeTaskId)
       }
       if (persisted.notification.notifications) {
-        notificationStore.notifications = persisted.notification.notifications
+        notificationStore.notifications.value = persisted.notification.notifications
       }
     }
 
     if (import.meta.client) {
+      const { currentUserId } = useUserStore()
+      const { activeThreadId } = useThreadStore()
+      const { activeTaskId } = useTaskStore()
+      const { notifications } = useNotificationStore()
+
       watch(
         () => [
-          userStore.currentUserId,
-          threadStore.activeThreadId,
-          taskStore.activeTaskId,
-          notificationStore.notifications
+          currentUserId.value,
+          activeThreadId.value,
+          activeTaskId.value,
+          notifications.value
         ],
         saveState,
         { deep: true }

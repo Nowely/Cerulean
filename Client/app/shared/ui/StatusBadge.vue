@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { TaskStatus } from '~/shared/types'
-import { STATUS_CONFIG } from '~/shared/config/task'
+import type { TaskStatus } from '~/entities/task'
+import { STATUS_CONFIG } from '~/entities/task'
 
 interface Props {
   status: TaskStatus
@@ -38,6 +38,6 @@ function getStatusColor(status: TaskStatus): string {
       class="h-3 w-3"
       :style="{ color: getStatusColor(status) }"
     />
-    <span v-if="showLabel">{{ STATUS_CONFIG[status].label }}</span>
+    <span v-if="showLabel">{{ STATUS_CONFIG[status]?.label ?? status }}</span>
   </span>
 </template>

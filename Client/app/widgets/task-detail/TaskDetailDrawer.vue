@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { useTaskStore, createTask } from '~/entities/task/store'
-import { useMessageStore, createMessage } from '~/entities/message/store'
-import { useThreadStore } from '~/entities/thread/store'
-import { useUserStore } from '~/entities/user/store'
-import { useDeleteTask } from '~/features/delete-task/useDeleteTask'
-import { STATUS_CONFIG, PRIORITY_CONFIG } from '~/shared/config/task'
+import { useTaskStore, createTask, STATUS_CONFIG, PRIORITY_CONFIG, type TaskStatus, type TaskPriority } from '~/entities/task'
+import { useMessageStore, createMessage, useThreadStore } from '~/entities/thread'
+import { useUserStore } from '~/entities/user'
+import { useTaskManage } from '~/features/task-manage'
 import { isDueOverdue, isDueSoon } from '~/shared/utils'
-import type { Task, TaskStatus, TaskPriority } from '~/shared/types'
 import StatusBadge from '~/shared/ui/StatusBadge.vue'
 import PriorityBadge from '~/shared/ui/PriorityBadge.vue'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
@@ -15,13 +12,13 @@ const taskStore = useTaskStore()
 const messageStore = useMessageStore()
 const threadStore = useThreadStore()
 const userStore = useUserStore()
-const { execute: deleteTask } = useDeleteTask()
+const { remove: deleteTask } = useTaskManage()
 const toast = useToast()
 
 const newSubtask = ref('')
 
-const task = computed(() => taskStore.activeTask)
-const open = computed(() => taskStore.activeTask !== null)
+const task = computed(() => taskStore.activeTask.value)
+const open = computed(() => taskStore.activeTask.value !== null)
 
 const creator = computed(() => task.value ? userStore.getUserById(task.value.createdBy) : null)
 const assignees = computed(() =>
@@ -59,7 +56,7 @@ function changeStatus(newStatus: TaskStatus) {
 
   const message = createMessage(
     task.value.threadId,
-    `marked ${task.value.title} as ${STATUS_CONFIG[newStatus].label.toLowerCase()}`,
+    `marked ${task.value.title} as ${(STATUS_CONFIG[newStatus]?.label ?? newStatus).toLowerCase()}`,
     task.value.createdBy,
     'status-change',
     task.value.id,
@@ -70,7 +67,7 @@ function changeStatus(newStatus: TaskStatus) {
 
   toast.add({
     title: 'Task status updated',
-    description: `${task.value.title} -> ${STATUS_CONFIG[newStatus].label}`,
+    description: `${task.value.title} -> ${STATUS_CONFIG[newStatus]?.label ?? newStatus}`,
     color: 'success',
     icon: 'i-lucide-check-circle'
   })
@@ -83,7 +80,7 @@ function changePriority(newPriority: TaskPriority) {
 
   const message = createMessage(
     task.value.threadId,
-    `Changed priority of ${task.value.title} to ${PRIORITY_CONFIG[newPriority].label}`,
+    `Changed priority of ${task.value.title} to ${PRIORITY_CONFIG[newPriority]?.label ?? newPriority}`,
     task.value.createdBy,
     'task-updated',
     task.value.id
@@ -93,7 +90,7 @@ function changePriority(newPriority: TaskPriority) {
 
   toast.add({
     title: 'Task priority updated',
-    description: `${task.value.title} -> ${PRIORITY_CONFIG[newPriority].label}`,
+    description: `${task.value.title} -> ${PRIORITY_CONFIG[newPriority]?.label ?? newPriority}`,
     color: 'success',
     icon: 'i-lucide-check-circle'
   })
@@ -114,7 +111,7 @@ function toggleSubtask(subtaskId: string) {
 }
 
 function addSubtask() {
-  if (!newSubtask.value.trim() || !task.value || !userStore.currentUserId) {
+  if (!newSubtask.value.trim() || !task.value || !userStore.currentUserId.value) {
     toast.add({
       title: 'Subtask title is required',
       color: 'warning',
@@ -126,7 +123,7 @@ function addSubtask() {
   const subtaskObj = createTask(
     task.value.threadId,
     newSubtask.value.trim(),
-    userStore.currentUserId,
+    userStore.currentUserId.value,
     {
       priority: task.value.priority,
       parentTaskId: task.value.id
@@ -137,7 +134,7 @@ function addSubtask() {
   const message = createMessage(
     task.value.threadId,
     `Created subtask: ${newSubtask.value.trim()}`,
-    userStore.currentUserId,
+    userStore.currentUserId.value,
     'task-created',
     subtaskObj.id
   )

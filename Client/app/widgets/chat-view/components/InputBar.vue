@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useUserStore } from '~/entities/user/store'
-import { useThreadStore } from '~/entities/thread/store'
-import { useUIStore } from '~/entities/ui/store'
-import { useSendMessage } from '~/features/send-message/useSendMessage'
+import { useThreadStore } from '~/entities/thread'
+import { useUserStore } from '~/entities/user'
+import { useUIStore } from '~/shared/model'
+import { useSendMessage } from '~/features/message-send'
 
 const userStore = useUserStore()
 const threadStore = useThreadStore()
@@ -23,7 +23,7 @@ watch(text, () => {
 
 function handleSend() {
   const trimmed = text.value.trim()
-  if (!trimmed || !threadStore.activeThread) {
+  if (!trimmed || !threadStore.activeThread.value) {
     toast.add({
       title: 'Cannot send message',
       description: 'Select a thread and type a message first.',
@@ -87,7 +87,7 @@ function handleInput(e: Event) {
 
 <template>
   <div
-    v-if="threadStore.activeThread"
+    v-if="threadStore.activeThread.value"
     class="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
   >
     <div

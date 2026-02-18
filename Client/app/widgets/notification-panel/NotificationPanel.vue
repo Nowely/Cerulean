@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useNotificationStore } from '~/entities/notification/store'
-import { useThreadStore } from '~/entities/thread/store'
-import { useTaskStore } from '~/entities/task/store'
-import { useManageNotifications } from '~/features/manage-notifications/useManageNotifications'
+import { useNotificationStore } from '~/entities/user'
+import { useThreadStore } from '~/entities/thread'
+import { useTaskStore } from '~/entities/task'
+import { useUIStore } from '~/shared/model'
 import { relativeTime } from '~/shared/utils'
 
 const notificationStore = useNotificationStore()
 const threadStore = useThreadStore()
 const taskStore = useTaskStore()
-const { markRead, markAllRead, hidePanel } = useManageNotifications()
+const uiStore = useUIStore()
 const toast = useToast()
 
 const NOTIF_ICONS: Record<string, string> = {
@@ -20,14 +20,14 @@ const NOTIF_ICONS: Record<string, string> = {
 }
 
 function handleNotificationClick(notif: { id: string, threadId?: string, taskId?: string }) {
-  markRead(notif.id)
+  notificationStore.markRead(notif.id)
   if (notif.threadId) {
     threadStore.setActive(notif.threadId)
   }
   if (notif.taskId) {
     taskStore.setActive(notif.taskId)
   }
-  hidePanel()
+  notificationStore.setShowPanel(false)
 
   toast.add({
     title: 'Notification opened',
@@ -37,13 +37,13 @@ function handleNotificationClick(notif: { id: string, threadId?: string, taskId?
 }
 
 function closePanel() {
-  hidePanel()
+  notificationStore.setShowPanel(false)
 }
 
 function handleMarkAllRead() {
-  if (notificationStore.unreadCount === 0) return
+  if (notificationStore.unreadCount.value === 0) return
 
-  markAllRead()
+  notificationStore.markAllRead()
   toast.add({
     title: 'All notifications marked read',
     color: 'success',
@@ -54,7 +54,7 @@ function handleMarkAllRead() {
 
 <template>
   <USlideover
-    :open="notificationStore.showPanel"
+    :open="notificationStore.showPanel.value"
     side="right"
     :ui="{ content: 'w-80 sm:w-96' }"
     @update:open="(o) => !o && closePanel()"
@@ -64,11 +64,11 @@ function handleMarkAllRead() {
         <div class="flex flex-row items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
           <div>
             <h3 class="text-sm font-semibold">
-              Notifications{{ notificationStore.unreadCount > 0 ? ` (${notificationStore.unreadCount})` : '' }}
+              Notifications{{ notificationStore.unreadCount.value > 0 ? ` (${notificationStore.unreadCount.value})` : '' }}
             </h3>
           </div>
           <button
-            v-if="notificationStore.unreadCount > 0"
+            v-if="notificationStore.unreadCount.value > 0"
             class="flex items-center gap-1 text-[12px] text-primary-500 hover:text-primary-600 transition-colors"
             data-testid="mark-all-read-btn"
             @click="handleMarkAllRead"
@@ -84,7 +84,7 @@ function handleMarkAllRead() {
         <div class="flex-1 overflow-y-auto">
           <div class="flex flex-col">
             <div
-              v-if="notificationStore.notifications.length === 0"
+              v-if="notificationStore.notifications.value.length === 0"
               class="flex flex-col items-center gap-2 px-4 py-16 text-center"
             >
               <UIcon
@@ -97,7 +97,7 @@ function handleMarkAllRead() {
             </div>
 
             <button
-              v-for="notif in notificationStore.notifications"
+              v-for="notif in notificationStore.notifications.value"
               :key="notif.id"
               :data-testid="`notification-item-${notif.id}`"
               class="flex items-start gap-3 border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"

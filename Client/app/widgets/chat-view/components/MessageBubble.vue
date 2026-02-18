@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Message } from '~/shared/types'
-import { useUserStore } from '~/entities/user/store'
+import type { Message } from '~/entities/thread'
+import { useUserStore } from '~/entities/user'
 import { formatTime } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
 const userStore = useUserStore()
 
 const sender = computed(() => userStore.getUserById(props.message.senderId))
-const isOwn = computed(() => props.message.senderId === userStore.currentUserId)
+const isOwn = computed(() => props.message.senderId === userStore.currentUserId.value)
 </script>
 
 <template>

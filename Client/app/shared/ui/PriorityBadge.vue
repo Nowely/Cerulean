@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { TaskPriority } from '~/shared/types'
-import { PRIORITY_CONFIG } from '~/shared/config/task'
+import type { TaskPriority } from '~/entities/task'
+import { PRIORITY_CONFIG } from '~/entities/task'
 
 interface Props {
   priority: TaskPriority
@@ -36,6 +36,6 @@ function getPriorityColor(priority: TaskPriority): string {
       class="h-3 w-3"
       :style="{ color: getPriorityColor(priority) }"
     />
-    <span v-if="showLabel">{{ PRIORITY_CONFIG[priority].label }}</span>
+    <span v-if="showLabel">{{ PRIORITY_CONFIG[priority]?.label ?? priority }}</span>
   </span>
 </template>

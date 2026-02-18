@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { useMessageStore } from '~/entities/message/store'
-import { useThreadStore } from '~/entities/thread/store'
+import { useMessageStore, useThreadStore } from '~/entities/thread'
 import { formatDate } from '~/shared/utils'
 import SystemBubble from './components/SystemBubble.vue'
 import TaskCardBubble from './components/TaskCardBubble.vue'
@@ -16,8 +15,8 @@ const showScrollBtn = ref(false)
 const prevMessageCount = ref(0)
 
 const threadMessages = computed(() =>
-  threadStore.activeThreadId
-    ? messageStore.threadMessages(threadStore.activeThreadId)
+  threadStore.activeThreadId.value
+    ? messageStore.threadMessages(threadStore.activeThreadId.value)
     : []
 )
 

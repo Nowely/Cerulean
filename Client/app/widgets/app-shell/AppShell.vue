@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useThreadStore } from '~/entities/thread/store'
-import { useUIStore } from '~/entities/ui/store'
+import { useThreadStore } from '~/entities/thread'
+import { useUIStore } from '~/shared/model'
 import { useIsMobile } from '~/composables/useIsMobile'
 import Sidebar from '~/widgets/sidebar/Sidebar.vue'
 import ChatHeader from '~/widgets/chat-view/components/ChatHeader.vue'
@@ -14,11 +14,11 @@ const threadStore = useThreadStore()
 const uiStore = useUIStore()
 const isMobile = useIsMobile()
 
-const sidebarOpen = computed(() => uiStore.sidebarOpen)
+const sidebarOpen = computed(() => uiStore.sidebarOpen.value)
 const mobileSidebarOpen = computed(() => isMobile.value && sidebarOpen.value)
 
 watch(isMobile, (mobile) => {
-  if (!mobile && uiStore.sidebarOpen) {
+  if (!mobile && uiStore.sidebarOpen.value) {
     uiStore.setSidebar(false)
   }
 })
@@ -37,7 +37,7 @@ watch(isMobile, (mobile) => {
       :open="mobileSidebarOpen"
       side="left"
       :ui="{ content: 'w-80' }"
-      @update:open="(o) => uiStore.setSidebar(o)"
+      @update:open="(o) => uiStore.setSidebar(o as boolean)"
     >
       <template #content>
         <Sidebar />
@@ -45,7 +45,7 @@ watch(isMobile, (mobile) => {
     </USlideover>
 
     <main class="flex flex-1 flex-col overflow-hidden">
-      <template v-if="threadStore.activeThread">
+      <template v-if="threadStore.activeThread.value">
         <ChatHeader />
         <ChatView />
       </template>

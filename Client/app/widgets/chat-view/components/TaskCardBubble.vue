@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Message } from '~/shared/types'
-import { useUserStore } from '~/entities/user/store'
-import { useTaskStore } from '~/entities/task/store'
+import type { Message } from '~/entities/thread'
+import { useUserStore } from '~/entities/user'
+import { useTaskStore } from '~/entities/task'
 import { formatTime, isDueOverdue, isDueSoon } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 import StatusBadge from '~/shared/ui/StatusBadge.vue'
@@ -22,7 +22,7 @@ const taskStore = useTaskStore()
 
 const sender = computed(() => userStore.getUserById(props.message.senderId))
 const task = computed(() => props.message.taskId ? taskStore.getTaskById(props.message.taskId) : null)
-const isOwn = computed(() => props.message.senderId === userStore.currentUserId)
+const isOwn = computed(() => props.message.senderId === userStore.currentUserId.value)
 
 const assigneeUsers = computed(() =>
   task.value?.assignees.map(id => userStore.getUserById(id)).filter(Boolean) ?? []

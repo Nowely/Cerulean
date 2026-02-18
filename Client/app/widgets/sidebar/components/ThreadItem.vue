@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Thread } from '~/shared/types'
-import { useMessageStore } from '~/entities/message/store'
-import { useUserStore } from '~/entities/user/store'
+import type { Thread } from '~/entities/thread'
+import { useMessageStore } from '~/entities/thread'
+import { useUserStore } from '~/entities/user'
 import { relativeTime } from '~/shared/utils'
 
 interface Props {
@@ -29,7 +29,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const lastMessage = computed(() => {
-  const messages = messageStore.messages
+  const messages = messageStore.messages.value
     .filter(m => m.threadId === props.thread.id)
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
   return messages[0]

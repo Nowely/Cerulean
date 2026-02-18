@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { useTaskStore, createTask } from '~/entities/task/store'
-import { useMessageStore, createMessage } from '~/entities/message/store'
-import { useThreadStore } from '~/entities/thread/store'
-import { useUserStore } from '~/entities/user/store'
-import { useTemplateStore } from '~/entities/template/store'
-import { useUIStore } from '~/entities/ui/store'
+import { useTaskStore, createTask } from '~/entities/task'
+import { useMessageStore, createMessage, useThreadStore } from '~/entities/thread'
+import { useUserStore } from '~/entities/user'
+import { useUIStore } from '~/shared/model'
 
 const taskStore = useTaskStore()
 const messageStore = useMessageStore()
 const threadStore = useThreadStore()
 const userStore = useUserStore()
-const templateStore = useTemplateStore()
 const uiStore = useUIStore()
 const toast = useToast()
 
@@ -22,9 +19,9 @@ const TEMPLATE_ICONS: Record<string, string> = {
 }
 
 function handleSelect(templateId: string) {
-  const template = templateStore.getTemplateById(templateId)
-  const activeThread = threadStore.activeThread
-  const currentUser = userStore.currentUser
+  const template = taskStore.getTemplateById(templateId)
+  const activeThread = threadStore.activeThread.value
+  const currentUser = userStore.currentUser.value
 
   if (!template || !activeThread || !currentUser) {
     toast.add({
@@ -37,7 +34,6 @@ function handleSelect(templateId: string) {
   }
 
   const threadId = activeThread.id
-  const now = new Date().toISOString()
 
   const task = createTask(threadId, template.name, currentUser.id, {
     description: template.description,
@@ -98,7 +94,7 @@ function closeDrawer() {
 
 <template>
   <USlideover
-    :open="uiStore.showTemplates"
+    :open="uiStore.showTemplates.value"
     side="bottom"
     @update:open="(o) => !o && closeDrawer()"
   >
@@ -113,7 +109,7 @@ function closeDrawer() {
 
         <div class="flex flex-col gap-2">
           <button
-            v-for="template in templateStore.templates"
+            v-for="template in taskStore.templates.value"
             :key="template.id"
             class="flex items-start gap-3 rounded-xl bg-gray-100 dark:bg-gray-800 p-3 text-left transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
             @click="handleSelect(template.id)"

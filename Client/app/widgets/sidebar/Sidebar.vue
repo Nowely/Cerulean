@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { useThreadStore } from '~/entities/thread/store'
-import { useUIStore } from '~/entities/ui/store'
-import { useCreateThread } from '~/features/create-thread/useCreateThread'
-import { useSearchThreads } from '~/features/search-threads/useSearchThreads'
+import { useThreadStore } from '~/entities/thread'
+import { useThreadManage } from '~/features/thread-manage'
+import { useUIStore } from '~/shared/model'
 import { useIsMobile } from '~/composables/useIsMobile'
 import SidebarHeader from './components/SidebarHeader.vue'
 import SidebarFooter from './components/SidebarFooter.vue'
 import ThreadItem from './components/ThreadItem.vue'
-import type { Thread } from '~/shared/types'
+import type { Thread } from '~/entities/thread'
 
 const threadStore = useThreadStore()
 const uiStore = useUIStore()
-const { execute: createThreadAction } = useCreateThread()
-const { results, setSearch } = useSearchThreads()
+const { create: createThreadAction, results, search } = useThreadManage()
 const isMobile = useIsMobile()
 const toast = useToast()
 
@@ -20,16 +18,16 @@ const showNewThread = ref(false)
 const newThreadName = ref('')
 const newThreadType = ref<Thread['type']>('project')
 
-const activeThreadId = computed(() => threadStore.activeThreadId)
+const activeThreadId = computed(() => threadStore.activeThreadId.value)
 
 const pinnedThreads = computed(() =>
-  results.value.filter(t => t.pinned)
+  results.value.filter((t: { pinned: boolean }) => t.pinned)
 )
 
 const unpinnedThreads = computed(() =>
   results.value
-    .filter(t => !t.pinned)
-    .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
+    .filter((t: { pinned: boolean }) => !t.pinned)
+    .sort((a: { lastActivity: string }, b: { lastActivity: string }) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
 )
 
 function handleCreateThread() {
