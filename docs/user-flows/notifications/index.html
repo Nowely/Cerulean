@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - TaskChat User Flow</title>
+  <link rel="stylesheet" href="../flow-theme.css">
+</head>
+<body>
+  <div class="container" data-flow-root>
+    <header>
+      <h1>Notifications</h1>
+      <p class="summary">View, manage, and interact with system notifications for task updates and assignments</p>
+      <p class="meta">Updated: February 17, 2026 | Interactive flow format</p>
+    </header>
+
+    <section class="steps-shell">
+      <h2>Flow Steps</h2>
+      <div class="flow-nav">
+        <div class="flow-nav-top">
+          <button type="button" data-flow-prev>Previous</button>
+          <button type="button" class="primary" data-flow-next>Next</button>
+          <span class="flow-status" data-flow-status></span>
+          <label><input type="checkbox" data-flow-show-all> Show all steps</label>
+        </div>
+        <div class="flow-nav-index" data-flow-index></div>
+      </div>
+      <div class="steps-grid" data-flow-steps>
+        <article class="step-card" data-step-title="Open notifications panel">
+          <div class="step-head">
+            <div class="step-number">1</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Click the bell icon with unread count badge (e.g., "4") in the thread header to open notifications panel.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Notification panel slides in from the right side (380-384px wide on desktop, 320px on mobile). Panel header shows "Notifications (4)" with unread count and a "Mark all read" link in the top right. Panel displays a scrollable list of notifications, each showing type icon, type label, message, timestamp, and unread indicator. Notifications are sorted by most recent first.</p>
+          </details>
+          <div class="ui-mock show-sidebar show-panel" data-default-classes="ui-mock show-sidebar show-panel">
+            <p class="wireframe-hint">Panel block models notification list structure and copy.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Active thread context</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Header</div>
+                <div class="wf-line" contenteditable="true">Bell icon badge: 4 unread</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Notifications (4)</div>
+                <div class="wf-item" contenteditable="true">New Assignment - 1m ago</div>
+                <div class="wf-item" contenteditable="true">Task Completed - 12h ago</div>
+                <div class="wf-item" contenteditable="true">New Comment - 4h ago</div>
+                <div class="wf-item" contenteditable="true">Due Soon - 1h ago</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Key Observations</h2>
+      <ul>
+        <li><strong>Notification Types:</strong> Five types identified - New Assignment, Task Completed, New Comment, Due Soon, and Thread Created</li>
+        <li><strong>Visual Differentiation:</strong> Each notification type has a unique icon and color scheme for quick recognition</li>
+        <li><strong>Unread Indicators:</strong> Green dot badges clearly mark unread notifications</li>
+        <li><strong>Badge Count:</strong> Bell icon displays total unread count, updating in real-time</li>
+        <li><strong>Mark All Read:</strong> Bulk action available to mark all notifications as read at once</li>
+        <li><strong>Individual Actions:</strong> Clicking a notification marks it as read and navigates to the relevant thread/task</li>
+        <li><strong>Timestamp Format:</strong> Human-readable relative timestamps (minutes, hours, days ago)</li>
+        <li><strong>Context-Rich Messages:</strong> Notifications include actor names, task titles, and action descriptions</li>
+        <li><strong>Auto-generation:</strong> Notifications are automatically created for: task assignments, status changes, comments, approaching due dates, and thread creation</li>
+        <li><strong>Panel Behavior:</strong> Clicking outside or pressing Escape closes the panel</li>
+        <li><strong>Keyboard Shortcut:</strong> F8 key opens notifications panel (mentioned in accessibility attributes)</li>
+        <li><strong>Persistence:</strong> Notifications remain until explicitly marked as read by user action</li>
+        <li><strong>Scrollable Content:</strong> Panel scrolls if notifications exceed visible area</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p><a href="../index.html">← Back to all flows</a></p>
+      <p style="margin-top: 10px; font-size: 0.9em;">Interactive HTML flow format for fast iteration.</p>
+    </footer>
+  </div>
+  <script src="../flow-runtime.js"></script>
+</body>
+</html>

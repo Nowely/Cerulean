@@ -1,0 +1,40 @@
+import { useMessageStore, useThreadStore, useUserStore, createMessage } from '~/shared/model'
+import type { MessageType, Message } from '~/shared/types'
+
+interface SendMessageInput {
+  content: string
+  type?: MessageType
+  taskId?: string
+  metadata?: Record<string, string>
+}
+
+export function useSendMessage() {
+  const messageStore = useMessageStore()
+  const threadStore = useThreadStore()
+  const userStore = useUserStore()
+
+  function execute(input: SendMessageInput): Message | null {
+    const threadId = threadStore.activeThreadId.value
+    const userId = userStore.currentUserId.value
+
+    if (!threadId || !userId) return null
+
+    const message = createMessage(
+      threadId,
+      input.content,
+      userId,
+      input.type ?? 'text',
+      input.taskId,
+      input.metadata
+    )
+
+    messageStore.add(message)
+    threadStore.updateLastActivity(threadId, message.timestamp)
+
+    return message
+  }
+
+  return {
+    execute
+  }
+}

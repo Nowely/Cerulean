@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thread Management - TaskChat User Flow</title>
+  <link rel="stylesheet" href="../flow-theme.css">
+</head>
+<body>
+  <div class="container" data-flow-root>
+    <header>
+      <h1>Thread Management</h1>
+      <p class="summary">Create, search, and switch between conversation threads.</p>
+      <p class="meta">Updated: February 17, 2026 | Interactive flow format</p>
+    </header>
+
+    <section class="steps-shell">
+      <h2>Flow Steps</h2>
+      <div class="flow-nav">
+        <div class="flow-nav-top">
+          <button type="button" data-flow-prev>Previous</button>
+          <button type="button" class="primary" data-flow-next>Next</button>
+          <span class="flow-status" data-flow-status></span>
+          <label><input type="checkbox" data-flow-show-all> Show all steps</label>
+        </div>
+        <div class="flow-nav-index" data-flow-index></div>
+      </div>
+
+      <div class="steps-grid" data-flow-steps>
+        <article class="step-card" data-step-title="Initial state">
+          <div class="step-head">
+            <div class="step-number">1</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>View the initial state of the application with the sidebar showing pinned and all threads.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Sidebar displays two pinned threads (Website Redesign, Mobile App Sprint) and additional threads in the "All Threads" section. Welcome screen shown in main area prompting user to select a thread.</p>
+          </details>
+          <div class="ui-mock show-sidebar" data-default-classes="ui-mock show-sidebar">
+            <p class="wireframe-hint">Structure mock: click any label text to edit. Toggle layout states to iterate quickly.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-list">
+                  <div class="wf-item" contenteditable="true">Pinned: Website Redesign</div>
+                  <div class="wf-item" contenteditable="true">Pinned: Mobile App Sprint</div>
+                  <div class="wf-item" contenteditable="true">All Threads: Bug Triage</div>
+                </div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Main Area</div>
+                <div class="wf-header-row">
+                  <span class="wf-chip" contenteditable="true">Welcome</span>
+                </div>
+                <div class="wf-line" contenteditable="true">Select a thread to start chatting.</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Dialog / Panel</div>
+                <div class="wf-line" contenteditable="true">No panel in this step</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card" data-step-title="Search threads">
+          <div class="step-head">
+            <div class="step-number">2</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Click on the search input field and type "bug" to search for threads.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Thread list filters in real-time to show only threads matching "bug". The "Bug Triage" thread is displayed, while others are hidden. Search is case-insensitive.</p>
+          </details>
+          <div class="ui-mock show-sidebar" data-default-classes="ui-mock show-sidebar">
+            <p class="wireframe-hint">Search behavior is represented in the sidebar block.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-line" contenteditable="true">Search: bug</div>
+                <div class="wf-list">
+                  <div class="wf-item" contenteditable="true">Result: Bug Triage</div>
+                </div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Main Area</div>
+                <div class="wf-line" contenteditable="true">Thread list filters while typing.</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Dialog / Panel</div>
+                <div class="wf-line" contenteditable="true">No panel in this step</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card" data-step-title="Open new thread dialog">
+          <div class="step-head">
+            <div class="step-number">3</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Clear the search and click the green "+" button in the sidebar header to create a new thread.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>A dialog/modal appears with the title "New Thread" containing a form with fields: thread name input (focused), thread type buttons (project/group/direct with "project" selected by default), and a disabled "Create Thread" button.</p>
+          </details>
+          <div class="ui-mock show-sidebar show-panel" data-default-classes="ui-mock show-sidebar show-panel">
+            <p class="wireframe-hint">Panel block represents the New Thread dialog.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">+ New Thread</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Main Area</div>
+                <div class="wf-line" contenteditable="true">Background remains visible behind dialog.</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">New Thread Dialog</div>
+                <div class="wf-line" contenteditable="true">Title: New Thread</div>
+                <div class="wf-line" contenteditable="true">Type: Project (default), Group, Direct</div>
+                <div class="wf-line wf-muted" contenteditable="true">Create button disabled until name entered</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card" data-step-title="Fill thread form">
+          <div class="step-head">
+            <div class="step-number">4</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Type "Q1 Planning Session" in the thread name field and select "Group" as the thread type.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Thread name field populates with text, "Group" button becomes active/selected, and "Create Thread" button becomes enabled (no longer disabled).</p>
+          </details>
+          <div class="ui-mock show-sidebar show-panel" data-default-classes="ui-mock show-sidebar show-panel">
+            <p class="wireframe-hint">Edit fields directly to iterate on naming and type labels.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Search cleared</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Main Area</div>
+                <div class="wf-line" contenteditable="true">Dialog in focus.</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">New Thread Dialog</div>
+                <div class="wf-line" contenteditable="true">Thread name: Q1 Planning Session</div>
+                <div class="wf-line" contenteditable="true">Selected type: Group</div>
+                <div class="wf-line" contenteditable="true">Create button enabled</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card" data-step-title="Create thread">
+          <div class="step-head">
+            <div class="step-number">5</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Click the "Create Thread" button to submit the form.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Success toast notification appears: "Thread created - Q1 Planning Session is ready". New thread appears in the "All Threads" section of the sidebar. Thread is automatically opened showing empty chat view with thread name in header and message input at bottom.</p>
+          </details>
+          <div class="ui-mock show-sidebar" data-default-classes="ui-mock show-sidebar">
+            <p class="wireframe-hint">Use this wireframe to tune success copy and post-create state.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">All Threads: Q1 Planning Session</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Main Area</div>
+                <div class="wf-line" contenteditable="true">Toast: Thread created - Q1 Planning Session is ready</div>
+                <div class="wf-line" contenteditable="true">Thread opens with empty chat and composer.</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Dialog / Panel</div>
+                <div class="wf-line" contenteditable="true">Closed after submit</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card" data-step-title="Switch thread">
+          <div class="step-head">
+            <div class="step-number">6</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Click on the "Website Redesign" thread in the pinned section to switch threads.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Active thread switches from "Q1 Planning Session" to "Website Redesign". Chat view loads with full message history, task cards, and member information. Thread item in sidebar is highlighted as active. Header updates to show "Website Redesign" with member count (3 members) and task count (4 tasks).</p>
+          </details>
+          <div class="ui-mock show-sidebar" data-default-classes="ui-mock show-sidebar">
+            <p class="wireframe-hint">Switch state highlights active thread and header metadata.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Active: Website Redesign</div>
+                <div class="wf-item" contenteditable="true">Previous: Q1 Planning Session</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Main Area</div>
+                <div class="wf-header-row">
+                  <span class="wf-chip" contenteditable="true">Website Redesign</span>
+                  <span class="wf-chip" contenteditable="true">3 members</span>
+                  <span class="wf-chip" contenteditable="true">4 tasks</span>
+                </div>
+                <div class="wf-line" contenteditable="true">Message history and task cards are loaded.</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Dialog / Panel</div>
+                <div class="wf-line" contenteditable="true">No panel in this step</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Key Observations</h2>
+      <ul>
+        <li><strong>Thread Grouping:</strong> Threads are organized into "Pinned" and "All Threads" sections for better organization</li>
+        <li><strong>Real-time Search:</strong> Thread search filters results as you type without requiring a search button click</li>
+        <li><strong>Thread Metadata:</strong> Each thread item shows last message preview, timestamp, and unread count badges</li>
+        <li><strong>Auto-selection:</strong> Newly created threads are automatically opened after creation</li>
+        <li><strong>Thread Types:</strong> Three thread types are available: Project, Group, and Direct with visual indicators</li>
+        <li><strong>Validation:</strong> Create button remains disabled until a thread name is provided</li>
+        <li><strong>Toast Notifications:</strong> Success feedback is provided via non-intrusive toast messages</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p><a href="../index.html">← Back to all flows</a></p>
+      <p style="margin-top: 10px; font-size: 0.9em;">Interactive HTML flow format for fast iteration.</p>
+    </footer>
+  </div>
+  <script src="../flow-runtime.js"></script>
+</body>
+</html>

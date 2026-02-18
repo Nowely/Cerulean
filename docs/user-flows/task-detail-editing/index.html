@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Detail & Editing - TaskChat User Flow</title>
+  <link rel="stylesheet" href="../flow-theme.css">
+</head>
+<body>
+  <div class="container" data-flow-root>
+    <header>
+      <h1>Task Detail & Editing</h1>
+      <p class="summary">View complete task details, edit properties, manage status/priority, and delete tasks.</p>
+      <p class="meta">Updated: February 17, 2026 | Interactive flow format</p>
+    </header>
+
+    <section class="steps-shell">
+      <h2>Flow Steps</h2>
+      <div class="flow-nav">
+        <div class="flow-nav-top">
+          <button type="button" data-flow-prev>Previous</button>
+          <button type="button" class="primary" data-flow-next>Next</button>
+          <span class="flow-status" data-flow-status></span>
+          <label><input type="checkbox" data-flow-show-all> Show all steps</label>
+        </div>
+        <div class="flow-nav-index" data-flow-index></div>
+      </div>
+
+      <div class="steps-grid" data-flow-steps>
+        <article class="step-card" data-step-title="Open task detail">
+          <div class="step-head">
+            <div class="step-number">1</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Click on any task card in the chat view (e.g., "Set up design system tokens") to open task details.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Task detail drawer slides in from the bottom (mobile) or right side (desktop). Displays complete task information including: Task title, Creator info with creation timestamp, Full description, Status dropdown (with current status shown), Priority dropdown (with current priority), Due date (with overdue/due soon indicators if applicable), Assignee avatars, Tags as badges, Dependencies section (if any), Subtasks section with progress bar, Edit button (pencil icon), Delete button (trash icon). Drawer has scrollable content if task details are extensive.</p>
+          </details>
+          <div class="ui-mock show-sidebar show-panel" data-default-classes="ui-mock show-sidebar show-panel">
+            <p class="wireframe-hint">Panel block represents task details. Edit labels to iterate field order/copy.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Thread list</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Chat Area</div>
+                <div class="wf-item" contenteditable="true">Task card clicked: Set up design system tokens</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Task Detail Drawer</div>
+                <div class="wf-item" contenteditable="true">Status dropdown | Priority dropdown</div>
+                <div class="wf-item" contenteditable="true">Due date | Assignees | Tags</div>
+                <div class="wf-item" contenteditable="true">Subtasks progress | Edit | Delete</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Key Observations</h2>
+      <ul>
+        <li><strong>Quick Status Changes:</strong> Status can be changed directly from the detail view via dropdown without opening edit form</li>
+        <li><strong>Priority Updates:</strong> Priority can be updated independently with a simple dropdown interaction</li>
+        <li><strong>Visual Status Indicators:</strong> Each status has a unique icon and color (To Do: circle, In Progress: spinner, Review: eye, Done: checkmark, Blocked: X)</li>
+        <li><strong>Priority Color Coding:</strong> Low (gray), Medium (blue), High (orange), Urgent (red)</li>
+        <li><strong>Due Date Warnings:</strong> Overdue dates shown in red, due soon dates in yellow with visual indicators</li>
+        <li><strong>Subtask Management:</strong> Progress bar shows completion ratio (e.g., "2/5 subtasks completed")</li>
+        <li><strong>Dependency Links:</strong> Clickable dependency links navigate to related task details</li>
+        <li><strong>Edit Mode:</strong> Clicking edit icon opens the full task form pre-populated with current values</li>
+        <li><strong>Delete Confirmation:</strong> Delete action likely triggers confirmation dialog to prevent accidental deletion</li>
+        <li><strong>Activity Tracking:</strong> Status and priority changes create system messages in the chat feed</li>
+        <li><strong>Responsive Design:</strong> Drawer adjusts size and position based on screen size (85vh height on mobile)</li>
+        <li><strong>Tag Display:</strong> Tags shown as small badge chips with consistent styling</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p><a href="../index.html">← Back to all flows</a></p>
+      <p style="margin-top: 10px; font-size: 0.9em;">Interactive HTML flow format for fast iteration.</p>
+    </footer>
+  </div>
+  <script src="../flow-runtime.js"></script>
+</body>
+</html>

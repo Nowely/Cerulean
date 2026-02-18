@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basic Messaging - TaskChat User Flow</title>
+  <link rel="stylesheet" href="../flow-theme.css">
+</head>
+<body>
+  <div class="container" data-flow-root>
+    <header>
+      <h1>Basic Messaging</h1>
+      <p class="summary">Send text messages and use command palette in chat threads.</p>
+      <p class="meta">Updated: February 17, 2026 | Interactive flow format</p>
+    </header>
+
+    <section class="steps-shell">
+      <h2>Flow Steps</h2>
+      <div class="flow-nav">
+        <div class="flow-nav-top">
+          <button type="button" data-flow-prev>Previous</button>
+          <button type="button" class="primary" data-flow-next>Next</button>
+          <span class="flow-status" data-flow-status></span>
+          <label><input type="checkbox" data-flow-show-all> Show all steps</label>
+        </div>
+        <div class="flow-nav-index" data-flow-index></div>
+      </div>
+
+      <div class="steps-grid" data-flow-steps>
+        <article class="step-card" data-step-title="Open active thread">
+          <div class="step-head">
+            <div class="step-number">1</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>View an active thread with existing chat history including messages, task cards, and system notifications.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Chat view displays messages grouped by date sections, task cards with status/priority badges, user avatars, and timestamps. Message input bar visible at bottom with placeholder text "Message or type '/' for commands..."</p>
+          </details>
+          <div class="ui-mock show-sidebar" data-default-classes="ui-mock show-sidebar">
+            <p class="wireframe-hint">Structure mock for chat layout. Click labels to edit copy and structure quickly.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Active: Website Redesign</div>
+                <div class="wf-item" contenteditable="true">Recent: Mobile App Sprint</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Chat Area</div>
+                <div class="wf-header-row">
+                  <span class="wf-chip" contenteditable="true">Thread: Website Redesign</span>
+                  <span class="wf-chip" contenteditable="true">Today</span>
+                </div>
+                <div class="wf-list">
+                  <div class="wf-item" contenteditable="true">Jordan: Ready to finalize tokens.</div>
+                  <div class="wf-item" contenteditable="true">Task card: Set up design system tokens</div>
+                </div>
+                <div class="wf-footer-row">
+                  <span class="wf-line" contenteditable="true">Message or type '/' for commands...</span>
+                </div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Aux Panel</div>
+                <div class="wf-line" contenteditable="true">Notifications / details</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card" data-step-title="Type message">
+          <div class="step-head">
+            <div class="step-number">2</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Click in the message input field and type a text message: "Great work on the tokens! This will really help with consistency."</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Input field becomes focused (green border). Text appears in the input field. Send button (paper plane icon) becomes enabled and changes color from gray to green.</p>
+          </details>
+          <div class="ui-mock show-sidebar" data-default-classes="ui-mock show-sidebar">
+            <p class="wireframe-hint">Focus on composer state: input text and send button enablement.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Thread stays active</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Chat Area</div>
+                <div class="wf-line" contenteditable="true">Input: Great work on the tokens! This will really help with consistency.</div>
+                <div class="wf-footer-row">
+                  <span class="wf-chip" contenteditable="true">Send: enabled</span>
+                </div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Aux Panel</div>
+                <div class="wf-line" contenteditable="true">No panel in this step</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card" data-step-title="Send message">
+          <div class="step-head">
+            <div class="step-number">3</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Click the send button (or press Enter) to send the message.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Message appears in the chat view with current user's avatar and timestamp. Toast notification shows "Message sent". Thread item in sidebar updates to show the new message as the last message preview. Input field clears automatically and send button becomes disabled again.</p>
+          </details>
+          <div class="ui-mock show-sidebar" data-default-classes="ui-mock show-sidebar">
+            <p class="wireframe-hint">This state shows feedback after message send.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Last preview: Great work on the tokens...</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Chat Area</div>
+                <div class="wf-item" contenteditable="true">You: Great work on the tokens! This will really help with consistency.</div>
+                <div class="wf-line" contenteditable="true">Toast: Message sent</div>
+                <div class="wf-footer-row">
+                  <span class="wf-chip" contenteditable="true">Input cleared</span>
+                </div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Aux Panel</div>
+                <div class="wf-line" contenteditable="true">No panel in this step</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card" data-step-title="Open command palette">
+          <div class="step-head">
+            <div class="step-number">4</div>
+            <div>
+              <div class="step-label">Action</div>
+              <p>Type "/" (forward slash) in the message input to trigger the command palette.</p>
+            </div>
+          </div>
+          <details>
+            <summary>Expected Result</summary>
+            <p>Command palette dropdown appears above the input showing available commands: "/task - Create a new task" and "/template - Use a task template". Each command has an icon and description.</p>
+          </details>
+          <div class="ui-mock show-sidebar show-panel" data-default-classes="ui-mock show-sidebar show-panel">
+            <p class="wireframe-hint">Panel represents the command list shown above composer.</p>
+            <div class="wireframe-controls">
+              <button type="button" data-toggle-class="show-sidebar">Sidebar</button>
+              <button type="button" data-toggle-class="show-panel">Panel</button>
+              <button type="button" data-toggle-class="is-mobile">Mobile layout</button>
+              <button type="button" data-reset-wireframe>Reset</button>
+            </div>
+            <div class="wireframe-app">
+              <aside class="wf-sidebar">
+                <div class="wf-block-title">Sidebar</div>
+                <div class="wf-item" contenteditable="true">Active thread remains selected</div>
+              </aside>
+              <section class="wf-main">
+                <div class="wf-block-title">Chat Area</div>
+                <div class="wf-line" contenteditable="true">Composer input: /</div>
+              </section>
+              <aside class="wf-panel">
+                <div class="wf-block-title">Command Palette</div>
+                <div class="wf-item" contenteditable="true">/task - Create a new task</div>
+                <div class="wf-item" contenteditable="true">/template - Use a task template</div>
+              </aside>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Key Observations</h2>
+      <ul>
+        <li><strong>Message Grouping:</strong> Messages are automatically grouped by sender and time, with avatars shown only when sender changes or significant time gap occurs</li>
+        <li><strong>Date Separators:</strong> Chat automatically inserts date separators (Feb 14, Feb 15, Today, etc.) for better chronological navigation</li>
+        <li><strong>Real-time Updates:</strong> Sidebar thread items update immediately to show the latest message preview</li>
+        <li><strong>Command Palette:</strong> Typing "/" triggers a contextual command menu for quick actions without leaving the input field</li>
+        <li><strong>Keyboard Shortcuts:</strong> Enter key sends messages, making chat interaction faster</li>
+        <li><strong>Visual Feedback:</strong> Send button changes state (disabled/enabled) based on input content</li>
+        <li><strong>Message Formatting:</strong> Messages display with clear sender attribution, timestamps, and visual hierarchy</li>
+        <li><strong>Quick Actions:</strong> Plus button next to input provides alternative access to task creation features</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p><a href="../index.html">← Back to all flows</a></p>
+      <p style="margin-top: 10px; font-size: 0.9em;">Interactive HTML flow format for fast iteration.</p>
+    </footer>
+  </div>
+  <script src="../flow-runtime.js"></script>
+</body>
+</html>
