@@ -1,5 +1,5 @@
 {
-  "name": "ClientV2",
+  "name": "Client",
   "private": true,
   "type": "module",
   "scripts": {
