@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useThreadStore, useUserStore, useUIStore } from '~/shared/model'
+import { useThreadStore, useUIStore } from '~/shared/model'
 import { useSendMessage } from '~/features/message-send'
+import { useToastHelpers } from '~/shared/lib'
 
-const userStore = useUserStore()
 const threadStore = useThreadStore()
 const uiStore = useUIStore()
 const { execute: sendMessage } = useSendMessage()
-const toast = useToast()
+const toast = useToastHelpers()
 
 const text = ref('')
 const showCommands = ref(false)
@@ -19,22 +19,31 @@ watch(text, () => {
   }
 })
 
+function openTaskForm() {
+  uiStore.setShowTaskForm(true)
+  text.value = ''
+  showCommands.value = false
+}
+
+function openTemplates() {
+  uiStore.setShowTemplates(true)
+  text.value = ''
+  showCommands.value = false
+}
+
 function handleSend() {
   const trimmed = text.value.trim()
   if (!trimmed || !threadStore.activeThread.value) {
-    toast.add({
+    toast.warning({
       title: 'Cannot send message',
-      description: 'Select a thread and type a message first.',
-      color: 'warning',
-      icon: 'i-lucide-alert-triangle'
+      description: 'Select a thread and type a message first.'
     })
     return
   }
 
   sendMessage({ content: trimmed, type: 'text' })
-  toast.add({
+  toast.success({
     title: 'Message sent',
-    color: 'success',
     icon: 'i-lucide-check'
   })
   text.value = ''
@@ -45,21 +54,17 @@ function handleSend() {
 
 function handleSlashCommand(cmd: string) {
   if (cmd === '/task' || cmd.startsWith('/task ')) {
-    uiStore.setShowTaskForm(true)
-    toast.add({
+    openTaskForm()
+    toast.primary({
       title: 'Task form opened',
-      color: 'primary',
       icon: 'i-lucide-list-todo'
     })
-    text.value = ''
   } else if (cmd === '/template' || cmd.startsWith('/template ')) {
-    uiStore.setShowTemplates(true)
-    toast.add({
+    openTemplates()
+    toast.primary({
       title: 'Template picker opened',
-      color: 'primary',
       icon: 'i-lucide-file-text'
     })
-    text.value = ''
   } else {
     handleSend()
   }
@@ -94,7 +99,7 @@ function handleInput(e: Event) {
     >
       <button
         class="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-        @click="uiStore.setShowTaskForm(true); text = ''; showCommands = false"
+        @click="openTaskForm"
       >
         <UIcon
           name="i-lucide-list-todo"
@@ -105,7 +110,7 @@ function handleInput(e: Event) {
       </button>
       <button
         class="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-        @click="uiStore.setShowTemplates(true); text = ''; showCommands = false"
+        @click="openTemplates"
       >
         <UIcon
           name="i-lucide-file-text"
@@ -133,7 +138,7 @@ function handleInput(e: Event) {
           <div class="p-1 w-52">
             <button
               class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-              @click="uiStore.setShowTaskForm(true)"
+              @click="openTaskForm"
             >
               <UIcon
                 name="i-lucide-list-todo"
@@ -143,7 +148,7 @@ function handleInput(e: Event) {
             </button>
             <button
               class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-              @click="uiStore.setShowTemplates(true)"
+              @click="openTemplates"
             >
               <UIcon
                 name="i-lucide-file-text"

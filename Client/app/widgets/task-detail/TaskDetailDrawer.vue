@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { useTaskStore, useMessageStore, useThreadStore, useUserStore, createMessage } from '~/shared/model'
-import { createTask, STATUS_CONFIG, PRIORITY_CONFIG } from '~/shared/lib'
+import { useTaskStore, useUserStore, useUIStore } from '~/shared/model'
+import { STATUS_CONFIG, PRIORITY_CONFIG, FORM_LABEL_CLASS, ICON_BUTTON_BASE_CLASS, useToastHelpers } from '~/shared/lib'
 import type { TaskStatus, TaskPriority } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
-import { isDueOverdue, isDueSoon } from '~/shared/utils'
+import { getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
 import StatusBadge from '~/shared/ui/StatusBadge.vue'
 import PriorityBadge from '~/shared/ui/PriorityBadge.vue'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
 const taskStore = useTaskStore()
-const messageStore = useMessageStore()
-const threadStore = useThreadStore()
 const userStore = useUserStore()
-const { remove: deleteTask } = useTaskManage()
-const toast = useToast()
+const uiStore = useUIStore()
+const { remove: deleteTask, changeStatus: updateTaskStatus, changePriority: updateTaskPriority, addSubtask: createSubtask, toggleSubtask: toggleTaskSubtask } = useTaskManage()
+const toast = useToastHelpers()
 
 const newSubtask = ref('')
+const iconButtonClass = `${ICON_BUTTON_BASE_CLASS} h-8 w-8`
 
 const task = computed(() => taskStore.activeTask.value)
 const open = computed(() => taskStore.activeTask.value !== null)
 
 const creator = computed(() => task.value ? userStore.getUserById(task.value.createdBy) : null)
 const assignees = computed(() =>
-  task.value?.assignees.map(id => userStore.getUserById(id)).filter(Boolean) ?? []
+  task.value ? resolveByIds(task.value.assignees, id => userStore.getUserById(id)) : []
 )
 const subtasks = computed(() =>
   task.value ? taskStore.getSubtasks(task.value.id) : []
@@ -34,7 +34,7 @@ const progress = computed(() =>
   subtasks.value.length > 0 ? (completedSubtasks.value / subtasks.value.length) * 100 : 0
 )
 const dependencies = computed(() =>
-  task.value?.dependencies.map(id => taskStore.getTaskById(id)).filter(Boolean) ?? []
+  task.value ? resolveByIds(task.value.dependencies, id => taskStore.getTaskById(id)) : []
 )
 
 const overdue = computed(() =>
@@ -44,107 +44,55 @@ const dueSoon = computed(() =>
   task.value && isDueSoon(task.value.dueDate) && task.value.status !== 'done'
 )
 
-function getStatusColor(status: string): string {
-  return `var(--status-${status})`
-}
-
 function changeStatus(newStatus: TaskStatus) {
   if (!task.value) return
-  const previousStatus = task.value.status
-  const updated = { ...task.value, status: newStatus, updatedAt: new Date().toISOString() }
-  taskStore.update(updated)
-
-  const message = createMessage(
-    task.value.threadId,
-    `marked ${task.value.title} as ${(STATUS_CONFIG[newStatus]?.label ?? newStatus).toLowerCase()}`,
-    task.value.createdBy,
-    'status-change',
-    task.value.id,
-    { from: previousStatus, to: newStatus }
-  )
-  messageStore.add(message)
-  threadStore.updateLastActivity(task.value.threadId, message.timestamp)
-
-  toast.add({
+  if (!updateTaskStatus(task.value.id, newStatus)) return
+  toast.success({
     title: 'Task status updated',
     description: `${task.value.title} -> ${STATUS_CONFIG[newStatus]?.label ?? newStatus}`,
-    color: 'success',
     icon: 'i-lucide-check-circle'
   })
 }
 
 function changePriority(newPriority: TaskPriority) {
   if (!task.value) return
-  const updated = { ...task.value, priority: newPriority, updatedAt: new Date().toISOString() }
-  taskStore.update(updated)
-
-  const message = createMessage(
-    task.value.threadId,
-    `Changed priority of ${task.value.title} to ${PRIORITY_CONFIG[newPriority]?.label ?? newPriority}`,
-    task.value.createdBy,
-    'task-updated',
-    task.value.id
-  )
-  messageStore.add(message)
-  threadStore.updateLastActivity(task.value.threadId, message.timestamp)
-
-  toast.add({
+  if (!updateTaskPriority(task.value.id, newPriority)) return
+  toast.success({
     title: 'Task priority updated',
     description: `${task.value.title} -> ${PRIORITY_CONFIG[newPriority]?.label ?? newPriority}`,
-    color: 'success',
     icon: 'i-lucide-check-circle'
   })
 }
 
 function toggleSubtask(subtaskId: string) {
-  const subtask = taskStore.getTaskById(subtaskId)
-  if (!subtask) return
-  const newStatus: TaskStatus = subtask.status === 'done' ? 'todo' : 'done'
-  taskStore.update({ ...subtask, status: newStatus, updatedAt: new Date().toISOString() })
-
-  toast.add({
-    title: newStatus === 'done' ? 'Subtask completed' : 'Subtask reopened',
-    description: subtask.title,
-    color: 'success',
+  const updated = toggleTaskSubtask(subtaskId)
+  if (!updated) return
+  toast.success({
+    title: updated.status === 'done' ? 'Subtask completed' : 'Subtask reopened',
+    description: updated.title,
     icon: 'i-lucide-check-circle'
   })
 }
 
 function addSubtask() {
-  if (!newSubtask.value.trim() || !task.value || !userStore.currentUserId.value) {
-    toast.add({
-      title: 'Subtask title is required',
-      color: 'warning',
-      icon: 'i-lucide-alert-triangle'
+  if (!task.value || !newSubtask.value.trim()) {
+    toast.warning({
+      title: 'Subtask title is required'
     })
     return
   }
 
-  const subtaskObj = createTask(
-    task.value.threadId,
-    newSubtask.value.trim(),
-    userStore.currentUserId.value,
-    {
-      priority: task.value.priority,
-      parentTaskId: task.value.id
-    }
-  )
-  taskStore.add(subtaskObj)
+  const subtask = createSubtask(task.value.id, newSubtask.value)
+  if (!subtask) {
+    toast.warning({
+      title: 'Subtask title is required'
+    })
+    return
+  }
 
-  const message = createMessage(
-    task.value.threadId,
-    `Created subtask: ${newSubtask.value.trim()}`,
-    userStore.currentUserId.value,
-    'task-created',
-    subtaskObj.id
-  )
-  messageStore.add(message)
-  threadStore.updateLastActivity(task.value.threadId, message.timestamp)
-
-  toast.add({
+  toast.success({
     title: 'Subtask created',
-    description: subtaskObj.title,
-    color: 'success',
+    description: subtask.title,
     icon: 'i-lucide-check-circle'
   })
   newSubtask.value = ''
@@ -155,10 +103,9 @@ function handleDelete() {
   const title = task.value.title
   deleteTask(task.value.id)
   taskStore.setActive(null)
-  toast.add({
+  toast.warning({
     title: 'Task deleted',
     description: title,
-    color: 'warning',
     icon: 'i-lucide-trash-2'
   })
 }
@@ -194,9 +141,9 @@ function closeDrawer() {
               </div>
               <div class="flex items-center gap-1">
                 <button
-                  class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                  :class="iconButtonClass"
                   aria-label="Edit task"
-                  @click="taskStore.setEditing(task); $emit('edit')"
+                  @click="taskStore.setEditing(task); uiStore.setShowTaskForm(true)"
                 >
                   <UIcon
                     name="i-lucide-edit-3"
@@ -221,7 +168,7 @@ function closeDrawer() {
             <div class="flex flex-col gap-5 pt-2">
               <div class="flex flex-wrap gap-3">
                 <div class="flex flex-col gap-1.5">
-                  <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Status</span>
+                  <span :class="FORM_LABEL_CLASS">Status</span>
                   <UDropdownMenu
                     :items="Object.entries(STATUS_CONFIG).map(([key, config]) => ({
                       label: config.label,
@@ -239,7 +186,7 @@ function closeDrawer() {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Priority</span>
+                  <span :class="FORM_LABEL_CLASS">Priority</span>
                   <UDropdownMenu
                     :items="Object.entries(PRIORITY_CONFIG).map(([key, config]) => ({
                       label: config.label,
@@ -260,7 +207,7 @@ function closeDrawer() {
                   v-if="task.dueDate"
                   class="flex flex-col gap-1.5"
                 >
-                  <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Due Date</span>
+                  <span :class="FORM_LABEL_CLASS">Due Date</span>
                   <span
                     class="flex items-center gap-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm"
                     :class="overdue ? 'text-red-500' : dueSoon ? 'text-amber-500' : ''"
@@ -278,7 +225,7 @@ function closeDrawer() {
                 v-if="task.description"
                 class="flex flex-col gap-1.5"
               >
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Description</span>
+                <span :class="FORM_LABEL_CLASS">Description</span>
                 <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                   {{ task.description }}
                 </p>
@@ -288,18 +235,18 @@ function closeDrawer() {
                 v-if="assignees.length > 0"
                 class="flex flex-col gap-2"
               >
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Assignees</span>
+                <span :class="FORM_LABEL_CLASS">Assignees</span>
                 <div class="flex flex-wrap gap-2">
                   <div
                     v-for="user in assignees"
-                    :key="user!.id"
+                    :key="user.id"
                     class="flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-800 py-1 pl-1 pr-3"
                   >
                     <UserAvatar
                       :user="user"
                       size="sm"
                     />
-                    <span class="text-sm">{{ user!.name }}</span>
+                    <span class="text-sm">{{ user.name }}</span>
                   </div>
                 </div>
               </div>
@@ -308,7 +255,7 @@ function closeDrawer() {
                 v-if="task.tags.length > 0"
                 class="flex flex-col gap-2"
               >
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Tags</span>
+                <span :class="FORM_LABEL_CLASS">Tags</span>
                 <div class="flex flex-wrap gap-1.5">
                   <span
                     v-for="tag in task.tags"
@@ -324,13 +271,13 @@ function closeDrawer() {
                 v-if="dependencies.length > 0"
                 class="flex flex-col gap-2"
               >
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Dependencies</span>
+                <span :class="FORM_LABEL_CLASS">Dependencies</span>
                 <div class="flex flex-col gap-1.5">
                   <button
                     v-for="dep in dependencies"
-                    :key="dep!.id"
+                    :key="dep.id"
                     class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-left text-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click="taskStore.setActive(dep!.id)"
+                    @click="taskStore.setActive(dep.id)"
                   >
                     <UIcon
                       name="i-lucide-link-2"
@@ -338,12 +285,12 @@ function closeDrawer() {
                     />
                     <span
                       class="flex-1"
-                      :class="dep!.status === 'done' && 'line-through text-gray-500'"
+                      :class="dep.status === 'done' && 'line-through text-gray-500'"
                     >
-                      {{ dep!.title }}
+                      {{ dep.title }}
                     </span>
                     <StatusBadge
-                      :status="dep!.status"
+                      :status="dep.status"
                       :show-label="false"
                     />
                   </button>
@@ -351,7 +298,7 @@ function closeDrawer() {
               </div>
 
               <div class="flex flex-col gap-2">
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                <span :class="FORM_LABEL_CLASS">
                   Subtasks{{ subtasks.length > 0 ? ` (${completedSubtasks}/${subtasks.length})` : '' }}
                 </span>
 

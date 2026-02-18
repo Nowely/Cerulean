@@ -31,6 +31,7 @@ export function createTaskFromInput(
 ): Task {
   return createTask(threadId, input.title, userId, {
     description: input.description,
+    status: input.status ?? 'todo',
     priority: input.priority ?? 'medium',
     assignees: input.assignees ?? [],
     dueDate: input.dueDate,

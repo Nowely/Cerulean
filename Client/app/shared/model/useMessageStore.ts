@@ -5,10 +5,25 @@ import { generateId } from '~/shared/utils'
 const messages = ref<Message[]>([])
 
 export function useMessageStore() {
+  const lastMessageByThread = computed(() => {
+    const index: Record<string, Message> = {}
+    for (const message of messages.value) {
+      const current = index[message.threadId]
+      if (!current || new Date(message.timestamp).getTime() > new Date(current.timestamp).getTime()) {
+        index[message.threadId] = message
+      }
+    }
+    return index
+  })
+
   function threadMessages(threadId: string) {
     return messages.value
       .filter(m => m.threadId === threadId)
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+  }
+
+  function getLastMessageForThread(threadId: string): Message | undefined {
+    return lastMessageByThread.value[threadId]
   }
 
   function getMessagesByTask(taskId: string): Message[] {
@@ -25,7 +40,9 @@ export function useMessageStore() {
 
   return {
     messages,
+    lastMessageByThread,
     threadMessages,
+    getLastMessageForThread,
     getMessagesByTask,
     add,
     init

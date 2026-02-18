@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TaskPriority } from '~/shared/types'
 import { PRIORITY_CONFIG } from '~/shared/lib'
+import { getPriorityColor } from '~/shared/utils'
 
 interface Props {
   priority: TaskPriority
@@ -16,16 +17,6 @@ const PRIORITY_ICONS: Record<TaskPriority, string> = {
   medium: 'i-lucide-arrow-right',
   high: 'i-lucide-arrow-up',
   urgent: 'i-lucide-alert-triangle'
-}
-
-function getPriorityColor(priority: TaskPriority): string {
-  const colors: Record<TaskPriority, string> = {
-    low: 'var(--priority-low)',
-    medium: 'var(--priority-medium)',
-    high: 'var(--priority-high)',
-    urgent: 'var(--priority-urgent)'
-  }
-  return colors[priority]
 }
 </script>
 

@@ -1,17 +1,20 @@
 <script setup lang="ts">
-import { useThreadStore, useUIStore } from '~/shared/model'
+import { useThreadStore } from '~/shared/model'
 import { useThreadManage } from '~/features/thread-manage'
-import { useIsMobile } from '~/shared/lib'
+import { useIsMobile, useToastHelpers, INPUT_BASE_CLASS } from '~/shared/lib'
 import SidebarHeader from './components/SidebarHeader.vue'
 import SidebarFooter from './components/SidebarFooter.vue'
 import ThreadItem from './components/ThreadItem.vue'
 import type { Thread } from '~/shared/types'
 
+defineOptions({
+  name: 'AppSidebar'
+})
+
 const threadStore = useThreadStore()
-const uiStore = useUIStore()
-const { create: createThreadAction, results, search } = useThreadManage()
+const { create: createThreadAction, results } = useThreadManage()
 const isMobile = useIsMobile()
-const toast = useToast()
+const toast = useToastHelpers()
 
 const showNewThread = ref(false)
 const newThreadName = ref('')
@@ -31,10 +34,8 @@ const unpinnedThreads = computed(() =>
 
 function handleCreateThread() {
   if (!newThreadName.value.trim()) {
-    toast.add({
-      title: 'Thread name is required',
-      color: 'warning',
-      icon: 'i-lucide-alert-triangle'
+    toast.warning({
+      title: 'Thread name is required'
     })
     return
   }
@@ -45,10 +46,9 @@ function handleCreateThread() {
   })
 
   if (thread) {
-    toast.add({
+    toast.success({
       title: 'Thread created',
       description: `${thread.name} is ready`,
-      color: 'success',
       icon: 'i-lucide-check-circle'
     })
   }
@@ -133,7 +133,7 @@ function openNewThread() {
               type="text"
               placeholder="Thread name..."
               data-testid="new-thread-name-input"
-              class="h-10 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 text-sm outline-none focus:ring-1 focus:ring-primary-500"
+              :class="INPUT_BASE_CLASS"
               autofocus
               @keydown.enter="handleCreateThread"
             >

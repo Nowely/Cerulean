@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { useTaskStore, useMessageStore, useThreadStore, useUserStore, useUIStore, createMessage } from '~/shared/model'
-import { createTask } from '~/shared/lib'
+import { useTaskStore, useUIStore } from '~/shared/model'
+import { useToastHelpers } from '~/shared/lib'
+import { useTaskManage } from '~/features/task-manage'
 
 const taskStore = useTaskStore()
-const messageStore = useMessageStore()
-const threadStore = useThreadStore()
-const userStore = useUserStore()
 const uiStore = useUIStore()
-const toast = useToast()
+const toast = useToastHelpers()
+const { applyTemplate } = useTaskManage()
 
 const TEMPLATE_ICONS: Record<string, string> = {
   tmpl1: 'i-lucide-bug',
@@ -18,69 +17,20 @@ const TEMPLATE_ICONS: Record<string, string> = {
 
 function handleSelect(templateId: string) {
   const template = taskStore.getTemplateById(templateId)
-  const activeThread = threadStore.activeThread.value
-  const currentUser = userStore.currentUser.value
+  if (!template) return
 
-  if (!template || !activeThread || !currentUser) {
-    toast.add({
+  const created = applyTemplate(templateId)
+  if (!created) {
+    toast.warning({
       title: 'Select a thread first',
-      description: 'Template tasks need an active thread.',
-      color: 'warning',
-      icon: 'i-lucide-alert-triangle'
+      description: 'Template tasks need an active thread.'
     })
     return
   }
 
-  const threadId = activeThread.id
-
-  const task = createTask(threadId, template.name, currentUser.id, {
-    description: template.description,
-    priority: template.defaultPriority,
-    assignees: [currentUser.id],
-    tags: [...template.defaultTags],
-    templateId: template.id
-  })
-
-  if (template.id === 'tmpl4') {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    task.dueDate = tomorrow.toISOString()
-  }
-
-  taskStore.add(task)
-
-  const message = createMessage(
-    threadId,
-    `Created task from template: ${template.name}`,
-    currentUser.id,
-    'task-created',
-    task.id
-  )
-  messageStore.add(message)
-  threadStore.updateLastActivity(threadId, message.timestamp)
-
-  template.subtasks.forEach((sub) => {
-    const subTask = createTask(threadId, sub.title, currentUser.id, {
-      priority: template.defaultPriority,
-      parentTaskId: task.id
-    })
-    taskStore.add(subTask)
-
-    const subMsg = createMessage(
-      threadId,
-      `Created subtask: ${sub.title}`,
-      currentUser.id,
-      'task-created',
-      subTask.id
-    )
-    messageStore.add(subMsg)
-  })
-
-  uiStore.setShowTemplates(false)
-  toast.add({
+  toast.success({
     title: 'Template applied',
     description: `${template.name} task created`,
-    color: 'success',
     icon: 'i-lucide-check-circle'
   })
 }

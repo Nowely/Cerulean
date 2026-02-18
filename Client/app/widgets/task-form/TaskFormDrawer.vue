@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { useTaskStore, useMessageStore, useThreadStore, useUserStore, useNotificationStore, useUIStore, createMessage, createNotification } from '~/shared/model'
-import { createTask, STATUS_CONFIG, PRIORITY_CONFIG } from '~/shared/lib'
-import type { Task, TaskStatus, TaskPriority } from '~/shared/types'
+import { useTaskStore, useThreadStore, useUserStore, useUIStore } from '~/shared/model'
+import { FORM_LABEL_CLASS, INPUT_BASE_CLASS, PRIORITY_CONFIG, selectableChipClass, STATUS_CONFIG, TEXTAREA_BASE_CLASS, useToastHelpers } from '~/shared/lib'
+import type { TaskPriority, TaskStatus } from '~/shared/types'
+import { useTaskManage } from '~/features/task-manage'
+import { getPriorityColor, getStatusColor, resolveByIds } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
 const taskStore = useTaskStore()
-const messageStore = useMessageStore()
 const threadStore = useThreadStore()
 const userStore = useUserStore()
-const notificationStore = useNotificationStore()
 const uiStore = useUIStore()
-const toast = useToast()
+const { create: createTaskAction, edit: editTaskAction } = useTaskManage()
+const toast = useToastHelpers()
 
 const isEditing = computed(() => taskStore.editingTask.value !== null)
 const open = computed(() => uiStore.showTaskForm.value)
@@ -58,20 +59,16 @@ function toggleAssignee(userId: string) {
 
 function handleSubmit() {
   if (!title.value.trim()) {
-    toast.add({
-      title: 'Task title is required',
-      color: 'warning',
-      icon: 'i-lucide-alert-triangle'
+    toast.warning({
+      title: 'Task title is required'
     })
     return
   }
 
-  if (!threadStore.activeThread.value) {
-    toast.add({
+  if (!isEditing.value && !threadStore.activeThread.value) {
+    toast.error({
       title: 'Select a thread first',
-      description: 'You need an active thread before creating a task.',
-      color: 'error',
-      icon: 'i-lucide-circle-alert'
+      description: 'You need an active thread before creating a task.'
     })
     return
   }
@@ -81,112 +78,60 @@ function handleSubmit() {
     .map(t => t.trim())
     .filter(Boolean)
 
-  const now = new Date().toISOString()
-  const currentUser = userStore.currentUser.value
-
   if (isEditing.value && taskStore.editingTask.value) {
-    const editing = taskStore.editingTask.value
-    const updated: Task = {
-      id: editing.id,
-      threadId: editing.threadId,
+    const updated = editTaskAction({
+      id: taskStore.editingTask.value.id,
       title: title.value.trim(),
       description: description.value.trim() || undefined,
       status: status.value,
       priority: priority.value,
       assignees: assignees.value,
-      createdBy: editing.createdBy,
-      createdAt: editing.createdAt,
-      updatedAt: now,
       dueDate: dueDate.value ? new Date(dueDate.value).toISOString() : undefined,
-      tags: parsedTags,
-      parentTaskId: editing.parentTaskId,
-      dependencies: [...editing.dependencies],
-      templateId: editing.templateId
+      tags: parsedTags
+    })
+
+    if (!updated) {
+      toast.error({
+        title: 'Could not update task'
+      })
+      return
     }
-    taskStore.update(updated)
 
-    const message = createMessage(
-      editing.threadId,
-      `Updated task: ${title.value.trim()}`,
-      currentUser?.id ?? '',
-      'task-updated',
-      editing.id
-    )
-    messageStore.add(message)
-    threadStore.updateLastActivity(editing.threadId, message.timestamp)
-
-    toast.add({
+    toast.success({
       title: 'Task updated',
-      description: updated.title,
-      color: 'success',
-      icon: 'i-lucide-check-circle'
+      description: updated.title
     })
   } else {
-    const newTask = createTask(
-      threadStore.activeThread.value.id,
-      title.value.trim(),
-      currentUser?.id ?? '',
-      {
-        description: description.value.trim() || undefined,
-        status: status.value,
-        priority: priority.value,
-        assignees: assignees.value,
-        dueDate: dueDate.value ? new Date(dueDate.value).toISOString() : undefined,
-        tags: parsedTags
-      }
-    )
-    taskStore.add(newTask)
-
-    const message = createMessage(
-      threadStore.activeThread.value.id,
-      `Created task: ${title.value.trim()}`,
-      currentUser?.id ?? '',
-      'task-created',
-      newTask.id
-    )
-    messageStore.add(message)
-    threadStore.updateLastActivity(threadStore.activeThread.value.id, message.timestamp)
-
-    assignees.value.forEach((userId) => {
-      if (userId !== currentUser?.id) {
-        const notification = createNotification(
-          'assignment',
-          threadStore.activeThread.value!.id,
-          'New Assignment',
-          `${currentUser?.name} assigned you to ${title.value.trim()}`,
-          newTask.id
-        )
-        notificationStore.add(notification)
-      }
+    const created = createTaskAction({
+      title: title.value.trim(),
+      description: description.value.trim() || undefined,
+      status: status.value,
+      priority: priority.value,
+      assignees: assignees.value,
+      dueDate: dueDate.value ? new Date(dueDate.value).toISOString() : undefined,
+      tags: parsedTags
     })
 
-    toast.add({
+    if (!created) {
+      toast.error({
+        title: 'Could not create task'
+      })
+      return
+    }
+
+    toast.success({
       title: 'Task created',
-      description: newTask.title,
-      color: 'success',
-      icon: 'i-lucide-check-circle'
+      description: created.title
     })
   }
 
   resetForm()
-  uiStore.setShowTaskForm(false)
-  taskStore.setEditing(null)
 }
 
 const members = computed(() => {
   if (!threadStore.activeThread.value) return []
-  return threadStore.activeThread.value.members
-    .map(id => userStore.getUserById(id))
-    .filter(Boolean)
+  return resolveByIds(threadStore.activeThread.value.members, id => userStore.getUserById(id))
 })
-
-function getStatusColor(s: TaskStatus): string {
-  return `var(--status-${s})`
-}
-
-function getPriorityColor(p: TaskPriority): string {
-  return `var(--priority-${p})`
-}
 
 function closeDrawer() {
   uiStore.setShowTaskForm(false)
@@ -215,7 +160,7 @@ function closeDrawer() {
         <div class="flex-1 overflow-y-auto px-4 pb-6">
           <div class="flex flex-col gap-4 pt-2">
             <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <label :class="FORM_LABEL_CLASS">
                 Title <span class="text-red-500">*</span>
               </label>
               <input
@@ -224,12 +169,12 @@ function closeDrawer() {
                 placeholder="Task title..."
                 autofocus
                 data-testid="task-title-input"
-                class="h-10 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 text-sm outline-none focus:ring-1 focus:ring-primary-500"
+                :class="INPUT_BASE_CLASS"
               >
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <label :class="FORM_LABEL_CLASS">
                 Description
               </label>
               <textarea
@@ -237,12 +182,12 @@ function closeDrawer() {
                 placeholder="Add a description..."
                 rows="3"
                 data-testid="task-description-input"
-                class="resize-none rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm leading-relaxed outline-none focus:ring-1 focus:ring-primary-500"
+                :class="TEXTAREA_BASE_CLASS"
               />
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <label :class="FORM_LABEL_CLASS">
                 Status
               </label>
               <div class="flex flex-wrap gap-1.5">
@@ -250,9 +195,7 @@ function closeDrawer() {
                   v-for="(config, s) in STATUS_CONFIG"
                   :key="s"
                   class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors"
-                  :class="status === s
-                    ? 'bg-primary-500/15 ring-1 ring-primary-500/30'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'"
+                  :class="selectableChipClass(status === s)"
                   @click="status = s"
                 >
                   <span
@@ -265,7 +208,7 @@ function closeDrawer() {
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <label :class="FORM_LABEL_CLASS">
                 Priority
               </label>
               <div class="flex flex-wrap gap-1.5">
@@ -273,9 +216,7 @@ function closeDrawer() {
                   v-for="(config, p) in PRIORITY_CONFIG"
                   :key="p"
                   class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors"
-                  :class="priority === p
-                    ? 'bg-primary-500/15 ring-1 ring-primary-500/30'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'"
+                  :class="selectableChipClass(priority === p)"
                   @click="priority = p"
                 >
                   <span
@@ -288,26 +229,24 @@ function closeDrawer() {
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <label :class="FORM_LABEL_CLASS">
                 Assignees
               </label>
               <div class="flex flex-wrap gap-2">
                 <button
                   v-for="user in members"
-                  :key="user!.id"
+                  :key="user.id"
                   class="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm transition-colors"
-                  :class="assignees.includes(user!.id)
-                    ? 'bg-primary-500/15 ring-1 ring-primary-500/30'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'"
-                  @click="toggleAssignee(user!.id)"
+                  :class="selectableChipClass(assignees.includes(user.id))"
+                  @click="toggleAssignee(user.id)"
                 >
                   <UserAvatar
                     :user="user"
                     size="sm"
                   />
-                  <span>{{ user!.name }}</span>
+                  <span>{{ user.name }}</span>
                   <UIcon
-                    v-if="assignees.includes(user!.id)"
+                    v-if="assignees.includes(user.id)"
                     name="i-lucide-x"
                     class="h-3 w-3 text-gray-400"
                   />
@@ -316,25 +255,25 @@ function closeDrawer() {
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <label :class="FORM_LABEL_CLASS">
                 Due Date
               </label>
               <input
                 v-model="dueDate"
                 type="date"
-                class="h-10 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 text-sm outline-none focus:ring-1 focus:ring-primary-500"
+                :class="INPUT_BASE_CLASS"
               >
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <label :class="FORM_LABEL_CLASS">
                 Tags (comma separated)
               </label>
               <input
                 v-model="tags"
                 type="text"
                 placeholder="e.g., design, frontend, bug"
-                class="h-10 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 text-sm placeholder:text-gray-400 outline-none focus:ring-1 focus:ring-primary-500"
+                :class="`${INPUT_BASE_CLASS} placeholder:text-gray-400`"
               >
             </div>
 

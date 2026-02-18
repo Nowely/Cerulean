@@ -2,6 +2,25 @@ export function twJoin(...classes: (string | boolean | undefined | null)[]): str
   return classes.filter(Boolean).join(' ')
 }
 
+export function isDefined<T>(value: T | null | undefined): value is T {
+  return value != null
+}
+
+export function resolveByIds<TId extends string, TEntity>(
+  ids: TId[],
+  getById: (id: TId) => TEntity | undefined
+): TEntity[] {
+  return ids.map(getById).filter(isDefined)
+}
+
+export function getStatusColor(status: string): string {
+  return `var(--status-${status})`
+}
+
+export function getPriorityColor(priority: string): string {
+  return `var(--priority-${priority})`
+}
+
 export function generateId(prefix = ''): string {
   return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }

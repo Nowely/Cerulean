@@ -1,6 +1,6 @@
-import type { User, UserId, Notification } from '../types/user'
-import { SEED_USERS, SEED_NOTIFICATIONS } from '~/shared/api/seed'
-import { generateId } from '~/shared/utils'
+import type { User, UserId } from '../types/user'
+import { SEED_USERS } from '~/shared/api/seed'
+import { resolveByIds } from '~/shared/utils'
 
 const users = ref<User[]>([])
 const currentUserId = ref<UserId | null>(null)
@@ -15,7 +15,7 @@ export function useUserStore() {
   }
 
   function getUsersByIds(ids: UserId[]): User[] {
-    return ids.map(id => getUserById(id)).filter(Boolean) as User[]
+    return resolveByIds(ids, id => getUserById(id))
   }
 
   function setCurrentUser(id: UserId) {
@@ -35,65 +35,5 @@ export function useUserStore() {
     getUsersByIds,
     setCurrentUser,
     init
-  }
-}
-
-const notifications = ref<Notification[]>([])
-const showPanel = ref(false)
-
-export function useNotificationStore() {
-  const unreadCount = computed(() =>
-    notifications.value.filter(n => !n.read).length
-  )
-
-  function add(notification: Notification) {
-    notifications.value.unshift(notification)
-  }
-
-  function markRead(id: string) {
-    const notification = notifications.value.find(n => n.id === id)
-    if (notification) notification.read = true
-  }
-
-  function markAllRead() {
-    notifications.value.forEach((n) => { n.read = true })
-  }
-
-  function setShowPanel(show: boolean) {
-    showPanel.value = show
-  }
-
-  function init() {
-    notifications.value = [...SEED_NOTIFICATIONS]
-  }
-
-  return {
-    notifications,
-    showPanel,
-    unreadCount,
-    add,
-    markRead,
-    markAllRead,
-    setShowPanel,
-    init
-  }
-}
-
-export function createNotification(
-  type: Notification['type'],
-  threadId: string,
-  title: string,
-  body: string,
-  taskId?: string
-): Notification {
-  return {
-    id: generateId('n'),
-    type,
-    threadId,
-    taskId,
-    title,
-    body,
-    timestamp: new Date().toISOString(),
-    read: false
   }
 }

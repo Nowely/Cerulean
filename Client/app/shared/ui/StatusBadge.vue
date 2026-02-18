@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TaskStatus } from '~/shared/types'
 import { STATUS_CONFIG } from '~/shared/lib'
+import { getStatusColor } from '~/shared/utils'
 
 interface Props {
   status: TaskStatus
@@ -17,17 +18,6 @@ const STATUS_ICONS: Record<TaskStatus, string> = {
   'review': 'i-lucide-eye',
   'done': 'i-lucide-check-circle-2',
   'blocked': 'i-lucide-ban'
-}
-
-function getStatusColor(status: TaskStatus): string {
-  const colors: Record<TaskStatus, string> = {
-    'todo': 'var(--status-todo)',
-    'in-progress': 'var(--status-in-progress)',
-    'review': 'var(--status-review)',
-    'done': 'var(--status-done)',
-    'blocked': 'var(--status-blocked)'
-  }
-  return colors[status]
 }
 </script>
 

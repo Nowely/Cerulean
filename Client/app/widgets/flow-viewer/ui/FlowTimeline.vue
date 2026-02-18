@@ -57,7 +57,7 @@ const d = computed(() => props.darkMode)
 
       <div
         class="timeline-progress absolute top-4 left-0 h-1 bg-primary-500 rounded-full transition-all duration-300"
-        :style="{ width: `${((currentStep + 1) / steps.length) * 100}%` }"
+        :style="{ width: steps.length > 0 ? `${((currentStep + 1) / steps.length) * 100}%` : '0%' }"
       />
 
       <div class="timeline-steps flex justify-between relative">

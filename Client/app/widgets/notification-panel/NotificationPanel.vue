@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useNotificationStore, useThreadStore, useTaskStore, useUIStore } from '~/shared/model'
+import { useNotificationStore, useThreadStore, useTaskStore } from '~/shared/model'
+import { useToastHelpers } from '~/shared/lib'
 import { relativeTime } from '~/shared/utils'
 
 const notificationStore = useNotificationStore()
 const threadStore = useThreadStore()
 const taskStore = useTaskStore()
-const uiStore = useUIStore()
-const toast = useToast()
+const toast = useToastHelpers()
 
 const NOTIF_ICONS: Record<string, string> = {
   'assignment': 'i-lucide-user-plus',
@@ -26,9 +26,8 @@ function handleNotificationClick(notif: { id: string, threadId?: string, taskId?
   }
   notificationStore.setShowPanel(false)
 
-  toast.add({
+  toast.primary({
     title: 'Notification opened',
-    color: 'primary',
     icon: 'i-lucide-bell'
   })
 }
@@ -41,9 +40,8 @@ function handleMarkAllRead() {
   if (notificationStore.unreadCount.value === 0) return
 
   notificationStore.markAllRead()
-  toast.add({
+  toast.success({
     title: 'All notifications marked read',
-    color: 'success',
     icon: 'i-lucide-check-check'
   })
 }

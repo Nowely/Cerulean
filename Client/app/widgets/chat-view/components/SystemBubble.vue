@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Message } from '~/shared/types'
 import { useUserStore } from '~/shared/model'
-import { STATUS_CONFIG } from '~/shared/lib'
+import { getStatusColor } from '~/shared/utils'
 
 interface Props {
   message: Message
@@ -15,10 +15,7 @@ const sender = computed(() => userStore.getUserById(props.message.senderId))
 
 const toStatus = computed(() => props.message.metadata?.to)
 const statusColor = computed(() =>
-  toStatus.value ? `var(--status-${toStatus.value})` : undefined
-)
-const statusLabel = computed(() =>
-  toStatus.value ? STATUS_CONFIG[toStatus.value as keyof typeof STATUS_CONFIG]?.label : ''
+  toStatus.value ? getStatusColor(toStatus.value) : undefined
 )
 </script>
 

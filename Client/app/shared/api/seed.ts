@@ -512,6 +512,7 @@ export const SEED_TEMPLATES: TaskTemplate[] = [
     description: 'Quick action item from a meeting',
     defaultPriority: 'medium',
     defaultTags: ['action-item'],
+    defaultDueOffsetDays: 1,
     subtasks: []
   }
 ]

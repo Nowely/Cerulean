@@ -1,7 +1,4 @@
-import { useUserStore, useNotificationStore } from '../model/useUserStore'
-import { useThreadStore } from '../model/useThreadStore'
-import { useMessageStore } from '../model/useMessageStore'
-import { useTaskStore } from '../model/useTaskStore'
+import { useMessageStore, useNotificationStore, useTaskStore, useThreadStore, useUserStore } from '~/shared/model'
 import type { Notification } from '../types/user'
 
 const STORAGE_KEY = 'taskchat-fsd-state'
@@ -34,21 +31,9 @@ export function useAppInit() {
     return null
   }
 
-  function saveState() {
+  function saveState(state: PersistedState) {
     if (import.meta.server) return
     try {
-      const { currentUserId } = useUserStore()
-      const { activeThreadId } = useThreadStore()
-      const { activeTaskId } = useTaskStore()
-      const { notifications } = useNotificationStore()
-
-      const state: PersistedState = {
-        version: STORAGE_VERSION,
-        user: { currentUserId: currentUserId.value },
-        thread: { activeThreadId: activeThreadId.value },
-        task: { activeTaskId: activeTaskId.value },
-        notification: { notifications: notifications.value }
-      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
     } catch {
       // ignore
@@ -87,19 +72,22 @@ export function useAppInit() {
     }
 
     if (import.meta.client) {
-      const { currentUserId } = useUserStore()
-      const { activeThreadId } = useThreadStore()
-      const { activeTaskId } = useTaskStore()
-      const { notifications } = useNotificationStore()
-
       watch(
         () => [
-          currentUserId.value,
-          activeThreadId.value,
-          activeTaskId.value,
-          notifications.value
+          userStore.currentUserId.value,
+          threadStore.activeThreadId.value,
+          taskStore.activeTaskId.value,
+          notificationStore.notifications.value
         ],
-        saveState,
+        () => {
+          saveState({
+            version: STORAGE_VERSION,
+            user: { currentUserId: userStore.currentUserId.value },
+            thread: { activeThreadId: threadStore.activeThreadId.value },
+            task: { activeTaskId: taskStore.activeTaskId.value },
+            notification: { notifications: notificationStore.notifications.value }
+          })
+        },
         { deep: true }
       )
     }

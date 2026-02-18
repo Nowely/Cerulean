@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { useDevViewport } from '~/shared/lib'
+import { ICON_BUTTON_BASE_CLASS, useDevViewport } from '~/shared/lib'
 
 const colorMode = useColorMode()
 const isDev = import.meta.dev
 const { mode, cycleMode } = useDevViewport()
+const iconButtonClass = `${ICON_BUTTON_BASE_CLASS} h-10 w-10 rounded-full`
 
 type ThemeValue = 'light' | 'dark' | 'system'
 
@@ -51,7 +52,7 @@ const viewportLabel = computed(() => {
   <footer class="shrink-0 border-t border-gray-200 dark:border-gray-800 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] min-h-14">
     <div class="flex items-center gap-1">
       <button
-        class="flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+        :class="iconButtonClass"
         :title="currentThemeInfo.label"
         @click="cycleTheme"
       >
@@ -62,7 +63,7 @@ const viewportLabel = computed(() => {
       </button>
       <button
         v-if="isDev"
-        class="flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+        :class="iconButtonClass"
         :title="viewportLabel"
         @click="cycleMode"
       >

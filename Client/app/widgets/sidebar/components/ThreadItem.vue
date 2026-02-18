@@ -28,10 +28,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const lastMessage = computed(() => {
-  const messages = messageStore.messages.value
-    .filter(m => m.threadId === props.thread.id)
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  return messages[0]
+  return messageStore.getLastMessageForThread(props.thread.id)
 })
 
 const previewText = computed(() =>

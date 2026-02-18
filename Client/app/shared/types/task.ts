@@ -24,6 +24,7 @@ export interface Task {
 export interface CreateTaskInput {
   title: string
   description?: string
+  status?: TaskStatus
   priority?: TaskPriority
   assignees?: string[]
   dueDate?: string
@@ -38,5 +39,6 @@ export interface TaskTemplate {
   description: string
   defaultPriority: TaskPriority
   defaultTags: string[]
+  defaultDueOffsetDays?: number
   subtasks: { title: string }[]
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useThreadStore, useTaskStore, useUserStore, useNotificationStore, useUIStore } from '~/shared/model'
-import { useIsMobile } from '~/shared/lib'
+import { ICON_BUTTON_BASE_CLASS, useIsMobile } from '~/shared/lib'
+import { resolveByIds } from '~/shared/utils'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 
 const threadStore = useThreadStore()
@@ -9,12 +10,11 @@ const userStore = useUserStore()
 const notificationStore = useNotificationStore()
 const uiStore = useUIStore()
 const isMobile = useIsMobile()
+const iconButtonClass = `${ICON_BUTTON_BASE_CLASS} h-9 w-9`
 
 const members = computed(() => {
   if (!threadStore.activeThread.value) return []
-  return threadStore.activeThread.value.members
-    .map(id => userStore.getUserById(id))
-    .filter(Boolean)
+  return resolveByIds(threadStore.activeThread.value.members, id => userStore.getUserById(id))
 })
 
 const taskCount = computed(() => {
@@ -31,7 +31,7 @@ const taskCount = computed(() => {
     <div class="flex items-center gap-3">
       <button
         v-if="isMobile"
-        class="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+        :class="iconButtonClass"
         aria-label="Toggle sidebar"
         data-testid="toggle-sidebar-btn"
         @click="uiStore.toggleSidebar()"
@@ -70,7 +70,7 @@ const taskCount = computed(() => {
         size="sm"
       />
       <button
-        class="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+        :class="`relative ${iconButtonClass}`"
         aria-label="Notifications"
         @click="notificationStore.setShowPanel(true)"
       >

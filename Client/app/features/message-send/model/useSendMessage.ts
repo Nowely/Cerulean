@@ -29,12 +29,6 @@ export function useSendMessage() {
     )
 
     messageStore.add(message)
-
-    if (threadId !== threadStore.activeThreadId.value) {
-      const thread = threadStore.threads.value.find(t => t.id === threadId)
-      if (thread) thread.unreadCount++
-    }
-
     threadStore.updateLastActivity(threadId, message.timestamp)
 
     return message

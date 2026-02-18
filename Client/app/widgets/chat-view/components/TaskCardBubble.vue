@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Message } from '~/shared/types'
 import { useUserStore, useTaskStore } from '~/shared/model'
-import { formatTime, isDueOverdue, isDueSoon } from '~/shared/utils'
+import { formatTime, getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 import StatusBadge from '~/shared/ui/StatusBadge.vue'
 import PriorityBadge from '~/shared/ui/PriorityBadge.vue'
@@ -24,11 +24,11 @@ const task = computed(() => props.message.taskId ? taskStore.getTaskById(props.m
 const isOwn = computed(() => props.message.senderId === userStore.currentUserId.value)
 
 const assigneeUsers = computed(() =>
-  task.value?.assignees.map(id => userStore.getUserById(id)).filter(Boolean) ?? []
+  task.value ? resolveByIds(task.value.assignees, id => userStore.getUserById(id)) : []
 )
 
 const subtasks = computed(() =>
-  task.value ? taskStore.getSubtasks(task.value!.id) : []
+  task.value ? taskStore.getSubtasks(task.value.id) : []
 )
 
 const completedSubtasks = computed(() =>
@@ -42,10 +42,6 @@ const overdue = computed(() =>
 const dueSoon = computed(() =>
   task.value && isDueSoon(task.value.dueDate) && task.value.status !== 'done'
 )
-
-function getStatusColor(status: string): string {
-  return `var(--status-${status})`
-}
 
 function handleClick() {
   if (task.value) {

@@ -11,8 +11,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'toggle-mobile'): void
-  (e: 'toggle-dark'): void
+  (e: 'toggle-mobile' | 'toggle-dark'): void
 }>()
 </script>
 
