@@ -3,6 +3,7 @@ import { useNoteStore, useThreadStore } from '~/shared/model'
 import { createNote } from '~/shared/lib'
 import NoteCard from './components/NoteCard.vue'
 import NoteEditor from './components/NoteEditor.vue'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const threadStore = useThreadStore()
 const noteStore = useNoteStore()
@@ -38,21 +39,20 @@ function deleteNote(id: string) {
 
 <template>
   <div class="flex h-full flex-col">
-    <!-- Header -->
-    <div class="border-b border-[hsl(var(--border))] px-4 py-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-lucide-notebook-pen"
-            class="h-5 w-5 text-violet-500"
-          />
-          <h2 class="text-lg font-semibold">
-            {{ threadStore.activeThread.value?.name }}
-          </h2>
-          <span class="text-xs text-gray-500">
-            {{ filteredNotes.length }} notes
-          </span>
-        </div>
+    <ContentPanelHeader>
+      <div class="flex items-center gap-2">
+        <UIcon
+          name="i-lucide-notebook-pen"
+          class="h-5 w-5 text-violet-500"
+        />
+        <h2 class="text-lg font-semibold">
+          {{ threadStore.activeThread.value?.name }}
+        </h2>
+        <span class="text-xs text-gray-500">
+          {{ filteredNotes.length }} notes
+        </span>
+      </div>
+      <template #end>
         <button
           class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
           @click="createNewNote"
@@ -62,9 +62,12 @@ function deleteNote(id: string) {
             class="h-4 w-4"
           />
         </button>
-      </div>
-      <!-- Search -->
-      <div class="mt-2 flex items-center gap-2 rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5">
+      </template>
+    </ContentPanelHeader>
+
+    <!-- Search -->
+    <div class="border-b border-[hsl(var(--border))] px-4 py-2">
+      <div class="flex items-center gap-2 rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5">
         <UIcon
           name="i-lucide-search"
           class="h-4 w-4 text-gray-400"

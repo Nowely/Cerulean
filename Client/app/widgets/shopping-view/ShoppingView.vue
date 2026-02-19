@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useShoppingStore, useThreadStore } from '~/shared/model'
 import { createShoppingItem } from '~/shared/lib'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const threadStore = useThreadStore()
 const shoppingStore = useShoppingStore()
@@ -45,18 +46,17 @@ function clearChecked() {
 
 <template>
   <div class="flex h-full flex-col">
-    <!-- Header -->
-    <div class="border-b border-[hsl(var(--border))] px-4 py-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-lucide-shopping-cart"
-            class="h-5 w-5 text-amber-500"
-          />
-          <h2 class="text-lg font-semibold">
-            {{ threadStore.activeThread.value?.name }}
-          </h2>
-        </div>
+    <ContentPanelHeader>
+      <div class="flex items-center gap-2">
+        <UIcon
+          name="i-lucide-shopping-cart"
+          class="h-5 w-5 text-amber-500"
+        />
+        <h2 class="text-lg font-semibold">
+          {{ threadStore.activeThread.value?.name }}
+        </h2>
+      </div>
+      <template #end>
         <button
           v-if="checkedCount > 0"
           class="text-xs text-gray-500 hover:text-red-400 transition-colors"
@@ -64,22 +64,23 @@ function clearChecked() {
         >
           Clear checked ({{ checkedCount }})
         </button>
+      </template>
+    </ContentPanelHeader>
+
+    <!-- Progress bar -->
+    <div
+      v-if="totalCount > 0"
+      class="border-b border-[hsl(var(--border))] px-4 py-2"
+    >
+      <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+        <span>{{ checkedCount }} of {{ totalCount }} items</span>
+        <span>{{ progress }}%</span>
       </div>
-      <!-- Progress bar -->
-      <div
-        v-if="totalCount > 0"
-        class="mt-2"
-      >
-        <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
-          <span>{{ checkedCount }} of {{ totalCount }} items</span>
-          <span>{{ progress }}%</span>
-        </div>
-        <div class="h-1.5 w-full rounded-full bg-[hsl(var(--muted))]">
-          <div
-            class="h-full rounded-full bg-amber-500 transition-all duration-300"
-            :style="{ width: `${progress}%` }"
-          />
-        </div>
+      <div class="h-1.5 w-full rounded-full bg-[hsl(var(--muted))]">
+        <div
+          class="h-full rounded-full bg-amber-500 transition-all duration-300"
+          :style="{ width: `${progress}%` }"
+        />
       </div>
     </div>
 

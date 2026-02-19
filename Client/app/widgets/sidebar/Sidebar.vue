@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ThreadKind } from '~/shared/types'
-import { useThreadStore } from '~/shared/model'
+import { useThreadStore, useUIStore } from '~/shared/model'
 import { useThreadManage } from '~/features/thread-manage'
 import { useIsMobile, useToastHelpers, THREAD_KINDS } from '~/shared/lib'
 import SidebarHeader from './components/SidebarHeader.vue'
@@ -12,6 +12,7 @@ defineOptions({
 })
 
 const threadStore = useThreadStore()
+const uiStore = useUIStore()
 const { create: createThreadAction, results } = useThreadManage()
 const isMobile = useIsMobile()
 const toast = useToastHelpers()
@@ -73,6 +74,11 @@ function openNewThread() {
 function backToKindPicker() {
   creationStep.value = 'kind'
 }
+
+function selectThread(threadId: string) {
+  threadStore.setActive(threadId)
+  uiStore.setSidebar(false)
+}
 </script>
 
 <template>
@@ -93,7 +99,7 @@ function backToKindPicker() {
             :key="thread.id"
             :thread="thread"
             :is-active="activeThreadId === thread.id"
-            @click="threadStore.setActive(thread.id)"
+            @click="selectThread(thread.id)"
           />
         </template>
 
@@ -109,7 +115,7 @@ function backToKindPicker() {
             :key="thread.id"
             :thread="thread"
             :is-active="activeThreadId === thread.id"
-            @click="threadStore.setActive(thread.id)"
+            @click="selectThread(thread.id)"
           />
         </template>
 

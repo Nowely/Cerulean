@@ -2,6 +2,7 @@
 import { useNotificationStore, useThreadStore, useTaskStore } from '~/shared/model'
 import { useToastHelpers } from '~/shared/lib'
 import { relativeTime } from '~/shared/utils'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const notificationStore = useNotificationStore()
 const threadStore = useThreadStore()
@@ -56,25 +57,25 @@ function handleMarkAllRead() {
   >
     <template #content>
       <div class="flex flex-col h-full">
-        <div class="flex flex-row items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-          <div>
-            <h3 class="text-sm font-semibold">
-              Notifications{{ notificationStore.unreadCount.value > 0 ? ` (${notificationStore.unreadCount.value})` : '' }}
-            </h3>
-          </div>
-          <button
-            v-if="notificationStore.unreadCount.value > 0"
-            class="flex items-center gap-1 text-[12px] text-primary-500 hover:text-primary-600 transition-colors"
-            data-testid="mark-all-read-btn"
-            @click="handleMarkAllRead"
-          >
-            <UIcon
-              name="i-lucide-check-check"
-              class="h-3.5 w-3.5"
-            />
-            Mark all read
-          </button>
-        </div>
+        <ContentPanelHeader>
+          <h3 class="text-sm font-semibold">
+            Notifications{{ notificationStore.unreadCount.value > 0 ? ` (${notificationStore.unreadCount.value})` : '' }}
+          </h3>
+          <template #end>
+            <button
+              v-if="notificationStore.unreadCount.value > 0"
+              class="flex items-center gap-1 text-[12px] text-primary-500 hover:text-primary-600 transition-colors"
+              data-testid="mark-all-read-btn"
+              @click="handleMarkAllRead"
+            >
+              <UIcon
+                name="i-lucide-check-check"
+                class="h-3.5 w-3.5"
+              />
+              Mark all read
+            </button>
+          </template>
+        </ContentPanelHeader>
 
         <div class="flex-1 overflow-y-auto">
           <div class="flex flex-col">

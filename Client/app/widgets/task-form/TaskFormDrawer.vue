@@ -5,6 +5,7 @@ import type { TaskPriority, TaskStatus } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getPriorityColor, getStatusColor, resolveByIds } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const taskStore = useTaskStore()
 const threadStore = useThreadStore()
@@ -148,14 +149,16 @@ function closeDrawer() {
   >
     <template #content>
       <div class="flex flex-col h-full">
-        <div class="p-4 pb-0">
-          <h3 class="text-lg font-semibold">
-            {{ isEditing ? 'Edit Task' : 'New Task' }}
-          </h3>
-          <p class="text-sm text-gray-500">
-            {{ isEditing ? 'Update the task details below' : 'Create a new task in this thread' }}
-          </p>
-        </div>
+        <ContentPanelHeader variant="header">
+          <div>
+            <h3 class="text-lg font-semibold">
+              {{ isEditing ? 'Edit Task' : 'New Task' }}
+            </h3>
+            <p class="text-sm text-gray-500">
+              {{ isEditing ? 'Update the task details below' : 'Create a new task in this thread' }}
+            </p>
+          </div>
+        </ContentPanelHeader>
 
         <div class="flex-1 overflow-y-auto px-4 pb-6">
           <div class="flex flex-col gap-4 pt-2">

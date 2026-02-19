@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Contact } from '~/shared/types'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 interface Props {
   contact: Contact
@@ -62,18 +63,8 @@ function getAvatarColor(name: string): string {
 
 <template>
   <div class="flex h-full flex-col bg-[hsl(var(--background))]">
-    <!-- Toolbar -->
-    <div class="flex items-center justify-between border-b border-[hsl(var(--border))] px-4 py-2">
-      <button
-        class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors md:hidden"
-        @click="emit('close')"
-      >
-        <UIcon
-          name="i-lucide-arrow-left"
-          class="h-4 w-4"
-        />
-      </button>
-      <div class="flex items-center gap-1">
+    <ContentPanelHeader variant="toolbar">
+      <template #end>
         <button
           class="flex h-8 items-center gap-1 rounded-lg px-2 hover:bg-[hsl(var(--muted))] transition-colors text-xs"
           @click="editing ? save() : (editing = true)"
@@ -102,8 +93,8 @@ function getAvatarColor(name: string): string {
             class="h-4 w-4"
           />
         </button>
-      </div>
-    </div>
+      </template>
+    </ContentPanelHeader>
 
     <!-- Contact info -->
     <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-6">

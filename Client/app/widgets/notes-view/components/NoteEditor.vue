@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Note } from '~/shared/types'
 import { relativeTime } from '~/shared/utils'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 interface Props {
   note: Note
@@ -44,23 +45,13 @@ function removeTag(tag: string) {
 
 <template>
   <div class="flex h-full flex-col bg-[hsl(var(--background))]">
-    <!-- Toolbar -->
-    <div class="flex items-center justify-between border-b border-[hsl(var(--border))] px-4 py-2">
-      <div class="flex items-center gap-2">
-        <button
-          class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors md:hidden"
-          @click="emit('close')"
-        >
-          <UIcon
-            name="i-lucide-arrow-left"
-            class="h-4 w-4"
-          />
-        </button>
+    <ContentPanelHeader variant="toolbar">
+      <template #start>
         <span class="text-xs text-gray-500">
           Edited {{ relativeTime(note.updatedAt) }}
         </span>
-      </div>
-      <div class="flex items-center gap-1">
+      </template>
+      <template #end>
         <button
           class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
           @click="emit('update', { pinned: !note.pinned })"
@@ -89,8 +80,8 @@ function removeTag(tag: string) {
             class="h-4 w-4"
           />
         </button>
-      </div>
-    </div>
+      </template>
+    </ContentPanelHeader>
 
     <!-- Editor body -->
     <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-3">

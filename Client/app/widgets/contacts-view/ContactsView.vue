@@ -3,6 +3,7 @@ import { useContactStore, useThreadStore } from '~/shared/model'
 import { createContact } from '~/shared/lib'
 import ContactCard from './components/ContactCard.vue'
 import ContactDetail from './components/ContactDetail.vue'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const threadStore = useThreadStore()
 const contactStore = useContactStore()
@@ -54,21 +55,20 @@ function addContact() {
 
 <template>
   <div class="flex h-full flex-col">
-    <!-- Header -->
-    <div class="border-b border-[hsl(var(--border))] px-4 py-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-lucide-contact"
-            class="h-5 w-5 text-sky-500"
-          />
-          <h2 class="text-lg font-semibold">
-            {{ threadStore.activeThread.value?.name }}
-          </h2>
-          <span class="text-xs text-gray-500">
-            {{ filteredContacts.length }} contacts
-          </span>
-        </div>
+    <ContentPanelHeader>
+      <div class="flex items-center gap-2">
+        <UIcon
+          name="i-lucide-contact"
+          class="h-5 w-5 text-sky-500"
+        />
+        <h2 class="text-lg font-semibold">
+          {{ threadStore.activeThread.value?.name }}
+        </h2>
+        <span class="text-xs text-gray-500">
+          {{ filteredContacts.length }} contacts
+        </span>
+      </div>
+      <template #end>
         <button
           class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
           @click="showNewForm = !showNewForm"
@@ -78,12 +78,14 @@ function addContact() {
             class="h-4 w-4"
           />
         </button>
-      </div>
+      </template>
+    </ContentPanelHeader>
 
-      <!-- Quick add form -->
+    <!-- Quick add form -->
+    <div class="border-b border-[hsl(var(--border))] px-4 py-2">
       <div
         v-if="showNewForm"
-        class="mt-2 flex flex-col gap-2 rounded-lg bg-[hsl(var(--muted))] p-3"
+        class="flex flex-col gap-2 rounded-lg bg-[hsl(var(--muted))] p-3 mb-2"
       >
         <input
           v-model="newName"
@@ -109,7 +111,7 @@ function addContact() {
       </div>
 
       <!-- Search -->
-      <div class="mt-2 flex items-center gap-2 rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5">
+      <div class="flex items-center gap-2 rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5">
         <UIcon
           name="i-lucide-search"
           class="h-4 w-4 text-gray-400"

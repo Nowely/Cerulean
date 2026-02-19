@@ -5,6 +5,7 @@ import { STATUS_CONFIG } from '~/shared/lib'
 import StatusBadge from '~/shared/ui/StatusBadge.vue'
 import PriorityBadge from '~/shared/ui/PriorityBadge.vue'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 import { relativeTime } from '~/shared/utils'
 
 const threadStore = useThreadStore()
@@ -44,21 +45,20 @@ function openNewTaskForm() {
 
 <template>
   <div class="flex h-full flex-col">
-    <!-- Header -->
-    <div class="border-b border-[hsl(var(--border))] px-4 py-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-lucide-check-square"
-            class="h-5 w-5 text-emerald-500"
-          />
-          <h2 class="text-lg font-semibold">
-            {{ threadStore.activeThread.value?.name }}
-          </h2>
-          <span class="text-xs text-gray-500">
-            {{ allTasks.length }} tasks
-          </span>
-        </div>
+    <ContentPanelHeader>
+      <div class="flex items-center gap-2">
+        <UIcon
+          name="i-lucide-check-square"
+          class="h-5 w-5 text-emerald-500"
+        />
+        <h2 class="text-lg font-semibold">
+          {{ threadStore.activeThread.value?.name }}
+        </h2>
+        <span class="text-xs text-gray-500">
+          {{ allTasks.length }} tasks
+        </span>
+      </div>
+      <template #end>
         <button
           class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
           @click="openNewTaskForm"
@@ -68,10 +68,12 @@ function openNewTaskForm() {
             class="h-4 w-4"
           />
         </button>
-      </div>
+      </template>
+    </ContentPanelHeader>
 
-      <!-- Status filter tabs -->
-      <div class="mt-2 flex gap-1 overflow-x-auto scrollbar-thin pb-0.5">
+    <!-- Status filter tabs -->
+    <div class="border-b border-[hsl(var(--border))] px-4 py-2">
+      <div class="flex gap-1 overflow-x-auto scrollbar-thin pb-0.5">
         <button
           v-for="status in statuses"
           :key="status"

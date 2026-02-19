@@ -7,6 +7,7 @@ import { getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/
 import StatusBadge from '~/shared/ui/StatusBadge.vue'
 import PriorityBadge from '~/shared/ui/PriorityBadge.vue'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
+import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const taskStore = useTaskStore()
 const userStore = useUserStore()
@@ -128,41 +129,42 @@ function closeDrawer() {
           v-if="task"
           class="flex-1 overflow-y-auto"
         >
-          <div class="p-4 pb-0">
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex-1">
-                <h3 class="text-base font-semibold leading-snug">
-                  {{ task.title }}
-                </h3>
-                <p class="mt-1 text-[12px] text-gray-500">
-                  Created by {{ creator?.name }} on
-                  {{ new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
-                </p>
-              </div>
-              <div class="flex items-center gap-1">
-                <button
-                  :class="iconButtonClass"
-                  aria-label="Edit task"
-                  @click="taskStore.setEditing(task); uiStore.setShowTaskForm(true)"
-                >
-                  <UIcon
-                    name="i-lucide-edit-3"
-                    class="h-4 w-4"
-                  />
-                </button>
-                <button
-                  class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
-                  aria-label="Delete task"
-                  @click="handleDelete"
-                >
-                  <UIcon
-                    name="i-lucide-trash-2"
-                    class="h-4 w-4"
-                  />
-                </button>
-              </div>
+          <ContentPanelHeader
+            variant="header"
+            align="start"
+          >
+            <div>
+              <h3 class="text-base font-semibold leading-snug">
+                {{ task.title }}
+              </h3>
+              <p class="mt-1 text-[12px] text-gray-500">
+                Created by {{ creator?.name }} on
+                {{ new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+              </p>
             </div>
-          </div>
+            <template #end>
+              <button
+                :class="iconButtonClass"
+                aria-label="Edit task"
+                @click="taskStore.setEditing(task); uiStore.setShowTaskForm(true)"
+              >
+                <UIcon
+                  name="i-lucide-edit-3"
+                  class="h-4 w-4"
+                />
+              </button>
+              <button
+                class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                aria-label="Delete task"
+                @click="handleDelete"
+              >
+                <UIcon
+                  name="i-lucide-trash-2"
+                  class="h-4 w-4"
+                />
+              </button>
+            </template>
+          </ContentPanelHeader>
 
           <div class="px-4 pb-6">
             <div class="flex flex-col gap-5 pt-2">
