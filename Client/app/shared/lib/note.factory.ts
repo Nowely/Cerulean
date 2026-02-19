@@ -5,7 +5,7 @@ export function createNote(
   threadId: string,
   title: string,
   content = '',
-  opts?: { color?: string; tags?: string[] },
+  opts?: { color?: string, tags?: string[] }
 ): Note {
   const now = new Date().toISOString()
   return {
@@ -17,6 +17,6 @@ export function createNote(
     pinned: false,
     tags: opts?.tags ?? [],
     createdAt: now,
-    updatedAt: now,
+    updatedAt: now
   }
 }

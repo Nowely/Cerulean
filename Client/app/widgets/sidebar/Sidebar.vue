@@ -8,7 +8,7 @@ import SidebarFooter from './components/SidebarFooter.vue'
 import ThreadItem from './components/ThreadItem.vue'
 
 defineOptions({
-  name: 'AppSidebar',
+  name: 'AppSidebar'
 })
 
 const threadStore = useThreadStore()
@@ -25,13 +25,13 @@ const creationStep = ref<'kind' | 'name'>('kind')
 const activeThreadId = computed(() => threadStore.activeThreadId.value)
 
 const pinnedThreads = computed(() =>
-  results.value.filter((t: { pinned: boolean }) => t.pinned),
+  results.value.filter((t: { pinned: boolean }) => t.pinned)
 )
 
 const unpinnedThreads = computed(() =>
   results.value
     .filter((t: { pinned: boolean }) => !t.pinned)
-    .sort((a: { lastActivity: string }, b: { lastActivity: string }) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()),
+    .sort((a: { lastActivity: string }, b: { lastActivity: string }) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
 )
 
 const kindOptions = computed(() => Object.values(THREAD_KINDS))
@@ -49,14 +49,14 @@ function handleCreateThread() {
 
   const thread = createThreadAction({
     name: newThreadName.value.trim(),
-    kind: newThreadKind.value,
+    kind: newThreadKind.value
   })
 
   if (thread) {
     toast.success({
       title: 'Thread created',
       description: `${thread.name} is ready`,
-      icon: 'i-lucide-check-circle',
+      icon: 'i-lucide-check-circle'
     })
   }
 

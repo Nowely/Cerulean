@@ -9,6 +9,6 @@ export function createThread(name: string, kind: ThreadKind, currentUser: { id: 
     members: [currentUser.id],
     lastActivity: new Date().toISOString(),
     unreadCount: 0,
-    pinned: false,
+    pinned: false
   }
 }

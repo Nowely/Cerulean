@@ -6,7 +6,7 @@ const activeNoteId = ref<NoteId | null>(null)
 
 export function useNoteStore() {
   const activeNote = computed(() =>
-    notes.value.find(n => n.id === activeNoteId.value) ?? null,
+    notes.value.find(n => n.id === activeNoteId.value) ?? null
   )
 
   function threadNotes(threadId: string): Note[] {
@@ -22,7 +22,7 @@ export function useNoteStore() {
     if (!query) return threadNotes(threadId)
     const q = query.toLowerCase()
     return threadNotes(threadId).filter(
-      n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q),
+      n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)
     )
   }
 
@@ -74,6 +74,6 @@ export function useNoteStore() {
     update,
     togglePin,
     remove,
-    init,
+    init
   }
 }

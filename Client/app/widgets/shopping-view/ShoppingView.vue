@@ -71,16 +71,19 @@ function clearChecked() {
       v-if="totalCount > 0"
       class="border-b border-[hsl(var(--border))] px-4 py-2"
     >
-      <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
-        <span>{{ checkedCount }} of {{ totalCount }} items</span>
-        <span>{{ progress }}%</span>
-      </div>
-      <div class="h-1.5 w-full rounded-full bg-[hsl(var(--muted))]">
-        <div
-          class="h-full rounded-full bg-amber-500 transition-all duration-300"
-          :style="{ width: `${progress}%` }"
-        />
-      </div>
+      <UProgress
+        :model-value="checkedCount"
+        :max="totalCount"
+        color="warning"
+        size="sm"
+      >
+        <template #status>
+          <div class="flex items-center justify-between text-xs text-gray-500">
+            <span>{{ checkedCount }} of {{ totalCount }} items</span>
+            <span>{{ progress }}%</span>
+          </div>
+        </template>
+      </UProgress>
     </div>
 
     <div class="border-b border-[hsl(var(--border))] px-4 py-2">
@@ -128,9 +131,10 @@ function clearChecked() {
             :key="item.id"
             class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-[hsl(var(--muted))] transition-colors"
           >
-            <button
-              class="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-gray-400 dark:border-gray-600 transition-colors hover:border-amber-500"
-              @click="shoppingStore.toggle(item.id)"
+            <UCheckbox
+              :model-value="false"
+              color="warning"
+              @update:model-value="shoppingStore.toggle(item.id)"
             />
             <span class="flex-1 text-sm">{{ item.text }}</span>
             <span
@@ -169,15 +173,11 @@ function clearChecked() {
               :key="item.id"
               class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-[hsl(var(--muted))] transition-colors"
             >
-              <button
-                class="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-amber-500 bg-amber-500 transition-colors"
-                @click="shoppingStore.toggle(item.id)"
-              >
-                <UIcon
-                  name="i-lucide-check"
-                  class="h-3 w-3 text-white"
-                />
-              </button>
+              <UCheckbox
+                :model-value="true"
+                color="warning"
+                @update:model-value="shoppingStore.toggle(item.id)"
+              />
               <span class="flex-1 text-sm text-gray-500 line-through">{{ item.text }}</span>
               <button
                 class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-400"

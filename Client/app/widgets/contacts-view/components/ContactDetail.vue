@@ -28,7 +28,7 @@ function save() {
     email: form.value.email,
     phone: form.value.phone,
     company: form.value.company,
-    notes: form.value.notes,
+    notes: form.value.notes
   })
   editing.value = false
 }
@@ -126,7 +126,7 @@ function getAvatarColor(name: string): string {
           v-for="field in [
             { icon: 'i-lucide-mail', key: 'email', label: 'Email', value: contact.email },
             { icon: 'i-lucide-phone', key: 'phone', label: 'Phone', value: contact.phone },
-            { icon: 'i-lucide-building-2', key: 'company', label: 'Company', value: contact.company },
+            { icon: 'i-lucide-building-2', key: 'company', label: 'Company', value: contact.company }
           ]"
           :key="field.key"
           class="flex items-start gap-3"

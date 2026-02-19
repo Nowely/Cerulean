@@ -20,7 +20,7 @@ const THREAD_VIEW_MAP: Record<ThreadKind, Component> = {
   shopping: ShoppingView,
   notes: NotesView,
   contacts: ContactsView,
-  chat: ChatView,
+  chat: ChatView
 }
 
 const threadStore = useThreadStore()

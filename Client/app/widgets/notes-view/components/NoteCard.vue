@@ -21,7 +21,7 @@ const emit = defineEmits<{
     :class="[
       isActive
         ? 'bg-violet-500/10 ring-1 ring-violet-500/30'
-        : 'hover:bg-[hsl(var(--muted))]',
+        : 'hover:bg-[hsl(var(--muted))]'
     ]"
     @click="emit('click')"
   >

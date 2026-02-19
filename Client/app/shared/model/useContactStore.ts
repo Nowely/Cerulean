@@ -6,7 +6,7 @@ const activeContactId = ref<ContactId | null>(null)
 
 export function useContactStore() {
   const activeContact = computed(() =>
-    contacts.value.find(c => c.id === activeContactId.value) ?? null,
+    contacts.value.find(c => c.id === activeContactId.value) ?? null
   )
 
   function threadContacts(threadId: string): Contact[] {
@@ -23,7 +23,7 @@ export function useContactStore() {
         c.name.toLowerCase().includes(q)
         || c.email?.toLowerCase().includes(q)
         || c.company?.toLowerCase().includes(q)
-        || c.tags.some(t => t.toLowerCase().includes(q)),
+        || c.tags.some(t => t.toLowerCase().includes(q))
     )
   }
 
@@ -64,6 +64,6 @@ export function useContactStore() {
     add,
     update,
     remove,
-    init,
+    init
   }
 }

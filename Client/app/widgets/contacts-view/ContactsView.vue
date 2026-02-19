@@ -16,7 +16,7 @@ const newEmail = ref('')
 const threadId = computed(() => threadStore.activeThreadId.value ?? '')
 
 const filteredContacts = computed(() =>
-  contactStore.searchContacts(threadId.value, searchQuery.value),
+  contactStore.searchContacts(threadId.value, searchQuery.value)
 )
 
 const isDetailOpen = computed(() => contactStore.activeContactId.value !== null)
@@ -43,7 +43,7 @@ function addContact() {
   const name = newName.value.trim()
   if (!name) return
   const contact = createContact(threadId.value, name, {
-    email: newEmail.value.trim() || undefined,
+    email: newEmail.value.trim() || undefined
   })
   contactStore.add(contact)
   threadStore.updateLastActivity(threadId.value, new Date().toISOString())
@@ -105,17 +105,12 @@ function addContact() {
         </UButton>
       </div>
 
-      <div class="flex items-center gap-2 rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5">
-        <UIcon
-          name="i-lucide-search"
-          class="h-4 w-4 text-gray-400"
-        />
-        <UInput
-          v-model="searchQuery"
-          placeholder="Search contacts..."
-          :ui="{ base: 'bg-transparent' }"
-        />
-      </div>
+      <UInput
+        v-model="searchQuery"
+        placeholder="Search contacts..."
+        icon="i-lucide-search"
+        variant="soft"
+      />
     </div>
 
     <div class="flex flex-1 overflow-hidden">
@@ -123,20 +118,11 @@ function addContact() {
         class="flex-1 overflow-y-auto scrollbar-thin"
         :class="{ 'hidden md:block md:w-2/5': isDetailOpen }"
       >
-        <div
+        <UEmpty
           v-if="filteredContacts.length === 0"
-          class="flex flex-col items-center justify-center gap-3 px-6 py-16"
-        >
-          <div class="flex h-16 w-16 items-center justify-center rounded-full bg-sky-500/10">
-            <UIcon
-              name="i-lucide-contact"
-              class="h-8 w-8 text-sky-500"
-            />
-          </div>
-          <p class="text-sm text-gray-500">
-            {{ searchQuery ? 'No contacts match your search' : 'No contacts yet' }}
-          </p>
-        </div>
+          icon="i-lucide-contact"
+          :title="searchQuery ? 'No contacts match your search' : 'No contacts yet'"
+        />
 
         <div
           v-for="[letter, contacts] in grouped"

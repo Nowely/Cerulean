@@ -4,7 +4,7 @@ import { generateId } from '~/shared/utils'
 export function createContact(
   threadId: string,
   name: string,
-  opts?: { email?: string; phone?: string; company?: string; notes?: string; tags?: string[] },
+  opts?: { email?: string, phone?: string, company?: string, notes?: string, tags?: string[] }
 ): Contact {
   return {
     id: generateId('c'),
@@ -15,6 +15,6 @@ export function createContact(
     company: opts?.company,
     notes: opts?.notes,
     tags: opts?.tags ?? [],
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toISOString()
   }
 }

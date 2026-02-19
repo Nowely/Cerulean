@@ -12,7 +12,7 @@ const searchQuery = ref('')
 const threadId = computed(() => threadStore.activeThreadId.value ?? '')
 
 const filteredNotes = computed(() =>
-  noteStore.searchNotes(threadId.value, searchQuery.value),
+  noteStore.searchNotes(threadId.value, searchQuery.value)
 )
 
 const isEditing = computed(() => noteStore.activeNoteId.value !== null)
@@ -64,17 +64,12 @@ function deleteNote(id: string) {
     </ContentPanelHeader>
 
     <div class="border-b border-[hsl(var(--border))] px-4 py-2">
-      <div class="flex items-center gap-2 rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5">
-        <UIcon
-          name="i-lucide-search"
-          class="h-4 w-4 text-gray-400"
-        />
-        <UInput
-          v-model="searchQuery"
-          placeholder="Search notes..."
-          :ui="{ base: 'bg-transparent' }"
-        />
-      </div>
+      <UInput
+        v-model="searchQuery"
+        placeholder="Search notes..."
+        icon="i-lucide-search"
+        variant="soft"
+      />
     </div>
 
     <div class="flex flex-1 overflow-hidden">
@@ -82,27 +77,12 @@ function deleteNote(id: string) {
         class="flex-1 overflow-y-auto scrollbar-thin p-3"
         :class="{ 'hidden md:block md:w-1/2 lg:w-2/5': isEditing }"
       >
-        <div
+        <UEmpty
           v-if="filteredNotes.length === 0"
-          class="flex flex-col items-center justify-center gap-3 px-6 py-16"
-        >
-          <div class="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/10">
-            <UIcon
-              name="i-lucide-notebook-pen"
-              class="h-8 w-8 text-violet-500"
-            />
-          </div>
-          <p class="text-sm text-gray-500">
-            {{ searchQuery ? 'No notes match your search' : 'No notes yet' }}
-          </p>
-          <UButton
-            v-if="!searchQuery"
-            color="primary"
-            @click="createNewNote"
-          >
-            Create a note
-          </UButton>
-        </div>
+          icon="i-lucide-notebook-pen"
+          :title="searchQuery ? 'No notes match your search' : 'No notes yet'"
+          :actions="!searchQuery ? [{ label: 'Create a note', color: 'primary', onClick: createNewNote }] : undefined"
+        />
 
         <div
           v-else

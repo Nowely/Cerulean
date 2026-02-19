@@ -34,6 +34,14 @@ const statusCounts = computed(() => {
 
 const statuses: (TaskStatus | 'all')[] = ['all', 'todo', 'in-progress', 'review', 'done', 'blocked']
 
+const statusTabs = computed(() =>
+  statuses.map(status => ({
+    label: status === 'all' ? 'All' : STATUS_CONFIG[status]?.label ?? status,
+    value: status,
+    badge: statusCounts.value[status] || undefined
+  }))
+)
+
 function openTask(taskId: string) {
   taskStore.setActive(taskId)
 }
@@ -71,27 +79,15 @@ function openNewTaskForm() {
       </template>
     </ContentPanelHeader>
 
-    <!-- Status filter tabs -->
     <div class="border-b border-[hsl(var(--border))] px-4 py-2">
-      <div class="flex gap-1 overflow-x-auto scrollbar-thin pb-0.5">
-        <button
-          v-for="status in statuses"
-          :key="status"
-          class="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors"
-          :class="statusFilter === status
-            ? 'bg-emerald-500/15 text-emerald-400'
-            : 'text-gray-500 hover:bg-[hsl(var(--muted))]'"
-          @click="statusFilter = status"
-        >
-          {{ status === 'all' ? 'All' : STATUS_CONFIG[status]?.label ?? status }}
-          <span
-            v-if="statusCounts[status]"
-            class="ml-0.5 text-[10px] opacity-70"
-          >
-            {{ statusCounts[status] }}
-          </span>
-        </button>
-      </div>
+      <UTabs
+        v-model="statusFilter"
+        :items="statusTabs"
+        color="neutral"
+        variant="pill"
+        size="xs"
+        :content="false"
+      />
     </div>
 
     <!-- Task list -->

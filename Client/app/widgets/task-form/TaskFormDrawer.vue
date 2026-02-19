@@ -168,7 +168,10 @@ function selectableChipClass(selected: boolean): string {
 
         <div class="flex-1 overflow-y-auto px-4 pb-6">
           <div class="flex flex-col gap-4 pt-2">
-            <UFormField label="Title" required>
+            <UFormField
+              label="Title"
+              required
+            >
               <UInput
                 v-model="title"
                 placeholder="Task title..."

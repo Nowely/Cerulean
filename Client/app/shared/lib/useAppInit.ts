@@ -6,7 +6,7 @@ import {
   useUserStore,
   useShoppingStore,
   useNoteStore,
-  useContactStore,
+  useContactStore
 } from '~/shared/model'
 import type { Notification } from '../types/user'
 import type { ShoppingItem } from '../types/shopping'
@@ -40,8 +40,7 @@ export function useAppInit() {
           return parsed
         }
       }
-    }
-    catch {
+    } catch {
       // ignore
     }
     return null
@@ -51,8 +50,7 @@ export function useAppInit() {
     if (import.meta.server) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    }
-    catch {
+    } catch {
       // ignore
     }
   }
@@ -112,7 +110,7 @@ export function useAppInit() {
           notificationStore.notifications.value,
           shoppingStore.items.value,
           noteStore.notes.value,
-          contactStore.contacts.value,
+          contactStore.contacts.value
         ],
         () => {
           saveState({
@@ -123,10 +121,10 @@ export function useAppInit() {
             notification: { notifications: notificationStore.notifications.value },
             shopping: { items: shoppingStore.items.value },
             notes: { notes: noteStore.notes.value },
-            contacts: { contacts: contactStore.contacts.value },
+            contacts: { contacts: contactStore.contacts.value }
           })
         },
-        { deep: true },
+        { deep: true }
       )
     }
 
@@ -135,6 +133,6 @@ export function useAppInit() {
 
   return {
     initialized,
-    init,
+    init
   }
 }

@@ -17,7 +17,7 @@ export const SEED_THREADS: Thread[] = [
     lastActivity: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     unreadCount: 3,
     pinned: true,
-    category: 'Design',
+    category: 'Design'
   },
   {
     id: 't2',
@@ -27,7 +27,7 @@ export const SEED_THREADS: Thread[] = [
     lastActivity: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     unreadCount: 1,
     pinned: true,
-    category: 'Engineering',
+    category: 'Engineering'
   },
   {
     id: 't3',
@@ -37,7 +37,7 @@ export const SEED_THREADS: Thread[] = [
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     unreadCount: 0,
     pinned: false,
-    category: 'Marketing',
+    category: 'Marketing'
   },
   {
     id: 't4',
@@ -46,7 +46,7 @@ export const SEED_THREADS: Thread[] = [
     members: ['u1', 'u2'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
     unreadCount: 0,
-    pinned: false,
+    pinned: false
   },
   {
     id: 't5',
@@ -56,7 +56,7 @@ export const SEED_THREADS: Thread[] = [
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     unreadCount: 5,
     pinned: false,
-    category: 'Engineering',
+    category: 'Engineering'
   },
   {
     id: 't6',
@@ -65,7 +65,7 @@ export const SEED_THREADS: Thread[] = [
     members: ['u1'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
     unreadCount: 0,
-    pinned: true,
+    pinned: true
   },
   {
     id: 't7',
@@ -74,7 +74,7 @@ export const SEED_THREADS: Thread[] = [
     members: ['u1'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
     unreadCount: 0,
-    pinned: false,
+    pinned: false
   },
   {
     id: 't8',
@@ -83,8 +83,8 @@ export const SEED_THREADS: Thread[] = [
     members: ['u1'],
     lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
     unreadCount: 0,
-    pinned: false,
-  },
+    pinned: false
+  }
 ]
 
 const now = Date.now()
@@ -583,8 +583,8 @@ export const SEED_NOTIFICATIONS: Notification[] = [
     title: 'Due Soon',
     body: 'Build authentication flow is due in 2 days',
     timestamp: new Date(now - 1000 * 60 * 60 * 1).toISOString(),
-    read: false,
-  },
+    read: false
+  }
 ]
 
 export const SEED_SHOPPING_ITEMS: ShoppingItem[] = [
@@ -595,7 +595,7 @@ export const SEED_SHOPPING_ITEMS: ShoppingItem[] = [
   { id: 'si5', threadId: 't6', text: 'Bananas', checked: true, quantity: 1, category: 'Produce', sortOrder: 4, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
   { id: 'si6', threadId: 't6', text: 'Spinach', checked: false, quantity: 1, category: 'Produce', sortOrder: 5, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
   { id: 'si7', threadId: 't6', text: 'Olive oil', checked: false, quantity: 1, category: 'Pantry', sortOrder: 6, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() },
-  { id: 'si8', threadId: 't6', text: 'Pasta', checked: false, quantity: 3, category: 'Pantry', sortOrder: 7, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() },
+  { id: 'si8', threadId: 't6', text: 'Pasta', checked: false, quantity: 3, category: 'Pantry', sortOrder: 7, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() }
 ]
 
 export const SEED_NOTES: Note[] = [
@@ -607,7 +607,7 @@ export const SEED_NOTES: Note[] = [
     pinned: true,
     tags: ['work', 'sprint'],
     createdAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
-    updatedAt: new Date(now - 1000 * 60 * 60 * 2).toISOString(),
+    updatedAt: new Date(now - 1000 * 60 * 60 * 2).toISOString()
   },
   {
     id: 'n-2',
@@ -618,7 +618,7 @@ export const SEED_NOTES: Note[] = [
     pinned: false,
     tags: ['design', 'reference'],
     createdAt: new Date(now - 1000 * 60 * 60 * 48).toISOString(),
-    updatedAt: new Date(now - 1000 * 60 * 60 * 48).toISOString(),
+    updatedAt: new Date(now - 1000 * 60 * 60 * 48).toISOString()
   },
   {
     id: 'n-3',
@@ -628,7 +628,7 @@ export const SEED_NOTES: Note[] = [
     pinned: false,
     tags: ['meeting', 'product'],
     createdAt: new Date(now - 1000 * 60 * 60 * 72).toISOString(),
-    updatedAt: new Date(now - 1000 * 60 * 60 * 72).toISOString(),
+    updatedAt: new Date(now - 1000 * 60 * 60 * 72).toISOString()
   },
   {
     id: 'n-4',
@@ -638,8 +638,8 @@ export const SEED_NOTES: Note[] = [
     pinned: false,
     tags: ['personal', 'reading'],
     createdAt: new Date(now - 1000 * 60 * 60 * 96).toISOString(),
-    updatedAt: new Date(now - 1000 * 60 * 60 * 96).toISOString(),
-  },
+    updatedAt: new Date(now - 1000 * 60 * 60 * 96).toISOString()
+  }
 ]
 
 export const SEED_CONTACTS: Contact[] = [
@@ -652,7 +652,7 @@ export const SEED_CONTACTS: Contact[] = [
     company: 'Cerulean Inc.',
     notes: 'Lead designer, prefers async communication',
     tags: ['team', 'design'],
-    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 7).toISOString()
   },
   {
     id: 'c2',
@@ -663,7 +663,7 @@ export const SEED_CONTACTS: Contact[] = [
     company: 'Cerulean Inc.',
     notes: 'Full-stack developer, timezone UTC-5',
     tags: ['team', 'engineering'],
-    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 7).toISOString()
   },
   {
     id: 'c3',
@@ -672,7 +672,7 @@ export const SEED_CONTACTS: Contact[] = [
     email: 'jordan.lee@example.com',
     company: 'Cerulean Inc.',
     tags: ['team', 'engineering'],
-    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 5).toISOString()
   },
   {
     id: 'c4',
@@ -683,7 +683,7 @@ export const SEED_CONTACTS: Contact[] = [
     company: 'Cerulean Inc.',
     notes: 'Marketing lead',
     tags: ['team', 'marketing'],
-    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 5).toISOString()
   },
   {
     id: 'c5',
@@ -694,6 +694,6 @@ export const SEED_CONTACTS: Contact[] = [
     company: 'Partner Agency',
     notes: 'External contractor for Q1 campaign',
     tags: ['external', 'marketing'],
-    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 3).toISOString(),
-  },
+    createdAt: new Date(now - 1000 * 60 * 60 * 24 * 3).toISOString()
+  }
 ]

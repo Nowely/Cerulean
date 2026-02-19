@@ -63,6 +63,6 @@ export function useShoppingStore() {
     updateText,
     remove,
     clearChecked,
-    init,
+    init
   }
 }
