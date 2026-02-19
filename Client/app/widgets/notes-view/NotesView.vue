@@ -53,37 +53,31 @@ function deleteNote(id: string) {
         </span>
       </div>
       <template #end>
-        <button
-          class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        <UButton
+          icon="i-lucide-plus"
+          color="neutral"
+          variant="ghost"
+          size="sm"
           @click="createNewNote"
-        >
-          <UIcon
-            name="i-lucide-plus"
-            class="h-4 w-4"
-          />
-        </button>
+        />
       </template>
     </ContentPanelHeader>
 
-    <!-- Search -->
     <div class="border-b border-[hsl(var(--border))] px-4 py-2">
       <div class="flex items-center gap-2 rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5">
         <UIcon
           name="i-lucide-search"
           class="h-4 w-4 text-gray-400"
         />
-        <input
+        <UInput
           v-model="searchQuery"
-          type="text"
           placeholder="Search notes..."
-          class="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-500"
-        >
+          :ui="{ base: 'bg-transparent' }"
+        />
       </div>
     </div>
 
-    <!-- Main content area -->
     <div class="flex flex-1 overflow-hidden">
-      <!-- Note grid / list -->
       <div
         class="flex-1 overflow-y-auto scrollbar-thin p-3"
         :class="{ 'hidden md:block md:w-1/2 lg:w-2/5': isEditing }"
@@ -101,13 +95,13 @@ function deleteNote(id: string) {
           <p class="text-sm text-gray-500">
             {{ searchQuery ? 'No notes match your search' : 'No notes yet' }}
           </p>
-          <button
+          <UButton
             v-if="!searchQuery"
-            class="mt-1 rounded-lg bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600 transition-colors"
+            color="primary"
             @click="createNewNote"
           >
             Create a note
-          </button>
+          </UButton>
         </div>
 
         <div
@@ -127,7 +121,6 @@ function deleteNote(id: string) {
         </div>
       </div>
 
-      <!-- Editor panel -->
       <NoteEditor
         v-if="isEditing && noteStore.activeNote.value"
         :note="noteStore.activeNote.value"

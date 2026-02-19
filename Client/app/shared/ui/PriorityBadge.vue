@@ -21,12 +21,16 @@ const PRIORITY_ICONS: Record<TaskPriority, string> = {
 </script>
 
 <template>
-  <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium">
+  <UBadge
+    color="neutral"
+    variant="subtle"
+    class="rounded-full px-2 py-0.5 text-[11px] font-medium"
+  >
     <UIcon
       :name="PRIORITY_ICONS[priority]"
       class="h-3 w-3"
       :style="{ color: getPriorityColor(priority) }"
     />
     <span v-if="showLabel">{{ PRIORITY_CONFIG[priority]?.label ?? priority }}</span>
-  </span>
+  </UBadge>
 </template>

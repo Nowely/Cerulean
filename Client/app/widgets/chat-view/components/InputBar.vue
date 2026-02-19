@@ -124,15 +124,14 @@ function handleInput(e: Event) {
     <div class="flex items-end gap-2">
       <UPopover>
         <template #default>
-          <button
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+          <UButton
+            icon="i-lucide-plus"
+            color="neutral"
+            variant="ghost"
+            size="lg"
+            class="rounded-full"
             aria-label="Quick actions"
-          >
-            <UIcon
-              name="i-lucide-plus"
-              class="h-5 w-5"
-            />
-          </button>
+          />
         </template>
         <template #content>
           <div class="p-1 w-52">
@@ -160,30 +159,33 @@ function handleInput(e: Event) {
         </template>
       </UPopover>
 
-      <textarea
+      <UTextarea
         ref="textareaRef"
-        :value="text"
+        :model-value="text"
         placeholder="Message or type '/' for commands..."
-        rows="1"
+        :rows="1"
+        autoresize
+        :max-rows="5"
         data-testid="message-input"
-        class="flex-1 resize-none rounded-2xl bg-gray-100 dark:bg-gray-800 px-4 py-2.5 text-sm leading-relaxed placeholder:text-gray-400 outline-none focus:ring-1 focus:ring-primary-500/40 transition-all"
-        @input="handleInput"
+        :ui="{
+          base: 'flex-1 resize-none rounded-2xl px-4 py-2.5 text-sm leading-relaxed'
+        }"
+        @update:model-value="text = $event; showCommands = $event === '/'"
         @keydown="handleKeyDown"
       />
 
-      <button
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all"
-        :class="text.trim() ? 'bg-primary-500 text-white' : 'text-gray-400'"
+      <UButton
+        :icon="text.trim() ? 'i-lucide-send' : undefined"
+        :color="text.trim() ? 'primary' : 'neutral'"
+        variant="solid"
+        size="lg"
+        class="rounded-full"
+        :class="!text.trim() && 'text-gray-400'"
         :disabled="!text.trim()"
         data-testid="send-message-btn"
         aria-label="Send message"
         @click="text.trim().startsWith('/') ? handleSlashCommand(text.trim()) : handleSend()"
-      >
-        <UIcon
-          name="i-lucide-send"
-          class="h-5 w-5"
-        />
-      </button>
+      />
     </div>
   </div>
 </template>

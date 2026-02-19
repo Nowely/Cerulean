@@ -22,12 +22,16 @@ const STATUS_ICONS: Record<TaskStatus, string> = {
 </script>
 
 <template>
-  <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium">
+  <UBadge
+    color="neutral"
+    variant="subtle"
+    class="rounded-full px-2 py-0.5 text-[11px] font-medium"
+  >
     <UIcon
       :name="STATUS_ICONS[status]"
       class="h-3 w-3"
       :style="{ color: getStatusColor(status) }"
     />
     <span v-if="showLabel">{{ STATUS_CONFIG[status]?.label ?? status }}</span>
-  </span>
+  </UBadge>
 </template>

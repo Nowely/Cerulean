@@ -52,38 +52,33 @@ function removeTag(tag: string) {
         </span>
       </template>
       <template #end>
-        <button
-          class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        <UButton
+          :icon="note.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :class="note.pinned ? 'text-violet-500' : ''"
           @click="emit('update', { pinned: !note.pinned })"
-        >
-          <UIcon
-            :name="note.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
-            class="h-4 w-4"
-            :class="note.pinned ? 'text-violet-500' : ''"
-          />
-        </button>
-        <button
-          class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        />
+        <UButton
+          icon="i-lucide-trash-2"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="text-gray-400 hover:text-red-400"
           @click="emit('delete')"
-        >
-          <UIcon
-            name="i-lucide-trash-2"
-            class="h-4 w-4 text-gray-400 hover:text-red-400"
-          />
-        </button>
-        <button
-          class="hidden md:flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        />
+        <UButton
+          icon="i-lucide-x"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="hidden md:flex"
           @click="emit('close')"
-        >
-          <UIcon
-            name="i-lucide-x"
-            class="h-4 w-4"
-          />
-        </button>
+        />
       </template>
     </ContentPanelHeader>
 
-    <!-- Editor body -->
     <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-3">
       <input
         v-model="localTitle"
@@ -99,7 +94,6 @@ function removeTag(tag: string) {
         @input="debouncedUpdate"
       />
 
-      <!-- Tags -->
       <div class="mt-4 flex flex-wrap items-center gap-1.5">
         <span
           v-for="tag in note.tags"

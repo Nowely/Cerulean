@@ -38,19 +38,19 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
         @click="emit('newThread')"
       />
     </div>
-    <div class="relative">
-      <UIcon
-        name="i-lucide-search"
-        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-      />
-      <input
-        type="text"
-        placeholder="Search threads..."
-        :value="searchQuery"
-        data-testid="thread-search-input"
-        class="h-9 w-full rounded-lg bg-[hsl(var(--muted))] pl-9 pr-3 text-sm outline-none ring-0 focus:ring-1 focus:ring-[hsl(var(--ring))]"
-        @input="uiStore.setSearch(($event.target as HTMLInputElement).value)"
-      >
-    </div>
+    <UInput
+      :model-value="searchQuery"
+      placeholder="Search threads..."
+      data-testid="thread-search-input"
+      :ui="{ base: 'h-9', leading: 'pointer-events-none' }"
+      @update:model-value="uiStore.setSearch($event)"
+    >
+      <template #leading>
+        <UIcon
+          name="i-lucide-search"
+          class="h-4 w-4 text-gray-400"
+        />
+      </template>
+    </UInput>
   </header>
 </template>

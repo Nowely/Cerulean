@@ -67,7 +67,6 @@ function clearChecked() {
       </template>
     </ContentPanelHeader>
 
-    <!-- Progress bar -->
     <div
       v-if="totalCount > 0"
       class="border-b border-[hsl(var(--border))] px-4 py-2"
@@ -84,24 +83,21 @@ function clearChecked() {
       </div>
     </div>
 
-    <!-- Add item input -->
     <div class="border-b border-[hsl(var(--border))] px-4 py-2">
       <div class="flex items-center gap-2">
         <UIcon
           name="i-lucide-plus"
           class="h-4 w-4 shrink-0 text-gray-400"
         />
-        <input
+        <UInput
           v-model="newItemText"
-          type="text"
           placeholder="Add an item..."
-          class="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-500"
+          :ui="{ base: 'bg-transparent' }"
           @keydown.enter="addItem"
-        >
+        />
       </div>
     </div>
 
-    <!-- Items list -->
     <div class="flex-1 overflow-y-auto scrollbar-thin">
       <div
         v-if="totalCount === 0"
@@ -119,7 +115,6 @@ function clearChecked() {
       </div>
 
       <template v-else>
-        <!-- Unchecked items grouped by category -->
         <div
           v-for="[category, items] in groupedUnchecked"
           :key="category"
@@ -136,9 +131,7 @@ function clearChecked() {
             <button
               class="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-gray-400 dark:border-gray-600 transition-colors hover:border-amber-500"
               @click="shoppingStore.toggle(item.id)"
-            >
-              <!-- empty checkbox -->
-            </button>
+            />
             <span class="flex-1 text-sm">{{ item.text }}</span>
             <span
               v-if="item.quantity && item.quantity > 1"
@@ -156,7 +149,6 @@ function clearChecked() {
           </div>
         </div>
 
-        <!-- Checked items -->
         <div
           v-if="checkedItems.length > 0"
           class="px-2"

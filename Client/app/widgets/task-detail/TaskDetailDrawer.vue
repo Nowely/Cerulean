@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTaskStore, useUserStore, useUIStore } from '~/shared/model'
-import { STATUS_CONFIG, PRIORITY_CONFIG, FORM_LABEL_CLASS, ICON_BUTTON_BASE_CLASS, useToastHelpers } from '~/shared/lib'
+import { STATUS_CONFIG, PRIORITY_CONFIG, useToastHelpers } from '~/shared/lib'
 import type { TaskStatus, TaskPriority } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
@@ -16,7 +16,6 @@ const { remove: deleteTask, changeStatus: updateTaskStatus, changePriority: upda
 const toast = useToastHelpers()
 
 const newSubtask = ref('')
-const iconButtonClass = `${ICON_BUTTON_BASE_CLASS} h-8 w-8`
 
 const task = computed(() => taskStore.activeTask.value)
 const open = computed(() => taskStore.activeTask.value !== null)
@@ -143,34 +142,30 @@ function closeDrawer() {
               </p>
             </div>
             <template #end>
-              <button
-                :class="iconButtonClass"
+              <UButton
+                icon="i-lucide-edit-3"
+                color="neutral"
+                variant="ghost"
+                size="sm"
                 aria-label="Edit task"
                 @click="taskStore.setEditing(task); uiStore.setShowTaskForm(true)"
-              >
-                <UIcon
-                  name="i-lucide-edit-3"
-                  class="h-4 w-4"
-                />
-              </button>
-              <button
-                class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+              />
+              <UButton
+                icon="i-lucide-trash-2"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                class="hover:bg-red-500/10 hover:text-red-500"
                 aria-label="Delete task"
                 @click="handleDelete"
-              >
-                <UIcon
-                  name="i-lucide-trash-2"
-                  class="h-4 w-4"
-                />
-              </button>
+              />
             </template>
           </ContentPanelHeader>
 
           <div class="px-4 pb-6">
             <div class="flex flex-col gap-5 pt-2">
               <div class="flex flex-wrap gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <span :class="FORM_LABEL_CLASS">Status</span>
+                <UFormField label="Status">
                   <UDropdownMenu
                     :items="Object.entries(STATUS_CONFIG).map(([key, config]) => ({
                       label: config.label,
@@ -185,10 +180,9 @@ function closeDrawer() {
                       <StatusBadge :status="task.status" />
                     </UButton>
                   </UDropdownMenu>
-                </div>
+                </UFormField>
 
-                <div class="flex flex-col gap-1.5">
-                  <span :class="FORM_LABEL_CLASS">Priority</span>
+                <UFormField label="Priority">
                   <UDropdownMenu
                     :items="Object.entries(PRIORITY_CONFIG).map(([key, config]) => ({
                       label: config.label,
@@ -203,13 +197,12 @@ function closeDrawer() {
                       <PriorityBadge :priority="task.priority" />
                     </UButton>
                   </UDropdownMenu>
-                </div>
+                </UFormField>
 
-                <div
+                <UFormField
                   v-if="task.dueDate"
-                  class="flex flex-col gap-1.5"
+                  label="Due Date"
                 >
-                  <span :class="FORM_LABEL_CLASS">Due Date</span>
                   <span
                     class="flex items-center gap-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm"
                     :class="overdue ? 'text-red-500' : dueSoon ? 'text-amber-500' : ''"
@@ -220,14 +213,14 @@ function closeDrawer() {
                     />
                     {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
                   </span>
-                </div>
+                </UFormField>
               </div>
 
               <div
                 v-if="task.description"
                 class="flex flex-col gap-1.5"
               >
-                <span :class="FORM_LABEL_CLASS">Description</span>
+                <span class="form-label">Description</span>
                 <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                   {{ task.description }}
                 </p>
@@ -237,7 +230,7 @@ function closeDrawer() {
                 v-if="assignees.length > 0"
                 class="flex flex-col gap-2"
               >
-                <span :class="FORM_LABEL_CLASS">Assignees</span>
+                <span class="form-label">Assignees</span>
                 <div class="flex flex-wrap gap-2">
                   <div
                     v-for="user in assignees"
@@ -257,7 +250,7 @@ function closeDrawer() {
                 v-if="task.tags.length > 0"
                 class="flex flex-col gap-2"
               >
-                <span :class="FORM_LABEL_CLASS">Tags</span>
+                <span class="form-label">Tags</span>
                 <div class="flex flex-wrap gap-1.5">
                   <span
                     v-for="tag in task.tags"
@@ -273,7 +266,7 @@ function closeDrawer() {
                 v-if="dependencies.length > 0"
                 class="flex flex-col gap-2"
               >
-                <span :class="FORM_LABEL_CLASS">Dependencies</span>
+                <span class="form-label">Dependencies</span>
                 <div class="flex flex-col gap-1.5">
                   <button
                     v-for="dep in dependencies"
@@ -300,7 +293,7 @@ function closeDrawer() {
               </div>
 
               <div class="flex flex-col gap-2">
-                <span :class="FORM_LABEL_CLASS">
+                <span class="form-label">
                   Subtasks{{ subtasks.length > 0 ? ` (${completedSubtasks}/${subtasks.length})` : '' }}
                 </span>
 
@@ -338,14 +331,13 @@ function closeDrawer() {
                 </template>
 
                 <div class="flex gap-2">
-                  <input
+                  <UInput
                     v-model="newSubtask"
-                    type="text"
                     placeholder="Add subtask..."
                     data-testid="new-subtask-input"
-                    class="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm placeholder:text-gray-400 outline-none focus:ring-1 focus:ring-primary-500"
+                    class="flex-1"
                     @keydown.enter="addSubtask"
-                  >
+                  />
                   <UButton
                     icon="i-lucide-plus"
                     :disabled="!newSubtask.trim()"

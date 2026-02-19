@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useThreadStore, useTaskStore, useUserStore, useNotificationStore, useUIStore } from '~/shared/model'
-import { ICON_BUTTON_BASE_CLASS, useIsMobile } from '~/shared/lib'
+import { useIsMobile } from '~/shared/lib'
 import { resolveByIds } from '~/shared/utils'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 
@@ -10,7 +10,8 @@ const userStore = useUserStore()
 const notificationStore = useNotificationStore()
 const uiStore = useUIStore()
 const isMobile = useIsMobile()
-const iconButtonClass = `${ICON_BUTTON_BASE_CLASS} h-9 w-9`
+
+const iconButtonClass = 'flex items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 h-9 w-9'
 
 const members = computed(() => {
   if (!threadStore.activeThread.value) return []
@@ -29,18 +30,16 @@ const taskCount = computed(() => {
     class="flex h-14 shrink-0 items-center justify-between border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3"
   >
     <div class="flex items-center gap-3">
-      <button
+      <UButton
         v-if="isMobile"
-        :class="iconButtonClass"
+        icon="i-lucide-menu"
+        color="neutral"
+        variant="ghost"
+        size="lg"
         aria-label="Toggle sidebar"
         data-testid="toggle-sidebar-btn"
         @click="uiStore.toggleSidebar()"
-      >
-        <UIcon
-          name="i-lucide-menu"
-          class="h-5 w-5"
-        />
-      </button>
+      />
       <div class="flex flex-col">
         <div class="flex items-center gap-2">
           <h2 class="text-sm font-semibold">
@@ -69,22 +68,24 @@ const taskCount = computed(() => {
         :max-visible="3"
         size="sm"
       />
-      <button
-        :class="`relative ${iconButtonClass}`"
+      <UButton
+        icon="i-lucide-bell"
+        color="neutral"
+        variant="ghost"
+        size="lg"
+        class="relative"
         aria-label="Notifications"
         @click="notificationStore.setShowPanel(true)"
       >
-        <UIcon
-          name="i-lucide-bell"
-          class="h-4.5 w-4.5"
-        />
-        <span
-          v-if="notificationStore.unreadCount.value > 0"
-          class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
-        >
-          {{ notificationStore.unreadCount.value }}
-        </span>
-      </button>
+        <template #trailing>
+          <span
+            v-if="notificationStore.unreadCount.value > 0"
+            class="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
+          >
+            {{ notificationStore.unreadCount.value }}
+          </span>
+        </template>
+      </UButton>
     </div>
   </header>
 </template>

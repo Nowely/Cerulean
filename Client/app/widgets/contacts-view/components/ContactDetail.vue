@@ -65,40 +65,35 @@ function getAvatarColor(name: string): string {
   <div class="flex h-full flex-col bg-[hsl(var(--background))]">
     <ContentPanelHeader variant="toolbar">
       <template #end>
-        <button
-          class="flex h-8 items-center gap-1 rounded-lg px-2 hover:bg-[hsl(var(--muted))] transition-colors text-xs"
+        <UButton
+          :icon="editing ? 'i-lucide-check' : 'i-lucide-pencil'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
           @click="editing ? save() : (editing = true)"
         >
-          <UIcon
-            :name="editing ? 'i-lucide-check' : 'i-lucide-pencil'"
-            class="h-3.5 w-3.5"
-          />
           {{ editing ? 'Save' : 'Edit' }}
-        </button>
-        <button
-          class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        </UButton>
+        <UButton
+          icon="i-lucide-trash-2"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="text-gray-400 hover:text-red-400"
           @click="emit('delete')"
-        >
-          <UIcon
-            name="i-lucide-trash-2"
-            class="h-4 w-4 text-gray-400 hover:text-red-400"
-          />
-        </button>
-        <button
-          class="hidden md:flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        />
+        <UButton
+          icon="i-lucide-x"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="hidden md:flex"
           @click="emit('close')"
-        >
-          <UIcon
-            name="i-lucide-x"
-            class="h-4 w-4"
-          />
-        </button>
+        />
       </template>
     </ContentPanelHeader>
 
-    <!-- Contact info -->
     <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-6">
-      <!-- Avatar & name -->
       <div class="flex flex-col items-center gap-3 mb-6">
         <div
           class="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white"
@@ -107,10 +102,11 @@ function getAvatarColor(name: string): string {
           {{ getInitials(contact.name) }}
         </div>
         <template v-if="editing">
-          <input
+          <UInput
             v-model="form.name"
-            class="text-center text-xl font-semibold bg-transparent outline-none border-b border-[hsl(var(--border))]"
-          >
+            class="text-center"
+            :ui="{ base: 'text-xl font-semibold text-center bg-transparent' }"
+          />
         </template>
         <template v-else>
           <h2 class="text-xl font-semibold">
@@ -125,7 +121,6 @@ function getAvatarColor(name: string): string {
         </template>
       </div>
 
-      <!-- Fields -->
       <div class="flex flex-col gap-4">
         <div
           v-for="field in [
@@ -145,11 +140,11 @@ function getAvatarColor(name: string): string {
               {{ field.label }}
             </p>
             <template v-if="editing">
-              <input
+              <UInput
                 v-model="(form as Record<string, any>)[field.key]"
-                class="w-full bg-transparent text-sm outline-none border-b border-[hsl(var(--border))] pb-0.5"
                 :placeholder="`Add ${field.label.toLowerCase()}...`"
-              >
+                :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+              />
             </template>
             <template v-else>
               <p class="text-sm">
@@ -159,7 +154,6 @@ function getAvatarColor(name: string): string {
           </div>
         </div>
 
-        <!-- Notes -->
         <div class="flex items-start gap-3">
           <UIcon
             name="i-lucide-file-text"
@@ -170,10 +164,11 @@ function getAvatarColor(name: string): string {
               Notes
             </p>
             <template v-if="editing">
-              <textarea
+              <UTextarea
                 v-model="form.notes"
-                class="w-full resize-none bg-transparent text-sm outline-none border-b border-[hsl(var(--border))] pb-0.5 min-h-[60px]"
                 placeholder="Add notes..."
+                :rows="3"
+                :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
               />
             </template>
             <template v-else>
@@ -184,7 +179,6 @@ function getAvatarColor(name: string): string {
           </div>
         </div>
 
-        <!-- Tags -->
         <div class="flex items-start gap-3">
           <UIcon
             name="i-lucide-tag"

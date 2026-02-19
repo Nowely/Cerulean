@@ -69,65 +69,56 @@ function addContact() {
         </span>
       </div>
       <template #end>
-        <button
-          class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        <UButton
+          :icon="showNewForm ? 'i-lucide-x' : 'i-lucide-plus'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
           @click="showNewForm = !showNewForm"
-        >
-          <UIcon
-            :name="showNewForm ? 'i-lucide-x' : 'i-lucide-plus'"
-            class="h-4 w-4"
-          />
-        </button>
+        />
       </template>
     </ContentPanelHeader>
 
-    <!-- Quick add form -->
     <div class="border-b border-[hsl(var(--border))] px-4 py-2">
       <div
         v-if="showNewForm"
         class="flex flex-col gap-2 rounded-lg bg-[hsl(var(--muted))] p-3 mb-2"
       >
-        <input
+        <UInput
           v-model="newName"
-          type="text"
           placeholder="Name..."
-          class="bg-transparent text-sm outline-none placeholder:text-gray-500"
           @keydown.enter="addContact"
-        >
-        <input
+        />
+        <UInput
           v-model="newEmail"
-          type="text"
           placeholder="Email (optional)..."
-          class="bg-transparent text-sm outline-none placeholder:text-gray-500"
           @keydown.enter="addContact"
-        >
-        <button
-          class="self-end rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-600 transition-colors"
+        />
+        <UButton
+          size="sm"
+          color="primary"
+          class="self-end"
           :disabled="!newName.trim()"
           @click="addContact"
         >
           Add Contact
-        </button>
+        </UButton>
       </div>
 
-      <!-- Search -->
       <div class="flex items-center gap-2 rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5">
         <UIcon
           name="i-lucide-search"
           class="h-4 w-4 text-gray-400"
         />
-        <input
+        <UInput
           v-model="searchQuery"
-          type="text"
           placeholder="Search contacts..."
-          class="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-500"
-        >
+          :ui="{ base: 'bg-transparent' }"
+        />
       </div>
     </div>
 
-    <!-- Content area -->
     <div class="flex flex-1 overflow-hidden">
-      <!-- Contact list -->
       <div
         class="flex-1 overflow-y-auto scrollbar-thin"
         :class="{ 'hidden md:block md:w-2/5': isDetailOpen }"
@@ -165,7 +156,6 @@ function addContact() {
         </div>
       </div>
 
-      <!-- Detail panel -->
       <ContactDetail
         v-if="isDetailOpen && contactStore.activeContact.value"
         :contact="contactStore.activeContact.value"

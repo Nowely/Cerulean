@@ -173,4 +173,16 @@ button, a, input, textarea {
   .text-balance {
     text-wrap: balance;
   }
+
+  .form-label {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-gray-500;
+  }
+
+  .selectable-chip {
+    @apply bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100;
+  }
+
+  .selectable-chip-selected {
+    @apply bg-primary-500/15 ring-1 ring-primary-500/30;
+  }
 }

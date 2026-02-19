@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTaskStore, useThreadStore, useUserStore, useUIStore } from '~/shared/model'
-import { FORM_LABEL_CLASS, INPUT_BASE_CLASS, PRIORITY_CONFIG, selectableChipClass, STATUS_CONFIG, TEXTAREA_BASE_CLASS, useToastHelpers } from '~/shared/lib'
+import { PRIORITY_CONFIG, STATUS_CONFIG, useToastHelpers } from '~/shared/lib'
 import type { TaskPriority, TaskStatus } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getPriorityColor, getStatusColor, resolveByIds } from '~/shared/utils'
@@ -138,6 +138,12 @@ function closeDrawer() {
   uiStore.setShowTaskForm(false)
   taskStore.setEditing(null)
 }
+
+function selectableChipClass(selected: boolean): string {
+  return selected
+    ? 'bg-primary-500/15 ring-1 ring-primary-500/30'
+    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'
+}
 </script>
 
 <template>
@@ -162,37 +168,25 @@ function closeDrawer() {
 
         <div class="flex-1 overflow-y-auto px-4 pb-6">
           <div class="flex flex-col gap-4 pt-2">
-            <div class="flex flex-col gap-1.5">
-              <label :class="FORM_LABEL_CLASS">
-                Title <span class="text-red-500">*</span>
-              </label>
-              <input
+            <UFormField label="Title" required>
+              <UInput
                 v-model="title"
-                type="text"
                 placeholder="Task title..."
                 autofocus
                 data-testid="task-title-input"
-                :class="INPUT_BASE_CLASS"
-              >
-            </div>
+              />
+            </UFormField>
 
-            <div class="flex flex-col gap-1.5">
-              <label :class="FORM_LABEL_CLASS">
-                Description
-              </label>
-              <textarea
+            <UFormField label="Description">
+              <UTextarea
                 v-model="description"
                 placeholder="Add a description..."
-                rows="3"
+                :rows="3"
                 data-testid="task-description-input"
-                :class="TEXTAREA_BASE_CLASS"
               />
-            </div>
+            </UFormField>
 
-            <div class="flex flex-col gap-1.5">
-              <label :class="FORM_LABEL_CLASS">
-                Status
-              </label>
+            <UFormField label="Status">
               <div class="flex flex-wrap gap-1.5">
                 <button
                   v-for="(config, s) in STATUS_CONFIG"
@@ -208,12 +202,9 @@ function closeDrawer() {
                   {{ config.label }}
                 </button>
               </div>
-            </div>
+            </UFormField>
 
-            <div class="flex flex-col gap-1.5">
-              <label :class="FORM_LABEL_CLASS">
-                Priority
-              </label>
+            <UFormField label="Priority">
               <div class="flex flex-wrap gap-1.5">
                 <button
                   v-for="(config, p) in PRIORITY_CONFIG"
@@ -229,12 +220,9 @@ function closeDrawer() {
                   {{ config.label }}
                 </button>
               </div>
-            </div>
+            </UFormField>
 
-            <div class="flex flex-col gap-1.5">
-              <label :class="FORM_LABEL_CLASS">
-                Assignees
-              </label>
+            <UFormField label="Assignees">
               <div class="flex flex-wrap gap-2">
                 <button
                   v-for="user in members"
@@ -255,30 +243,21 @@ function closeDrawer() {
                   />
                 </button>
               </div>
-            </div>
+            </UFormField>
 
-            <div class="flex flex-col gap-1.5">
-              <label :class="FORM_LABEL_CLASS">
-                Due Date
-              </label>
-              <input
+            <UFormField label="Due Date">
+              <UInput
                 v-model="dueDate"
                 type="date"
-                :class="INPUT_BASE_CLASS"
-              >
-            </div>
+              />
+            </UFormField>
 
-            <div class="flex flex-col gap-1.5">
-              <label :class="FORM_LABEL_CLASS">
-                Tags (comma separated)
-              </label>
-              <input
+            <UFormField label="Tags (comma separated)">
+              <UInput
                 v-model="tags"
-                type="text"
                 placeholder="e.g., design, frontend, bug"
-                :class="`${INPUT_BASE_CLASS} placeholder:text-gray-400`"
-              >
-            </div>
+              />
+            </UFormField>
 
             <UButton
               block

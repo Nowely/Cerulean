@@ -139,7 +139,6 @@ function selectThread(threadId: string) {
     >
       <template #content>
         <div class="p-4">
-          <!-- Step 1: Kind picker -->
           <template v-if="creationStep === 'kind'">
             <h3 class="text-lg font-semibold mb-1">
               New Thread
@@ -175,7 +174,6 @@ function selectThread(threadId: string) {
             </div>
           </template>
 
-          <!-- Step 2: Name input -->
           <template v-else>
             <div class="flex items-center gap-2 mb-4">
               <button
@@ -204,15 +202,13 @@ function selectThread(threadId: string) {
             </div>
 
             <div class="flex flex-col gap-3">
-              <input
+              <UInput
                 v-model="newThreadName"
-                type="text"
                 :placeholder="`${THREAD_KINDS[newThreadKind].label} name...`"
                 data-testid="new-thread-name-input"
-                class="w-full rounded-lg bg-[hsl(var(--muted))] px-3 py-2.5 text-sm outline-none placeholder:text-gray-500 focus:ring-1 focus:ring-[hsl(var(--ring))]"
                 autofocus
                 @keydown.enter="handleCreateThread"
-              >
+              />
 
               <UButton
                 block

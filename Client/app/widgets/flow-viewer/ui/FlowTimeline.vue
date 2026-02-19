@@ -38,12 +38,10 @@ const d = computed(() => props.darkMode)
           class="flex items-center gap-2 text-xs cursor-pointer"
           :class="d ? 'text-gray-400' : 'text-gray-600'"
         >
-          <input
-            :checked="showAll"
-            type="checkbox"
-            class="rounded border-gray-300 text-primary-500 focus:ring-primary-500"
-            @change="emit('update:showAll', ($event.target as HTMLInputElement).checked)"
-          >
+          <UCheckbox
+            :model-value="showAll"
+            @update:model-value="(v) => emit('update:showAll', v === true)"
+          />
           Show all
         </label>
       </div>
@@ -114,21 +112,15 @@ const d = computed(() => props.darkMode)
       class="timeline-actions flex items-center justify-between mt-4 pt-4 border-t"
       :class="d ? 'border-gray-700' : 'border-gray-200'"
     >
-      <button
-        type="button"
+      <UButton
+        color="neutral"
+        variant="outline"
         :disabled="showAll || currentStep === 0"
-        class="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        :class="d
-          ? 'border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700'
-          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'"
+        icon="i-lucide-chevron-left"
         @click="goToStep(Math.max(0, currentStep - 1))"
       >
-        <UIcon
-          name="i-lucide-chevron-left"
-          class="h-4 w-4"
-        />
         Previous
-      </button>
+      </UButton>
 
       <div class="flex items-center gap-1">
         <button
@@ -149,18 +141,14 @@ const d = computed(() => props.darkMode)
         />
       </div>
 
-      <button
-        type="button"
+      <UButton
+        color="primary"
         :disabled="showAll || currentStep === steps.length - 1"
-        class="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        trailing-icon="i-lucide-chevron-right"
         @click="goToStep(Math.min(steps.length - 1, currentStep + 1))"
       >
         Next
-        <UIcon
-          name="i-lucide-chevron-right"
-          class="h-4 w-4"
-        />
-      </button>
+      </UButton>
     </div>
   </div>
 </template>
