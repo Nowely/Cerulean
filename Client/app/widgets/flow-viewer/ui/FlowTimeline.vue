@@ -123,20 +123,14 @@ const d = computed(() => props.darkMode)
       </UButton>
 
       <div class="flex items-center gap-1">
-        <button
+        <UButton
           v-for="(step, idx) in steps"
           :key="idx"
-          type="button"
-          class="h-2 rounded-full transition-all"
-          :class="[
-            idx === currentStep && !showAll
-              ? 'w-6 bg-primary-500'
-              : idx < currentStep
-                ? 'w-2 bg-primary-400'
-                : d
-                  ? 'w-2 bg-gray-600 hover:bg-gray-500'
-                  : 'w-2 bg-gray-300 hover:bg-gray-400'
-          ]"
+          :color="(idx === currentStep && !showAll) || idx < currentStep ? 'primary' : 'neutral'"
+          :variant="(idx === currentStep && !showAll) ? 'solid' : 'soft'"
+          size="xs"
+          square
+          :ui="{ base: idx === currentStep && !showAll ? '!w-6 !rounded-full' : '!w-2 !h-2 !rounded-full' }"
           @click="goToStep(idx)"
         />
       </div>

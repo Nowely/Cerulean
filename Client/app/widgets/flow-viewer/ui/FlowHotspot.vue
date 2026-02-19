@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{
+defineProps<{
   position?: 'top' | 'right' | 'bottom' | 'left'
   text: string
   icon?: string
@@ -11,28 +11,21 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'click'): void
 }>()
-
-const positionClass = computed(() => {
-  switch (props.position) {
-    case 'top': return '-top-8 left-1/2 -translate-x-1/2'
-    case 'right': return 'left-full ml-2 top-1/2 -translate-y-1/2'
-    case 'bottom': return '-bottom-8 left-1/2 -translate-x-1/2'
-    case 'left': return 'right-full mr-2 top-1/2 -translate-y-1/2'
-    default: return '-top-8 left-1/2 -translate-x-1/2'
-  }
-})
 </script>
 
 <template>
-  <div class="flow-hotspot relative inline-flex items-center justify-center">
-    <button
-      class="hotspot-marker relative z-10 flex h-6 w-6 items-center justify-center rounded-full transition-all"
-      :class="[
-        active
-          ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
-          : 'bg-white dark:bg-gray-800 border-2 border-primary-400 text-primary-600 dark:text-primary-400',
-        pulse && !active ? 'animate-pulse-ring' : ''
-      ]"
+  <UTooltip
+    :text="text"
+    :content="{ side: position || 'top' }"
+    :open="active"
+    arrow
+  >
+    <UButton
+      :color="active ? 'primary' : 'neutral'"
+      :variant="active ? 'solid' : 'outline'"
+      size="xs"
+      square
+      :class="{ 'animate-pulse-ring': pulse && !active }"
       @click="emit('click')"
     >
       <span
@@ -49,25 +42,8 @@ const positionClass = computed(() => {
         name="i-lucide-info"
         class="h-3.5 w-3.5"
       />
-    </button>
-
-    <div
-      v-if="active"
-      class="hotspot-tooltip absolute z-20 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg"
-      :class="positionClass"
-    >
-      {{ text }}
-      <div
-        class="absolute h-2 w-2 rotate-45 bg-gray-900"
-        :class="{
-          'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2': position === 'top',
-          'left-0 top-1/2 -translate-x-1/2 -translate-y-1/2': position === 'right',
-          'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2': position === 'bottom',
-          'right-0 top-1/2 translate-x-1/2 -translate-y-1/2': position === 'left'
-        }"
-      />
-    </div>
-  </div>
+    </UButton>
+  </UTooltip>
 </template>
 
 <style scoped>

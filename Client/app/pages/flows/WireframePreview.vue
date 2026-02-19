@@ -19,37 +19,30 @@ watch(() => props.wireframe, syncToggleState, { immediate: true })
 <template>
   <div class="rounded-lg border border-gray-300 bg-gray-50 p-4">
     <div class="mb-3 flex flex-wrap gap-2">
-      <button
+      <UButton
         v-if="wireframe.sidebar"
-        type="button"
-        :aria-pressed="showSidebar"
-        :class="[
-          'rounded border px-2 py-1 text-xs',
-          showSidebar ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-300 bg-white'
-        ]"
+        label="Sidebar"
+        :color="showSidebar ? 'primary' : 'neutral'"
+        :variant="showSidebar ? 'soft' : 'outline'"
+        size="xs"
         @click="showSidebar = !showSidebar"
-      >
-        Sidebar
-      </button>
-      <button
+      />
+      <UButton
         v-if="wireframe.panel"
-        type="button"
-        :aria-pressed="showPanel"
-        :class="[
-          'rounded border px-2 py-1 text-xs',
-          showPanel ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-300 bg-white'
-        ]"
+        label="Panel"
+        :color="showPanel ? 'primary' : 'neutral'"
+        :variant="showPanel ? 'soft' : 'outline'"
+        size="xs"
         @click="showPanel = !showPanel"
-      >
-        Panel
-      </button>
-      <button
-        type="button"
-        class="ml-auto rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+      />
+      <UButton
+        label="Reset"
+        color="neutral"
+        variant="outline"
+        size="xs"
+        class="ml-auto"
         @click="syncToggleState"
-      >
-        Reset
-      </button>
+      />
     </div>
     <div class="flex min-h-[240px] gap-2 rounded-lg border border-gray-300 bg-gray-200 p-2">
       <aside

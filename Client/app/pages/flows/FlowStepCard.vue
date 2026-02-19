@@ -131,38 +131,22 @@ const emit = defineEmits<{
               :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
             >Preview</span>
           </div>
-          <button
-            class="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all"
-            :class="[
-              mobileMode
-                ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/30'
-                : darkMode
-                  ? 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
-                  : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'
-            ]"
+          <UButton
+            icon="i-lucide-smartphone"
+            :label="mobileMode ? 'Mobile' : 'Desktop'"
+            :color="mobileMode ? 'primary' : 'neutral'"
+            :variant="mobileMode ? 'solid' : 'outline'"
+            size="xs"
             @click="emit('toggle-mobile')"
-          >
-            <UIcon
-              name="i-lucide-smartphone"
-              class="h-3.5 w-3.5"
-            />
-            {{ mobileMode ? 'Mobile' : 'Desktop' }}
-          </button>
-          <button
-            class="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all"
-            :class="[
-              darkMode
-                ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/30'
-                : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'
-            ]"
+          />
+          <UButton
+            :icon="darkMode ? 'i-lucide-sun' : 'i-lucide-moon'"
+            :label="darkMode ? 'Light' : 'Dark'"
+            :color="darkMode ? 'primary' : 'neutral'"
+            :variant="darkMode ? 'solid' : 'outline'"
+            size="xs"
             @click="emit('toggle-dark')"
-          >
-            <UIcon
-              :name="darkMode ? 'i-lucide-sun' : 'i-lucide-moon'"
-              class="h-3.5 w-3.5"
-            />
-            {{ darkMode ? 'Light' : 'Dark' }}
-          </button>
+          />
         </div>
       </div>
       <FlowMockup

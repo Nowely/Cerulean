@@ -64,45 +64,47 @@ useHead({
         </div>
 
         <div class="grid gap-3">
-          <NuxtLink
+          <UCard
             v-for="flow in flows"
             :key="flow.slug"
+            as="NuxtLink"
             :to="`/flows/${flow.slug}`"
-            class="group flex items-center gap-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 p-4 transition-all hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg hover:shadow-primary-500/10"
+            variant="soft"
+            class="group cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
           >
-            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 transition-colors group-hover:bg-primary-500 group-hover:text-white">
+            <div class="flex items-center gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 transition-colors group-hover:bg-primary-500 group-hover:text-white">
+                <UIcon
+                  :name="flow.icon"
+                  class="h-6 w-6"
+                />
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  {{ flow.title }}
+                </div>
+                <div class="mt-0.5 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                  {{ flow.description }}
+                </div>
+              </div>
               <UIcon
-                :name="flow.icon"
-                class="h-6 w-6"
+                name="i-lucide-arrow-right"
+                class="h-5 w-5 text-gray-300 dark:text-gray-600 transition-all group-hover:text-primary-500 group-hover:translate-x-1"
               />
             </div>
-            <div class="min-w-0 flex-1">
-              <div class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                {{ flow.title }}
-              </div>
-              <div class="mt-0.5 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                {{ flow.description }}
-              </div>
-            </div>
-            <UIcon
-              name="i-lucide-arrow-right"
-              class="h-5 w-5 text-gray-300 dark:text-gray-600 transition-all group-hover:text-primary-500 group-hover:translate-x-1"
-            />
-          </NuxtLink>
+          </UCard>
         </div>
       </header>
 
       <footer class="text-center text-sm text-white/60">
-        <NuxtLink
+        <UButton
           to="/"
-          class="inline-flex items-center gap-2 hover:text-white transition-colors"
-        >
-          <UIcon
-            name="i-lucide-arrow-left"
-            class="h-4 w-4"
-          />
-          Back to TaskChat
-        </NuxtLink>
+          icon="i-lucide-arrow-left"
+          label="Back to TaskChat"
+          color="neutral"
+          variant="link"
+          class="hover:text-white"
+        />
       </footer>
     </div>
   </div>

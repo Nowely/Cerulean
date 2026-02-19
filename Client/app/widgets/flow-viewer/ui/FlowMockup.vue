@@ -69,16 +69,13 @@ const d = computed(() => props.darkMode)
             class="text-[11px] font-semibold"
             :class="d ? 'text-gray-400' : 'text-gray-500'"
           >Threads</span>
-          <button
-            class="h-6 w-6 rounded-md bg-primary-500 flex items-center justify-center text-white"
+          <UButton
+            icon="i-lucide-plus"
+            color="primary"
+            size="xs"
             :class="{ 'animate-pulse': isHighlighted('new-thread-btn') }"
             @click="handleInteract('new-thread-btn')"
-          >
-            <UIcon
-              name="i-lucide-plus"
-              class="h-3.5 w-3.5"
-            />
-          </button>
+          />
         </div>
 
         <div
@@ -153,16 +150,13 @@ const d = computed(() => props.darkMode)
           ]"
         >
           <div class="flex items-center gap-2">
-            <button
+            <UButton
               v-if="mobileMode"
-              class="h-7 w-7 rounded-md flex items-center justify-center"
-              :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
-            >
-              <UIcon
-                name="i-lucide-menu"
-                class="h-4 w-4 text-gray-500"
-              />
-            </button>
+              icon="i-lucide-menu"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            />
             <span
               class="font-medium text-sm"
               :class="d ? 'text-gray-100' : 'text-gray-900'"
@@ -176,16 +170,22 @@ const d = computed(() => props.darkMode)
             >
               {{ wireframe.main.header[1] }}
             </span>
-            <button
-              class="relative h-7 w-7 rounded-md flex items-center justify-center"
-              :class="[d ? 'hover:bg-gray-800' : 'hover:bg-gray-100', { 'ring-2 ring-primary-500': isHighlighted('bell-icon') }]"
+            <UButton
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :class="{ 'ring-2 ring-primary-500': isHighlighted('bell-icon') }"
             >
-              <UIcon
-                name="i-lucide-bell"
-                class="h-4 w-4 text-gray-500"
-              />
-              <span class="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary-500 text-[9px] text-white flex items-center justify-center">4</span>
-            </button>
+              <template #leading>
+                <div class="relative">
+                  <UIcon
+                    name="i-lucide-bell"
+                    class="h-4 w-4"
+                  />
+                  <span class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary-500 text-[9px] text-white flex items-center justify-center">4</span>
+                </div>
+              </template>
+            </UButton>
           </div>
         </header>
 
@@ -342,15 +342,12 @@ const d = computed(() => props.darkMode)
           </div>
 
           <div class="flex items-center gap-2">
-            <button
-              class="h-8 w-8 rounded-full flex items-center justify-center text-gray-400"
-              :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
-            >
-              <UIcon
-                name="i-lucide-plus"
-                class="h-4 w-4"
-              />
-            </button>
+            <UButton
+              icon="i-lucide-plus"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            />
             <div
               class="flex-1 rounded-2xl px-3 py-2 text-xs flex items-center"
               :class="[
@@ -368,15 +365,12 @@ const d = computed(() => props.darkMode)
                 class="text-gray-400"
               >{{ wireframe.main.composer }}</span>
             </div>
-            <button
-              class="h-8 w-8 rounded-full flex items-center justify-center transition-colors"
-              :class="wireframe.main.composerValue ? 'bg-primary-500 text-white' : 'text-gray-400'"
-            >
-              <UIcon
-                name="i-lucide-send"
-                class="h-4 w-4"
-              />
-            </button>
+            <UButton
+              icon="i-lucide-send"
+              :color="wireframe.main.composerValue ? 'primary' : 'neutral'"
+              :variant="wireframe.main.composerValue ? 'solid' : 'ghost'"
+              size="sm"
+            />
           </div>
         </div>
       </main>
@@ -404,16 +398,13 @@ const d = computed(() => props.darkMode)
               :class="d ? 'text-gray-300' : 'text-gray-700'"
             >{{ wireframe.panel.title }}</span>
           </div>
-          <button
-            class="h-6 w-6 rounded flex items-center justify-center text-gray-400"
-            :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
+          <UButton
+            icon="i-lucide-x"
+            color="neutral"
+            variant="ghost"
+            size="xs"
             @click="showPanel = false"
-          >
-            <UIcon
-              name="i-lucide-x"
-              class="h-3.5 w-3.5"
-            />
-          </button>
+          />
         </div>
 
         <div class="panel-content p-2 space-y-1">
@@ -436,27 +427,28 @@ const d = computed(() => props.darkMode)
               v-else-if="item.startsWith('Type:') || item.startsWith('Selected type:')"
               class="flex gap-1 px-2 py-1.5"
             >
-              <button
+              <UButton
                 v-for="t in ['Project', 'Group', 'Direct']"
                 :key="t"
-                class="flex-1 rounded px-2 py-1 text-[10px] font-medium"
-                :class="item.toLowerCase().includes(t.toLowerCase())
-                  ? 'bg-primary-500 text-white'
-                  : d ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'"
-              >
-                {{ t }}
-              </button>
+                :label="t"
+                :color="item.toLowerCase().includes(t.toLowerCase()) ? 'primary' : 'neutral'"
+                :variant="item.toLowerCase().includes(t.toLowerCase()) ? 'solid' : 'soft'"
+                size="xs"
+                class="flex-1"
+              />
             </div>
             <div
               v-else-if="item.includes('button')"
               class="px-2 py-1.5"
             >
-              <button
-                class="w-full rounded-lg bg-primary-500 px-3 py-2 text-xs font-medium text-white"
-                :class="{ 'opacity-50': item.includes('disabled'), 'animate-pulse': isHighlighted(`panel-item-${i}`) }"
-              >
-                {{ item.replace('button', '').replace('enabled', '').replace('disabled', '').trim() }}
-              </button>
+              <UButton
+                :label="item.replace('button', '').replace('enabled', '').replace('disabled', '').trim()"
+                color="primary"
+                size="xs"
+                block
+                :disabled="item.includes('disabled')"
+                :class="{ 'animate-pulse': isHighlighted(`panel-item-${i}`) }"
+              />
             </div>
             <div
               v-else
@@ -494,46 +486,33 @@ const d = computed(() => props.darkMode)
       :class="d ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'"
     >
       <div class="flex items-center gap-2">
-        <button
+        <UButton
           v-if="wireframe.sidebar"
-          class="rounded border px-2 py-1 text-[10px] transition-colors"
-          :class="showSidebar
-            ? d ? 'border-primary-500 bg-primary-900/30 text-primary-300' : 'border-primary-500 bg-primary-50 text-primary-700'
-            : d ? 'border-gray-600 bg-gray-900 text-gray-400' : 'border-gray-300 bg-white text-gray-600'"
+          icon="i-lucide-sidebar"
+          label="Sidebar"
+          :color="showSidebar ? 'primary' : 'neutral'"
+          :variant="showSidebar ? 'soft' : 'outline'"
+          size="xs"
           @click="showSidebar = !showSidebar"
-        >
-          <UIcon
-            name="i-lucide-sidebar"
-            class="h-3 w-3 inline mr-1"
-          />
-          Sidebar
-        </button>
-        <button
-          v-if="wireframe.panel"
-          class="rounded border px-2 py-1 text-[10px] transition-colors"
-          :class="showPanel
-            ? d ? 'border-primary-500 bg-primary-900/30 text-primary-300' : 'border-primary-500 bg-primary-50 text-primary-700'
-            : d ? 'border-gray-600 bg-gray-900 text-gray-400' : 'border-gray-300 bg-white text-gray-600'"
-          @click="showPanel = !showPanel"
-        >
-          <UIcon
-            name="i-lucide-panel-right"
-            class="h-3 w-3 inline mr-1"
-          />
-          Panel
-        </button>
-      </div>
-      <button
-        class="rounded border px-2 py-1 text-[10px]"
-        :class="d ? 'border-gray-600 bg-gray-900 text-gray-400' : 'border-gray-300 bg-white text-gray-600'"
-        @click="showSidebar = wireframe.showSidebar ?? false; showPanel = wireframe.showPanel ?? false"
-      >
-        <UIcon
-          name="i-lucide-rotate-ccw"
-          class="h-3 w-3 inline mr-1"
         />
-        Reset
-      </button>
+        <UButton
+          v-if="wireframe.panel"
+          icon="i-lucide-panel-right"
+          label="Panel"
+          :color="showPanel ? 'primary' : 'neutral'"
+          :variant="showPanel ? 'soft' : 'outline'"
+          size="xs"
+          @click="showPanel = !showPanel"
+        />
+      </div>
+      <UButton
+        icon="i-lucide-rotate-ccw"
+        label="Reset"
+        color="neutral"
+        variant="outline"
+        size="xs"
+        @click="showSidebar = wireframe.showSidebar ?? false; showPanel = wireframe.showPanel ?? false"
+      />
     </div>
   </div>
 </template>

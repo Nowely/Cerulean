@@ -50,23 +50,27 @@ const viewportLabel = computed(() => {
 <template>
   <footer class="shrink-0 border-t border-gray-200 dark:border-gray-800 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] min-h-14">
     <div class="flex items-center gap-1">
-      <UButton
-        :icon="currentThemeInfo.icon"
-        color="neutral"
-        variant="ghost"
-        size="lg"
-        :title="currentThemeInfo.label"
-        @click="cycleTheme"
-      />
-      <UButton
+      <UTooltip :text="currentThemeInfo.label">
+        <UButton
+          :icon="currentThemeInfo.icon"
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          @click="cycleTheme"
+        />
+      </UTooltip>
+      <UTooltip
         v-if="isDev"
-        :icon="viewportIcon"
-        color="neutral"
-        variant="ghost"
-        size="lg"
-        :title="viewportLabel"
-        @click="cycleMode"
-      />
+        :text="viewportLabel"
+      >
+        <UButton
+          :icon="viewportIcon"
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          @click="cycleMode"
+        />
+      </UTooltip>
     </div>
   </footer>
 </template>
