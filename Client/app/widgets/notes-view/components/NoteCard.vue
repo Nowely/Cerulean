@@ -16,13 +16,15 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <button
-    class="group flex w-full flex-col gap-1.5 rounded-xl p-3 text-left transition-all"
+  <UCard
+    variant="soft"
+    class="group cursor-pointer transition-all"
     :class="[
       isActive
         ? 'bg-violet-500/10 ring-1 ring-violet-500/30'
         : 'hover:bg-[hsl(var(--muted))]'
     ]"
+    :ui="{ body: 'p-3' }"
     @click="emit('click')"
   >
     <div class="flex items-start justify-between gap-2">
@@ -49,11 +51,11 @@ const emit = defineEmits<{
     </div>
     <p
       v-if="note.content"
-      class="text-xs text-gray-500 line-clamp-3 leading-relaxed"
+      class="text-xs text-gray-500 line-clamp-3 leading-relaxed mt-1.5"
     >
       {{ note.content }}
     </p>
-    <div class="flex items-center gap-2 mt-1">
+    <div class="flex items-center gap-2 mt-2">
       <UIcon
         v-if="note.pinned"
         name="i-lucide-pin"
@@ -72,5 +74,5 @@ const emit = defineEmits<{
         {{ relativeTime(note.updatedAt) }}
       </span>
     </div>
-  </button>
+  </UCard>
 </template>

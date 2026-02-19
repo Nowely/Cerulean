@@ -138,12 +138,6 @@ function closeDrawer() {
   uiStore.setShowTaskForm(false)
   taskStore.setEditing(null)
 }
-
-function selectableChipClass(selected: boolean): string {
-  return selected
-    ? 'bg-primary-500/15 ring-1 ring-primary-500/30'
-    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'
-}
 </script>
 
 <template>
@@ -190,12 +184,13 @@ function selectableChipClass(selected: boolean): string {
             </UFormField>
 
             <UFormField label="Status">
-              <div class="flex flex-wrap gap-1.5">
-                <button
+              <UFieldGroup>
+                <UButton
                   v-for="(config, s) in STATUS_CONFIG"
                   :key="s"
-                  class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors"
-                  :class="selectableChipClass(status === s)"
+                  :color="status === s ? 'primary' : 'neutral'"
+                  :variant="status === s ? 'soft' : 'ghost'"
+                  size="xs"
                   @click="status = s"
                 >
                   <span
@@ -203,17 +198,18 @@ function selectableChipClass(selected: boolean): string {
                     :style="{ backgroundColor: getStatusColor(s) }"
                   />
                   {{ config.label }}
-                </button>
-              </div>
+                </UButton>
+              </UFieldGroup>
             </UFormField>
 
             <UFormField label="Priority">
-              <div class="flex flex-wrap gap-1.5">
-                <button
+              <UFieldGroup>
+                <UButton
                   v-for="(config, p) in PRIORITY_CONFIG"
                   :key="p"
-                  class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors"
-                  :class="selectableChipClass(priority === p)"
+                  :color="priority === p ? 'primary' : 'neutral'"
+                  :variant="priority === p ? 'soft' : 'ghost'"
+                  size="xs"
                   @click="priority = p"
                 >
                   <span
@@ -221,31 +217,33 @@ function selectableChipClass(selected: boolean): string {
                     :style="{ backgroundColor: getPriorityColor(p) }"
                   />
                   {{ config.label }}
-                </button>
-              </div>
+                </UButton>
+              </UFieldGroup>
             </UFormField>
 
             <UFormField label="Assignees">
-              <div class="flex flex-wrap gap-2">
-                <button
+              <UFieldGroup>
+                <UButton
                   v-for="user in members"
                   :key="user.id"
-                  class="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm transition-colors"
-                  :class="selectableChipClass(assignees.includes(user.id))"
+                  :color="assignees.includes(user.id) ? 'primary' : 'neutral'"
+                  :variant="assignees.includes(user.id) ? 'soft' : 'ghost'"
+                  size="xs"
+                  class="rounded-full pr-3"
                   @click="toggleAssignee(user.id)"
                 >
                   <UserAvatar
                     :user="user"
                     size="sm"
                   />
-                  <span>{{ user.name }}</span>
+                  {{ user.name }}
                   <UIcon
                     v-if="assignees.includes(user.id)"
                     name="i-lucide-x"
-                    class="h-3 w-3 text-gray-400"
+                    class="h-3 w-3"
                   />
-                </button>
-              </div>
+                </UButton>
+              </UFieldGroup>
             </UFormField>
 
             <UFormField label="Due Date">

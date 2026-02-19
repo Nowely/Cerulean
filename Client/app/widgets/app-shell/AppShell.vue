@@ -46,13 +46,17 @@ watch(isMobile, (mobile) => {
 </script>
 
 <template>
-  <div class="flex h-dvh w-full overflow-hidden">
-    <aside
+  <UDashboardGroup>
+    <UDashboardPanel
       v-if="!isMobile"
-      class="w-80 shrink-0 border-r border-[hsl(var(--border))]"
+      id="sidebar"
+      :default-size="20"
+      :min-size="15"
+      :max-size="30"
+      resizable
     >
       <Sidebar />
-    </aside>
+    </UDashboardPanel>
 
     <USlideover
       :open="mobileSidebarOpen"
@@ -65,42 +69,23 @@ watch(isMobile, (mobile) => {
       </template>
     </USlideover>
 
-    <main class="flex flex-1 flex-col overflow-hidden">
+    <UDashboardPanel id="content">
       <template v-if="threadStore.activeThread.value && contentComponent">
         <ChatHeader v-if="showChatHeader" />
         <component :is="contentComponent" />
       </template>
-      <template v-else>
-        <div class="flex flex-1 flex-col items-center justify-center gap-4 px-6">
-          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-primary-500/10">
-            <UIcon
-              name="i-lucide-layout-grid"
-              class="h-10 w-10 text-primary-500"
-            />
-          </div>
-          <div class="text-center">
-            <h2 class="text-lg font-semibold">
-              Welcome to Cerulean
-            </h2>
-            <p class="mt-1 text-sm text-gray-500">
-              Select a thread from the sidebar or create a new one
-            </p>
-          </div>
-          <button
-            v-if="isMobile"
-            class="mt-2 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600"
-            data-testid="open-threads-btn"
-            @click="uiStore.toggleSidebar()"
-          >
-            Open Threads
-          </button>
-        </div>
-      </template>
-    </main>
+      <UEmpty
+        v-else
+        icon="i-lucide-layout-grid"
+        title="Welcome to Cerulean"
+        description="Select a thread from the sidebar or create a new one"
+        :actions="isMobile ? [{ label: 'Open Threads', color: 'primary', onClick: () => uiStore.toggleSidebar() }] : undefined"
+      />
+    </UDashboardPanel>
 
     <NotificationPanel />
     <TaskDetailDrawer />
     <TaskFormDrawer />
     <TaskTemplatePicker />
-  </div>
+  </UDashboardGroup>
 </template>

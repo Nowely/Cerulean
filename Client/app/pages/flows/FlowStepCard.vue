@@ -87,31 +87,37 @@ const emit = defineEmits<{
         </p>
       </div>
 
-      <details
-        class="result-section group"
-        :open="isActive"
+      <UCollapsible
+        class="result-section"
+        :default-open="isActive"
       >
-        <summary class="flex items-center gap-2 cursor-pointer list-none">
-          <UIcon
-            name="i-lucide-eye"
-            class="h-4 w-4 text-amber-500"
-          />
+        <UButton
+          color="neutral"
+          variant="ghost"
+          class="group w-full justify-start px-0"
+          trailing-icon="i-lucide-chevron-down"
+          :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200 ml-auto' }"
+        >
+          <template #leading>
+            <UIcon
+              name="i-lucide-eye"
+              class="h-4 w-4 text-amber-500"
+            />
+          </template>
           <span
-            class="text-xs font-semibold flex-1"
+            class="text-xs font-semibold"
             :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
           >Expected Result</span>
-          <UIcon
-            name="i-lucide-chevron-down"
-            class="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180"
-          />
-        </summary>
-        <p
-          class="mt-3 text-sm leading-relaxed pl-6"
-          :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
-        >
-          {{ step.result }}
-        </p>
-      </details>
+        </UButton>
+        <template #content>
+          <p
+            class="mt-3 text-sm leading-relaxed pl-6"
+            :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
+          >
+            {{ step.result }}
+          </p>
+        </template>
+      </UCollapsible>
 
       <div class="mockup-section">
         <div class="flex items-center justify-between mb-3">

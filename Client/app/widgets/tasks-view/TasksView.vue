@@ -98,44 +98,45 @@ function openNewTaskForm() {
       />
 
       <div class="flex flex-col gap-0.5 p-2">
-        <button
+        <UCard
           v-for="task in filteredTasks"
           :key="task.id"
-          class="flex w-full items-start gap-3 rounded-xl p-3 text-left transition-colors hover:bg-[hsl(var(--muted))]"
+          variant="soft"
+          class="cursor-pointer transition-colors hover:bg-[hsl(var(--muted))]"
           :class="{ 'bg-emerald-500/5': taskStore.activeTaskId.value === task.id }"
+          :ui="{ body: 'p-3' }"
           @click="openTask(task.id)"
         >
-          <div class="mt-0.5 shrink-0">
+          <div class="flex items-start gap-3">
             <StatusBadge
               :status="task.status"
               :show-label="false"
+              class="mt-0.5"
             />
-          </div>
-          <div class="flex min-w-0 flex-1 flex-col gap-1">
-            <span class="text-sm font-medium leading-snug">{{ task.title }}</span>
-            <div class="flex flex-wrap items-center gap-2">
-              <PriorityBadge
-                :priority="task.priority"
-                :show-label="false"
-              />
-              <UBadge
-                v-for="tag in task.tags.slice(0, 3)"
-                :key="tag"
-                color="primary"
-                variant="soft"
-                size="xs"
-              >
-                {{ tag }}
-              </UBadge>
-              <span
-                v-if="task.dueDate"
-                class="text-[10px] text-gray-500"
-              >
-                Due {{ relativeTime(task.dueDate) }}
-              </span>
+            <div class="flex min-w-0 flex-1 flex-col gap-1">
+              <span class="text-sm font-medium leading-snug">{{ task.title }}</span>
+              <div class="flex flex-wrap items-center gap-2">
+                <PriorityBadge
+                  :priority="task.priority"
+                  :show-label="false"
+                />
+                <UBadge
+                  v-for="tag in task.tags.slice(0, 3)"
+                  :key="tag"
+                  color="primary"
+                  variant="soft"
+                  size="xs"
+                >
+                  {{ tag }}
+                </UBadge>
+                <span
+                  v-if="task.dueDate"
+                  class="text-[10px] text-gray-500"
+                >
+                  Due {{ relativeTime(task.dueDate) }}
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="shrink-0">
             <AvatarStack
               v-if="task.assignees.length > 0"
               :users="task.assignees.map(id => userStore.getUserById(id)).filter(Boolean) as any[]"
@@ -143,7 +144,7 @@ function openNewTaskForm() {
               size="sm"
             />
           </div>
-        </button>
+        </UCard>
       </div>
     </div>
   </div>

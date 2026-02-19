@@ -78,14 +78,16 @@ function handleClick() {
         {{ sender?.name }}
       </span>
 
-      <button
-        class="w-full text-left rounded-2xl overflow-hidden transition-transform active:scale-[0.98]"
-        :class="isOwn ? 'rounded-br-md' : 'rounded-bl-md'"
+      <UCard
+        variant="outline"
+        class="w-full max-w-[85%] cursor-pointer transition-transform active:scale-[0.98]"
+        :class="isOwn ? 'ml-auto rounded-br-md' : 'mr-auto rounded-bl-md'"
+        :ui="{ body: 'p-0' }"
         @click="handleClick"
       >
-        <div class="flex bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
+        <div class="flex">
           <div
-            class="w-1 shrink-0"
+            class="w-1 shrink-0 rounded-l-lg"
             :style="{ backgroundColor: getStatusColor(task.status) }"
           />
           <div class="flex flex-1 flex-col gap-2 p-3">
@@ -110,41 +112,51 @@ function handleClick() {
               <StatusBadge :status="task.status" />
               <PriorityBadge :priority="task.priority" />
 
-              <span
+              <UBadge
                 v-if="task.dueDate"
-                class="inline-flex items-center gap-1 text-[11px]"
-                :class="overdue ? 'text-red-500 font-medium' : dueSoon ? 'text-amber-500 font-medium' : 'text-gray-500'"
+                color="neutral"
+                variant="subtle"
+                size="xs"
+                :class="overdue ? '!text-red-500' : dueSoon ? '!text-amber-500' : ''"
               >
-                <UIcon
-                  name="i-lucide-calendar"
-                  class="h-3 w-3"
-                />
+                <template #leading>
+                  <UIcon
+                    name="i-lucide-calendar"
+                    class="h-3 w-3"
+                  />
+                </template>
                 {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}
-              </span>
+              </UBadge>
 
-              <span
+              <UBadge
                 v-if="subtasks.length > 0"
-                class="inline-flex items-center gap-1 text-[11px] text-gray-500"
+                color="neutral"
+                variant="subtle"
+                size="xs"
               >
-                <UIcon
-                  name="i-lucide-list-checks"
-                  class="h-3 w-3"
-                />
+                <template #leading>
+                  <UIcon
+                    name="i-lucide-list-checks"
+                    class="h-3 w-3"
+                  />
+                </template>
                 {{ completedSubtasks }}/{{ subtasks.length }}
-              </span>
+              </UBadge>
             </div>
 
             <div
               v-if="task.tags.length > 0"
               class="flex flex-wrap gap-1"
             >
-              <span
+              <UBadge
                 v-for="tag in task.tags"
                 :key="tag"
-                class="rounded-md bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-medium text-gray-500"
+                color="neutral"
+                variant="subtle"
+                size="xs"
               >
                 {{ tag }}
-              </span>
+              </UBadge>
             </div>
 
             <AvatarStack
@@ -155,7 +167,7 @@ function handleClick() {
             />
           </div>
         </div>
-      </button>
+      </UCard>
 
       <span class="px-1 text-[10px] text-gray-500">
         {{ formatTime(message.timestamp) }}

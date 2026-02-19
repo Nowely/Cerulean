@@ -25,13 +25,15 @@ const STATUS_ICONS: Record<TaskStatus, string> = {
   <UBadge
     color="neutral"
     variant="subtle"
+    :label="showLabel ? (STATUS_CONFIG[status]?.label ?? status) : undefined"
     class="rounded-full px-2 py-0.5 text-[11px] font-medium"
   >
-    <UIcon
-      :name="STATUS_ICONS[status]"
-      class="h-3 w-3"
-      :style="{ color: getStatusColor(status) }"
-    />
-    <span v-if="showLabel">{{ STATUS_CONFIG[status]?.label ?? status }}</span>
+    <template #leading>
+      <UIcon
+        :name="STATUS_ICONS[status]"
+        class="h-3 w-3"
+        :style="{ color: getStatusColor(status) }"
+      />
+    </template>
   </UBadge>
 </template>

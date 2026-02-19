@@ -58,20 +58,25 @@ const senderName = computed(() => {
 </script>
 
 <template>
-  <button
-    class="flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
-    :class="isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : 'hover:bg-[hsl(var(--sidebar-accent))]'"
+  <UButton
+    color="neutral"
+    variant="ghost"
+    block
+    class="justify-start h-auto px-3 py-2.5"
+    :class="isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : ''"
     :data-testid="`thread-item-${thread.id}`"
     @click="emit('click')"
   >
-    <UAvatar
-      :icon="kindConfig.icon"
-      size="xl"
-      :style="{ backgroundColor: kindConfig.color }"
-      class="text-white"
-    />
-    <div class="flex min-w-0 flex-1 flex-col">
-      <div class="flex items-center justify-between gap-2">
+    <template #leading>
+      <UAvatar
+        :icon="kindConfig.icon"
+        size="xl"
+        :style="{ backgroundColor: kindConfig.color }"
+        class="text-white"
+      />
+    </template>
+    <div class="flex min-w-0 flex-1 flex-col items-start text-left">
+      <div class="flex items-center justify-between gap-2 w-full">
         <span class="flex items-center gap-1.5 truncate text-sm font-medium">
           <UIcon
             v-if="thread.pinned"
@@ -84,7 +89,7 @@ const senderName = computed(() => {
           {{ relativeTime(thread.lastActivity) }}
         </span>
       </div>
-      <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center justify-between gap-2 w-full">
         <p class="truncate text-[13px] text-gray-500">
           <span
             v-if="senderName && (thread.kind === 'chat' || thread.kind === 'tasks')"
@@ -101,5 +106,5 @@ const senderName = computed(() => {
         </UBadge>
       </div>
     </div>
-  </button>
+  </UButton>
 </template>
