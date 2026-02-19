@@ -32,20 +32,15 @@ const emit = defineEmits<{
       class="step-header flex items-start gap-3 p-4 border-b"
       :class="darkMode ? 'border-gray-800' : 'border-gray-100'"
     >
-      <div
-        class="step-number flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors"
-        :class="[
-          isActive
-            ? 'bg-primary-500 text-white'
-            : darkMode
-              ? 'bg-gray-800 text-gray-400'
-              : 'bg-gray-100 text-gray-600'
-        ]"
-      >
-        {{ stepNumber }}
-      </div>
+      <UAvatar
+        :text="String(stepNumber)"
+        size="lg"
+        :color="isActive ? 'primary' : 'neutral'"
+        :variant="isActive ? 'solid' : 'soft'"
+        class="shrink-0 font-bold"
+      />
 
-      <div class="step-info flex-1 min-w-0">
+      <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 mb-1">
           <span
             class="text-[10px] font-semibold uppercase tracking-wider"
@@ -53,14 +48,15 @@ const emit = defineEmits<{
           >
             {{ step.label || 'Step' }}
           </span>
-          <span
+          <UBadge
             v-if="isActive"
-            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
-            :class="darkMode ? 'bg-primary-900/50 text-primary-300' : 'bg-primary-100 text-primary-700'"
+            color="primary"
+            variant="soft"
+            size="xs"
           >
             <span class="h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" />
             Current
-          </span>
+          </UBadge>
         </div>
         <h4
           class="font-semibold"
@@ -96,16 +92,14 @@ const emit = defineEmits<{
         :open="isActive"
       >
         <summary class="flex items-center gap-2 cursor-pointer list-none">
-          <div class="flex items-center gap-2 flex-1">
-            <UIcon
-              name="i-lucide-eye"
-              class="h-4 w-4 text-amber-500"
-            />
-            <span
-              class="text-xs font-semibold"
-              :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
-            >Expected Result</span>
-          </div>
+          <UIcon
+            name="i-lucide-eye"
+            class="h-4 w-4 text-amber-500"
+          />
+          <span
+            class="text-xs font-semibold flex-1"
+            :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
+          >Expected Result</span>
           <UIcon
             name="i-lucide-chevron-down"
             class="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180"
@@ -131,79 +125,77 @@ const emit = defineEmits<{
               :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
             >Preview</span>
           </div>
-          <div class="flex items-center gap-2">
-            <button
-              class="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all"
-              :class="[
-                mobileMode
-                  ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/30'
-                  : darkMode
-                    ? 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
-                    : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'
-              ]"
-              @click="emit('toggle-mobile')"
-            >
-              <UIcon
-                name="i-lucide-smartphone"
-                class="h-3.5 w-3.5"
-              />
-              {{ mobileMode ? 'Mobile' : 'Desktop' }}
-            </button>
-            <button
-              class="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all"
-              :class="[
-                darkMode
-                  ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/30'
+          <button
+            class="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all"
+            :class="[
+              mobileMode
+                ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/30'
+                : darkMode
+                  ? 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
                   : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'
-              ]"
-              @click="emit('toggle-dark')"
-            >
-              <UIcon
-                :name="darkMode ? 'i-lucide-sun' : 'i-lucide-moon'"
-                class="h-3.5 w-3.5"
-              />
-              {{ darkMode ? 'Light' : 'Dark' }}
-            </button>
-          </div>
-        </div>
-        <FlowMockup
-          :wireframe="step.wireframe"
-          :highlights="step.highlights"
-          :mobile-mode="mobileMode"
-          :dark-mode="darkMode"
-        />
-      </div>
-
-      <div
-        v-if="step.annotations?.length"
-        class="annotations-section rounded-lg p-3"
-        :class="darkMode ? 'bg-amber-900/20' : 'bg-amber-50'"
-      >
-        <div class="flex items-center gap-2 mb-2">
-          <UIcon
-            name="i-lucide-lightbulb"
-            class="h-4 w-4 text-amber-600"
-          />
-          <span
-            class="text-xs font-semibold"
-            :class="darkMode ? 'text-amber-400' : 'text-amber-700'"
-          >Key Points</span>
-        </div>
-        <ul class="space-y-1.5">
-          <li
-            v-for="(annotation, i) in step.annotations"
-            :key="i"
-            class="flex items-start gap-2 text-xs"
-            :class="darkMode ? 'text-amber-300' : 'text-amber-700'"
+            ]"
+            @click="emit('toggle-mobile')"
           >
             <UIcon
-              :name="annotation.icon || 'i-lucide-info'"
-              class="h-3.5 w-3.5 mt-0.5 shrink-0"
+              name="i-lucide-smartphone"
+              class="h-3.5 w-3.5"
             />
-            <span>{{ annotation.text }}</span>
-          </li>
-        </ul>
+            {{ mobileMode ? 'Mobile' : 'Desktop' }}
+          </button>
+          <button
+            class="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all"
+            :class="[
+              darkMode
+                ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/30'
+                : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'
+            ]"
+            @click="emit('toggle-dark')"
+          >
+            <UIcon
+              :name="darkMode ? 'i-lucide-sun' : 'i-lucide-moon'"
+              class="h-3.5 w-3.5"
+            />
+            {{ darkMode ? 'Light' : 'Dark' }}
+          </button>
+        </div>
       </div>
+      <FlowMockup
+        :wireframe="step.wireframe"
+        :highlights="step.highlights"
+        :mobile-mode="mobileMode"
+        :dark-mode="darkMode"
+      />
+    </div>
+
+    <div
+      v-if="step.annotations?.length"
+      class="annotations-section rounded-lg p-3"
+      :class="darkMode ? 'bg-amber-900/20' : 'bg-amber-50'"
+    >
+      <div class="flex items-center gap-2 mb-2">
+        <UIcon
+          name="i-lucide-lightbulb"
+          class="h-4 w-4 text-amber-600"
+        />
+        <span
+          class="text-xs font-semibold"
+          :class="darkMode ? 'text-amber-400' : 'text-amber-700'"
+        >Key Points</span>
+      </div>
+      <ul class="space-y-1.5">
+        <li
+          v-for="(annotation, i) in step.annotations"
+          :key="i"
+          class="flex items-start gap-2 text-xs"
+          :class="darkMode ? 'text-amber-300' : 'text-amber-700'"
+        >
+          <UIcon
+            :name="annotation.icon || 'i-lucide-info'"
+            class="h-3.5 w-3.5 mt-0.5 shrink-0"
+          />
+          <span>{{ annotation.text }}</span>
+        </li>
+      </ul>
     </div>
   </article>
 </template>

@@ -41,16 +41,14 @@ const containerClass = computed(() => {
 <template>
   <div :class="containerClass">
     <div class="flex items-center gap-2">
-      <button
+      <UButton
         v-if="showBackButton"
-        class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        icon="i-lucide-menu"
+        color="neutral"
+        variant="ghost"
+        size="sm"
         @click="handleBack"
-      >
-        <UIcon
-          name="i-lucide-menu"
-          class="h-5 w-5"
-        />
-      </button>
+      />
       <slot name="start" />
     </div>
 

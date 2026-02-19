@@ -30,25 +30,21 @@ const emit = defineEmits<{
         {{ note.title || 'Untitled' }}
       </h3>
       <div class="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          class="rounded p-1 hover:bg-[hsl(var(--muted))]"
+        <UButton
+          :icon="note.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
+          :color="note.pinned ? 'primary' : 'neutral'"
+          variant="ghost"
+          size="xs"
           @click.stop="emit('pin')"
-        >
-          <UIcon
-            :name="note.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
-            class="h-3 w-3"
-            :class="note.pinned ? 'text-violet-500' : 'text-gray-400'"
-          />
-        </button>
-        <button
-          class="rounded p-1 hover:bg-[hsl(var(--muted))]"
+        />
+        <UButton
+          icon="i-lucide-trash-2"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          class="hover:text-red-400"
           @click.stop="emit('delete')"
-        >
-          <UIcon
-            name="i-lucide-trash-2"
-            class="h-3 w-3 text-gray-400 hover:text-red-400"
-          />
-        </button>
+        />
       </div>
     </div>
     <p
@@ -63,13 +59,15 @@ const emit = defineEmits<{
         name="i-lucide-pin"
         class="h-3 w-3 text-violet-500"
       />
-      <span
+      <UBadge
         v-for="tag in note.tags.slice(0, 3)"
         :key="tag"
-        class="rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-400"
+        color="primary"
+        variant="soft"
+        size="xs"
       >
         {{ tag }}
-      </span>
+      </UBadge>
       <span class="ml-auto text-[10px] text-gray-500">
         {{ relativeTime(note.updatedAt) }}
       </span>

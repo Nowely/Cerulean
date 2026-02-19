@@ -18,14 +18,6 @@ export function useShoppingStore() {
     return items.value.filter(i => i.threadId === threadId).length
   }
 
-  function categories(threadId: string): string[] {
-    const cats = new Set<string>()
-    for (const item of items.value) {
-      if (item.threadId === threadId && item.category) cats.add(item.category)
-    }
-    return [...cats].sort()
-  }
-
   function add(item: ShoppingItem) {
     items.value.push(item)
   }
@@ -57,7 +49,6 @@ export function useShoppingStore() {
     threadItems,
     checkedCount,
     totalCount,
-    categories,
     add,
     toggle,
     updateText,

@@ -67,15 +67,13 @@ function openNewTaskForm() {
         </span>
       </div>
       <template #end>
-        <button
-          class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+        <UButton
+          icon="i-lucide-plus"
+          color="neutral"
+          variant="ghost"
+          size="sm"
           @click="openNewTaskForm"
-        >
-          <UIcon
-            name="i-lucide-plus"
-            class="h-4 w-4"
-          />
-        </button>
+        />
       </template>
     </ContentPanelHeader>
 
@@ -90,29 +88,14 @@ function openNewTaskForm() {
       />
     </div>
 
-    <!-- Task list -->
     <div class="flex-1 overflow-y-auto scrollbar-thin">
-      <div
+      <UEmpty
         v-if="filteredTasks.length === 0"
-        class="flex flex-col items-center justify-center gap-3 px-6 py-16"
-      >
-        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
-          <UIcon
-            name="i-lucide-check-square"
-            class="h-8 w-8 text-emerald-500"
-          />
-        </div>
-        <p class="text-sm text-gray-500">
-          {{ statusFilter === 'all' ? 'No tasks yet' : 'No tasks with this status' }}
-        </p>
-        <button
-          v-if="statusFilter === 'all'"
-          class="mt-1 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition-colors"
-          @click="openNewTaskForm"
-        >
-          Create a task
-        </button>
-      </div>
+        icon="i-lucide-check-square"
+        :title="statusFilter === 'all' ? 'No tasks yet' : 'No tasks with this status'"
+        :actions="statusFilter === 'all' ? [{ label: 'Create a task', color: 'primary', onClick: openNewTaskForm }] : undefined"
+        class="py-16"
+      />
 
       <div class="flex flex-col gap-0.5 p-2">
         <button
@@ -135,13 +118,15 @@ function openNewTaskForm() {
                 :priority="task.priority"
                 :show-label="false"
               />
-              <span
+              <UBadge
                 v-for="tag in task.tags.slice(0, 3)"
                 :key="tag"
-                class="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-400"
+                color="primary"
+                variant="soft"
+                size="xs"
               >
                 {{ tag }}
-              </span>
+              </UBadge>
               <span
                 v-if="task.dueDate"
                 class="text-[10px] text-gray-500"

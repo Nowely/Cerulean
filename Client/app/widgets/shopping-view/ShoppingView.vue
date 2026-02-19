@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { useShoppingStore, useThreadStore } from '~/shared/model'
-import { createShoppingItem } from '~/shared/lib'
 import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
+import InputBar from '~/widgets/chat-view/components/InputBar.vue'
 
 const threadStore = useThreadStore()
 const shoppingStore = useShoppingStore()
 
-const newItemText = ref('')
 const showChecked = ref(true)
 
 const threadId = computed(() => threadStore.activeThreadId.value ?? '')
@@ -16,28 +15,9 @@ const allItems = computed(() => shoppingStore.threadItems(threadId.value))
 const uncheckedItems = computed(() => allItems.value.filter(i => !i.checked))
 const checkedItems = computed(() => allItems.value.filter(i => i.checked))
 
-const groupedUnchecked = computed(() => {
-  const groups: Record<string, typeof uncheckedItems.value> = {}
-  for (const item of uncheckedItems.value) {
-    const cat = item.category || 'Other'
-    if (!groups[cat]) groups[cat] = []
-    groups[cat].push(item)
-  }
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-})
-
 const checkedCount = computed(() => shoppingStore.checkedCount(threadId.value))
 const totalCount = computed(() => shoppingStore.totalCount(threadId.value))
 const progress = computed(() => totalCount.value > 0 ? Math.round((checkedCount.value / totalCount.value) * 100) : 0)
-
-function addItem() {
-  const text = newItemText.value.trim()
-  if (!text) return
-  const item = createShoppingItem(threadId.value, text)
-  shoppingStore.add(item)
-  newItemText.value = ''
-  threadStore.updateLastActivity(threadId.value, new Date().toISOString())
-}
 
 function clearChecked() {
   shoppingStore.clearChecked(threadId.value)
@@ -45,7 +25,7 @@ function clearChecked() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
+  <div class="relative flex flex-1 flex-col overflow-hidden">
     <ContentPanelHeader>
       <div class="flex items-center gap-2">
         <UIcon
@@ -86,21 +66,6 @@ function clearChecked() {
       </UProgress>
     </div>
 
-    <div class="border-b border-[hsl(var(--border))] px-4 py-2">
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-lucide-plus"
-          class="h-4 w-4 shrink-0 text-gray-400"
-        />
-        <UInput
-          v-model="newItemText"
-          placeholder="Add an item..."
-          :ui="{ base: 'bg-transparent' }"
-          @keydown.enter="addItem"
-        />
-      </div>
-    </div>
-
     <div class="flex-1 overflow-y-auto scrollbar-thin">
       <div
         v-if="totalCount === 0"
@@ -118,16 +83,9 @@ function clearChecked() {
       </div>
 
       <template v-else>
-        <div
-          v-for="[category, items] in groupedUnchecked"
-          :key="category"
-          class="px-2"
-        >
-          <p class="px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-            {{ category }}
-          </p>
+        <div class="px-2">
           <div
-            v-for="item in items"
+            v-for="item in uncheckedItems"
             :key="item.id"
             class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-[hsl(var(--muted))] transition-colors"
           >
@@ -193,5 +151,7 @@ function clearChecked() {
         </div>
       </template>
     </div>
+
+    <InputBar />
   </div>
 </template>

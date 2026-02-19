@@ -1,22 +1,19 @@
 <script setup lang="ts">
-import { useThreadStore, useUIStore } from '~/shared/model'
+import { useThreadStore, useUIStore, useShoppingStore } from '~/shared/model'
 import { useSendMessage } from '~/features/message-send'
-import { useToastHelpers } from '~/shared/lib'
+import { useToastHelpers, createShoppingItem } from '~/shared/lib'
 
 const threadStore = useThreadStore()
 const uiStore = useUIStore()
+const shoppingStore = useShoppingStore()
 const { execute: sendMessage } = useSendMessage()
 const toast = useToastHelpers()
 
 const text = ref('')
 const showCommands = ref(false)
-const textareaRef = ref<HTMLTextAreaElement>()
 
-watch(text, () => {
-  if (textareaRef.value) {
-    textareaRef.value.style.height = 'auto'
-    textareaRef.value.style.height = Math.min(textareaRef.value.scrollHeight, 120) + 'px'
-  }
+watch(text, (val) => {
+  showCommands.value = val === '/'
 })
 
 function openTaskForm() {
@@ -33,7 +30,8 @@ function openTemplates() {
 
 function handleSend() {
   const trimmed = text.value.trim()
-  if (!trimmed || !threadStore.activeThread.value) {
+  const thread = threadStore.activeThread.value
+  if (!trimmed || !thread) {
     toast.warning({
       title: 'Cannot send message',
       description: 'Select a thread and type a message first.'
@@ -41,15 +39,20 @@ function handleSend() {
     return
   }
 
-  sendMessage({ content: trimmed, type: 'text' })
-  toast.success({
-    title: 'Message sent',
-    icon: 'i-lucide-check'
-  })
-  text.value = ''
-  if (textareaRef.value) {
-    textareaRef.value.style.height = 'auto'
+  if (thread.kind === 'shopping') {
+    const item = createShoppingItem(thread.id, trimmed)
+    shoppingStore.add(item)
+    threadStore.updateLastActivity(thread.id, new Date().toISOString())
+  } else {
+    sendMessage({ content: trimmed, type: 'text' })
+    toast.success({
+      title: 'Message sent',
+      icon: 'i-lucide-check'
+    })
   }
+  
+  text.value = ''
+  showCommands.value = false
 }
 
 function handleSlashCommand(cmd: string) {
@@ -79,12 +82,6 @@ function handleKeyDown(e: KeyboardEvent) {
       handleSend()
     }
   }
-}
-
-function handleInput(e: Event) {
-  const val = (e.target as HTMLTextAreaElement).value
-  text.value = val
-  showCommands.value = val === '/'
 }
 </script>
 
@@ -161,9 +158,8 @@ function handleInput(e: Event) {
 
       <div class="flex-1">
         <UTextarea
-          ref="textareaRef"
-          :model-value="text"
-          placeholder="Message or type '/' for commands..."
+          v-model="text"
+          :placeholder="threadStore.activeThread.value?.kind === 'shopping' ? 'Add an item...' : 'Message or type \'/\' for commands...'"
           :rows="1"
           autoresize
           :max-rows="5"
@@ -172,13 +168,12 @@ function handleInput(e: Event) {
             root: 'w-full',
             base: 'resize-none rounded-2xl px-4 py-2.5 text-sm leading-relaxed'
           }"
-          @update:model-value="text = $event; showCommands = $event === '/'"
           @keydown="handleKeyDown"
         />
       </div>
 
       <UButton
-        :icon="text.trim() ? 'i-lucide-send' : undefined"
+        icon="i-lucide-send"
         :color="text.trim() ? 'primary' : 'neutral'"
         variant="solid"
         size="lg"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Thread, ThreadKind } from '~/shared/types'
+import type { Thread } from '~/shared/types'
 import { useMessageStore, useUserStore, useShoppingStore, useNoteStore, useContactStore, useTaskStore } from '~/shared/model'
 import { THREAD_KINDS } from '~/shared/lib'
 import { relativeTime } from '~/shared/utils'
@@ -64,15 +64,12 @@ const senderName = computed(() => {
     :data-testid="`thread-item-${thread.id}`"
     @click="emit('click')"
   >
-    <div
-      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white"
+    <UAvatar
+      :icon="kindConfig.icon"
+      size="xl"
       :style="{ backgroundColor: kindConfig.color }"
-    >
-      <UIcon
-        :name="kindConfig.icon"
-        class="h-5 w-5"
-      />
-    </div>
+      class="text-white"
+    />
     <div class="flex min-w-0 flex-1 flex-col">
       <div class="flex items-center justify-between gap-2">
         <span class="flex items-center gap-1.5 truncate text-sm font-medium">
@@ -95,12 +92,13 @@ const senderName = computed(() => {
           >{{ senderName }}: </span>
           {{ previewText }}
         </p>
-        <span
+        <UBadge
           v-if="thread.unreadCount > 0"
-          class="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[11px] font-semibold text-white"
+          color="primary"
+          size="xs"
         >
           {{ thread.unreadCount }}
-        </span>
+        </UBadge>
       </div>
     </div>
   </button>

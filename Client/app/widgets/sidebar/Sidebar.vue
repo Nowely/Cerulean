@@ -86,48 +86,43 @@ function selectThread(threadId: string) {
     <SidebarHeader @new-thread="openNewThread" />
 
     <div
-      class="flex-1 overflow-y-auto scrollbar-thin"
+      class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-4 scrollbar-thin"
       data-testid="thread-list"
     >
-      <div class="flex flex-col gap-0.5 px-2 pb-4">
-        <template v-if="pinnedThreads.length > 0">
-          <p class="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-            Pinned
-          </p>
-          <ThreadItem
-            v-for="thread in pinnedThreads"
-            :key="thread.id"
-            :thread="thread"
-            :is-active="activeThreadId === thread.id"
-            @click="selectThread(thread.id)"
-          />
-        </template>
+      <template v-if="pinnedThreads.length > 0">
+        <p class="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+          Pinned
+        </p>
+        <ThreadItem
+          v-for="thread in pinnedThreads"
+          :key="thread.id"
+          :thread="thread"
+          :is-active="activeThreadId === thread.id"
+          @click="selectThread(thread.id)"
+        />
+      </template>
 
-        <template v-if="unpinnedThreads.length > 0">
-          <p
-            v-if="pinnedThreads.length > 0"
-            class="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500"
-          >
-            All Threads
-          </p>
-          <ThreadItem
-            v-for="thread in unpinnedThreads"
-            :key="thread.id"
-            :thread="thread"
-            :is-active="activeThreadId === thread.id"
-            @click="selectThread(thread.id)"
-          />
-        </template>
-
-        <div
-          v-if="results.length === 0"
-          class="flex flex-col items-center gap-2 px-4 py-12 text-center"
+      <template v-if="unpinnedThreads.length > 0">
+        <p
+          v-if="pinnedThreads.length > 0"
+          class="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500"
         >
-          <p class="text-sm text-gray-500">
-            No threads found
-          </p>
-        </div>
-      </div>
+          All Threads
+        </p>
+        <ThreadItem
+          v-for="thread in unpinnedThreads"
+          :key="thread.id"
+          :thread="thread"
+          :is-active="activeThreadId === thread.id"
+          @click="selectThread(thread.id)"
+        />
+      </template>
+
+      <UEmpty
+        v-if="results.length === 0"
+        title="No threads found"
+        class="py-12"
+      />
     </div>
 
     <SidebarFooter />
@@ -146,23 +141,25 @@ function selectThread(threadId: string) {
             <p class="text-sm text-gray-500 mb-4">
               Choose what kind of thread to create
             </p>
-            <div class="grid grid-cols-1 gap-2">
-              <button
+            <div class="flex flex-col gap-2">
+              <UButton
                 v-for="opt in kindOptions"
                 :key="opt.kind"
-                class="flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-[hsl(var(--muted))]"
+                color="neutral"
+                variant="ghost"
+                block
+                class="justify-start h-auto p-3"
                 @click="selectKind(opt.kind)"
               >
-                <div
-                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
-                  :style="{ backgroundColor: opt.color }"
-                >
-                  <UIcon
-                    :name="opt.icon"
-                    class="h-5 w-5"
+                <template #leading>
+                  <UAvatar
+                    :icon="opt.icon"
+                    size="lg"
+                    :style="{ backgroundColor: opt.color }"
+                    class="text-white shrink-0"
                   />
-                </div>
-                <div>
+                </template>
+                <div class="text-left">
                   <p class="text-sm font-medium">
                     {{ opt.label }}
                   </p>
@@ -170,35 +167,31 @@ function selectThread(threadId: string) {
                     {{ opt.description }}
                   </p>
                 </div>
-              </button>
+              </UButton>
             </div>
           </template>
 
           <template v-else>
             <div class="flex items-center gap-2 mb-4">
-              <button
-                class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
+              <UButton
+                icon="i-lucide-arrow-left"
+                color="neutral"
+                variant="ghost"
+                size="sm"
                 @click="backToKindPicker"
-              >
-                <UIcon
-                  name="i-lucide-arrow-left"
-                  class="h-4 w-4"
-                />
-              </button>
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-full text-white"
+              />
+              <UAvatar
                 :style="{ backgroundColor: THREAD_KINDS[newThreadKind].color }"
+                size="sm"
               >
                 <UIcon
                   :name="THREAD_KINDS[newThreadKind].icon"
-                  class="h-4 w-4"
+                  class="h-4 w-4 text-white"
                 />
-              </div>
-              <div>
-                <h3 class="text-sm font-semibold">
-                  New {{ THREAD_KINDS[newThreadKind].label }} Thread
-                </h3>
-              </div>
+              </UAvatar>
+              <h3 class="text-sm font-semibold">
+                New {{ THREAD_KINDS[newThreadKind].label }} Thread
+              </h3>
             </div>
 
             <div class="flex flex-col gap-3">

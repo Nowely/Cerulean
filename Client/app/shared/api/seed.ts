@@ -588,14 +588,14 @@ export const SEED_NOTIFICATIONS: Notification[] = [
 ]
 
 export const SEED_SHOPPING_ITEMS: ShoppingItem[] = [
-  { id: 'si1', threadId: 't6', text: 'Milk', checked: false, quantity: 2, category: 'Dairy', sortOrder: 0, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
-  { id: 'si2', threadId: 't6', text: 'Eggs', checked: true, quantity: 1, category: 'Dairy', sortOrder: 1, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
-  { id: 'si3', threadId: 't6', text: 'Bread', checked: false, quantity: 1, category: 'Bakery', sortOrder: 2, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
-  { id: 'si4', threadId: 't6', text: 'Chicken breast', checked: false, quantity: 2, category: 'Meat', sortOrder: 3, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
-  { id: 'si5', threadId: 't6', text: 'Bananas', checked: true, quantity: 1, category: 'Produce', sortOrder: 4, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
-  { id: 'si6', threadId: 't6', text: 'Spinach', checked: false, quantity: 1, category: 'Produce', sortOrder: 5, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
-  { id: 'si7', threadId: 't6', text: 'Olive oil', checked: false, quantity: 1, category: 'Pantry', sortOrder: 6, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() },
-  { id: 'si8', threadId: 't6', text: 'Pasta', checked: false, quantity: 3, category: 'Pantry', sortOrder: 7, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() }
+  { id: 'si1', threadId: 't6', text: 'Milk', checked: false, quantity: 2, sortOrder: 0, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
+  { id: 'si2', threadId: 't6', text: 'Eggs', checked: true, quantity: 1, sortOrder: 1, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
+  { id: 'si3', threadId: 't6', text: 'Bread', checked: false, quantity: 1, sortOrder: 2, createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
+  { id: 'si4', threadId: 't6', text: 'Chicken breast', checked: false, quantity: 2, sortOrder: 3, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
+  { id: 'si5', threadId: 't6', text: 'Bananas', checked: true, quantity: 1, sortOrder: 4, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
+  { id: 'si6', threadId: 't6', text: 'Spinach', checked: false, quantity: 1, sortOrder: 5, createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
+  { id: 'si7', threadId: 't6', text: 'Olive oil', checked: false, quantity: 1, sortOrder: 6, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() },
+  { id: 'si8', threadId: 't6', text: 'Pasta', checked: false, quantity: 3, sortOrder: 7, createdAt: new Date(now - 1000 * 60 * 60 * 1).toISOString() }
 ]
 
 export const SEED_NOTES: Note[] = [

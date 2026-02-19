@@ -6,7 +6,6 @@ export interface ShoppingItem {
   text: string
   checked: boolean
   quantity?: number
-  category?: string
   sortOrder: number
   createdAt: string
 }
