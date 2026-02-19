@@ -68,19 +68,15 @@ function isTaskType(msg: Message): boolean {
         v-for="(msg, index) in formattedMessages"
         :key="msg.id"
       >
-        <div
+        <UBadge
           v-if="msg._dateSeparator"
-          class="flex justify-center py-2"
+          color="neutral"
+          variant="soft"
+          size="xs"
+          class="mx-auto my-2 flex justify-center backdrop-blur-sm"
         >
-          <UBadge
-            color="neutral"
-            variant="soft"
-            size="xs"
-            class="backdrop-blur-sm"
-          >
-            {{ msg._dateSeparator }}
-          </UBadge>
-        </div>
+          {{ msg._dateSeparator }}
+        </UBadge>
 
         <SystemBubble
           v-if="isSystemType(msg._original)"

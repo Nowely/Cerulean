@@ -73,20 +73,12 @@ function clearChecked() {
     </div>
 
     <UScrollArea class="flex-1">
-      <div
+      <UEmpty
         v-if="totalCount === 0"
-        class="flex flex-col items-center justify-center gap-3 px-6 py-16"
-      >
-        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
-          <UIcon
-            name="i-lucide-shopping-cart"
-            class="h-8 w-8 text-amber-500"
-          />
-        </div>
-        <p class="text-sm text-gray-500">
-          Your shopping list is empty
-        </p>
-      </div>
+        icon="i-lucide-shopping-cart"
+        title="Your shopping list is empty"
+        class="py-16"
+      />
 
       <template v-else>
         <div class="px-2">

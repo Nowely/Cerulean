@@ -53,30 +53,28 @@ function handleClick() {
 <template>
   <div
     v-if="task"
-    class="flex gap-2 px-3"
+    class="flex items-end gap-2 px-3"
     :class="isOwn ? 'flex-row-reverse' : 'flex-row'"
   >
     <UserAvatar
       v-if="showAvatar && !isOwn"
       :user="sender"
       size="sm"
-      class="mt-1"
-    />
-    <div
-      v-else-if="!isOwn"
-      class="w-7 shrink-0"
     />
 
     <div
       class="flex max-w-[85%] flex-col gap-0.5"
       :class="isOwn ? 'items-end' : 'items-start'"
     >
-      <span
+      <UBadge
         v-if="showAvatar && !isOwn"
-        class="px-1 text-[11px] font-medium text-primary-500"
+        color="primary"
+        variant="subtle"
+        size="xs"
+        class="mx-1 font-medium"
       >
         {{ sender?.name }}
-      </span>
+      </UBadge>
 
       <UCard
         variant="outline"

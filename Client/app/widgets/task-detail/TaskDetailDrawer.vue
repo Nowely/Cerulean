@@ -264,11 +264,10 @@ function closeDrawer() {
             </div>
           </UFormField>
 
-          <div
+          <UFormField
             v-if="dependencies.length > 0"
-            class="flex flex-col gap-2"
+            label="Dependencies"
           >
-            <span class="form-label">Dependencies</span>
             <div class="flex flex-col gap-1.5">
               <UButton
                 v-for="dep in dependencies"
@@ -298,17 +297,13 @@ function closeDrawer() {
                 </template>
               </UButton>
             </div>
-          </div>
+          </UFormField>
 
-          <div class="flex flex-col gap-2">
-            <span class="form-label">
-              Subtasks{{ subtasks.length > 0 ? ` (${completedSubtasks}/${subtasks.length})` : '' }}
-            </span>
-
+          <UFormField :label="`Subtasks${subtasks.length > 0 ? ` (${completedSubtasks}/${subtasks.length})` : ''}`">
             <template v-if="subtasks.length > 0">
               <UProgress
                 :value="progress"
-                class="h-1.5"
+                class="h-1.5 mb-2"
               />
               <UButton
                 v-for="sub in subtasks"
@@ -335,7 +330,7 @@ function closeDrawer() {
               </UButton>
             </template>
 
-            <div class="flex gap-2">
+            <div class="flex gap-2 mt-2">
               <UInput
                 v-model="newSubtask"
                 placeholder="Add subtask..."
@@ -349,7 +344,7 @@ function closeDrawer() {
                 @click="addSubtask"
               />
             </div>
-          </div>
+          </UFormField>
         </div>
       </UScrollArea>
     </template>

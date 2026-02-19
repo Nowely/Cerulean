@@ -102,10 +102,13 @@ function removeTag(tag: string) {
       />
 
       <div class="mt-4 flex flex-wrap items-center gap-1.5">
-        <span
+        <UBadge
           v-for="tag in note.tags"
           :key="tag"
-          class="flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-xs text-violet-400"
+          color="primary"
+          variant="soft"
+          size="xs"
+          class="pr-1"
         >
           {{ tag }}
           <UButton
@@ -113,10 +116,10 @@ function removeTag(tag: string) {
             color="neutral"
             variant="ghost"
             size="xs"
-            class="h-3 w-3 p-0"
+            class="ml-1 h-3 w-3 p-0"
             @click="removeTag(tag)"
           />
-        </span>
+        </UBadge>
         <UInput
           v-model="newTag"
           placeholder="Add tag..."
