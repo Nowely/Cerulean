@@ -38,77 +38,74 @@ function deleteNote(id: string) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
-    <ContentPanelHeader>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-lucide-notebook-pen"
-          class="h-5 w-5 text-violet-500"
-        />
-        <h2 class="text-lg font-semibold">
-          {{ threadStore.activeThread.value?.name }}
-        </h2>
-        <span class="text-xs text-gray-500">
-          {{ filteredNotes.length }} notes
-        </span>
-      </div>
-      <template #end>
-        <UButton
-          icon="i-lucide-plus"
-          color="neutral"
-          variant="ghost"
-          size="sm"
-          @click="createNewNote"
-        />
-      </template>
-    </ContentPanelHeader>
-
-    <div class="border-b border-[hsl(var(--border))] px-4 py-2">
+  <ContentPanelHeader>
+    <div class="flex items-center gap-2">
+      <UIcon
+        name="i-lucide-notebook-pen"
+        class="h-5 w-5 text-violet-500"
+      />
+      <h2 class="text-lg font-semibold">
+        {{ threadStore.activeThread.value?.name }}
+      </h2>
+      <span class="text-xs text-gray-500">
+        {{ filteredNotes.length }} notes
+      </span>
+    </div>
+    <template #end>
+      <UButton
+        icon="i-lucide-plus"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        @click="createNewNote"
+      />
+    </template>
+    <template #subheader>
       <UInput
         v-model="searchQuery"
         placeholder="Search notes..."
         icon="i-lucide-search"
         variant="soft"
       />
-    </div>
+    </template>
+  </ContentPanelHeader>
 
-    <div class="flex flex-1 overflow-hidden">
-      <UScrollArea
-        class="flex-1 p-3"
-        :class="{ 'hidden md:block md:w-1/2 lg:w-2/5': isEditing }"
-      >
-        <UEmpty
-          v-if="filteredNotes.length === 0"
-          icon="i-lucide-notebook-pen"
-          :title="searchQuery ? 'No notes match your search' : 'No notes yet'"
-          :actions="!searchQuery ? [{ label: 'Create a note', color: 'primary', onClick: createNewNote }] : undefined"
-        />
-
-        <div
-          v-else
-          class="grid grid-cols-1 gap-2 sm:grid-cols-2"
-          :class="{ 'sm:grid-cols-1': isEditing }"
-        >
-          <NoteCard
-            v-for="note in filteredNotes"
-            :key="note.id"
-            :note="note"
-            :is-active="noteStore.activeNoteId.value === note.id"
-            @click="openNote(note.id)"
-            @pin="noteStore.togglePin(note.id)"
-            @delete="deleteNote(note.id)"
-          />
-        </div>
-      </UScrollArea>
-
-      <NoteEditor
-        v-if="isEditing && noteStore.activeNote.value"
-        :note="noteStore.activeNote.value"
-        class="w-full md:w-1/2 lg:w-3/5 border-l border-[hsl(var(--border))]"
-        @close="closeEditor"
-        @update="(updates) => noteStore.update(noteStore.activeNoteId.value!, updates)"
-        @delete="deleteNote(noteStore.activeNoteId.value!)"
+  <div class="flex flex-1 overflow-hidden">
+    <UScrollArea
+      class="flex-1 p-3"
+      :class="{ 'hidden md:block md:w-1/2 lg:w-2/5': isEditing }"
+    >
+      <UEmpty
+        v-if="filteredNotes.length === 0"
+        icon="i-lucide-notebook-pen"
+        :title="searchQuery ? 'No notes match your search' : 'No notes yet'"
+        :actions="!searchQuery ? [{ label: 'Create a note', color: 'primary', onClick: createNewNote }] : undefined"
       />
-    </div>
+
+      <div
+        v-else
+        class="grid grid-cols-1 gap-2 sm:grid-cols-2"
+        :class="{ 'sm:grid-cols-1': isEditing }"
+      >
+        <NoteCard
+          v-for="note in filteredNotes"
+          :key="note.id"
+          :note="note"
+          :is-active="noteStore.activeNoteId.value === note.id"
+          @click="openNote(note.id)"
+          @pin="noteStore.togglePin(note.id)"
+          @delete="deleteNote(note.id)"
+        />
+      </div>
+    </UScrollArea>
+
+    <NoteEditor
+      v-if="isEditing && noteStore.activeNote.value"
+      :note="noteStore.activeNote.value"
+      class="w-full md:w-1/2 lg:w-3/5 border-l border-[hsl(var(--border))]"
+      @close="closeEditor"
+      @update="(updates) => noteStore.update(noteStore.activeNoteId.value!, updates)"
+      @delete="deleteNote(noteStore.activeNoteId.value!)"
+    />
   </div>
 </template>

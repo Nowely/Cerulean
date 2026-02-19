@@ -4,8 +4,7 @@ import { STATUS_CONFIG, PRIORITY_CONFIG, useToastHelpers } from '~/shared/lib'
 import type { TaskStatus, TaskPriority } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
-import StatusBadge from '~/shared/ui/StatusBadge.vue'
-import PriorityBadge from '~/shared/ui/PriorityBadge.vue'
+import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
 import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const taskStore = useTaskStore()
@@ -176,7 +175,10 @@ function closeDrawer() {
                   variant="ghost"
                   class="bg-gray-100 dark:bg-gray-800"
                 >
-                  <StatusBadge :status="task.status" />
+                  <PropertyBadge
+                    type="status"
+                    :value="task.status"
+                  />
                 </UButton>
               </UDropdownMenu>
             </UFormField>
@@ -193,7 +195,10 @@ function closeDrawer() {
                   variant="ghost"
                   class="bg-gray-100 dark:bg-gray-800"
                 >
-                  <PriorityBadge :priority="task.priority" />
+                  <PropertyBadge
+                    type="priority"
+                    :value="task.priority"
+                  />
                 </UButton>
               </UDropdownMenu>
             </UFormField>
@@ -290,8 +295,9 @@ function closeDrawer() {
                   {{ dep.title }}
                 </span>
                 <template #trailing>
-                  <StatusBadge
-                    :status="dep.status"
+                  <PropertyBadge
+                    type="status"
+                    :value="dep.status"
                     :show-label="false"
                   />
                 </template>

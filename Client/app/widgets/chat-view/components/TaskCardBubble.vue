@@ -3,8 +3,7 @@ import type { Message } from '~/shared/types'
 import { useUserStore, useTaskStore } from '~/shared/model'
 import { formatTime, getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
-import StatusBadge from '~/shared/ui/StatusBadge.vue'
-import PriorityBadge from '~/shared/ui/PriorityBadge.vue'
+import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 
 interface Props {
@@ -107,8 +106,14 @@ function handleClick() {
             </p>
 
             <div class="flex flex-wrap items-center gap-2">
-              <StatusBadge :status="task.status" />
-              <PriorityBadge :priority="task.priority" />
+              <PropertyBadge
+                type="status"
+                :value="task.status"
+              />
+              <PropertyBadge
+                type="priority"
+                :value="task.priority"
+              />
 
               <UBadge
                 v-if="task.dueDate"

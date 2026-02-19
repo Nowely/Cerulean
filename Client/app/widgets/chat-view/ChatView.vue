@@ -62,7 +62,7 @@ function isTaskType(msg: Message): boolean {
 </script>
 
 <template>
-  <div class="relative flex flex-1 flex-col overflow-hidden">
+  <div class="flex flex-1 flex-col">
     <UScrollArea class="flex-1">
       <template
         v-for="(msg, index) in formattedMessages"

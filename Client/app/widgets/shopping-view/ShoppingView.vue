@@ -25,7 +25,7 @@ function clearChecked() {
 </script>
 
 <template>
-  <div class="relative flex flex-1 flex-col overflow-hidden">
+  <div class="flex flex-1 flex-col">
     <ContentPanelHeader>
       <div class="flex items-center gap-2">
         <UIcon
@@ -51,26 +51,25 @@ function clearChecked() {
           </template>
         </UButton>
       </template>
-    </ContentPanelHeader>
-
-    <div
-      v-if="totalCount > 0"
-      class="border-b border-[hsl(var(--border))] px-4 py-2"
-    >
-      <UProgress
-        :model-value="checkedCount"
-        :max="totalCount"
-        color="warning"
-        size="sm"
+      <template
+        v-if="totalCount > 0"
+        #subheader
       >
-        <template #status>
-          <div class="flex items-center justify-between text-xs text-gray-500">
-            <span>{{ checkedCount }} of {{ totalCount }} items</span>
-            <span>{{ progress }}%</span>
-          </div>
-        </template>
-      </UProgress>
-    </div>
+        <UProgress
+          :model-value="checkedCount"
+          :max="totalCount"
+          color="warning"
+          size="sm"
+        >
+          <template #status>
+            <div class="flex items-center justify-between text-xs text-gray-500">
+              <span>{{ checkedCount }} of {{ totalCount }} items</span>
+              <span>{{ progress }}%</span>
+            </div>
+          </template>
+        </UProgress>
+      </template>
+    </ContentPanelHeader>
 
     <UScrollArea class="flex-1">
       <UEmpty

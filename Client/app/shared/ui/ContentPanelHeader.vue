@@ -67,4 +67,11 @@ const containerClass = computed(() => {
       <slot name="end" />
     </div>
   </div>
+
+  <div
+    v-if="$slots.subheader"
+    class="border-b border-[hsl(var(--border))] px-4 py-2"
+  >
+    <slot name="subheader" />
+  </div>
 </template>
