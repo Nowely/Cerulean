@@ -159,20 +159,23 @@ function handleInput(e: Event) {
         </template>
       </UPopover>
 
-      <UTextarea
-        ref="textareaRef"
-        :model-value="text"
-        placeholder="Message or type '/' for commands..."
-        :rows="1"
-        autoresize
-        :max-rows="5"
-        data-testid="message-input"
-        :ui="{
-          base: 'flex-1 resize-none rounded-2xl px-4 py-2.5 text-sm leading-relaxed'
-        }"
-        @update:model-value="text = $event; showCommands = $event === '/'"
-        @keydown="handleKeyDown"
-      />
+      <div class="flex-1">
+        <UTextarea
+          ref="textareaRef"
+          :model-value="text"
+          placeholder="Message or type '/' for commands..."
+          :rows="1"
+          autoresize
+          :max-rows="5"
+          data-testid="message-input"
+          :ui="{
+            root: 'w-full',
+            base: 'resize-none rounded-2xl px-4 py-2.5 text-sm leading-relaxed'
+          }"
+          @update:model-value="text = $event; showCommands = $event === '/'"
+          @keydown="handleKeyDown"
+        />
+      </div>
 
       <UButton
         :icon="text.trim() ? 'i-lucide-send' : undefined"
