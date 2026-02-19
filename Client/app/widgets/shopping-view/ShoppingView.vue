@@ -37,13 +37,19 @@ function clearChecked() {
         </h2>
       </div>
       <template #end>
-        <button
+        <UButton
           v-if="checkedCount > 0"
-          class="text-xs text-gray-500 hover:text-red-400 transition-colors"
+          label="Clear checked"
+          color="neutral"
+          variant="link"
+          size="xs"
+          class="text-gray-500 hover:text-red-400"
           @click="clearChecked"
         >
-          Clear checked ({{ checkedCount }})
-        </button>
+          <template #trailing>
+            <span class="text-xs">({{ checkedCount }})</span>
+          </template>
+        </UButton>
       </template>
     </ContentPanelHeader>
 
@@ -66,7 +72,7 @@ function clearChecked() {
       </UProgress>
     </div>
 
-    <div class="flex-1 overflow-y-auto scrollbar-thin">
+    <UScrollArea class="flex-1">
       <div
         v-if="totalCount === 0"
         class="flex flex-col items-center justify-center gap-3 px-6 py-16"
@@ -99,15 +105,14 @@ function clearChecked() {
               v-if="item.quantity && item.quantity > 1"
               class="text-xs text-gray-500"
             >x{{ item.quantity }}</span>
-            <button
+            <UButton
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              size="xs"
               class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-400"
               @click="shoppingStore.remove(item.id)"
-            >
-              <UIcon
-                name="i-lucide-x"
-                class="h-4 w-4"
-              />
-            </button>
+            />
           </div>
         </div>
 
@@ -115,16 +120,21 @@ function clearChecked() {
           v-if="checkedItems.length > 0"
           class="px-2"
         >
-          <button
-            class="flex w-full items-center gap-2 px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            class="w-full justify-start px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500"
             @click="showChecked = !showChecked"
           >
-            <UIcon
-              :name="showChecked ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-              class="h-3 w-3"
-            />
+            <template #leading>
+              <UIcon
+                :name="showChecked ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                class="h-3 w-3"
+              />
+            </template>
             Completed ({{ checkedItems.length }})
-          </button>
+          </UButton>
           <template v-if="showChecked">
             <div
               v-for="item in checkedItems"
@@ -137,20 +147,19 @@ function clearChecked() {
                 @update:model-value="shoppingStore.toggle(item.id)"
               />
               <span class="flex-1 text-sm text-gray-500 line-through">{{ item.text }}</span>
-              <button
+              <UButton
+                icon="i-lucide-x"
+                color="neutral"
+                variant="ghost"
+                size="xs"
                 class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-400"
                 @click="shoppingStore.remove(item.id)"
-              >
-                <UIcon
-                  name="i-lucide-x"
-                  class="h-4 w-4"
-                />
-              </button>
+              />
             </div>
           </template>
         </div>
       </template>
-    </div>
+    </UScrollArea>
 
     <InputBar />
   </div>

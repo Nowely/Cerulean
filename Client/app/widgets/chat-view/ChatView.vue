@@ -63,8 +63,11 @@ function isTaskType(msg: Message): boolean {
 
 <template>
   <div class="relative flex flex-1 flex-col overflow-hidden">
-    <div class="flex-1 overflow-y-auto">
-      <template v-for="(msg, index) in formattedMessages" :key="msg.id">
+    <UScrollArea class="flex-1">
+      <template
+        v-for="(msg, index) in formattedMessages"
+        :key="msg.id"
+      >
         <div
           v-if="msg._dateSeparator"
           class="flex justify-center py-2"
@@ -94,7 +97,7 @@ function isTaskType(msg: Message): boolean {
           :show-avatar="shouldShowAvatar(index)"
         />
       </template>
-    </div>
+    </UScrollArea>
 
     <InputBar />
   </div>

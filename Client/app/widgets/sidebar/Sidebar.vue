@@ -85,8 +85,8 @@ function selectThread(threadId: string) {
   <div class="flex h-full flex-col bg-[hsl(var(--sidebar-background))]">
     <SidebarHeader @new-thread="openNewThread" />
 
-    <div
-      class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-4 scrollbar-thin"
+    <UScrollArea
+      class="flex-1 px-2 pb-4"
       data-testid="thread-list"
     >
       <template v-if="pinnedThreads.length > 0">
@@ -125,7 +125,7 @@ function selectThread(threadId: string) {
         title="No threads found"
         class="py-12"
       />
-    </div>
+    </UScrollArea>
 
     <SidebarFooter />
 

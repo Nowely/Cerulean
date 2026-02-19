@@ -35,22 +35,16 @@ function save() {
 
 function addTag() {
   const tag = newTag.value.trim().toLowerCase()
-  if (!tag || props.contact.tags.includes(tag)) { newTag.value = ''; return }
+  if (!tag || props.contact.tags.includes(tag)) {
+    newTag.value = ''
+    return
+  }
   emit('update', { tags: [...props.contact.tags, tag] })
   newTag.value = ''
 }
 
 function removeTag(tag: string) {
   emit('update', { tags: props.contact.tags.filter(t => t !== tag) })
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(w => w[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
 }
 
 function getAvatarColor(name: string): string {
@@ -93,14 +87,15 @@ function getAvatarColor(name: string): string {
       </template>
     </ContentPanelHeader>
 
-    <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-6">
+    <UScrollArea class="flex-1 px-4 py-6">
       <div class="flex flex-col items-center gap-3 mb-6">
-        <div
-          class="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white"
+        <UAvatar
+          :alt="contact.name"
+          size="3xl"
           :style="{ backgroundColor: getAvatarColor(contact.name) }"
-        >
-          {{ getInitials(contact.name) }}
-        </div>
+          class="font-bold text-white"
+          :ui="{ fallback: 'bg-transparent text-2xl' }"
+        />
         <template v-if="editing">
           <UInput
             v-model="form.name"
@@ -189,30 +184,36 @@ function getAvatarColor(name: string): string {
               Tags
             </p>
             <div class="flex flex-wrap gap-1.5">
-              <span
+              <UBadge
                 v-for="tag in contact.tags"
                 :key="tag"
-                class="flex items-center gap-1 rounded-full bg-sky-500/10 px-2 py-0.5 text-xs text-sky-400"
+                color="primary"
+                variant="soft"
+                size="xs"
+                class="pr-1"
               >
                 {{ tag }}
-                <button @click="removeTag(tag)">
-                  <UIcon
-                    name="i-lucide-x"
-                    class="h-3 w-3"
-                  />
-                </button>
-              </span>
-              <input
+                <UButton
+                  icon="i-lucide-x"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  class="h-3 w-3 p-0 ml-1"
+                  @click="removeTag(tag)"
+                />
+              </UBadge>
+              <UInput
                 v-model="newTag"
-                type="text"
                 placeholder="Add tag..."
-                class="w-20 bg-transparent text-xs outline-none placeholder:text-gray-500"
+                variant="none"
+                size="xs"
+                class="w-20"
                 @keydown.enter="addTag"
-              >
+              />
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </UScrollArea>
   </div>
 </template>

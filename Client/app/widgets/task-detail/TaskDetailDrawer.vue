@@ -158,9 +158,9 @@ function closeDrawer() {
         </template>
       </ContentPanelHeader>
 
-      <div
+      <UScrollArea
         v-if="task"
-        class="flex-1 overflow-y-auto px-4 pb-6"
+        class="flex-1 px-4 pb-6"
       >
         <div class="flex flex-col gap-5 pt-2">
           <div class="flex flex-wrap gap-3">
@@ -218,21 +218,19 @@ function closeDrawer() {
             </UFormField>
           </div>
 
-          <div
+          <UFormField
             v-if="task.description"
-            class="flex flex-col gap-1.5"
+            label="Description"
           >
-            <span class="form-label">Description</span>
             <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
               {{ task.description }}
             </p>
-          </div>
+          </UFormField>
 
-          <div
+          <UFormField
             v-if="assignees.length > 0"
-            class="flex flex-col gap-2"
+            label="Assignees"
           >
-            <span class="form-label">Assignees</span>
             <UAvatarGroup>
               <UAvatar
                 v-for="user in assignees"
@@ -247,13 +245,12 @@ function closeDrawer() {
                 </template>
               </UAvatar>
             </UAvatarGroup>
-          </div>
+          </UFormField>
 
-          <div
+          <UFormField
             v-if="task.tags.length > 0"
-            class="flex flex-col gap-2"
+            label="Tags"
           >
-            <span class="form-label">Tags</span>
             <div class="flex flex-wrap gap-1.5">
               <UBadge
                 v-for="tag in task.tags"
@@ -265,7 +262,7 @@ function closeDrawer() {
                 {{ tag }}
               </UBadge>
             </div>
-          </div>
+          </UFormField>
 
           <div
             v-if="dependencies.length > 0"
@@ -354,7 +351,7 @@ function closeDrawer() {
             </div>
           </div>
         </div>
-      </div>
+      </UScrollArea>
     </template>
   </USlideover>
 </template>

@@ -160,7 +160,7 @@ function closeDrawer() {
           </div>
         </ContentPanelHeader>
 
-        <div class="flex-1 overflow-y-auto px-4 pb-6">
+        <UScrollArea class="flex-1 px-4 pb-6">
           <div class="flex flex-col gap-4 pt-2">
             <UFormField
               label="Title"
@@ -271,7 +271,7 @@ function closeDrawer() {
               {{ isEditing ? 'Save Changes' : 'Create Task' }}
             </UButton>
           </div>
-        </div>
+        </UScrollArea>
       </div>
     </template>
   </USlideover>

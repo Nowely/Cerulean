@@ -33,7 +33,10 @@ function debouncedUpdate() {
 
 function addTag() {
   const tag = newTag.value.trim().toLowerCase()
-  if (!tag || props.note.tags.includes(tag)) { newTag.value = ''; return }
+  if (!tag || props.note.tags.includes(tag)) {
+    newTag.value = ''
+    return
+  }
   emit('update', { tags: [...props.note.tags, tag] })
   newTag.value = ''
 }
@@ -79,18 +82,22 @@ function removeTag(tag: string) {
       </template>
     </ContentPanelHeader>
 
-    <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-3">
-      <input
+    <UScrollArea class="flex-1 px-4 py-3">
+      <UInput
         v-model="localTitle"
-        type="text"
         placeholder="Note title..."
-        class="w-full bg-transparent text-xl font-semibold outline-none placeholder:text-gray-400"
+        variant="none"
+        size="xl"
+        class="font-semibold"
         @input="debouncedUpdate"
-      >
-      <textarea
+      />
+      <UTextarea
         v-model="localContent"
         placeholder="Start writing..."
-        class="mt-3 w-full flex-1 resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-500 min-h-[300px]"
+        variant="none"
+        autoresize
+        :rows="10"
+        class="mt-3 text-sm leading-relaxed"
         @input="debouncedUpdate"
       />
 
@@ -101,21 +108,24 @@ function removeTag(tag: string) {
           class="flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-xs text-violet-400"
         >
           {{ tag }}
-          <button @click="removeTag(tag)">
-            <UIcon
-              name="i-lucide-x"
-              class="h-3 w-3"
-            />
-          </button>
+          <UButton
+            icon="i-lucide-x"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            class="h-3 w-3 p-0"
+            @click="removeTag(tag)"
+          />
         </span>
-        <input
+        <UInput
           v-model="newTag"
-          type="text"
           placeholder="Add tag..."
-          class="w-20 bg-transparent text-xs outline-none placeholder:text-gray-500"
+          variant="none"
+          size="xs"
+          class="w-20"
           @keydown.enter="addTag"
-        >
+        />
       </div>
-    </div>
+    </UScrollArea>
   </div>
 </template>

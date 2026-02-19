@@ -88,7 +88,7 @@ function openNewTaskForm() {
       />
     </div>
 
-    <div class="flex-1 overflow-y-auto scrollbar-thin">
+    <UScrollArea class="flex-1">
       <UEmpty
         v-if="filteredTasks.length === 0"
         icon="i-lucide-check-square"
@@ -146,6 +146,6 @@ function openNewTaskForm() {
           </div>
         </UCard>
       </div>
-    </div>
+    </UScrollArea>
   </div>
 </template>

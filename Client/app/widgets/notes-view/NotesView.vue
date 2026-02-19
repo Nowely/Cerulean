@@ -73,8 +73,8 @@ function deleteNote(id: string) {
     </div>
 
     <div class="flex flex-1 overflow-hidden">
-      <div
-        class="flex-1 overflow-y-auto scrollbar-thin p-3"
+      <UScrollArea
+        class="flex-1 p-3"
         :class="{ 'hidden md:block md:w-1/2 lg:w-2/5': isEditing }"
       >
         <UEmpty
@@ -99,7 +99,7 @@ function deleteNote(id: string) {
             @delete="deleteNote(note.id)"
           />
         </div>
-      </div>
+      </UScrollArea>
 
       <NoteEditor
         v-if="isEditing && noteStore.activeNote.value"

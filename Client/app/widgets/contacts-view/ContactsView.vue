@@ -114,8 +114,8 @@ function addContact() {
     </div>
 
     <div class="flex flex-1 overflow-hidden">
-      <div
-        class="flex-1 overflow-y-auto scrollbar-thin"
+      <UScrollArea
+        class="flex-1"
         :class="{ 'hidden md:block md:w-2/5': isDetailOpen }"
       >
         <UEmpty
@@ -140,7 +140,7 @@ function addContact() {
             @click="openContact(contact.id)"
           />
         </div>
-      </div>
+      </UScrollArea>
 
       <ContactDetail
         v-if="isDetailOpen && contactStore.activeContact.value"

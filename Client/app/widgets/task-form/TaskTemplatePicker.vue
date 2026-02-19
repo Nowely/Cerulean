@@ -56,19 +56,24 @@ function closeDrawer() {
         </p>
 
         <div class="flex flex-col gap-2">
-          <button
+          <UButton
             v-for="template in taskStore.templates.value"
             :key="template.id"
-            class="flex items-start gap-3 rounded-xl bg-gray-100 dark:bg-gray-800 p-3 text-left transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+            color="neutral"
+            variant="ghost"
+            block
+            class="justify-start h-auto p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
             @click="handleSelect(template.id)"
           >
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-500/10">
-              <UIcon
-                :name="TEMPLATE_ICONS[template.id] ?? 'i-lucide-zap'"
-                class="h-5 w-5 text-primary-500"
-              />
-            </div>
-            <div class="flex flex-col gap-0.5">
+            <template #leading>
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-500/10">
+                <UIcon
+                  :name="TEMPLATE_ICONS[template.id] ?? 'i-lucide-zap'"
+                  class="h-5 w-5 text-primary-500"
+                />
+              </div>
+            </template>
+            <div class="flex flex-col items-start gap-0.5 text-left">
               <span class="text-sm font-semibold">{{ template.name }}</span>
               <span class="text-[12px] text-gray-500">{{ template.description }}</span>
               <span
@@ -78,7 +83,7 @@ function closeDrawer() {
                 {{ template.subtasks.length }} subtask{{ template.subtasks.length !== 1 ? 's' : '' }} included
               </span>
             </div>
-          </button>
+          </UButton>
         </div>
       </div>
     </template>

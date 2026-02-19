@@ -75,7 +75,7 @@ function handleMarkAllRead() {
           </template>
         </ContentPanelHeader>
 
-        <div class="flex-1 overflow-y-auto">
+        <UScrollArea class="flex-1">
           <div class="flex flex-col">
             <UEmpty
               v-if="notificationStore.notifications.value.length === 0"
@@ -123,7 +123,7 @@ function handleMarkAllRead() {
               </div>
             </UCard>
           </div>
-        </div>
+        </UScrollArea>
       </div>
     </template>
   </USlideover>
