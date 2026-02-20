@@ -5,6 +5,18 @@
   --font-sans: 'Geist Variable', 'Geist', sans-serif;
   --font-mono: 'Geist Mono Variable', 'Geist Mono', monospace;
 
+  --color-cerulean-50: #E6F5FA;
+  --color-cerulean-100: #CCEAF5;
+  --color-cerulean-200: #99D5EB;
+  --color-cerulean-300: #66BFE0;
+  --color-cerulean-400: #33A9D6;
+  --color-cerulean-500: #007BA7;
+  --color-cerulean-600: #006285;
+  --color-cerulean-700: #004A64;
+  --color-cerulean-800: #003142;
+  --color-cerulean-900: #001921;
+  --color-cerulean-950: #000C10;
+
   --color-green-50: #EFFDF5;
   --color-green-100: #D9FBE8;
   --color-green-200: #B3F5D1;

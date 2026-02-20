@@ -12,7 +12,7 @@ defineOptions({
 })
 
 const threadStore = useThreadStore()
-const { create: createThreadAction, results } = useThreadManage()
+const { create: createThreadAction } = useThreadManage()
 const toast = useToastHelpers()
 
 const showNewThread = ref(false)
@@ -23,11 +23,11 @@ const creationStep = ref<'kind' | 'name'>('kind')
 const activeThreadId = computed(() => threadStore.activeThreadId.value)
 
 const pinnedThreads = computed(() =>
-  results.value.filter((t: { pinned: boolean }) => t.pinned)
+  threadStore.sortedThreads.value.filter((t: { pinned: boolean }) => t.pinned)
 )
 
 const unpinnedThreads = computed(() =>
-  results.value
+  threadStore.sortedThreads.value
     .filter((t: { pinned: boolean }) => !t.pinned)
     .sort((a: { lastActivity: string }, b: { lastActivity: string }) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
 )
@@ -111,7 +111,7 @@ function selectThread(threadId: string) {
   </template>
 
   <UEmpty
-    v-if="results.length === 0"
+    v-if="threadStore.threads.value.length === 0"
     title="No threads found"
     class="py-12"
   />
