@@ -97,7 +97,6 @@ function addContact() {
         />
         <UButton
           size="sm"
-          color="primary"
           class="self-end"
           :disabled="!newName.trim()"
           @click="addContact"

@@ -67,7 +67,6 @@ function closeDrawer() {
               <UAvatar
                 :icon="TEMPLATE_ICONS[template.id] ?? 'i-lucide-zap'"
                 size="lg"
-                color="primary"
                 variant="soft"
               />
               <div class="flex flex-col gap-0.5 min-w-0 flex-1">

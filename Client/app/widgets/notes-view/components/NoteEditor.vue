@@ -104,7 +104,6 @@ function removeTag(tag: string) {
         <UBadge
           v-for="tag in note.tags"
           :key="tag"
-          color="primary"
           variant="soft"
           size="xs"
           class="pr-1"

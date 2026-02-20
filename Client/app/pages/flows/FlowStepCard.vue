@@ -53,7 +53,6 @@ const emit = defineEmits<{
             </span>
             <UBadge
               v-if="isActive"
-              color="primary"
               variant="soft"
               size="xs"
             >
@@ -156,7 +155,10 @@ const emit = defineEmits<{
       />
     </div>
 
-    <template v-if="step.annotations?.length" #footer>
+    <template
+      v-if="step.annotations?.length"
+      #footer
+    >
       <div
         class="annotations-section"
         :class="darkMode ? 'bg-amber-900/20' : 'bg-amber-50'"

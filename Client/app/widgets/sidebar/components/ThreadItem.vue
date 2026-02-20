@@ -93,7 +93,6 @@ const threadName = computed(() =>
         </span>
         <UBadge
           v-if="thread.unreadCount > 0"
-          color="primary"
           size="xs"
         >
           {{ thread.unreadCount }}

@@ -186,7 +186,6 @@ function getAvatarColor(name: string): string {
             <UBadge
               v-for="tag in contact.tags"
               :key="tag"
-              color="primary"
               variant="soft"
               size="xs"
               class="pr-1"

@@ -123,7 +123,6 @@ function openNewTaskForm() {
                 <UBadge
                   v-for="tag in task.tags.slice(0, 3)"
                   :key="tag"
-                  color="primary"
                   variant="soft"
                   size="xs"
                 >

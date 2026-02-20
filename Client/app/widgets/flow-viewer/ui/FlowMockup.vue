@@ -71,7 +71,6 @@ const d = computed(() => props.darkMode)
           >Threads</span>
           <UButton
             icon="i-lucide-plus"
-            color="primary"
             size="xs"
             :class="{ 'animate-pulse': isHighlighted('new-thread-btn') }"
             @click="handleInteract('new-thread-btn')"
@@ -443,7 +442,6 @@ const d = computed(() => props.darkMode)
             >
               <UButton
                 :label="item.replace('button', '').replace('enabled', '').replace('disabled', '').trim()"
-                color="primary"
                 size="xs"
                 block
                 :disabled="item.includes('disabled')"

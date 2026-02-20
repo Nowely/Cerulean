@@ -136,7 +136,6 @@ const d = computed(() => props.darkMode)
       </div>
 
       <UButton
-        color="primary"
         :disabled="showAll || currentStep === steps.length - 1"
         trailing-icon="i-lucide-chevron-right"
         @click="goToStep(Math.min(steps.length - 1, currentStep + 1))"

@@ -9,12 +9,20 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxtjs/i18n'
   ],
-
   devtools: {
     enabled: true
   },
 
   css: ['~/assets/css/main.css'],
+
+  ui: {
+    theme: {
+      defaultVariants: {
+        size: 'md',
+        color: 'primary'
+      }
+    }
+  },
 
   routeRules: {
     '/': { prerender: true }

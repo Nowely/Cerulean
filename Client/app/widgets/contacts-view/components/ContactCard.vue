@@ -45,7 +45,6 @@ function getAvatarColor(name: string): string {
         <UBadge
           v-for="tag in contact.tags.slice(0, 2)"
           :key="tag"
-          color="primary"
           variant="soft"
           size="xs"
           class="text-sky-400"

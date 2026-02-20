@@ -38,7 +38,10 @@ const avatarConfig = computed(() => {
       content: isOwn ? 'bg-primary-500 text-white rounded-br-md' : 'bg-gray-100 dark:bg-gray-800 rounded-bl-md'
     }"
   >
-    <template v-if="showAvatar && !isOwn" #leading>
+    <template
+      v-if="showAvatar && !isOwn"
+      #leading
+    >
       <UAvatar
         :alt="sender?.name"
         size="xs"

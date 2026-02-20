@@ -18,19 +18,13 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
     <UUser
       name="Cerulean"
       :description="currentUser?.name"
-      size="md"
     >
       <template #avatar>
-        <UserAvatar
-          :user="currentUser ?? undefined"
-          size="md"
-        />
+        <UserAvatar :user="currentUser ?? undefined" />
       </template>
     </UUser>
     <UButton
       icon="i-lucide-plus"
-      size="md"
-      color="primary"
       data-testid="new-thread-btn"
       @click="emit('newThread')"
     />

@@ -60,7 +60,6 @@ function handleMarkAllRead() {
           <template #trailing>
             <UBadge
               v-if="notificationStore.unreadCount.value > 0"
-              color="primary"
               variant="subtle"
               size="xs"
             >
@@ -71,7 +70,6 @@ function handleMarkAllRead() {
             <UButton
               v-if="notificationStore.unreadCount.value > 0"
               icon="i-lucide-check-check"
-              color="primary"
               variant="link"
               size="xs"
               label="Mark all read"

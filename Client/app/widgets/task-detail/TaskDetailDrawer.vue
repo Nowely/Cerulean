@@ -249,7 +249,6 @@ function closeDrawer() {
                 <UBadge
                   v-for="tag in task.tags"
                   :key="tag"
-                  color="primary"
                   variant="soft"
                   size="xs"
                 >

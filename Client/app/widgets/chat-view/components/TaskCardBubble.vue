@@ -67,7 +67,6 @@ function handleClick() {
       <div class="flex items-center justify-between gap-2">
         <UBadge
           v-if="showAvatar && !isOwn"
-          color="primary"
           variant="subtle"
           size="xs"
           class="font-medium"

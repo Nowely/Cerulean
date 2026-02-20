@@ -69,7 +69,6 @@ const emit = defineEmits<{
         <UBadge
           v-for="tag in note.tags.slice(0, 3)"
           :key="tag"
-          color="primary"
           variant="soft"
           size="xs"
         >
