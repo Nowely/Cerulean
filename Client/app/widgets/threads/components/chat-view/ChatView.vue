@@ -64,35 +64,37 @@ function isTaskType(msg: Message): boolean {
 <template>
   <div class="flex flex-1 flex-col">
     <UScrollArea class="flex-1">
-      <template
-        v-for="(msg, index) in formattedMessages"
-        :key="msg.id"
-      >
-        <UBadge
-          v-if="msg._dateSeparator"
-          color="neutral"
-          variant="soft"
-          size="xs"
-          class="mx-auto my-2 flex justify-center backdrop-blur-sm"
+      <div class="px-3 py-2">
+        <template
+          v-for="(msg, index) in formattedMessages"
+          :key="msg.id"
         >
-          {{ msg._dateSeparator }}
-        </UBadge>
+          <UBadge
+            v-if="msg._dateSeparator"
+            color="neutral"
+            variant="soft"
+            size="xs"
+            class="mx-auto my-3 flex justify-center backdrop-blur-sm"
+          >
+            {{ msg._dateSeparator }}
+          </UBadge>
 
-        <SystemBubble
-          v-if="isSystemType(msg._original)"
-          :message="msg._original"
-        />
-        <TaskCardBubble
-          v-else-if="isTaskType(msg._original)"
-          :message="msg._original"
-          :show-avatar="shouldShowAvatar(index)"
-        />
-        <MessageBubble
-          v-else
-          :message="msg._original"
-          :show-avatar="shouldShowAvatar(index)"
-        />
-      </template>
+          <SystemBubble
+            v-if="isSystemType(msg._original)"
+            :message="msg._original"
+          />
+          <TaskCardBubble
+            v-else-if="isTaskType(msg._original)"
+            :message="msg._original"
+            :show-avatar="shouldShowAvatar(index)"
+          />
+          <MessageBubble
+            v-else
+            :message="msg._original"
+            :show-avatar="shouldShowAvatar(index)"
+          />
+        </template>
+      </div>
     </UScrollArea>
 
     <InputBar />

@@ -31,23 +31,23 @@ const previewText = computed(() => {
   if (kind === 'shopping') {
     const checked = shoppingStore.checkedCount(props.thread.id)
     const total = shoppingStore.totalCount(props.thread.id)
-    return total > 0 ? `${checked}/${total} items checked` : 'No items yet'
+    return total > 0 ? `${checked}/${total} items` : 'No items'
   }
   if (kind === 'notes') {
     const count = noteStore.totalCount(props.thread.id)
-    return count > 0 ? `${count} note${count !== 1 ? 's' : ''}` : 'No notes yet'
+    return count > 0 ? `${count} note${count !== 1 ? 's' : ''}` : 'No notes'
   }
   if (kind === 'contacts') {
     const count = contactStore.totalCount(props.thread.id)
-    return count > 0 ? `${count} contact${count !== 1 ? 's' : ''}` : 'No contacts yet'
+    return count > 0 ? `${count} contact${count !== 1 ? 's' : ''}` : 'No contacts'
   }
   if (kind === 'tasks') {
     const tasks = taskStore.threadTasks(props.thread.id)
-    if (tasks.length === 0) return 'No tasks yet'
+    if (tasks.length === 0) return 'No tasks'
     const done = tasks.filter(t => t.status === 'done').length
-    return `${done}/${tasks.length} tasks done`
+    return `${done}/${tasks.length} done`
   }
-  return lastMessage.value?.content ?? 'No messages yet'
+  return lastMessage.value?.content ?? 'No messages'
 })
 
 const senderName = computed(() => {
@@ -62,41 +62,45 @@ const description = computed(() => {
     : ''
   return `${prefix}${previewText.value}`
 })
-
-const threadName = computed(() =>
-  props.thread.pinned ? `📌 ${props.thread.name}` : props.thread.name
-)
 </script>
 
 <template>
-  <UUser
-    :name="threadName"
-    :avatar="{
-      icon: kindConfig.icon,
-      size: 'lg',
-      ui: { root: '' }
-    }"
-    :ui="{
-      root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : 'hover:bg-elevated'}`
-    }"
+  <div
+    class="flex items-center gap-2.5 px-3 py-1.5 rounded-md cursor-pointer transition-colors"
+    :class="isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : 'hover:bg-elevated'"
     :data-testid="`thread-item-${thread.id}`"
     @click="emit('click')"
   >
-    <template #description>
-      <p class="truncate text-sm text-muted">
-        {{ description }}
-      </p>
-      <div class="flex items-center gap-1.5 shrink-0 ml-auto">
-        <span class="text-xs text-muted">
-          {{ relativeTime(thread.lastActivity) }}
-        </span>
-        <UBadge
-          v-if="thread.unreadCount > 0"
-          size="xs"
+    <UAvatar
+      :icon="kindConfig.icon"
+      size="sm"
+    />
+
+    <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+      <div class="flex items-center gap-1.5">
+        <span
+          class="font-medium text-sm truncate"
+          :class="thread.unreadCount > 0 ? 'text-highlighted' : 'text-default'"
         >
-          {{ thread.unreadCount }}
-        </UBadge>
+          {{ thread.pinned ? `📌 ${thread.name}` : thread.name }}
+        </span>
       </div>
-    </template>
-  </UUser>
+      <span class="text-xs truncate" :class="thread.unreadCount > 0 ? 'text-default font-medium' : 'text-muted'">
+        {{ description }}
+      </span>
+    </div>
+
+    <div class="flex flex-col items-end gap-0.5 shrink-0">
+      <span class="text-[10px] text-muted leading-tight">
+        {{ relativeTime(thread.lastActivity) }}
+      </span>
+      <UBadge
+        v-if="thread.unreadCount > 0"
+        size="xs"
+        class="h-4 min-w-4 px-1 text-[10px]"
+      >
+        {{ thread.unreadCount }}
+      </UBadge>
+    </div>
+  </div>
 </template>

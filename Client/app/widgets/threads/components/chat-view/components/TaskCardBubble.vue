@@ -53,22 +53,25 @@ function handleClick() {
     v-if="task"
     variant="outline"
     task
-    class="max-w-[85%] cursor-pointer transition-transform active:scale-[0.98] mx-3"
+    class="max-w-[75%] cursor-pointer transition-transform active:scale-[0.98] my-1"
     :class="[isOwn ? 'ml-auto rounded-br-md' : 'mr-auto rounded-bl-md']"
     :style="{ borderLeftColor: getStatusColor(task.status) }"
+    :ui="{ body: 'sm:gap-2 gap-1.5', header: 'p-2 sm:p-2', footer: 'p-2 sm:p-2 pt-0' }"
     @click="handleClick"
   >
     <template #header>
       <div class="flex items-center justify-between gap-2">
-        <UBadge
-          v-if="showAvatar && !isOwn"
-          :label="sender?.name"
-          variant="subtle"
-          size="xs"
-        />
-        <h3 class="text-sm font-semibold leading-snug flex-1 min-w-0">
-          {{ task.title }}
-        </h3>
+        <div class="flex items-center gap-1.5 min-w-0">
+          <UBadge
+            v-if="showAvatar && !isOwn"
+            :label="sender?.name"
+            variant="subtle"
+            size="xs"
+          />
+          <h3 class="text-sm font-semibold leading-snug truncate">
+            {{ task.title }}
+          </h3>
+        </div>
         <UIcon
           name="i-lucide-chevron-right"
           class="size-4 shrink-0 text-dimmed"
@@ -78,12 +81,12 @@ function handleClick() {
 
     <p
       v-if="task.description"
-      class="text-sm leading-relaxed text-muted line-clamp-2"
+      class="text-xs leading-relaxed text-muted line-clamp-2"
     >
       {{ task.description }}
     </p>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-1.5">
       <PropertyBadge
         type="status"
         :value="task.status"
@@ -137,7 +140,7 @@ function handleClick() {
     />
 
     <template #footer>
-      <span class="text-2xs text-muted">
+      <span class="text-[10px] text-muted">
         {{ formatTime(message.timestamp) }}
       </span>
     </template>

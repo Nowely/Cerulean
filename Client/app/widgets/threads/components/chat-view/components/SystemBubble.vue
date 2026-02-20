@@ -23,25 +23,25 @@ const statusColor = computed(() =>
   <UBadge
     color="neutral"
     variant="subtle"
-    class="mx-4 my-1 flex justify-center rounded-full px-3 py-1 text-xs"
+    class="mx-auto my-2 flex justify-center rounded-full px-3 py-0.5 text-xs"
   >
     <template v-if="message.type === 'status-change'">
       <UIcon
         name="i-lucide-arrow-right"
-        class="h-3 w-3 mr-1.5"
+        class="size-3 mr-1"
       />
       <span class="font-medium text-default">{{ sender?.name }}</span>
       {{ ' ' }}{{ message.content }}
       <span
         v-if="statusColor"
-        class="ml-1.5 h-2 w-2 rounded-full"
+        class="ml-1 size-2 rounded-full"
         :style="{ backgroundColor: statusColor }"
       />
     </template>
     <template v-else-if="message.type === 'assignment'">
       <UIcon
         name="i-lucide-user-plus"
-        class="h-3 w-3 mr-1.5 text-primary-500"
+        class="size-3 mr-1 text-primary-500"
       />
       <span class="font-medium text-default">{{ sender?.name }}</span>
       {{ ' ' }}{{ message.content }}
