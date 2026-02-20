@@ -45,13 +45,6 @@ function addTag() {
 function removeTag(tag: string) {
   emit('update', { tags: props.contact.tags.filter(t => t !== tag) })
 }
-
-function getAvatarColor(name: string): string {
-  let hash = 0
-  for (const char of name) hash = char.charCodeAt(0) + ((hash << 5) - hash)
-  const hue = Math.abs(hash) % 360
-  return `hsl(${hue} 60% 45%)`
-}
 </script>
 
 <template>

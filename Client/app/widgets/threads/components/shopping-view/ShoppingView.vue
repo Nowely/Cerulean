@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useShoppingStore, useThreadStore } from '~/shared/model'
-import InputBar from '~/widgets/chat-view/components/InputBar.vue'
+import InputBar from '~/widgets/threads/components/chat-view/components/InputBar.vue'
 
 const threadStore = useThreadStore()
 const shoppingStore = useShoppingStore()
