@@ -96,13 +96,12 @@ function getAvatarColor(name: string): string {
           class="font-bold text-white"
           :ui="{ fallback: 'bg-transparent text-2xl' }"
         />
-        <template v-if="editing">
-          <UInput
-            v-model="form.name"
-            class="text-center"
-            :ui="{ base: 'text-xl font-semibold text-center bg-transparent' }"
-          />
-        </template>
+        <UInput
+          v-if="editing"
+          v-model="form.name"
+          class="text-center"
+          :ui="{ base: 'text-xl font-semibold text-center bg-transparent' }"
+        />
         <template v-else>
           <h2 class="text-xl font-semibold">
             {{ contact.name }}
@@ -117,102 +116,97 @@ function getAvatarColor(name: string): string {
       </div>
 
       <div class="flex flex-col gap-4">
-        <div
-          v-for="field in [
-            { icon: 'i-lucide-mail', key: 'email', label: 'Email', value: contact.email },
-            { icon: 'i-lucide-phone', key: 'phone', label: 'Phone', value: contact.phone },
-            { icon: 'i-lucide-building-2', key: 'company', label: 'Company', value: contact.company }
-          ]"
-          :key="field.key"
-          class="flex items-start gap-3"
-        >
-          <UIcon
-            :name="field.icon"
-            class="h-4 w-4 mt-0.5 text-gray-400"
-          />
-          <div class="flex-1">
-            <p class="text-[11px] font-medium uppercase tracking-wider text-gray-500 mb-0.5">
-              {{ field.label }}
+        <UFormField label="Email">
+          <template v-if="editing">
+            <UInput
+              v-model="form.email"
+              placeholder="Add email..."
+              :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+            />
+          </template>
+          <template v-else>
+            <p class="text-sm">
+              {{ contact.email || '---' }}
             </p>
-            <template v-if="editing">
-              <UInput
-                v-model="(form as Record<string, any>)[field.key]"
-                :placeholder="`Add ${field.label.toLowerCase()}...`"
-                :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
-              />
-            </template>
-            <template v-else>
-              <p class="text-sm">
-                {{ field.value || '---' }}
-              </p>
-            </template>
-          </div>
-        </div>
+          </template>
+        </UFormField>
 
-        <div class="flex items-start gap-3">
-          <UIcon
-            name="i-lucide-file-text"
-            class="h-4 w-4 mt-0.5 text-gray-400"
-          />
-          <div class="flex-1">
-            <p class="text-[11px] font-medium uppercase tracking-wider text-gray-500 mb-0.5">
-              Notes
+        <UFormField label="Phone">
+          <template v-if="editing">
+            <UInput
+              v-model="form.phone"
+              placeholder="Add phone..."
+              :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+            />
+          </template>
+          <template v-else>
+            <p class="text-sm">
+              {{ contact.phone || '---' }}
             </p>
-            <template v-if="editing">
-              <UTextarea
-                v-model="form.notes"
-                placeholder="Add notes..."
-                :rows="3"
-                :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
-              />
-            </template>
-            <template v-else>
-              <p class="text-sm whitespace-pre-wrap">
-                {{ contact.notes || '---' }}
-              </p>
-            </template>
-          </div>
-        </div>
+          </template>
+        </UFormField>
 
-        <div class="flex items-start gap-3">
-          <UIcon
-            name="i-lucide-tag"
-            class="h-4 w-4 mt-0.5 text-gray-400"
-          />
-          <div class="flex-1">
-            <p class="text-[11px] font-medium uppercase tracking-wider text-gray-500 mb-1">
-              Tags
+        <UFormField label="Company">
+          <template v-if="editing">
+            <UInput
+              v-model="form.company"
+              placeholder="Add company..."
+              :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+            />
+          </template>
+          <template v-else>
+            <p class="text-sm">
+              {{ contact.company || '---' }}
             </p>
-            <div class="flex flex-wrap gap-1.5">
-              <UBadge
-                v-for="tag in contact.tags"
-                :key="tag"
-                color="primary"
-                variant="soft"
+          </template>
+        </UFormField>
+
+        <UFormField label="Notes">
+          <template v-if="editing">
+            <UTextarea
+              v-model="form.notes"
+              placeholder="Add notes..."
+              :rows="3"
+              :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+            />
+          </template>
+          <template v-else>
+            <p class="text-sm whitespace-pre-wrap">
+              {{ contact.notes || '---' }}
+            </p>
+          </template>
+        </UFormField>
+
+        <UFormField label="Tags">
+          <div class="flex flex-wrap gap-1.5">
+            <UBadge
+              v-for="tag in contact.tags"
+              :key="tag"
+              color="primary"
+              variant="soft"
+              size="xs"
+              class="pr-1"
+            >
+              {{ tag }}
+              <UButton
+                icon="i-lucide-x"
+                color="neutral"
+                variant="ghost"
                 size="xs"
-                class="pr-1"
-              >
-                {{ tag }}
-                <UButton
-                  icon="i-lucide-x"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  class="h-3 w-3 p-0 ml-1"
-                  @click="removeTag(tag)"
-                />
-              </UBadge>
-              <UInput
-                v-model="newTag"
-                placeholder="Add tag..."
-                variant="none"
-                size="xs"
-                class="w-20"
-                @keydown.enter="addTag"
+                class="h-3 w-3 p-0 ml-1"
+                @click="removeTag(tag)"
               />
-            </div>
+            </UBadge>
+            <UInput
+              v-model="newTag"
+              placeholder="Add tag..."
+              variant="none"
+              size="xs"
+              class="w-20"
+              @keydown.enter="addTag"
+            />
           </div>
-        </div>
+        </UFormField>
       </div>
     </UScrollArea>
   </div>

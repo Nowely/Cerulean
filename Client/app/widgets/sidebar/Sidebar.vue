@@ -158,11 +158,11 @@ function selectThread(threadId: string) {
                   class="text-white shrink-0"
                 />
               </template>
-              <div class="text-left">
-                <p class="text-sm font-medium">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-left">
                   {{ opt.label }}
                 </p>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-gray-500 text-left">
                   {{ opt.description }}
                 </p>
               </div>

@@ -55,56 +55,53 @@ const senderName = computed(() => {
   const user = userStore.getUserById(lastMessage.value.senderId)
   return user?.name?.split(' ')[0]
 })
+
+const description = computed(() => {
+  const prefix = senderName.value && (props.thread.kind === 'chat' || props.thread.kind === 'tasks')
+    ? `${senderName.value}: `
+    : ''
+  return `${prefix}${previewText.value}`
+})
+
+const threadName = computed(() =>
+  props.thread.pinned ? `📌 ${props.thread.name}` : props.thread.name
+)
 </script>
 
 <template>
-  <UButton
-    color="neutral"
-    variant="ghost"
-    block
-    class="justify-start h-auto px-3 py-2.5"
-    :class="isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : ''"
+  <UUser
+    :name="threadName"
+    :description="description"
+    :avatar="{
+      icon: kindConfig.icon,
+      size: 'lg',
+      style: { backgroundColor: kindConfig.color },
+      ui: { root: 'text-white' }
+    }"
+    :ui="{
+      root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`
+    }"
     :data-testid="`thread-item-${thread.id}`"
     @click="emit('click')"
   >
-    <template #leading>
-      <UAvatar
-        :icon="kindConfig.icon"
-        size="xl"
-        :style="{ backgroundColor: kindConfig.color }"
-        class="text-white"
-      />
-    </template>
-    <div class="flex min-w-0 flex-1 flex-col items-start text-left">
-      <div class="flex items-center justify-between gap-2 w-full">
-        <span class="flex items-center gap-1.5 truncate text-sm font-medium">
-          <UIcon
-            v-if="thread.pinned"
-            name="i-lucide-pin"
-            class="h-3 w-3 shrink-0 text-primary-500"
-          />
-          {{ thread.name }}
-        </span>
-        <span class="shrink-0 text-xs text-gray-500">
-          {{ relativeTime(thread.lastActivity) }}
-        </span>
-      </div>
-      <div class="flex items-center justify-between gap-2 w-full">
+    <template #description>
+      <div class="flex items-center justify-between gap-2 w-full min-w-0">
         <p class="truncate text-[13px] text-gray-500">
-          <span
-            v-if="senderName && (thread.kind === 'chat' || thread.kind === 'tasks')"
-            class="text-[hsl(var(--sidebar-foreground))]"
-          >{{ senderName }}: </span>
-          {{ previewText }}
+          {{ description }}
         </p>
-        <UBadge
-          v-if="thread.unreadCount > 0"
-          color="primary"
-          size="xs"
-        >
-          {{ thread.unreadCount }}
-        </UBadge>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span class="text-xs text-gray-500">
+            {{ relativeTime(thread.lastActivity) }}
+          </span>
+          <UBadge
+            v-if="thread.unreadCount > 0"
+            color="primary"
+            size="xs"
+          >
+            {{ thread.unreadCount }}
+          </UBadge>
+        </div>
       </div>
-    </div>
-  </UButton>
+    </template>
+  </UUser>
 </template>

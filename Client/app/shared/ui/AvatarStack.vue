@@ -12,13 +12,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'sm'
 })
 
-const visible = computed(() =>
-  (props.users.filter(Boolean) as User[]).slice(0, props.maxVisible)
-)
-
-const remaining = computed(() =>
-  props.users.filter(Boolean).length - props.maxVisible
-)
+const validUsers = computed(() => props.users.filter(Boolean) as User[])
 
 const sizeMap = {
   sm: '2xs',
@@ -27,29 +21,19 @@ const sizeMap = {
 </script>
 
 <template>
-  <UAvatarGroup :size="sizeMap[props.size]">
+  <UAvatarGroup
+    :size="sizeMap[props.size]"
+    :max="maxVisible"
+  >
     <UAvatar
-      v-for="user in visible"
+      v-for="user in validUsers"
       :key="user.id"
       :alt="user.name"
       :style="{ backgroundColor: user.color }"
-      :ui="{
-        root: 'font-semibold text-white',
-        fallback: 'bg-transparent'
-      }"
+      :ui="{ root: 'font-semibold text-white', fallback: 'bg-transparent' }"
     >
       <template #fallback>
         {{ user.initials }}
-      </template>
-    </UAvatar>
-    <UAvatar
-      v-if="remaining > 0"
-      :alt="`+${remaining} more`"
-      class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-      :ui="{ fallback: 'bg-transparent' }"
-    >
-      <template #fallback>
-        +{{ remaining }}
       </template>
     </UAvatar>
   </UAvatarGroup>

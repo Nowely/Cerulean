@@ -148,131 +148,129 @@ function closeDrawer() {
     @update:open="(o) => !o && closeDrawer()"
   >
     <template #content>
-      <div class="flex flex-col h-full">
-        <ContentPanelHeader variant="header">
-          <div>
-            <h3 class="text-lg font-semibold">
-              {{ isEditing ? 'Edit Task' : 'New Task' }}
-            </h3>
-            <p class="text-sm text-gray-500">
-              {{ isEditing ? 'Update the task details below' : 'Create a new task in this thread' }}
-            </p>
-          </div>
-        </ContentPanelHeader>
+      <ContentPanelHeader variant="header">
+        <div>
+          <h3 class="text-lg font-semibold">
+            {{ isEditing ? 'Edit Task' : 'New Task' }}
+          </h3>
+          <p class="text-sm text-gray-500">
+            {{ isEditing ? 'Update the task details below' : 'Create a new task in this thread' }}
+          </p>
+        </div>
+      </ContentPanelHeader>
 
-        <UScrollArea class="flex-1 px-4 pb-6">
-          <div class="space-y-4 pt-2">
-            <UFormField
-              label="Title"
-              required
-            >
-              <UInput
-                v-model="title"
-                placeholder="Task title..."
-                autofocus
-                data-testid="task-title-input"
-              />
-            </UFormField>
+      <UScrollArea class="flex-1 px-4 pb-6">
+        <div class="space-y-4 pt-2">
+          <UFormField
+            label="Title"
+            required
+          >
+            <UInput
+              v-model="title"
+              placeholder="Task title..."
+              autofocus
+              data-testid="task-title-input"
+            />
+          </UFormField>
 
-            <UFormField label="Description">
-              <UTextarea
-                v-model="description"
-                placeholder="Add a description..."
-                :rows="3"
-                data-testid="task-description-input"
-              />
-            </UFormField>
+          <UFormField label="Description">
+            <UTextarea
+              v-model="description"
+              placeholder="Add a description..."
+              :rows="3"
+              data-testid="task-description-input"
+            />
+          </UFormField>
 
-            <UFormField label="Status">
-              <UFieldGroup>
-                <UButton
-                  v-for="(config, s) in STATUS_CONFIG"
-                  :key="s"
-                  :color="status === s ? 'primary' : 'neutral'"
-                  :variant="status === s ? 'soft' : 'ghost'"
-                  size="xs"
-                  @click="status = s"
-                >
-                  <span
-                    class="h-2 w-2 rounded-full"
-                    :style="{ backgroundColor: getStatusColor(s) }"
-                  />
-                  {{ config.label }}
-                </UButton>
-              </UFieldGroup>
-            </UFormField>
+          <UFormField label="Status">
+            <UFieldGroup>
+              <UButton
+                v-for="(config, s) in STATUS_CONFIG"
+                :key="s"
+                :color="status === s ? 'primary' : 'neutral'"
+                :variant="status === s ? 'soft' : 'ghost'"
+                size="xs"
+                @click="status = s"
+              >
+                <span
+                  class="h-2 w-2 rounded-full"
+                  :style="{ backgroundColor: getStatusColor(s) }"
+                />
+                {{ config.label }}
+              </UButton>
+            </UFieldGroup>
+          </UFormField>
 
-            <UFormField label="Priority">
-              <UFieldGroup>
-                <UButton
-                  v-for="(config, p) in PRIORITY_CONFIG"
-                  :key="p"
-                  :color="priority === p ? 'primary' : 'neutral'"
-                  :variant="priority === p ? 'soft' : 'ghost'"
-                  size="xs"
-                  @click="priority = p"
-                >
-                  <span
-                    class="h-2 w-2 rounded-full"
-                    :style="{ backgroundColor: getPriorityColor(p) }"
-                  />
-                  {{ config.label }}
-                </UButton>
-              </UFieldGroup>
-            </UFormField>
+          <UFormField label="Priority">
+            <UFieldGroup>
+              <UButton
+                v-for="(config, p) in PRIORITY_CONFIG"
+                :key="p"
+                :color="priority === p ? 'primary' : 'neutral'"
+                :variant="priority === p ? 'soft' : 'ghost'"
+                size="xs"
+                @click="priority = p"
+              >
+                <span
+                  class="h-2 w-2 rounded-full"
+                  :style="{ backgroundColor: getPriorityColor(p) }"
+                />
+                {{ config.label }}
+              </UButton>
+            </UFieldGroup>
+          </UFormField>
 
-            <UFormField label="Assignees">
-              <UFieldGroup>
-                <UButton
-                  v-for="user in members"
-                  :key="user.id"
-                  :color="assignees.includes(user.id) ? 'primary' : 'neutral'"
-                  :variant="assignees.includes(user.id) ? 'soft' : 'ghost'"
-                  size="xs"
-                  class="rounded-full pr-3"
-                  @click="toggleAssignee(user.id)"
-                >
-                  <UserAvatar
-                    :user="user"
-                    size="sm"
-                  />
-                  {{ user.name }}
-                  <UIcon
-                    v-if="assignees.includes(user.id)"
-                    name="i-lucide-x"
-                    class="h-3 w-3"
-                  />
-                </UButton>
-              </UFieldGroup>
-            </UFormField>
+          <UFormField label="Assignees">
+            <UFieldGroup>
+              <UButton
+                v-for="user in members"
+                :key="user.id"
+                :color="assignees.includes(user.id) ? 'primary' : 'neutral'"
+                :variant="assignees.includes(user.id) ? 'soft' : 'ghost'"
+                size="xs"
+                class="rounded-full pr-3"
+                @click="toggleAssignee(user.id)"
+              >
+                <UserAvatar
+                  :user="user"
+                  size="sm"
+                />
+                {{ user.name }}
+                <UIcon
+                  v-if="assignees.includes(user.id)"
+                  name="i-lucide-x"
+                  class="h-3 w-3"
+                />
+              </UButton>
+            </UFieldGroup>
+          </UFormField>
 
-            <UFormField label="Due Date">
-              <UInput
-                v-model="dueDate"
-                type="date"
-              />
-            </UFormField>
+          <UFormField label="Due Date">
+            <UInput
+              v-model="dueDate"
+              type="date"
+            />
+          </UFormField>
 
-            <UFormField label="Tags (comma separated)">
-              <UInput
-                v-model="tags"
-                placeholder="e.g., design, frontend, bug"
-              />
-            </UFormField>
+          <UFormField label="Tags (comma separated)">
+            <UInput
+              v-model="tags"
+              placeholder="e.g., design, frontend, bug"
+            />
+          </UFormField>
 
-            <UButton
-              block
-              size="lg"
-              :disabled="!title.trim()"
-              class="mt-2"
-              data-testid="task-submit-btn"
-              @click="handleSubmit"
-            >
-              {{ isEditing ? 'Save Changes' : 'Create Task' }}
-            </UButton>
-          </div>
-        </UScrollArea>
-      </div>
+          <UButton
+            block
+            size="lg"
+            :disabled="!title.trim()"
+            class="mt-2"
+            data-testid="task-submit-btn"
+            @click="handleSubmit"
+          >
+            {{ isEditing ? 'Save Changes' : 'Create Task' }}
+          </UButton>
+        </div>
+      </UScrollArea>
     </template>
   </USlideover>
 </template>

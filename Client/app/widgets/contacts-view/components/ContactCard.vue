@@ -18,40 +18,44 @@ function getAvatarColor(name: string): string {
 </script>
 
 <template>
-  <UButton
-    color="neutral"
-    variant="ghost"
-    block
-    class="justify-start h-auto px-3 py-2.5"
-    :class="isActive ? 'bg-sky-500/10' : ''"
+  <UUser
+    :name="contact.name"
+    :description="contact.company"
+    :avatar="{
+      alt: contact.name,
+      size: 'md',
+      style: { backgroundColor: getAvatarColor(contact.name) },
+      ui: { root: 'font-semibold text-white', fallback: 'bg-transparent' }
+    }"
+    :ui="{
+      root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-sky-500/10' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`
+    }"
     @click="emit('click')"
   >
-    <template #leading>
-      <UAvatar
-        :alt="contact.name"
-        size="md"
-        :style="{ backgroundColor: getAvatarColor(contact.name) }"
-        class="text-white font-semibold"
-      />
+    <template #description>
+      <div class="flex items-center justify-between gap-2 w-full min-w-0">
+        <span
+          v-if="contact.company"
+          class="text-xs text-gray-500 truncate"
+        >
+          {{ contact.company }}
+        </span>
+        <div
+          v-if="contact.tags.length > 0"
+          class="flex gap-1 ml-auto shrink-0"
+        >
+          <UBadge
+            v-for="tag in contact.tags.slice(0, 2)"
+            :key="tag"
+            color="primary"
+            variant="soft"
+            size="xs"
+            class="text-sky-400"
+          >
+            {{ tag }}
+          </UBadge>
+        </div>
+      </div>
     </template>
-    <div class="flex min-w-0 flex-1 flex-col items-start text-left">
-      <span class="text-sm font-medium truncate">{{ contact.name }}</span>
-      <span
-        v-if="contact.company"
-        class="text-xs text-gray-500 truncate"
-      >{{ contact.company }}</span>
-    </div>
-    <template #trailing>
-      <UBadge
-        v-for="tag in contact.tags.slice(0, 2)"
-        :key="tag"
-        color="primary"
-        variant="soft"
-        size="xs"
-        class="text-sky-400"
-      >
-        {{ tag }}
-      </UBadge>
-    </template>
-  </UButton>
+  </UUser>
 </template>
