@@ -116,8 +116,6 @@ function selectThread(threadId: string) {
     class="py-12"
   />
 
-  <SidebarFooter />
-
   <USlideover
     v-model:open="showNewThread"
     side="right"

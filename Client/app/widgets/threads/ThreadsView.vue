@@ -3,6 +3,7 @@ import type { ThreadKind } from '~/shared/types'
 import type { Component } from 'vue'
 import { useThreadStore } from '~/shared/model'
 import Sidebar from '~/widgets/sidebar/Sidebar.vue'
+import SidebarFooter from '~/widgets/sidebar/components/SidebarFooter.vue'
 import ChatHeader from '~/widgets/threads/components/chat-view/components/ChatHeader.vue'
 import ChatView from '~/widgets/threads/components/chat-view/ChatView.vue'
 import ListView from '~/widgets/threads/components/list-view/ListView.vue'
@@ -41,8 +42,12 @@ const contentComponent = computed(() => {
       :max-size="30"
       resizable
       collapsible
+      :ui="{ footer: 'border-t border-default' }"
     >
       <Sidebar />
+      <template #footer>
+        <SidebarFooter />
+      </template>
     </UDashboardSidebar>
 
     <UDashboardPanel id="content">
