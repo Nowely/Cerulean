@@ -125,7 +125,7 @@ function getAvatarColor(name: string): string {
             <UInput
               v-model="form.email"
               placeholder="Add email..."
-              :ui="{ base: 'bg-transparent border-b border-default rounded-none pb-0.5' }"
+              variant="underline"
             />
           </template>
           <template v-else>
@@ -140,7 +140,7 @@ function getAvatarColor(name: string): string {
             <UInput
               v-model="form.phone"
               placeholder="Add phone..."
-              :ui="{ base: 'bg-transparent border-b border-default rounded-none pb-0.5' }"
+              variant="underline"
             />
           </template>
           <template v-else>
@@ -155,7 +155,7 @@ function getAvatarColor(name: string): string {
             <UInput
               v-model="form.company"
               placeholder="Add company..."
-              :ui="{ base: 'bg-transparent border-b border-default rounded-none pb-0.5' }"
+              variant="underline"
             />
           </template>
           <template v-else>
@@ -171,7 +171,7 @@ function getAvatarColor(name: string): string {
               v-model="form.notes"
               placeholder="Add notes..."
               :rows="3"
-              :ui="{ base: 'bg-transparent border-b border-default rounded-none pb-0.5' }"
+              variant="underline"
             />
           </template>
           <template v-else>

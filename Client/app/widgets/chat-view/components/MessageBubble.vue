@@ -47,7 +47,6 @@ const avatarConfig = computed(() => {
         size="xs"
         :style="{ backgroundColor: sender?.color }"
         class="font-semibold text-white"
-        :ui="{ fallback: 'bg-transparent' }"
       >
         <template #fallback>
           {{ sender?.initials }}

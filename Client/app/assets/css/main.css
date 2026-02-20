@@ -57,6 +57,7 @@
 }
 
 :root {
+  --ui-radius: 0.5rem;
   --status-todo: var(--color-status-todo-light);
   --status-in-progress: var(--color-status-in-progress-light);
   --status-review: var(--color-status-review-light);

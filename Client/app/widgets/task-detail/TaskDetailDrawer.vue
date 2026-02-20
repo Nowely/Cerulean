@@ -116,7 +116,6 @@ function closeDrawer() {
   <USlideover
     :open="open"
     side="bottom"
-    :ui="{ content: 'max-h-[85dvh]' }"
     @update:open="(o) => !o && closeDrawer()"
   >
     <template #content>
@@ -232,7 +231,6 @@ function closeDrawer() {
                   :alt="user.name"
                   :style="{ backgroundColor: user.color }"
                   class="font-semibold text-white"
-                  :ui="{ fallback: 'bg-transparent' }"
                 >
                   <template #fallback>
                     {{ user.initials }}
