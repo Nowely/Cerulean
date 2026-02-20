@@ -128,7 +128,7 @@ function selectThread(threadId: string) {
         <h3 class="text-lg font-semibold mb-1">
           New Thread
         </h3>
-        <p class="text-sm text-gray-500 mb-4">
+        <p class="text-sm text-muted mb-4">
           Choose what kind of thread to create
         </p>
         <div class="flex flex-col gap-2">
@@ -153,7 +153,7 @@ function selectThread(threadId: string) {
               <p class="text-sm font-medium text-left">
                 {{ opt.label }}
               </p>
-              <p class="text-xs text-gray-500 text-left">
+              <p class="text-xs text-muted text-left">
                 {{ opt.description }}
               </p>
             </div>

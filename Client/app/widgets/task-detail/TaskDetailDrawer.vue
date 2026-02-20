@@ -123,7 +123,7 @@ function closeDrawer() {
       <template v-if="task">
         <UDashboardNavbar :title="task.title">
           <template #leading>
-            <p class="text-[12px] text-gray-500">
+            <p class="text-[12px] text-muted">
               Created by {{ creator?.name }} on
               {{ new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
             </p>
@@ -162,7 +162,7 @@ function closeDrawer() {
                   <UButton
                     color="neutral"
                     variant="ghost"
-                    class="bg-gray-100 dark:bg-gray-800"
+                    class="bg-elevated dark:bg-elevated"
                   >
                     <PropertyBadge
                       type="status"
@@ -182,7 +182,7 @@ function closeDrawer() {
                   <UButton
                     color="neutral"
                     variant="ghost"
-                    class="bg-gray-100 dark:bg-gray-800"
+                    class="bg-elevated dark:bg-elevated"
                   >
                     <PropertyBadge
                       type="priority"
@@ -216,7 +216,7 @@ function closeDrawer() {
               v-if="task.description"
               label="Description"
             >
-              <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+              <p class="text-sm leading-relaxed text-default dark:text-default">
                 {{ task.description }}
               </p>
             </UFormField>
@@ -267,18 +267,18 @@ function closeDrawer() {
                   :key="dep.id"
                   color="neutral"
                   variant="ghost"
-                  class="justify-start bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  class="justify-start bg-elevated dark:bg-elevated hover:bg-accented dark:hover:bg-accented"
                   @click="taskStore.setActive(dep.id)"
                 >
                   <template #leading>
                     <UIcon
                       name="i-lucide-link-2"
-                      class="h-3.5 w-3.5 text-gray-500"
+                      class="h-3.5 w-3.5 text-muted"
                     />
                   </template>
                   <span
                     class="flex-1 text-left"
-                    :class="dep.status === 'done' && 'line-through text-gray-500'"
+                    :class="dep.status === 'done' && 'line-through text-muted'"
                   >
                     {{ dep.title }}
                   </span>
@@ -312,12 +312,12 @@ function closeDrawer() {
                       :name="sub.status === 'done' ? 'i-lucide-check-circle-2' : 'i-lucide-circle'"
                       class="h-4 w-4"
                       :style="sub.status === 'done' ? { color: getStatusColor('done') } : {}"
-                      :class="sub.status !== 'done' && 'text-gray-400'"
+                      :class="sub.status !== 'done' && 'text-dimmed'"
                     />
                   </template>
                   <span
                     class="text-sm"
-                    :class="sub.status === 'done' && 'line-through text-gray-500'"
+                    :class="sub.status === 'done' && 'line-through text-muted'"
                   >
                     {{ sub.title }}
                   </span>

@@ -46,7 +46,7 @@ const d = computed(() => props.darkMode)
 <template>
   <div
     class="flow-mockup rounded-lg border-2 overflow-hidden"
-    :class="d ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'"
+    :class="d ? 'border-muted bg-muted' : 'border-default bg-white'"
   >
     <div
       class="mockup-container flex h-[340px] md:h-[400px]"
@@ -56,18 +56,18 @@ const d = computed(() => props.darkMode)
         v-if="showSidebar && wireframe.sidebar"
         class="sidebar shrink-0 border-r"
         :class="[
-          d ? 'border-gray-700 bg-gray-950' : 'border-gray-200 bg-gray-50',
+          d ? 'border-muted bg-muted' : 'border-default bg-muted',
           mobileMode ? 'w-full h-32 border-r-0 border-b overflow-x-auto' : 'w-44 md:w-52',
           { 'ring-2 ring-primary-500 ring-offset-2': isHighlighted('sidebar') }
         ]"
       >
         <div
           class="sidebar-header flex items-center justify-between px-3 py-2 border-b"
-          :class="d ? 'border-gray-700' : 'border-gray-200'"
+          :class="d ? 'border-muted' : 'border-default'"
         >
           <span
             class="text-[11px] font-semibold"
-            :class="d ? 'text-gray-400' : 'text-gray-500'"
+            :class="d ? 'text-dimmed' : 'text-muted'"
           >Threads</span>
           <UButton
             icon="i-lucide-plus"
@@ -84,22 +84,22 @@ const d = computed(() => props.darkMode)
           <div
             class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs"
             :class="[
-              d ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200',
+              d ? 'bg-muted border-muted' : 'bg-white border-default',
               wireframe.sidebar.searchFocused ? 'border-primary-500 ring-1 ring-primary-500/30' : '',
               { 'ring-2 ring-primary-500 ring-offset-1': isHighlighted('search-input') }
             ]"
           >
             <UIcon
               name="i-lucide-search"
-              class="h-3.5 w-3.5 text-gray-400"
+              class="h-3.5 w-3.5 text-dimmed"
             />
             <span
               v-if="wireframe.sidebar.search"
-              :class="d ? 'text-gray-300' : 'text-gray-700'"
+              :class="d ? 'text-toned' : 'text-default'"
             >{{ wireframe.sidebar.search }}</span>
             <span
               v-else
-              class="text-gray-400"
+              class="text-dimmed"
             >Search...</span>
           </div>
         </div>
@@ -111,7 +111,7 @@ const d = computed(() => props.darkMode)
           >
             <div
               v-if="item.startsWith('Pinned:') || item.startsWith('All Threads:')"
-              class="px-2 pt-2 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-gray-400"
+              class="px-2 pt-2 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-dimmed"
             >
               {{ item.split(':')[0] }}
             </div>
@@ -121,14 +121,14 @@ const d = computed(() => props.darkMode)
               :class="[
                 wireframe.sidebar.activeItem && item.includes(wireframe.sidebar.activeItem)
                   ? d ? 'bg-primary-900/30 text-primary-300' : 'bg-primary-50 text-primary-700'
-                  : d ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700',
+                  : d ? 'hover:bg-elevated text-toned' : 'hover:bg-elevated text-default',
                 { 'ring-2 ring-primary-500 ring-offset-1': isHighlighted(`thread-${i}`) }
               ]"
               @click="handleInteract(`thread-${i}`)"
             >
               <div
                 class="h-5 w-5 rounded shrink-0"
-                :class="d ? 'bg-gray-700' : 'bg-gray-200'"
+                :class="d ? 'bg-accented' : 'bg-accented'"
               />
               <span class="truncate">{{ item.replace('Active: ', '').replace('Result: ', '') }}</span>
             </div>
@@ -138,13 +138,13 @@ const d = computed(() => props.darkMode)
 
       <main
         class="main-area flex-1 flex flex-col min-w-0"
-        :class="d ? 'bg-gray-900' : 'bg-white'"
+        :class="d ? 'bg-muted' : 'bg-white'"
       >
         <header
           v-if="wireframe.main?.header?.length"
           class="chat-header flex items-center justify-between px-3 py-2 border-b"
           :class="[
-            d ? 'border-gray-700' : 'border-gray-200',
+            d ? 'border-muted' : 'border-default',
             { 'ring-2 ring-primary-500 ring-offset-2': isHighlighted('header') }
           ]"
         >
@@ -158,14 +158,14 @@ const d = computed(() => props.darkMode)
             />
             <span
               class="font-medium text-sm"
-              :class="d ? 'text-gray-100' : 'text-gray-900'"
+              :class="d ? 'text-highlighted' : 'text-highlighted'"
             >{{ wireframe.main.header[0] }}</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span
               v-if="wireframe.main.header[1]"
               class="text-[10px] px-1.5 py-0.5 rounded"
-              :class="d ? 'text-gray-400 bg-gray-800' : 'text-gray-500 bg-gray-100'"
+              :class="d ? 'text-dimmed bg-elevated' : 'text-muted bg-elevated'"
             >
               {{ wireframe.main.header[1] }}
             </span>
@@ -195,14 +195,14 @@ const d = computed(() => props.darkMode)
           >
             <div
               class="h-12 w-12 rounded-full flex items-center justify-center mb-2"
-              :class="d ? 'bg-gray-800' : 'bg-gray-100'"
+              :class="d ? 'bg-elevated' : 'bg-elevated'"
             >
               <UIcon
                 name="i-lucide-message-square"
-                class="h-6 w-6 text-gray-400"
+                class="h-6 w-6 text-dimmed"
               />
             </div>
-            <p class="text-sm text-gray-500">
+            <p class="text-sm text-muted">
               No messages yet
             </p>
           </div>
@@ -217,8 +217,8 @@ const d = computed(() => props.darkMode)
                 class="flex justify-center py-1"
               >
                 <span
-                  class="rounded-full px-2.5 py-0.5 text-[10px] font-medium text-gray-500"
-                  :class="d ? 'bg-gray-800' : 'bg-gray-100'"
+                  class="rounded-full px-2.5 py-0.5 text-[10px] font-medium text-muted"
+                  :class="d ? 'bg-elevated' : 'bg-elevated'"
                 >{{ item }}</span>
               </div>
 
@@ -241,10 +241,10 @@ const d = computed(() => props.darkMode)
                   class="flex-1 rounded-lg px-3 py-2 text-xs max-w-[85%]"
                   :class="[
                     item.startsWith('Task card:')
-                      ? d ? 'bg-gray-800 border border-gray-700' : 'bg-gray-100 border border-gray-200'
+                      ? d ? 'bg-elevated border border-muted' : 'bg-elevated border border-default'
                       : item.startsWith('Input:') || item.startsWith('Composer input:')
-                        ? d ? 'bg-gray-800/50 border border-dashed border-gray-600 text-gray-400' : 'bg-gray-50 border border-dashed border-gray-300 text-gray-500'
-                        : d ? 'bg-gray-800' : 'bg-gray-100'
+                        ? d ? 'bg-elevated/50 border border-dashed border-accented text-dimmed' : 'bg-muted border border-dashed border-muted text-muted'
+                        : d ? 'bg-elevated' : 'bg-elevated'
                   ]"
                 >
                   <div
@@ -257,10 +257,10 @@ const d = computed(() => props.darkMode)
                     />
                     <span
                       class="font-medium"
-                      :class="d ? 'text-gray-100' : 'text-gray-900'"
+                      :class="d ? 'text-highlighted' : 'text-highlighted'"
                     >{{ item.replace('Task card: ', '') }}</span>
                   </div>
-                  <div :class="d ? 'text-gray-300' : 'text-gray-700'">
+                  <div :class="d ? 'text-toned' : 'text-default'">
                     {{ item.replace('Input: ', '').replace('Composer input: ', '').replace('You: ', '') }}
                   </div>
                 </div>
@@ -273,12 +273,12 @@ const d = computed(() => props.darkMode)
               >
                 <div
                   class="h-7 w-7 rounded-full shrink-0"
-                  :class="d ? 'bg-gray-700' : 'bg-gray-200'"
+                  :class="d ? 'bg-accented' : 'bg-accented'"
                 />
                 <div
                   class="flex-1 rounded-lg px-3 py-2 text-xs max-w-[85%]"
                   :class="[
-                    d ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'
+                    d ? 'bg-elevated text-toned' : 'bg-elevated text-default'
                   ]"
                 >
                   {{ item }}
@@ -304,7 +304,7 @@ const d = computed(() => props.darkMode)
           v-if="wireframe.main?.composer !== undefined"
           class="composer border-t px-3 py-2"
           :class="[
-            d ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white',
+            d ? 'border-muted bg-muted' : 'border-default bg-white',
             { 'ring-2 ring-primary-500 ring-offset-2': isHighlighted('composer') }
           ]"
         >
@@ -312,31 +312,31 @@ const d = computed(() => props.darkMode)
             v-if="wireframe.main.showCommandPalette"
             class="command-palette mb-2 rounded-lg border p-1"
             :class="[
-              d ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white',
+              d ? 'border-muted bg-muted' : 'border-default bg-white',
               { 'ring-2 ring-primary-500': isHighlighted('command-palette') }
             ]"
           >
             <div
               class="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer"
-              :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
+              :class="d ? 'hover:bg-elevated' : 'hover:bg-elevated'"
             >
               <UIcon
                 name="i-lucide-list-todo"
                 class="h-4 w-4 text-primary-500"
               />
               <span class="text-xs font-medium">/task</span>
-              <span class="text-xs text-gray-400">Create a new task</span>
+              <span class="text-xs text-dimmed">Create a new task</span>
             </div>
             <div
               class="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer"
-              :class="d ? 'hover:bg-gray-800' : 'hover:bg-gray-100'"
+              :class="d ? 'hover:bg-elevated' : 'hover:bg-elevated'"
             >
               <UIcon
                 name="i-lucide-file-text"
                 class="h-4 w-4 text-amber-500"
               />
               <span class="text-xs font-medium">/template</span>
-              <span class="text-xs text-gray-400">Use a task template</span>
+              <span class="text-xs text-dimmed">Use a task template</span>
             </div>
           </div>
 
@@ -350,18 +350,18 @@ const d = computed(() => props.darkMode)
             <div
               class="flex-1 rounded-2xl px-3 py-2 text-xs flex items-center"
               :class="[
-                d ? 'bg-gray-800' : 'bg-gray-100',
+                d ? 'bg-elevated' : 'bg-elevated',
                 wireframe.main.composerFocused ? 'ring-1 ring-primary-500/40' : '',
                 { 'ring-2 ring-primary-500': isHighlighted('composer-input') }
               ]"
             >
               <span
                 v-if="wireframe.main.composerValue"
-                :class="d ? 'text-gray-100' : 'text-gray-900'"
+                :class="d ? 'text-highlighted' : 'text-highlighted'"
               >{{ wireframe.main.composerValue }}</span>
               <span
                 v-else
-                class="text-gray-400"
+                class="text-dimmed"
               >{{ wireframe.main.composer }}</span>
             </div>
             <UButton
@@ -378,23 +378,23 @@ const d = computed(() => props.darkMode)
         v-if="showPanel && wireframe.panel"
         class="panel shrink-0 border-l overflow-y-auto"
         :class="[
-          d ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white',
+          d ? 'border-muted bg-muted' : 'border-default bg-white',
           mobileMode ? 'w-full h-auto border-l-0 border-t' : 'w-44 md:w-52',
           { 'ring-2 ring-primary-500 ring-offset-2': isHighlighted('panel') }
         ]"
       >
         <div
           class="panel-header flex items-center justify-between px-3 py-2 border-b"
-          :class="d ? 'border-gray-700' : 'border-gray-200'"
+          :class="d ? 'border-muted' : 'border-default'"
         >
           <div class="flex items-center gap-2">
             <UIcon
               :name="getPanelIcon(wireframe.panel.type)"
-              class="h-4 w-4 text-gray-500"
+              class="h-4 w-4 text-muted"
             />
             <span
               class="text-xs font-semibold"
-              :class="d ? 'text-gray-300' : 'text-gray-700'"
+              :class="d ? 'text-toned' : 'text-default'"
             >{{ wireframe.panel.title }}</span>
           </div>
           <UButton
@@ -416,10 +416,10 @@ const d = computed(() => props.darkMode)
               class="px-2 py-1.5 text-xs"
               :class="{ 'ring-2 ring-primary-500 rounded': isHighlighted(`panel-item-${i}`) }"
             >
-              <span class="text-gray-400 text-[10px]">{{ item.split(':')[0] }}:</span>
+              <span class="text-dimmed text-[10px]">{{ item.split(':')[0] }}:</span>
               <span
                 class="ml-1"
-                :class="d ? 'text-gray-300' : 'text-gray-700'"
+                :class="d ? 'text-toned' : 'text-default'"
               >{{ item.split(':').slice(1).join(':').trim() }}</span>
             </div>
             <div
@@ -452,22 +452,22 @@ const d = computed(() => props.darkMode)
               v-else
               class="notification-item flex items-center gap-2 rounded-md px-2 py-1.5 text-xs cursor-pointer"
               :class="[
-                d ? 'hover:bg-gray-800' : 'hover:bg-gray-100',
+                d ? 'hover:bg-elevated' : 'hover:bg-elevated',
                 { 'ring-2 ring-primary-500': isHighlighted(`panel-item-${i}`) }
               ]"
             >
               <div
                 class="h-5 w-5 rounded-full flex items-center justify-center shrink-0"
-                :class="d ? 'bg-gray-800' : 'bg-gray-100'"
+                :class="d ? 'bg-elevated' : 'bg-elevated'"
               >
                 <UIcon
                   name="i-lucide-bell"
-                  class="h-3 w-3 text-gray-400"
+                  class="h-3 w-3 text-dimmed"
                 />
               </div>
               <div class="flex-1 min-w-0">
                 <div
-                  :class="d ? 'text-gray-300' : 'text-gray-700'"
+                  :class="d ? 'text-toned' : 'text-default'"
                   class="truncate"
                 >
                   {{ item }}
@@ -481,7 +481,7 @@ const d = computed(() => props.darkMode)
 
     <div
       class="mockup-controls flex items-center justify-between px-3 py-2 border-t"
-      :class="d ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'"
+      :class="d ? 'bg-elevated border-muted' : 'bg-muted border-default'"
     >
       <div class="flex items-center gap-2">
         <UButton

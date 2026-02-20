@@ -34,7 +34,7 @@ function clearChecked() {
           color="neutral"
           variant="link"
           size="xs"
-          class="text-gray-500 hover:text-red-400"
+          class="text-muted hover:text-red-400"
           @click="clearChecked"
         >
           <template #trailing>
@@ -52,7 +52,7 @@ function clearChecked() {
         size="sm"
       >
         <template #status>
-          <div class="flex items-center justify-between text-xs text-gray-500 w-full">
+          <div class="flex items-center justify-between text-xs text-muted w-full">
             <span>{{ checkedCount }} of {{ totalCount }} items</span>
             <span>{{ progress }}%</span>
           </div>
@@ -73,7 +73,7 @@ function clearChecked() {
           <div
             v-for="item in uncheckedItems"
             :key="item.id"
-            class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-[hsl(var(--muted))] transition-colors"
+            class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition-colors"
           >
             <UCheckbox
               :model-value="false"
@@ -83,14 +83,14 @@ function clearChecked() {
             <span class="flex-1 text-sm">{{ item.text }}</span>
             <span
               v-if="item.quantity && item.quantity > 1"
-              class="text-xs text-gray-500"
+              class="text-xs text-muted"
             >x{{ item.quantity }}</span>
             <UButton
               icon="i-lucide-x"
               color="neutral"
               variant="ghost"
               size="xs"
-              class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-400"
+              class="opacity-0 group-hover:opacity-100 transition-opacity text-dimmed hover:text-red-400"
               @click="shoppingStore.remove(item.id)"
             />
           </div>
@@ -104,7 +104,7 @@ function clearChecked() {
             color="neutral"
             variant="ghost"
             size="xs"
-            class="w-full justify-start px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+            class="w-full justify-start px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted"
           >
             <template #leading>
               <UIcon
@@ -119,20 +119,20 @@ function clearChecked() {
             <div
               v-for="item in checkedItems"
               :key="item.id"
-              class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-[hsl(var(--muted))] transition-colors"
+              class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition-colors"
             >
               <UCheckbox
                 :model-value="true"
                 color="warning"
                 @update:model-value="shoppingStore.toggle(item.id)"
               />
-              <span class="flex-1 text-sm text-gray-500 line-through">{{ item.text }}</span>
+              <span class="flex-1 text-sm text-muted line-through">{{ item.text }}</span>
               <UButton
                 icon="i-lucide-x"
                 color="neutral"
                 variant="ghost"
                 size="xs"
-                class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-400"
+                class="opacity-0 group-hover:opacity-100 transition-opacity text-dimmed hover:text-red-400"
                 @click="shoppingStore.remove(item.id)"
               />
             </div>

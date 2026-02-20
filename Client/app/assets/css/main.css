@@ -18,78 +18,96 @@
   --color-green-800: #016538;
   --color-green-900: #0A5331;
   --color-green-950: #052E16;
+
+  --color-status-todo-light: #64748b;
+  --color-status-todo-dark: #94a3b8;
+  --color-status-in-progress-light: #06b6d4;
+  --color-status-in-progress-dark: #22d3ee;
+  --color-status-review-light: #a855f7;
+  --color-status-review-dark: #c084fc;
+  --color-status-done-light: #22c55e;
+  --color-status-done-dark: #4ade80;
+  --color-status-blocked-light: #ef4444;
+  --color-status-blocked-dark: #f87171;
+
+  --color-priority-low-light: #64748b;
+  --color-priority-low-dark: #94a3b8;
+  --color-priority-medium-light: #f59e0b;
+  --color-priority-medium-dark: #fbbf24;
+  --color-priority-high-light: #f97316;
+  --color-priority-high-dark: #fb923c;
+  --color-priority-urgent-light: #ef4444;
+  --color-priority-urgent-dark: #f87171;
+
+  --color-kind-tasks-light: #22c55e;
+  --color-kind-tasks-dark: #4ade80;
+  --color-kind-shopping-light: #f59e0b;
+  --color-kind-shopping-dark: #fbbf24;
+  --color-kind-notes-light: #a855f7;
+  --color-kind-notes-dark: #c084fc;
+  --color-kind-contacts-light: #06b6d4;
+  --color-kind-contacts-dark: #22d3ee;
+  --color-kind-chat-light: #3b82f6;
+  --color-kind-chat-dark: #60a5fa;
+
+  --color-bubble-own-light: #00A155;
+  --color-bubble-own-dark: #00A155;
+  --color-bubble-other-light: #f1f5f9;
+  --color-bubble-other-dark: #1e293b;
 }
 
 :root {
-  --status-todo: 215 16% 47%;
-  --status-in-progress: 199 89% 48%;
-  --status-review: 280 65% 60%;
-  --status-done: 142 71% 45%;
-  --status-blocked: 0 72% 51%;
+  --status-todo: var(--color-status-todo-light);
+  --status-in-progress: var(--color-status-in-progress-light);
+  --status-review: var(--color-status-review-light);
+  --status-done: var(--color-status-done-light);
+  --status-blocked: var(--color-status-blocked-light);
 
-  --priority-low: 215 16% 47%;
-  --priority-medium: 45 93% 47%;
-  --priority-high: 25 95% 53%;
-  --priority-urgent: 0 72% 51%;
+  --priority-low: var(--color-priority-low-light);
+  --priority-medium: var(--color-priority-medium-light);
+  --priority-high: var(--color-priority-high-light);
+  --priority-urgent: var(--color-priority-urgent-light);
 
-  --bubble-own: 152 55% 42%;
-  --bubble-own-foreground: 0 0% 100%;
-  --bubble-other: 210 10% 95%;
-  --bubble-other-foreground: 210 20% 20%;
+  --kind-tasks: var(--color-kind-tasks-light);
+  --kind-shopping: var(--color-kind-shopping-light);
+  --kind-notes: var(--color-kind-notes-light);
+  --kind-contacts: var(--color-kind-contacts-light);
+  --kind-chat: var(--color-kind-chat-light);
 
-  --chart-1: 210 100% 52%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 262 83% 58%;
-  --chart-5: 340 82% 52%;
-
-  --kind-tasks: 142 71% 45%;
-  --kind-shopping: 38 92% 50%;
-  --kind-notes: 262 83% 58%;
-  --kind-contacts: 199 89% 48%;
-  --kind-chat: 210 100% 52%;
+  --bubble-own: var(--color-bubble-own-light);
+  --bubble-other: var(--color-bubble-other-light);
 }
 
 .dark {
-  --status-todo: 215 20% 55%;
-  --status-in-progress: 199 89% 58%;
-  --status-review: 280 65% 70%;
-  --status-done: 152 55% 50%;
-  --status-blocked: 0 72% 58%;
+  --status-todo: var(--color-status-todo-dark);
+  --status-in-progress: var(--color-status-in-progress-dark);
+  --status-review: var(--color-status-review-dark);
+  --status-done: var(--color-status-done-dark);
+  --status-blocked: var(--color-status-blocked-dark);
 
-  --priority-low: 215 20% 55%;
-  --priority-medium: 45 93% 57%;
-  --priority-high: 25 95% 58%;
-  --priority-urgent: 0 72% 58%;
+  --priority-low: var(--color-priority-low-dark);
+  --priority-medium: var(--color-priority-medium-dark);
+  --priority-high: var(--color-priority-high-dark);
+  --priority-urgent: var(--color-priority-urgent-dark);
 
-  --bubble-own: 152 55% 33%;
-  --bubble-own-foreground: 0 0% 100%;
-  --bubble-other: 210 14% 18%;
-  --bubble-other-foreground: 210 15% 90%;
+  --kind-tasks: var(--color-kind-tasks-dark);
+  --kind-shopping: var(--color-kind-shopping-dark);
+  --kind-notes: var(--color-kind-notes-dark);
+  --kind-contacts: var(--color-kind-contacts-dark);
+  --kind-chat: var(--color-kind-chat-dark);
 
-  --kind-tasks: 152 55% 42%;
-  --kind-shopping: 38 92% 50%;
-  --kind-notes: 262 83% 58%;
-  --kind-contacts: 199 89% 48%;
-  --kind-chat: 210 100% 52%;
+  --bubble-own: var(--color-bubble-own-dark);
+  --bubble-other: var(--color-bubble-other-dark);
 }
 
 html, body, #__nuxt, #__layout {
   height: 100%;
 }
 
-body {
-  transition: background-color 0.2s, color 0.2s;
-}
-
-button, a, input, textarea {
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
-}
-
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: hsl(210 10% 20%) transparent;
+    scrollbar-color: var(--ui-border) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -101,20 +119,16 @@ button, a, input, textarea {
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: hsl(210 10% 20%);
+    background-color: var(--ui-border);
     border-radius: 9999px;
   }
 
-  .text-balance {
-    text-wrap: balance;
-  }
-
   .form-label {
-    @apply text-[11px] font-semibold uppercase tracking-wider text-gray-500;
+    @apply text-[11px] font-semibold uppercase tracking-wider text-muted;
   }
 
   .selectable-chip {
-    @apply bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100;
+    @apply bg-elevated text-muted hover:text-highlighted;
   }
 
   .selectable-chip-selected {

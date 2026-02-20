@@ -145,7 +145,7 @@ function addContact() {
       <ContactDetail
         v-if="isDetailOpen && contactStore.activeContact.value"
         :contact="contactStore.activeContact.value"
-        class="w-full md:w-3/5 border-l border-[hsl(var(--border))]"
+        class="w-full md:w-3/5 border-l border-default"
         @close="closeDetail"
         @update="(updates) => contactStore.update(contactStore.activeContactId.value!, updates)"
         @delete="() => { contactStore.remove(contactStore.activeContactId.value!); closeDetail() }"

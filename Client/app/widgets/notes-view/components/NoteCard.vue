@@ -22,7 +22,7 @@ const emit = defineEmits<{
     :class="[
       isActive
         ? 'bg-violet-500/10 ring-1 ring-violet-500/30'
-        : 'hover:bg-[hsl(var(--muted))]'
+        : 'hover:bg-muted'
     ]"
     :ui="{ body: 'p-0', header: 'p-3 pb-0' }"
     @click="emit('click')"
@@ -54,7 +54,7 @@ const emit = defineEmits<{
 
     <p
       v-if="note.content"
-      class="text-xs text-gray-500 line-clamp-3 leading-relaxed px-3"
+      class="text-xs text-muted line-clamp-3 leading-relaxed px-3"
     >
       {{ note.content }}
     </p>
@@ -74,7 +74,7 @@ const emit = defineEmits<{
         >
           {{ tag }}
         </UBadge>
-        <span class="ml-auto text-xs text-gray-500">
+        <span class="ml-auto text-xs text-muted">
           {{ relativeTime(note.updatedAt) }}
         </span>
       </div>

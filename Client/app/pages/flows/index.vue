@@ -16,7 +16,7 @@ useHead({
 <template>
   <div class="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-purple-700 p-4 md:p-8">
     <div class="mx-auto max-w-4xl">
-      <header class="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-10 shadow-2xl mb-6">
+      <header class="bg-white dark:bg-muted rounded-2xl p-6 md:p-10 shadow-2xl mb-6">
         <div class="flex flex-col items-center text-center mb-8">
           <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 dark:bg-primary-900/30 mb-4">
             <UIcon
@@ -24,13 +24,13 @@ useHead({
               class="h-8 w-8 text-primary-600 dark:text-primary-400"
             />
           </div>
-          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 class="text-2xl md:text-3xl font-bold text-highlighted dark:text-highlighted">
             TaskChat User Flows
           </h1>
-          <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-md">
+          <p class="mt-2 text-muted dark:text-dimmed max-w-md">
             Interactive documentation showing how to use TaskChat features. Each flow includes step-by-step walkthroughs with live previews.
           </p>
-          <div class="mt-4 inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-800 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
+          <div class="mt-4 inline-flex items-center gap-2 rounded-full bg-elevated dark:bg-elevated px-4 py-2 text-xs text-muted dark:text-dimmed">
             <UIcon
               name="i-lucide-clock"
               class="h-3.5 w-3.5"
@@ -80,16 +80,16 @@ useHead({
                 />
               </div>
               <div class="min-w-0 flex-1">
-                <div class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                <div class="font-semibold text-highlighted dark:text-highlighted group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                   {{ flow.title }}
                 </div>
-                <div class="mt-0.5 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                <div class="mt-0.5 text-sm text-muted dark:text-dimmed line-clamp-2">
                   {{ flow.description }}
                 </div>
               </div>
               <UIcon
                 name="i-lucide-arrow-right"
-                class="h-5 w-5 text-gray-300 dark:text-gray-600 transition-all group-hover:text-primary-500 group-hover:translate-x-1"
+                class="h-5 w-5 text-toned dark:text-toned transition-all group-hover:text-primary-500 group-hover:translate-x-1"
               />
             </div>
           </UCard>

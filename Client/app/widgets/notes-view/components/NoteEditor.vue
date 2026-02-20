@@ -46,10 +46,10 @@ function removeTag(tag: string) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-[hsl(var(--background))]">
+  <div class="flex h-full flex-col bg-default">
     <UDashboardNavbar>
       <template #leading>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           Edited {{ relativeTime(note.updatedAt) }}
         </span>
       </template>
@@ -67,7 +67,7 @@ function removeTag(tag: string) {
           color="neutral"
           variant="ghost"
           size="sm"
-          class="text-gray-400 hover:text-red-400"
+          class="text-dimmed hover:text-red-400"
           @click="emit('delete')"
         />
         <UButton

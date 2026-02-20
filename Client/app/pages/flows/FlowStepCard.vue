@@ -22,13 +22,13 @@ const emit = defineEmits<{
       isActive
         ? 'border-primary-500 shadow-lg shadow-primary-500/10'
         : darkMode
-          ? 'border-gray-700 bg-gray-900'
-          : 'border-gray-200 bg-white',
+          ? 'border-muted bg-muted'
+          : 'border-default bg-white',
       isActive && darkMode ? 'bg-primary-900/20' : '',
       isActive && !darkMode ? 'bg-primary-50/50' : ''
     ]"
     :ui="{
-      header: `p-4 border-b ${darkMode ? 'border-gray-800' : 'border-gray-100'}`,
+      header: 'p-4 border-b border-muted',
       body: 'p-4 space-y-4',
       footer: 'p-3 rounded-lg'
     }"
@@ -47,7 +47,7 @@ const emit = defineEmits<{
           <div class="flex items-center gap-2 mb-1">
             <span
               class="text-[10px] font-semibold uppercase tracking-wider"
-              :class="isActive ? 'text-primary-600' : 'text-gray-500'"
+              :class="isActive ? 'text-primary-600' : 'text-muted'"
             >
               {{ step.label || 'Step' }}
             </span>
@@ -62,7 +62,7 @@ const emit = defineEmits<{
           </div>
           <h4
             class="font-semibold"
-            :class="darkMode ? 'text-gray-100' : 'text-gray-900'"
+            :class="darkMode ? 'text-highlighted' : 'text-highlighted'"
           >
             {{ step.title }}
           </h4>
@@ -78,12 +78,12 @@ const emit = defineEmits<{
         />
         <span
           class="text-xs font-semibold"
-          :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
+          :class="darkMode ? 'text-toned' : 'text-default'"
         >Action</span>
       </div>
       <p
         class="text-sm leading-relaxed"
-        :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
+        :class="darkMode ? 'text-dimmed' : 'text-toned'"
       >
         {{ step.action }}
       </p>
@@ -105,13 +105,13 @@ const emit = defineEmits<{
         </template>
         <span
           class="text-xs font-semibold"
-          :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
+          :class="darkMode ? 'text-toned' : 'text-default'"
         >Expected Result</span>
       </UButton>
       <template #content>
         <p
           class="mt-3 text-sm leading-relaxed pl-6"
-          :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
+          :class="darkMode ? 'text-dimmed' : 'text-toned'"
         >
           {{ step.result }}
         </p>
@@ -123,11 +123,11 @@ const emit = defineEmits<{
         <div class="flex items-center gap-2">
           <UIcon
             name="i-lucide-layout"
-            class="h-4 w-4 text-gray-500"
+            class="h-4 w-4 text-muted"
           />
           <span
             class="text-xs font-semibold"
-            :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
+            :class="darkMode ? 'text-toned' : 'text-default'"
           >Preview</span>
         </div>
         <UButton

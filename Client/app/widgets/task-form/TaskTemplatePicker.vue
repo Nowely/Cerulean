@@ -51,7 +51,7 @@ function closeDrawer() {
         <h3 class="text-lg font-semibold mb-1">
           Task Templates
         </h3>
-        <p class="text-sm text-gray-500 mb-4">
+        <p class="text-sm text-muted mb-4">
           Choose a template to quickly create a task
         </p>
 
@@ -60,7 +60,7 @@ function closeDrawer() {
             v-for="template in taskStore.templates.value"
             :key="template.id"
             variant="soft"
-            class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            class="cursor-pointer hover:bg-accented dark:hover:bg-accented transition-colors"
             @click="handleSelect(template.id)"
           >
             <div class="flex items-center gap-3">
@@ -71,10 +71,10 @@ function closeDrawer() {
               />
               <div class="flex flex-col gap-0.5 min-w-0 flex-1">
                 <span class="text-sm font-semibold">{{ template.name }}</span>
-                <span class="text-[12px] text-gray-500">{{ template.description }}</span>
+                <span class="text-[12px] text-muted">{{ template.description }}</span>
                 <span
                   v-if="template.subtasks.length > 0"
-                  class="mt-1 text-[11px] text-gray-500"
+                  class="mt-1 text-[11px] text-muted"
                 >
                   {{ template.subtasks.length }} subtask{{ template.subtasks.length !== 1 ? 's' : '' }} included
                 </span>

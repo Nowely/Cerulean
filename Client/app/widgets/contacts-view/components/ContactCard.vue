@@ -27,14 +27,14 @@ function getAvatarColor(name: string): string {
       ui: { root: 'font-semibold text-white', fallback: 'bg-transparent' }
     }"
     :ui="{
-      root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-sky-500/10' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`
+      root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-sky-500/10' : 'hover:bg-elevated dark:hover:bg-elevated'}`
     }"
     @click="emit('click')"
   >
     <template #description>
       <span
         v-if="contact.company"
-        class="text-xs text-gray-500 truncate"
+        class="text-xs text-muted truncate"
       >
         {{ contact.company }}
       </span>

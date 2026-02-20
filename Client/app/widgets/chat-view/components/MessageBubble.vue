@@ -35,7 +35,7 @@ const avatarConfig = computed(() => {
     :avatar="avatarConfig"
     :content="message.content"
     :ui="{
-      content: isOwn ? 'bg-primary-500 text-white rounded-br-md' : 'bg-gray-100 dark:bg-gray-800 rounded-bl-md'
+      content: isOwn ? 'bg-primary-500 text-white rounded-br-md' : 'bg-elevated dark:bg-elevated rounded-bl-md'
     }"
   >
     <template

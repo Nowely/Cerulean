@@ -30,7 +30,7 @@ const statusColor = computed(() =>
         name="i-lucide-arrow-right"
         class="h-3 w-3 mr-1.5"
       />
-      <span class="font-medium text-gray-700 dark:text-gray-300">{{ sender?.name }}</span>
+      <span class="font-medium text-default dark:text-default">{{ sender?.name }}</span>
       {{ ' ' }}{{ message.content }}
       <span
         v-if="statusColor"
@@ -43,7 +43,7 @@ const statusColor = computed(() =>
         name="i-lucide-user-plus"
         class="h-3 w-3 mr-1.5 text-primary-500"
       />
-      <span class="font-medium text-gray-700 dark:text-gray-300">{{ sender?.name }}</span>
+      <span class="font-medium text-default dark:text-default">{{ sender?.name }}</span>
       {{ ' ' }}{{ message.content }}
     </template>
     <template v-else>

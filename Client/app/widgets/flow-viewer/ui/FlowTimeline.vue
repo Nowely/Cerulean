@@ -26,17 +26,17 @@ const d = computed(() => props.darkMode)
     <div class="timeline-header flex items-center justify-between mb-4">
       <h3
         class="text-sm font-semibold"
-        :class="d ? 'text-gray-100' : 'text-gray-900'"
+        :class="d ? 'text-highlighted' : 'text-highlighted'"
       >
         Flow Progress
       </h3>
       <div class="flex items-center gap-3">
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-muted">
           {{ showAll ? `All ${steps.length} steps` : `Step ${currentStep + 1} of ${steps.length}` }}
         </span>
         <label
           class="flex items-center gap-2 text-xs cursor-pointer"
-          :class="d ? 'text-gray-400' : 'text-gray-600'"
+          :class="d ? 'text-dimmed' : 'text-toned'"
         >
           <UCheckbox
             :model-value="showAll"
@@ -50,7 +50,7 @@ const d = computed(() => props.darkMode)
     <div class="timeline-container relative">
       <div
         class="timeline-track absolute top-4 left-0 right-0 h-1 rounded-full"
-        :class="d ? 'bg-gray-700' : 'bg-gray-200'"
+        :class="d ? 'bg-accented' : 'bg-accented'"
       />
 
       <div
@@ -75,8 +75,8 @@ const d = computed(() => props.darkMode)
                     ? 'bg-primary-900/50 text-primary-400 border-2 border-primary-500'
                     : 'bg-primary-100 text-primary-600 border-2 border-primary-500'
                   : d
-                    ? 'bg-gray-800 text-gray-400 border-2 border-gray-600 group-hover:border-primary-400 group-hover:text-primary-500'
-                    : 'bg-white text-gray-400 border-2 border-gray-300 group-hover:border-primary-400 group-hover:text-primary-500'
+                    ? 'bg-elevated text-dimmed border-2 border-accented group-hover:border-primary-400 group-hover:text-primary-500'
+                    : 'bg-white text-dimmed border-2 border-muted group-hover:border-primary-400 group-hover:text-primary-500'
             ]"
           >
             <UIcon
@@ -97,8 +97,8 @@ const d = computed(() => props.darkMode)
                 idx === currentStep && !showAll
                   ? 'text-primary-600'
                   : d
-                    ? 'text-gray-400 group-hover:text-gray-300'
-                    : 'text-gray-500 group-hover:text-gray-700'
+                    ? 'text-dimmed group-hover:text-toned'
+                    : 'text-muted group-hover:text-default'
               ]"
             >
               {{ step.title }}
@@ -110,7 +110,7 @@ const d = computed(() => props.darkMode)
 
     <div
       class="timeline-actions flex items-center justify-between mt-4 pt-4 border-t"
-      :class="d ? 'border-gray-700' : 'border-gray-200'"
+      :class="d ? 'border-muted' : 'border-default'"
     >
       <UButton
         color="neutral"

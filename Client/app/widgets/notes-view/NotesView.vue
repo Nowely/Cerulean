@@ -103,7 +103,7 @@ function deleteNote(id: string) {
       <NoteEditor
         v-if="isEditing && noteStore.activeNote.value"
         :note="noteStore.activeNote.value"
-        class="w-full md:w-1/2 lg:w-3/5 border-l border-[hsl(var(--border))]"
+        class="w-full md:w-1/2 lg:w-3/5 border-l border-default"
         @close="closeEditor"
         @update="(updates) => noteStore.update(noteStore.activeNoteId.value!, updates)"
         @delete="deleteNote(noteStore.activeNoteId.value!)"

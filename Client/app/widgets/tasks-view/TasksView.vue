@@ -100,7 +100,7 @@ function openNewTaskForm() {
           v-for="task in filteredTasks"
           :key="task.id"
           variant="soft"
-          class="cursor-pointer transition-colors hover:bg-[hsl(var(--muted))]"
+          class="cursor-pointer transition-colors hover:bg-muted"
           :class="{ 'bg-emerald-500/5': taskStore.activeTaskId.value === task.id }"
           :ui="{ body: 'p-3' }"
           @click="openTask(task.id)"
@@ -130,7 +130,7 @@ function openNewTaskForm() {
                 </UBadge>
                 <span
                   v-if="task.dueDate"
-                  class="text-xs text-gray-500"
+                  class="text-xs text-muted"
                 >
                   Due {{ relativeTime(task.dueDate) }}
                 </span>

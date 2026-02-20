@@ -151,7 +151,7 @@ function closeDrawer() {
         :title="isEditing ? 'Edit Task' : 'New Task'"
       >
         <template #trailing>
-          <p class="text-sm text-gray-500">
+          <p class="text-sm text-muted">
             {{ isEditing ? 'Update the task details below' : 'Create a new task in this thread' }}
           </p>
         </template>

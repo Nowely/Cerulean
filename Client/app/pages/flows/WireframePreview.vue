@@ -17,7 +17,7 @@ watch(() => props.wireframe, syncToggleState, { immediate: true })
 </script>
 
 <template>
-  <div class="rounded-lg border border-gray-300 bg-gray-50 p-4">
+  <div class="rounded-lg border border-muted bg-muted p-4">
     <div class="mb-3 flex flex-wrap gap-2">
       <UButton
         v-if="wireframe.sidebar"
@@ -44,17 +44,17 @@ watch(() => props.wireframe, syncToggleState, { immediate: true })
         @click="syncToggleState"
       />
     </div>
-    <div class="flex min-h-[240px] gap-2 rounded-lg border border-gray-300 bg-gray-200 p-2">
+    <div class="flex min-h-[240px] gap-2 rounded-lg border border-muted bg-accented p-2">
       <aside
         v-if="showSidebar && wireframe.sidebar"
-        class="w-1/3 rounded-lg border border-gray-300 bg-gray-100 p-2"
+        class="w-1/3 rounded-lg border border-muted bg-elevated p-2"
       >
-        <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
           {{ wireframe.sidebar.title || 'Sidebar' }}
         </div>
         <div
           v-if="wireframe.sidebar.search"
-          class="mb-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+          class="mb-2 rounded border border-muted bg-white px-2 py-1 text-xs"
         >
           Search: {{ wireframe.sidebar.search }}
         </div>
@@ -62,14 +62,14 @@ watch(() => props.wireframe, syncToggleState, { immediate: true })
           <div
             v-for="(item, i) in wireframe.sidebar.items"
             :key="i"
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+            class="rounded border border-muted bg-white px-2 py-1 text-xs"
           >
             {{ item }}
           </div>
         </div>
       </aside>
-      <section class="flex-1 rounded-lg border border-gray-300 bg-gray-50 p-2">
-        <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <section class="flex-1 rounded-lg border border-muted bg-muted p-2">
+        <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
           {{ wireframe.main?.title || 'Main Area' }}
         </div>
         <div
@@ -79,7 +79,7 @@ watch(() => props.wireframe, syncToggleState, { immediate: true })
           <span
             v-for="(h, i) in wireframe.main.header"
             :key="i"
-            class="rounded-full border border-gray-300 bg-white px-2 py-0.5 text-xs"
+            class="rounded-full border border-muted bg-white px-2 py-0.5 text-xs"
           >
             {{ h }}
           </span>
@@ -91,7 +91,7 @@ watch(() => props.wireframe, syncToggleState, { immediate: true })
           <div
             v-for="(item, i) in wireframe.main.items"
             :key="i"
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+            class="rounded border border-muted bg-white px-2 py-1 text-xs"
           >
             {{ item }}
           </div>
@@ -104,23 +104,23 @@ watch(() => props.wireframe, syncToggleState, { immediate: true })
         </div>
         <div
           v-if="wireframe.main?.composer"
-          class="mt-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-500"
+          class="mt-2 rounded border border-muted bg-white px-2 py-1 text-xs text-muted"
         >
           {{ wireframe.main.composer }}
         </div>
       </section>
       <aside
         v-if="showPanel && wireframe.panel"
-        class="w-1/3 rounded-lg border border-gray-300 bg-white p-2"
+        class="w-1/3 rounded-lg border border-muted bg-white p-2"
       >
-        <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
           {{ wireframe.panel.title || 'Panel' }}
         </div>
         <div class="space-y-1">
           <div
             v-for="(item, i) in wireframe.panel.items"
             :key="i"
-            class="rounded border border-gray-300 bg-gray-50 px-2 py-1 text-xs"
+            class="rounded border border-muted bg-muted px-2 py-1 text-xs"
           >
             {{ item }}
           </div>

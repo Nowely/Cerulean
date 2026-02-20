@@ -40,7 +40,7 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
       <template #leading>
         <UIcon
           name="i-lucide-search"
-          class="h-4 w-4 text-gray-400"
+          class="h-4 w-4 text-dimmed"
         />
       </template>
     </UInput>

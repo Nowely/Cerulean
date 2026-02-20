@@ -55,7 +55,7 @@ function getAvatarColor(name: string): string {
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-[hsl(var(--background))]">
+  <div class="flex h-full flex-col bg-default">
     <UDashboardNavbar>
       <template #right>
         <UButton
@@ -72,7 +72,7 @@ function getAvatarColor(name: string): string {
           color="neutral"
           variant="ghost"
           size="sm"
-          class="text-gray-400 hover:text-red-400"
+          class="text-dimmed hover:text-red-400"
           @click="emit('delete')"
         />
         <UButton
@@ -125,7 +125,7 @@ function getAvatarColor(name: string): string {
             <UInput
               v-model="form.email"
               placeholder="Add email..."
-              :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+              :ui="{ base: 'bg-transparent border-b border-default rounded-none pb-0.5' }"
             />
           </template>
           <template v-else>
@@ -140,7 +140,7 @@ function getAvatarColor(name: string): string {
             <UInput
               v-model="form.phone"
               placeholder="Add phone..."
-              :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+              :ui="{ base: 'bg-transparent border-b border-default rounded-none pb-0.5' }"
             />
           </template>
           <template v-else>
@@ -155,7 +155,7 @@ function getAvatarColor(name: string): string {
             <UInput
               v-model="form.company"
               placeholder="Add company..."
-              :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+              :ui="{ base: 'bg-transparent border-b border-default rounded-none pb-0.5' }"
             />
           </template>
           <template v-else>
@@ -171,7 +171,7 @@ function getAvatarColor(name: string): string {
               v-model="form.notes"
               placeholder="Add notes..."
               :rows="3"
-              :ui="{ base: 'bg-transparent border-b border-[hsl(var(--border))] rounded-none pb-0.5' }"
+              :ui="{ base: 'bg-transparent border-b border-default rounded-none pb-0.5' }"
             />
           </template>
           <template v-else>

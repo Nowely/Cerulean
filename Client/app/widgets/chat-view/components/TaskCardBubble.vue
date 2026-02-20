@@ -78,14 +78,14 @@ function handleClick() {
         </h3>
         <UIcon
           name="i-lucide-chevron-right"
-          class="h-4 w-4 shrink-0 text-gray-400"
+          class="h-4 w-4 shrink-0 text-dimmed"
         />
       </div>
     </template>
 
     <p
       v-if="task.description"
-      class="text-[13px] leading-relaxed text-gray-500 line-clamp-2"
+      class="text-[13px] leading-relaxed text-muted line-clamp-2"
     >
       {{ task.description }}
     </p>
@@ -155,7 +155,7 @@ function handleClick() {
     />
 
     <template #footer>
-      <span class="text-[10px] text-gray-500">
+      <span class="text-[10px] text-muted">
         {{ formatTime(message.timestamp) }}
       </span>
     </template>

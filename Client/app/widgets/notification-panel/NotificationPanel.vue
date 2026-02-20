@@ -92,7 +92,7 @@ function handleMarkAllRead() {
             :key="notif.id"
             :data-testid="`notification-item-${notif.id}`"
             variant="soft"
-            class="cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+            class="cursor-pointer border-b border-default dark:border-muted last:border-b-0 transition-colors hover:bg-elevated dark:hover:bg-elevated"
             :class="!notif.read && 'bg-primary-500/5'"
             :ui="{ root: 'rounded-none', body: 'px-4 py-3' }"
             @click="handleNotificationClick(notif)"
@@ -101,13 +101,13 @@ function handleMarkAllRead() {
               <UAvatar
                 :icon="NOTIF_ICONS[notif.type] ?? 'i-lucide-bell'"
                 size="sm"
-                :class="!notif.read ? 'bg-primary-500/15 text-primary-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'"
+                :class="!notif.read ? 'bg-primary-500/15 text-primary-500' : 'bg-elevated dark:bg-elevated text-muted'"
               />
               <div class="flex min-w-0 flex-1 flex-col gap-0.5">
                 <div class="flex items-center justify-between gap-2">
                   <span
                     class="text-[12px] font-semibold"
-                    :class="!notif.read ? '' : 'text-gray-500'"
+                    :class="!notif.read ? '' : 'text-muted'"
                   >
                     {{ notif.title }}
                   </span>
@@ -116,10 +116,10 @@ function handleMarkAllRead() {
                     class="h-2 w-2 shrink-0 rounded-full bg-primary-500"
                   />
                 </div>
-                <p class="text-[12px] text-gray-500 line-clamp-2">
+                <p class="text-[12px] text-muted line-clamp-2">
                   {{ notif.body }}
                 </p>
-                <span class="text-[10px] text-gray-400">
+                <span class="text-[10px] text-dimmed">
                   {{ relativeTime(notif.timestamp) }}
                 </span>
               </div>

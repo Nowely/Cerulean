@@ -40,7 +40,7 @@ const d = computed(() => darkMode.value)
 <template>
   <div
     class="min-h-screen p-3 md:p-6"
-    :class="d ? 'bg-gray-950' : 'bg-gray-100'"
+    :class="d ? 'bg-muted' : 'bg-elevated'"
   >
     <div
       v-if="flow"
@@ -48,7 +48,7 @@ const d = computed(() => darkMode.value)
     >
       <header
         class="rounded-xl p-5 md:p-6 shadow-sm mb-4"
-        :class="d ? 'bg-gray-900' : 'bg-white'"
+        :class="d ? 'bg-muted' : 'bg-white'"
       >
         <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div class="flex items-start gap-3">
@@ -65,26 +65,26 @@ const d = computed(() => darkMode.value)
             <div>
               <h1
                 class="text-xl md:text-2xl font-bold"
-                :class="d ? 'text-gray-100' : 'text-gray-900'"
+                :class="d ? 'text-highlighted' : 'text-highlighted'"
               >
                 {{ flow.title }}
               </h1>
               <p
                 class="mt-1 text-sm"
-                :class="d ? 'text-gray-400' : 'text-gray-500'"
+                :class="d ? 'text-dimmed' : 'text-muted'"
               >
                 {{ flow.summary }}
               </p>
             </div>
           </div>
 
-          <span class="text-xs text-gray-400">{{ lastUpdated }}</span>
+          <span class="text-xs text-dimmed">{{ lastUpdated }}</span>
         </div>
       </header>
 
       <div
         class="rounded-xl p-4 md:p-6 shadow-sm mb-4"
-        :class="d ? 'bg-gray-900' : 'bg-white'"
+        :class="d ? 'bg-muted' : 'bg-white'"
       >
         <FlowTimeline
           :steps="flow.steps"
@@ -124,7 +124,7 @@ const d = computed(() => darkMode.value)
 
       <section
         class="rounded-xl p-5 md:p-6 shadow-sm mt-4"
-        :class="d ? 'bg-gray-900' : 'bg-white'"
+        :class="d ? 'bg-muted' : 'bg-white'"
       >
         <div class="flex items-center gap-2 mb-4">
           <UIcon
@@ -133,7 +133,7 @@ const d = computed(() => darkMode.value)
           />
           <h2
             class="font-semibold"
-            :class="d ? 'text-gray-100' : 'text-gray-900'"
+            :class="d ? 'text-highlighted' : 'text-highlighted'"
           >
             Key Observations
           </h2>
@@ -143,7 +143,7 @@ const d = computed(() => darkMode.value)
             v-for="(obs, i) in flow.observations"
             :key="i"
             class="flex items-start gap-3 rounded-lg p-3"
-            :class="d ? 'bg-gray-800' : 'bg-gray-50'"
+            :class="d ? 'bg-elevated' : 'bg-muted'"
           >
             <div
               class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
@@ -158,11 +158,11 @@ const d = computed(() => darkMode.value)
             <div>
               <span
                 class="text-xs font-semibold"
-                :class="d ? 'text-gray-100' : 'text-gray-900'"
+                :class="d ? 'text-highlighted' : 'text-highlighted'"
               >{{ obs.label }}</span>
               <p
                 class="mt-0.5 text-xs"
-                :class="d ? 'text-gray-400' : 'text-gray-600'"
+                :class="d ? 'text-dimmed' : 'text-toned'"
               >
                 {{ obs.description }}
               </p>
