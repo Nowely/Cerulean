@@ -5,7 +5,7 @@ import { useThreadStore } from '~/shared/model'
 import Sidebar from '~/widgets/sidebar/Sidebar.vue'
 import ChatHeader from '~/widgets/threads/components/chat-view/components/ChatHeader.vue'
 import ChatView from '~/widgets/threads/components/chat-view/ChatView.vue'
-import ShoppingView from '~/widgets/threads/components/shopping-view/ShoppingView.vue'
+import ListView from '~/widgets/threads/components/list-view/ListView.vue'
 import NotesView from '~/widgets/threads/components/notes-view/NotesView.vue'
 import ContactsView from '~/widgets/threads/components/contacts-view/ContactsView.vue'
 import TasksView from '~/widgets/threads/components/tasks-view/TasksView.vue'
@@ -16,7 +16,8 @@ import TaskTemplatePicker from '~/widgets/threads/components/task-form/TaskTempl
 
 const THREAD_VIEW_MAP: Record<ThreadKind, Component> = {
   tasks: TasksView,
-  shopping: ShoppingView,
+  shopping: ListView,
+  checklist: ListView,
   notes: NotesView,
   contacts: ContactsView,
   chat: ChatView

@@ -1,6 +1,6 @@
 export type ThreadId = string
 
-export type ThreadKind = 'tasks' | 'shopping' | 'notes' | 'contacts' | 'chat'
+export type ThreadKind = 'tasks' | 'shopping' | 'checklist' | 'notes' | 'contacts' | 'chat'
 
 export interface Thread {
   id: ThreadId

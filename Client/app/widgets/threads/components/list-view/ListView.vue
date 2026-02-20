@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ShoppingItem } from '~/shared/types/shopping'
 import { useShoppingStore, useThreadStore } from '~/shared/model'
 import InputBar from '~/widgets/threads/components/chat-view/components/InputBar.vue'
 
@@ -19,10 +20,56 @@ const checkedItems = computed(() => {
   return shoppingStore.checkableItems(threadId.value).filter(i => i.checked)
 })
 
-const checkedCount = computed(() => shoppingStore.checkedCount(threadId.value))
-const checkableTotal = computed(() => shoppingStore.checkableTotalCount(threadId.value))
 const totalCount = computed(() => shoppingStore.totalCount(threadId.value))
-const progress = computed(() => checkableTotal.value > 0 ? Math.round((checkedCount.value / checkableTotal.value) * 100) : 0)
+
+const draggedItem = ref<ShoppingItem | null>(null)
+const dragOverId = ref<string | null>(null)
+
+function onDragStart(event: DragEvent, item: ShoppingItem) {
+  draggedItem.value = item
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', item.id)
+  }
+}
+
+function onDragEnd() {
+  draggedItem.value = null
+  dragOverId.value = null
+}
+
+function onDragOver(event: DragEvent, item: ShoppingItem) {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dragOverId.value = item.id
+}
+
+function onDragLeave() {
+  dragOverId.value = null
+}
+
+function onDrop(event: DragEvent, targetItem: ShoppingItem, itemList: ShoppingItem[]) {
+  event.preventDefault()
+  if (!draggedItem.value || draggedItem.value.id === targetItem.id) {
+    return
+  }
+
+  const fromIndex = itemList.findIndex(i => i.id === draggedItem.value!.id)
+  const toIndex = itemList.findIndex(i => i.id === targetItem.id)
+
+  if (fromIndex === -1 || toIndex === -1) return
+
+  const newOrder = [...itemList]
+  newOrder.splice(fromIndex, 1)
+  newOrder.splice(toIndex, 0, draggedItem.value)
+
+  shoppingStore.reorder(threadId.value, newOrder.map(i => i.id))
+
+  draggedItem.value = null
+  dragOverId.value = null
+}
 </script>
 
 <template>
@@ -31,22 +78,6 @@ const progress = computed(() => checkableTotal.value > 0 ? Math.round((checkedCo
       :title="threadStore.activeThread.value?.name"
       icon="i-lucide-shopping-cart"
     />
-
-    <UDashboardToolbar v-if="checkableTotal > 0">
-      <UProgress
-        :model-value="checkedCount"
-        :max="checkableTotal"
-        color="warning"
-        size="sm"
-      >
-        <template #status>
-          <div class="flex items-center justify-between text-xs text-muted w-full">
-            <span>{{ checkedCount }} of {{ checkableTotal }} items</span>
-            <span>{{ progress }}%</span>
-          </div>
-        </template>
-      </UProgress>
-    </UDashboardToolbar>
 
     <UScrollArea class="flex-1">
       <UEmpty
@@ -61,15 +92,25 @@ const progress = computed(() => checkableTotal.value > 0 ? Math.round((checkedCo
           v-if="checkableItems.length > 0"
           class="px-2"
         >
-          <div class="flex items-center justify-between px-3 pb-1 pt-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-muted">To Buy</span>
-            <span class="text-xs text-muted">({{ checkableItems.length }})</span>
+          <div class="px-3 pb-1 pt-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-muted">To Buy ({{ checkableItems.length }})</span>
           </div>
           <div
             v-for="item in checkableItems"
             :key="item.id"
-            class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition-colors"
+            :draggable="true"
+            class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition-colors cursor-grab active:cursor-grabbing"
+            :class="{ 'bg-muted': dragOverId === item.id }"
+            @dragstart="onDragStart($event, item)"
+            @dragend="onDragEnd"
+            @dragover="onDragOver($event, item)"
+            @dragleave="onDragLeave"
+            @drop="onDrop($event, item, checkableItems)"
           >
+            <UIcon
+              name="i-lucide-grip-vertical"
+              class="h-4 w-4 text-dimmed opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            />
             <UCheckbox
               :model-value="false"
               color="warning"
@@ -91,15 +132,25 @@ const progress = computed(() => checkableTotal.value > 0 ? Math.round((checkedCo
           v-if="trackableItems.length > 0"
           class="px-2"
         >
-          <div class="flex items-center justify-between px-3 pb-1 pt-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-muted">To Track</span>
-            <span class="text-xs text-muted">({{ trackableItems.length }})</span>
+          <div class="px-3 pb-1 pt-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-muted">To Track ({{ trackableItems.length }})</span>
           </div>
           <div
             v-for="item in trackableItems"
             :key="item.id"
-            class="group flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted transition-colors"
+            :draggable="true"
+            class="group flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted transition-colors cursor-grab active:cursor-grabbing"
+            :class="{ 'bg-muted': dragOverId === item.id }"
+            @dragstart="onDragStart($event, item)"
+            @dragend="onDragEnd"
+            @dragover="onDragOver($event, item)"
+            @dragleave="onDragLeave"
+            @drop="onDrop($event, item, trackableItems)"
           >
+            <UIcon
+              name="i-lucide-grip-vertical"
+              class="h-4 w-4 text-dimmed opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            />
             <div class="flex items-center gap-1">
               <UButton
                 icon="i-lucide-minus"
@@ -161,8 +212,19 @@ const progress = computed(() => checkableTotal.value > 0 ? Math.round((checkedCo
             <div
               v-for="item in checkedItems"
               :key="item.id"
-              class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition-colors"
+              :draggable="true"
+              class="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition-colors cursor-grab active:cursor-grabbing"
+              :class="{ 'bg-muted': dragOverId === item.id }"
+              @dragstart="onDragStart($event, item)"
+              @dragend="onDragEnd"
+              @dragover="onDragOver($event, item)"
+              @dragleave="onDragLeave"
+              @drop="onDrop($event, item, checkedItems)"
             >
+              <UIcon
+                name="i-lucide-grip-vertical"
+                class="h-4 w-4 text-dimmed opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              />
               <UCheckbox
                 :model-value="true"
                 color="warning"

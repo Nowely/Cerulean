@@ -23,6 +23,13 @@ export const THREAD_KINDS: Record<ThreadKind, ThreadKindConfig> = {
     color: 'hsl(38 92% 50%)',
     description: 'Create checklists for groceries and purchases'
   },
+  checklist: {
+    kind: 'checklist',
+    label: 'Checklist',
+    icon: 'i-lucide-list-checks',
+    color: 'hsl(262 83% 58%)',
+    description: 'Simple todo list with checkboxes'
+  },
   notes: {
     kind: 'notes',
     label: 'Notes',
