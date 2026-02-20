@@ -74,7 +74,7 @@ function closeDrawer() {
                 <span class="text-[12px] text-muted">{{ template.description }}</span>
                 <span
                   v-if="template.subtasks.length > 0"
-                  class="mt-1 text-[11px] text-muted"
+                  class="mt-1 text-xs text-muted"
                 >
                   {{ template.subtasks.length }} subtask{{ template.subtasks.length !== 1 ? 's' : '' }} included
                 </span>

@@ -85,7 +85,7 @@ function handleClick() {
 
     <p
       v-if="task.description"
-      class="text-[13px] leading-relaxed text-muted line-clamp-2"
+      class="text-sm leading-relaxed text-muted line-clamp-2"
     >
       {{ task.description }}
     </p>
@@ -155,7 +155,7 @@ function handleClick() {
     />
 
     <template #footer>
-      <span class="text-[10px] text-muted">
+      <span class="text-2xs text-muted">
         {{ formatTime(message.timestamp) }}
       </span>
     </template>

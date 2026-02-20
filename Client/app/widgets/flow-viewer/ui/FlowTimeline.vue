@@ -92,7 +92,7 @@ const d = computed(() => props.darkMode)
 
           <div class="step-label mt-2 text-center max-w-[80px] md:max-w-[100px]">
             <span
-              class="text-[10px] md:text-xs font-medium leading-tight line-clamp-2 transition-colors"
+              class="text-2xs md:text-xs font-medium leading-tight line-clamp-2 transition-colors"
               :class="[
                 idx === currentStep && !showAll
                   ? 'text-primary-600'

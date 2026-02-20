@@ -121,7 +121,6 @@ function selectThread(threadId: string) {
   <USlideover
     v-model:open="showNewThread"
     side="right"
-    :ui="{ content: 'max-h-[70dvh] p-4' }"
   >
     <template #content>
       <template v-if="creationStep === 'kind'">

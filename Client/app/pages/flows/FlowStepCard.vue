@@ -46,7 +46,7 @@ const emit = defineEmits<{
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
             <span
-              class="text-[10px] font-semibold uppercase tracking-wider"
+              class="text-2xs font-semibold uppercase tracking-wider"
               :class="isActive ? 'text-primary-600' : 'text-muted'"
             >
               {{ step.label || 'Step' }}

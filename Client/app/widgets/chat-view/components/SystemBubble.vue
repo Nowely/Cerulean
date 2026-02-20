@@ -23,7 +23,7 @@ const statusColor = computed(() =>
   <UBadge
     color="neutral"
     variant="subtle"
-    class="mx-4 my-1 flex justify-center rounded-full px-3 py-1 text-[11px]"
+    class="mx-4 my-1 flex justify-center rounded-full px-3 py-1 text-xs"
   >
     <template v-if="message.type === 'status-change'">
       <UIcon

@@ -143,7 +143,7 @@ function closeDrawer() {
   <USlideover
     :open="open"
     side="bottom"
-    :ui="{ content: 'max-h-[90dvh]' }"
+    size="lg"
     @update:open="(o) => !o && closeDrawer()"
   >
     <template #content>

@@ -82,8 +82,8 @@ function addContact() {
       <UCard
         v-if="showNewForm"
         variant="soft"
+        flush
         class="mb-2"
-        :ui="{ body: 'p-3 space-y-2' }"
       >
         <UInput
           v-model="newName"

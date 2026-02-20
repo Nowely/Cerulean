@@ -104,7 +104,7 @@ function clearChecked() {
             color="neutral"
             variant="ghost"
             size="xs"
-            class="w-full justify-start px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted"
+            class="w-full justify-start px-2 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-muted"
           >
             <template #leading>
               <UIcon

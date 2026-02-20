@@ -36,7 +36,7 @@ const taskCount = computed(() => {
             {{ threadStore.activeThread.value.category }}
           </UBadge>
         </div>
-        <p class="text-[11px] text-muted">
+        <p class="text-xs text-muted">
           {{ members.length }} member{{ members.length !== 1 ? 's' : '' }}
           <template v-if="taskCount > 0">
             {{ ' / ' }}{{ taskCount }} task{{ taskCount !== 1 ? 's' : '' }}

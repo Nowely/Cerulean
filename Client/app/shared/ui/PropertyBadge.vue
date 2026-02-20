@@ -54,7 +54,6 @@ const color = computed(() =>
     color="neutral"
     variant="subtle"
     :label="label"
-    class="rounded-full px-2 py-0.5 text-[11px] font-medium"
   >
     <template #leading>
       <UIcon

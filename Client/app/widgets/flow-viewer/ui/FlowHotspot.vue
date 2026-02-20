@@ -30,7 +30,7 @@ const emit = defineEmits<{
     >
       <span
         v-if="number"
-        class="text-[10px] font-bold"
+        class="text-2xs font-bold"
       >{{ number }}</span>
       <UIcon
         v-else-if="icon"

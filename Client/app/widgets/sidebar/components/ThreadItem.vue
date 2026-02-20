@@ -84,7 +84,7 @@ const threadName = computed(() =>
     @click="emit('click')"
   >
     <template #description>
-      <p class="truncate text-[13px] text-muted">
+      <p class="truncate text-sm text-muted">
         {{ description }}
       </p>
       <div class="flex items-center gap-1.5 shrink-0 ml-auto">

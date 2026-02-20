@@ -43,7 +43,7 @@ export default defineAppConfig({
     },
     badge: {
       slots: {
-        base: 'rounded-full px-2 py-0.5 text-[11px] font-medium inline-flex items-center gap-1'
+        base: 'rounded-full px-2 py-0.5 text-xs font-medium inline-flex items-center gap-1'
       },
       defaultVariants: {
         size: 'md',
@@ -52,7 +52,7 @@ export default defineAppConfig({
     },
     separator: {
       slots: {
-        label: 'text-[11px] font-semibold uppercase tracking-wider text-muted'
+        label: 'text-xs font-semibold uppercase tracking-wider text-muted'
       }
     },
     card: {
@@ -62,6 +62,12 @@ export default defineAppConfig({
       variants: {
         compact: {
           body: 'p-3'
+        },
+        flat: {
+          body: 'p-0'
+        },
+        flush: {
+          body: 'p-3 space-y-2'
         }
       }
     },
@@ -78,6 +84,11 @@ export default defineAppConfig({
         fallback: 'font-semibold bg-transparent'
       }
     },
+    user: {
+      slots: {
+        description: 'truncate text-muted'
+      }
+    },
     slideover: {
       slots: {
         body: 'p-4 sm:p-5'
@@ -90,6 +101,17 @@ export default defineAppConfig({
           right: {
             content: 'w-80 sm:w-96'
           }
+        },
+        size: {
+          sm: {
+            content: 'max-h-[70dvh]'
+          },
+          md: {
+            content: 'max-h-[85dvh]'
+          },
+          lg: {
+            content: 'max-h-[90dvh]'
+          }
         }
       }
     },
@@ -101,6 +123,11 @@ export default defineAppConfig({
     progress: {
       slots: {
         base: 'h-1.5 rounded-full'
+      }
+    },
+    collapsible: {
+      slots: {
+        content: 'overflow-hidden'
       }
     }
   }

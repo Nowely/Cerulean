@@ -66,7 +66,7 @@ const d = computed(() => props.darkMode)
           :class="d ? 'border-muted' : 'border-default'"
         >
           <span
-            class="text-[11px] font-semibold"
+            class="text-xs font-semibold"
             :class="d ? 'text-dimmed' : 'text-muted'"
           >Threads</span>
           <UButton
@@ -164,7 +164,7 @@ const d = computed(() => props.darkMode)
           <div class="flex items-center gap-1.5">
             <span
               v-if="wireframe.main.header[1]"
-              class="text-[10px] px-1.5 py-0.5 rounded"
+              class="text-2xs px-1.5 py-0.5 rounded"
               :class="d ? 'text-dimmed bg-elevated' : 'text-muted bg-elevated'"
             >
               {{ wireframe.main.header[1] }}
@@ -217,7 +217,7 @@ const d = computed(() => props.darkMode)
                 class="flex justify-center py-1"
               >
                 <span
-                  class="rounded-full px-2.5 py-0.5 text-[10px] font-medium text-muted"
+                  class="rounded-full px-2.5 py-0.5 text-2xs font-medium text-muted"
                   :class="d ? 'bg-elevated' : 'bg-elevated'"
                 >{{ item }}</span>
               </div>
@@ -416,7 +416,7 @@ const d = computed(() => props.darkMode)
               class="px-2 py-1.5 text-xs"
               :class="{ 'ring-2 ring-primary-500 rounded': isHighlighted(`panel-item-${i}`) }"
             >
-              <span class="text-dimmed text-[10px]">{{ item.split(':')[0] }}:</span>
+              <span class="text-dimmed text-2xs">{{ item.split(':')[0] }}:</span>
               <span
                 class="ml-1"
                 :class="d ? 'text-toned' : 'text-default'"

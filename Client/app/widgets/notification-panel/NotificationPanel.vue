@@ -119,7 +119,7 @@ function handleMarkAllRead() {
                 <p class="text-[12px] text-muted line-clamp-2">
                   {{ notif.body }}
                 </p>
-                <span class="text-[10px] text-dimmed">
+                <span class="text-2xs text-dimmed">
                   {{ relativeTime(notif.timestamp) }}
                 </span>
               </div>

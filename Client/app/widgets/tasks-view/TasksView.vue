@@ -100,9 +100,9 @@ function openNewTaskForm() {
           v-for="task in filteredTasks"
           :key="task.id"
           variant="soft"
+          compact
           class="cursor-pointer transition-colors hover:bg-muted"
           :class="{ 'bg-emerald-500/5': taskStore.activeTaskId.value === task.id }"
-          :ui="{ body: 'p-3' }"
           @click="openTask(task.id)"
         >
           <div class="flex items-start gap-3">

@@ -18,13 +18,14 @@ const emit = defineEmits<{
 <template>
   <UCard
     variant="soft"
+    flat
     class="group cursor-pointer transition-all"
     :class="[
       isActive
         ? 'bg-violet-500/10 ring-1 ring-violet-500/30'
         : 'hover:bg-muted'
     ]"
-    :ui="{ body: 'p-0', header: 'p-3 pb-0' }"
+    :ui="{ header: 'p-3 pb-0' }"
     @click="emit('click')"
   >
     <template #header>
