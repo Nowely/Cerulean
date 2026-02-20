@@ -161,7 +161,7 @@ function closeDrawer() {
         </ContentPanelHeader>
 
         <UScrollArea class="flex-1 px-4 pb-6">
-          <div class="flex flex-col gap-4 pt-2">
+          <div class="space-y-4 pt-2">
             <UFormField
               label="Title"
               required

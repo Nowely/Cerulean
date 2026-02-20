@@ -85,7 +85,7 @@ const senderName = computed(() => {
           />
           {{ thread.name }}
         </span>
-        <span class="shrink-0 text-[11px] text-gray-500">
+        <span class="shrink-0 text-xs text-gray-500">
           {{ relativeTime(thread.lastActivity) }}
         </span>
       </div>

@@ -93,7 +93,6 @@ function selectThread(threadId: string) {
         <USeparator
           label="Pinned"
           class="px-3 pt-3"
-          :ui="{ label: 'text-[11px] font-semibold uppercase tracking-wider text-gray-500' }"
         />
         <ThreadItem
           v-for="thread in pinnedThreads"
@@ -109,7 +108,6 @@ function selectThread(threadId: string) {
           v-if="pinnedThreads.length > 0"
           label="All Threads"
           class="px-3 pt-3"
-          :ui="{ label: 'text-[11px] font-semibold uppercase tracking-wider text-gray-500' }"
         />
         <ThreadItem
           v-for="thread in unpinnedThreads"

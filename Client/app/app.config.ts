@@ -25,6 +25,21 @@ export default defineAppConfig({
       default: {
         base: 'rounded-lg font-medium transition-colors'
       }
+    },
+    separator: {
+      slots: {
+        label: 'text-[11px] font-semibold uppercase tracking-wider text-gray-500'
+      }
+    },
+    card: {
+      slots: {
+        body: 'p-4'
+      },
+      variants: {
+        compact: {
+          body: 'p-3'
+        }
+      }
     }
   }
 })

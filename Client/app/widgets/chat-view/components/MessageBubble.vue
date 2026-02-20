@@ -51,7 +51,7 @@ const isOwn = computed(() => props.message.senderId === userStore.currentUserId.
       >
         {{ message.content }}
       </div>
-      <span class="px-1 text-[10px] text-gray-500">
+      <span class="px-1 text-xs text-gray-500">
         {{ formatTime(message.timestamp) }}
       </span>
     </div>

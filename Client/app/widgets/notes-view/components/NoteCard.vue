@@ -70,7 +70,7 @@ const emit = defineEmits<{
       >
         {{ tag }}
       </UBadge>
-      <span class="ml-auto text-[10px] text-gray-500">
+      <span class="ml-auto text-xs text-gray-500">
         {{ relativeTime(note.updatedAt) }}
       </span>
     </div>

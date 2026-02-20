@@ -77,9 +77,11 @@ function addContact() {
       />
     </template>
     <template #subheader>
-      <div
+      <UCard
         v-if="showNewForm"
-        class="flex flex-col gap-2 rounded-lg bg-[hsl(var(--muted))] p-3 mb-2"
+        variant="soft"
+        class="mb-2"
+        :ui="{ body: 'p-3 space-y-2' }"
       >
         <UInput
           v-model="newName"
@@ -100,7 +102,7 @@ function addContact() {
         >
           Add Contact
         </UButton>
-      </div>
+      </UCard>
       <UInput
         v-model="searchQuery"
         placeholder="Search contacts..."

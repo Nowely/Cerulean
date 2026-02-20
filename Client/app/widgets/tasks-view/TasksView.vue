@@ -130,7 +130,7 @@ function openNewTaskForm() {
               </UBadge>
               <span
                 v-if="task.dueDate"
-                class="text-[10px] text-gray-500"
+                class="text-xs text-gray-500"
               >
                 Due {{ relativeTime(task.dueDate) }}
               </span>

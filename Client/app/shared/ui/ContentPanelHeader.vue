@@ -55,7 +55,7 @@ const containerClass = computed(() => {
     <div
       v-if="$slots.default"
       class="flex-1"
-      :class="variant === 'header' ? '' : 'min-w-0'"
+      :class="{ 'min-w-0': variant !== 'header' }"
     >
       <slot />
     </div>

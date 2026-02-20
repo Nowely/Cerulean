@@ -161,7 +161,7 @@ function closeDrawer() {
         v-if="task"
         class="flex-1 px-4 pb-6"
       >
-        <div class="flex flex-col gap-5 pt-2">
+        <div class="space-y-5 pt-2">
           <div class="flex flex-wrap gap-3">
             <UFormField label="Status">
               <UDropdownMenu
