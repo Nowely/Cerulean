@@ -33,16 +33,10 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
     <UInput
       :model-value="searchQuery"
       placeholder="Search threads..."
+      icon="i-lucide-search"
       size="sm"
       data-testid="thread-search-input"
       @update:model-value="uiStore.setSearch($event)"
-    >
-      <template #leading>
-        <UIcon
-          name="i-lucide-search"
-          class="h-4 w-4 text-dimmed"
-        />
-      </template>
-    </UInput>
+    />
   </div>
 </template>

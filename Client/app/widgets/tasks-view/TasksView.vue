@@ -123,11 +123,10 @@ function openNewTaskForm() {
                 <UBadge
                   v-for="tag in task.tags.slice(0, 3)"
                   :key="tag"
+                  :label="tag"
                   variant="soft"
                   size="xs"
-                >
-                  {{ tag }}
-                </UBadge>
+                />
                 <span
                   v-if="task.dueDate"
                   class="text-xs text-muted"

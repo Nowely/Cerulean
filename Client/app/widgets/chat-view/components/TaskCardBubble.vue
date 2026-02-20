@@ -62,18 +62,16 @@ function handleClick() {
       <div class="flex items-center justify-between gap-2">
         <UBadge
           v-if="showAvatar && !isOwn"
+          :label="sender?.name"
           variant="subtle"
           size="xs"
-          class="font-medium"
-        >
-          {{ sender?.name }}
-        </UBadge>
+        />
         <h3 class="text-sm font-semibold leading-snug flex-1 min-w-0">
           {{ task.title }}
         </h3>
         <UIcon
           name="i-lucide-chevron-right"
-          class="h-4 w-4 shrink-0 text-dimmed"
+          class="size-4 shrink-0 text-dimmed"
         />
       </div>
     </template>
@@ -97,32 +95,22 @@ function handleClick() {
 
       <UBadge
         v-if="task.dueDate"
+        icon="i-lucide-calendar"
         color="neutral"
         variant="subtle"
         size="xs"
         :class="overdue ? '!text-red-500' : dueSoon ? '!text-amber-500' : ''"
       >
-        <template #leading>
-          <UIcon
-            name="i-lucide-calendar"
-            class="h-3 w-3"
-          />
-        </template>
         {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}
       </UBadge>
 
       <UBadge
         v-if="subtasks.length > 0"
+        icon="i-lucide-list-checks"
         color="neutral"
         variant="subtle"
         size="xs"
       >
-        <template #leading>
-          <UIcon
-            name="i-lucide-list-checks"
-            class="h-3 w-3"
-          />
-        </template>
         {{ completedSubtasks }}/{{ subtasks.length }}
       </UBadge>
     </div>
@@ -134,12 +122,11 @@ function handleClick() {
       <UBadge
         v-for="tag in task.tags"
         :key="tag"
+        :label="tag"
         color="neutral"
         variant="subtle"
         size="xs"
-      >
-        {{ tag }}
-      </UBadge>
+      />
     </div>
 
     <AvatarStack

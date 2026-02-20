@@ -65,16 +65,15 @@ const emit = defineEmits<{
         <UIcon
           v-if="note.pinned"
           name="i-lucide-pin"
-          class="h-3 w-3 text-violet-500"
+          class="size-3 text-violet-500"
         />
         <UBadge
           v-for="tag in note.tags.slice(0, 3)"
           :key="tag"
+          :label="tag"
           variant="soft"
           size="xs"
-        >
-          {{ tag }}
-        </UBadge>
+        />
         <span class="ml-auto text-xs text-muted">
           {{ relativeTime(note.updatedAt) }}
         </span>

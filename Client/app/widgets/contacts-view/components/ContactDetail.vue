@@ -121,64 +121,56 @@ function getAvatarColor(name: string): string {
 
       <div class="flex flex-col gap-4">
         <UFormField label="Email">
-          <template v-if="editing">
-            <UInput
-              v-model="form.email"
-              placeholder="Add email..."
-              variant="underline"
-            />
-          </template>
-          <template v-else>
-            <p class="text-sm">
-              {{ contact.email || '---' }}
-            </p>
-          </template>
+          <UInput
+            v-if="editing"
+            v-model="form.email"
+            placeholder="Add email..."
+            variant="underline"
+          />
+          <span
+            v-else
+            class="text-sm"
+          >{{ contact.email || '---' }}</span>
         </UFormField>
 
         <UFormField label="Phone">
-          <template v-if="editing">
-            <UInput
-              v-model="form.phone"
-              placeholder="Add phone..."
-              variant="underline"
-            />
-          </template>
-          <template v-else>
-            <p class="text-sm">
-              {{ contact.phone || '---' }}
-            </p>
-          </template>
+          <UInput
+            v-if="editing"
+            v-model="form.phone"
+            placeholder="Add phone..."
+            variant="underline"
+          />
+          <span
+            v-else
+            class="text-sm"
+          >{{ contact.phone || '---' }}</span>
         </UFormField>
 
         <UFormField label="Company">
-          <template v-if="editing">
-            <UInput
-              v-model="form.company"
-              placeholder="Add company..."
-              variant="underline"
-            />
-          </template>
-          <template v-else>
-            <p class="text-sm">
-              {{ contact.company || '---' }}
-            </p>
-          </template>
+          <UInput
+            v-if="editing"
+            v-model="form.company"
+            placeholder="Add company..."
+            variant="underline"
+          />
+          <span
+            v-else
+            class="text-sm"
+          >{{ contact.company || '---' }}</span>
         </UFormField>
 
         <UFormField label="Notes">
-          <template v-if="editing">
-            <UTextarea
-              v-model="form.notes"
-              placeholder="Add notes..."
-              :rows="3"
-              variant="underline"
-            />
-          </template>
-          <template v-else>
-            <p class="text-sm whitespace-pre-wrap">
-              {{ contact.notes || '---' }}
-            </p>
-          </template>
+          <UTextarea
+            v-if="editing"
+            v-model="form.notes"
+            placeholder="Add notes..."
+            :rows="3"
+            variant="underline"
+          />
+          <span
+            v-else
+            class="text-sm whitespace-pre-wrap"
+          >{{ contact.notes || '---' }}</span>
         </UFormField>
 
         <UFormField label="Tags">
@@ -188,19 +180,20 @@ function getAvatarColor(name: string): string {
               :key="tag"
               variant="soft"
               size="xs"
-              class="pr-1"
             >
               {{ tag }}
               <UButton
+                v-if="editing"
                 icon="i-lucide-x"
                 color="neutral"
                 variant="ghost"
                 size="xs"
-                class="h-3 w-3 p-0 ml-1"
+                class="size-3 p-0 ml-1"
                 @click="removeTag(tag)"
               />
             </UBadge>
             <UInput
+              v-if="editing"
               v-model="newTag"
               placeholder="Add tag..."
               variant="none"

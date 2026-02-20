@@ -215,9 +215,7 @@ function closeDrawer() {
               v-if="task.description"
               label="Description"
             >
-              <p class="text-sm leading-relaxed text-default">
-                {{ task.description }}
-              </p>
+              <span class="text-sm leading-relaxed">{{ task.description }}</span>
             </UFormField>
 
             <UFormField
@@ -247,11 +245,10 @@ function closeDrawer() {
                 <UBadge
                   v-for="tag in task.tags"
                   :key="tag"
+                  :label="tag"
                   variant="soft"
                   size="xs"
-                >
-                  {{ tag }}
-                </UBadge>
+                />
               </div>
             </UFormField>
 
@@ -263,17 +260,12 @@ function closeDrawer() {
                 <UButton
                   v-for="dep in dependencies"
                   :key="dep.id"
+                  icon="i-lucide-link-2"
                   color="neutral"
                   variant="ghost"
                   class="justify-start bg-elevated hover:bg-accented"
                   @click="taskStore.setActive(dep.id)"
                 >
-                  <template #leading>
-                    <UIcon
-                      name="i-lucide-link-2"
-                      class="h-3.5 w-3.5 text-muted"
-                    />
-                  </template>
                   <span
                     class="flex-1 text-left"
                     :class="dep.status === 'done' && 'line-through text-muted'"

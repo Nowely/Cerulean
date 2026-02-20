@@ -106,7 +106,6 @@ function removeTag(tag: string) {
           :key="tag"
           variant="soft"
           size="xs"
-          class="pr-1"
         >
           {{ tag }}
           <UButton
@@ -114,7 +113,7 @@ function removeTag(tag: string) {
             color="neutral"
             variant="ghost"
             size="xs"
-            class="ml-1 h-3 w-3 p-0"
+            class="ml-1 size-3 p-0"
             @click="removeTag(tag)"
           />
         </UBadge>

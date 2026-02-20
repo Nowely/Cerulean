@@ -92,38 +92,30 @@ function handleMarkAllRead() {
             :key="notif.id"
             :data-testid="`notification-item-${notif.id}`"
             variant="soft"
-            notification
             class="cursor-pointer border-b border-default last:border-b-0 transition-colors hover:bg-elevated"
             :class="!notif.read && 'bg-primary-500/5'"
             @click="handleNotificationClick(notif)"
           >
-            <div class="flex items-start gap-3">
-              <UAvatar
-                :icon="NOTIF_ICONS[notif.type] ?? 'i-lucide-bell'"
-                size="sm"
-                :class="!notif.read ? 'bg-primary-500/15 text-primary-500' : 'bg-elevated text-muted'"
-              />
-              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                <div class="flex items-center justify-between gap-2">
-                  <span
-                    class="text-xs font-semibold"
-                    :class="!notif.read ? '' : 'text-muted'"
-                  >
-                    {{ notif.title }}
-                  </span>
-                  <span
-                    v-if="!notif.read"
-                    class="h-2 w-2 shrink-0 rounded-full bg-primary-500"
-                  />
-                </div>
+            <UUser
+              :name="notif.title"
+              :description="notif.body"
+              :avatar="{
+                icon: NOTIF_ICONS[notif.type] ?? 'i-lucide-bell',
+                size: 'sm',
+                ui: { root: !notif.read ? 'bg-primary-500/15 text-primary-500' : 'bg-elevated text-muted' }
+              }"
+              :chip="!notif.read"
+              class="gap-3"
+            >
+              <template #description>
                 <p class="text-xs text-muted line-clamp-2">
                   {{ notif.body }}
                 </p>
                 <span class="text-2xs text-dimmed">
                   {{ relativeTime(notif.timestamp) }}
                 </span>
-              </div>
-            </div>
+              </template>
+            </UUser>
           </UCard>
         </UScrollArea>
       </div>
