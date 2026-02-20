@@ -71,7 +71,7 @@ function closeDrawer() {
               />
               <div class="flex flex-col gap-0.5 min-w-0 flex-1">
                 <span class="text-sm font-semibold">{{ template.name }}</span>
-                <span class="text-[12px] text-muted">{{ template.description }}</span>
+                <span class="text-xs text-muted">{{ template.description }}</span>
                 <span
                   v-if="template.subtasks.length > 0"
                   class="mt-1 text-xs text-muted"

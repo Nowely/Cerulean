@@ -33,8 +33,8 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
     <UInput
       :model-value="searchQuery"
       placeholder="Search threads..."
+      size="sm"
       data-testid="thread-search-input"
-      :ui="{ base: 'h-9' }"
       @update:model-value="uiStore.setSearch($event)"
     >
       <template #leading>

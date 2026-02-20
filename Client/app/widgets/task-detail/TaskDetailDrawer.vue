@@ -122,7 +122,7 @@ function closeDrawer() {
       <template v-if="task">
         <UDashboardNavbar :title="task.title">
           <template #leading>
-            <p class="text-[12px] text-muted">
+            <p class="text-xs text-muted">
               Created by {{ creator?.name }} on
               {{ new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
             </p>

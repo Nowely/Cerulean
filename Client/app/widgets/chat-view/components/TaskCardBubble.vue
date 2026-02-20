@@ -52,14 +52,9 @@ function handleClick() {
   <UCard
     v-if="task"
     variant="outline"
+    task
     class="max-w-[85%] cursor-pointer transition-transform active:scale-[0.98] mx-3"
     :class="[isOwn ? 'ml-auto rounded-br-md' : 'mr-auto rounded-bl-md']"
-    :ui="{
-      root: 'border-l-4',
-      header: 'p-3 pb-0',
-      body: 'p-3 pt-2 flex flex-col gap-2',
-      footer: 'p-3 pt-0'
-    }"
     :style="{ borderLeftColor: getStatusColor(task.status) }"
     @click="handleClick"
   >

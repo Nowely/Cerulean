@@ -31,12 +31,9 @@ const avatarConfig = computed(() => {
     :id="message.id"
     :role="isOwn ? 'user' : 'assistant'"
     :side="isOwn ? 'right' : 'left'"
-    :variant="isOwn ? 'soft' : 'outline'"
+    :variant="isOwn ? 'own' : 'other'"
     :avatar="avatarConfig"
     :content="message.content"
-    :ui="{
-      content: isOwn ? 'bg-primary-500 text-white rounded-br-md' : 'bg-elevated dark:bg-elevated rounded-bl-md'
-    }"
   >
     <template
       v-if="showAvatar && !isOwn"

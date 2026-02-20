@@ -11,6 +11,11 @@ export default defineAppConfig({
       variants: {
         variant: {
           underline: 'bg-transparent border-0 border-b border-default rounded-none focus:border-primary-500'
+        },
+        size: {
+          sm: {
+            base: 'h-9 text-sm'
+          }
         }
       },
       defaultVariants: {
@@ -68,6 +73,16 @@ export default defineAppConfig({
         },
         flush: {
           body: 'p-3 space-y-2'
+        },
+        task: {
+          root: 'border-l-4',
+          header: 'p-3 pb-0',
+          body: 'p-3 pt-2 flex flex-col gap-2',
+          footer: 'p-3 pt-0'
+        },
+        notification: {
+          root: 'rounded-none',
+          body: 'px-4 py-3'
         }
       }
     },
@@ -128,6 +143,27 @@ export default defineAppConfig({
     collapsible: {
       slots: {
         content: 'overflow-hidden'
+      }
+    },
+    chatMessage: {
+      variants: {
+        variant: {
+          own: {
+            content: 'bg-primary-500 text-white rounded-br-md'
+          },
+          other: {
+            content: 'bg-elevated rounded-bl-md'
+          }
+        }
+      }
+    },
+    chatPrompt: {
+      variants: {
+        variant: {
+          pill: {
+            root: 'rounded-2xl'
+          }
+        }
       }
     }
   }

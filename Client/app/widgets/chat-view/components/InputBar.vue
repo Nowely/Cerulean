@@ -56,8 +56,7 @@ function handleSend() {
     <UChatPrompt
       v-model="text"
       :placeholder="threadStore.activeThread.value?.kind === 'shopping' ? 'Add an item...' : 'Message...'"
-      variant="outline"
-      :ui="{ root: 'rounded-2xl' }"
+      variant="pill"
       @submit="handleSend"
     >
       <template #leading>
