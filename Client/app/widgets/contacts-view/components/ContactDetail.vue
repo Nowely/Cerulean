@@ -96,8 +96,7 @@ function getAvatarColor(name: string): string {
         :avatar="{
           alt: contact.name,
           size: '3xl',
-          style: { backgroundColor: getAvatarColor(contact.name) },
-          ui: { root: 'font-bold text-white', fallback: 'bg-transparent text-2xl' }
+          ui: { root: 'font-bold text-2xl' }
         }"
         class="mb-6 justify-center"
       />
@@ -108,9 +107,8 @@ function getAvatarColor(name: string): string {
         <UAvatar
           :alt="contact.name"
           size="3xl"
-          :style="{ backgroundColor: getAvatarColor(contact.name) }"
-          class="font-bold text-white"
-          :ui="{ fallback: 'bg-transparent text-2xl' }"
+          class="font-bold"
+          :ui="{ fallback: 'text-2xl' }"
         />
         <UInput
           v-model="form.name"

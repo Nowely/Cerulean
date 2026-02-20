@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import AppShell from '~/widgets/app-shell/AppShell.vue'
+import Threads from '~/widgets/threads/Threads.vue'
 </script>
 
 <template>
-  <AppShell />
+  <Threads />
 </template>

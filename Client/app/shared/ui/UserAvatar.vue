@@ -22,10 +22,8 @@ const sizeMap = {
     v-if="user"
     :alt="user.name"
     :size="sizeMap[props.size]"
-    :style="{ backgroundColor: user.color }"
     :ui="{
-      root: 'font-semibold text-white',
-      fallback: 'bg-transparent'
+      root: 'font-semibold'
     }"
   >
     <template #fallback>

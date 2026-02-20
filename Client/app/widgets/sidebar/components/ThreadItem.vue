@@ -74,8 +74,7 @@ const threadName = computed(() =>
     :avatar="{
       icon: kindConfig.icon,
       size: 'lg',
-      style: { backgroundColor: kindConfig.color },
-      ui: { root: 'text-white' }
+      ui: { root: '' }
     }"
     :ui="{
       root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : 'hover:bg-elevated'}`

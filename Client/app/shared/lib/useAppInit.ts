@@ -14,7 +14,7 @@ import type { Note } from '../types/note'
 import type { Contact } from '../types/contact'
 
 const STORAGE_KEY = 'cerulean-workspace-state'
-const STORAGE_VERSION = 2
+const STORAGE_VERSION = 3
 
 interface PersistedState {
   version: number

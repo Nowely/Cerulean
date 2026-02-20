@@ -2,6 +2,7 @@
 import { useThreadStore, useUIStore, useShoppingStore } from '~/shared/model'
 import { useSendMessage } from '~/features/message-send'
 import { useToastHelpers, createShoppingItem } from '~/shared/lib'
+import type { ShoppingItemType } from '~/shared/types/shopping'
 
 const threadStore = useThreadStore()
 const uiStore = useUIStore()
@@ -10,6 +11,13 @@ const { execute: sendMessage } = useSendMessage()
 const toast = useToastHelpers()
 
 const text = ref('')
+const itemType = ref<ShoppingItemType>('checkable')
+
+const isShoppingThread = computed(() => threadStore.activeThread.value?.kind === 'shopping')
+
+function toggleItemType() {
+  itemType.value = itemType.value === 'checkable' ? 'trackable' : 'checkable'
+}
 
 function openTaskForm() {
   uiStore.setShowTaskForm(true)
@@ -33,7 +41,7 @@ function handleSend() {
   }
 
   if (thread.kind === 'shopping') {
-    const item = createShoppingItem(thread.id, trimmed)
+    const item = createShoppingItem(thread.id, trimmed, { type: itemType.value })
     shoppingStore.add(item)
     threadStore.updateLastActivity(thread.id, new Date().toISOString())
   } else {
@@ -75,6 +83,16 @@ function handleSend() {
       </template>
 
       <template #trailing>
+        <UButton
+          v-if="isShoppingThread"
+          :icon="itemType === 'checkable' ? 'i-lucide-check-square' : 'i-lucide-hash'"
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          class="rounded-full"
+          :aria-label="itemType === 'checkable' ? 'Checkable item (click for trackable)' : 'Trackable item (click for checkable)'"
+          @click="toggleItemType"
+        />
         <UChatPromptSubmit
           :color="text.trim() ? 'primary' : 'neutral'"
           :disabled="!text.trim()"

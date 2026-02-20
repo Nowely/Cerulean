@@ -23,8 +23,7 @@ function getAvatarColor(name: string): string {
     :avatar="{
       alt: contact.name,
       size: 'md',
-      style: { backgroundColor: getAvatarColor(contact.name) },
-      ui: { root: 'font-semibold text-white', fallback: 'bg-transparent' }
+      ui: { root: 'font-semibold' }
     }"
     :ui="{
       root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-sky-500/10' : 'hover:bg-elevated'}`

@@ -16,15 +16,6 @@ export function useThreadStore() {
     })
   })
 
-  function filteredThreads(query: string) {
-    if (!query) return sortedThreads.value
-    const q = query.toLowerCase()
-    return sortedThreads.value.filter(t =>
-      t.name.toLowerCase().includes(q)
-      || t.category?.toLowerCase().includes(q)
-    )
-  }
-
   function setActive(id: ThreadId | null) {
     activeThreadId.value = id
     if (id) {
@@ -56,7 +47,6 @@ export function useThreadStore() {
     activeThreadId,
     activeThread,
     sortedThreads,
-    filteredThreads,
     setActive,
     add,
     clearUnread,

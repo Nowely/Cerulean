@@ -19,9 +19,7 @@ const isOwn = computed(() => props.message.senderId === userStore.currentUserId.
 const avatarConfig = computed(() => {
   if (!props.showAvatar || isOwn.value) return undefined
   return {
-    alt: sender.value?.name,
-    style: { backgroundColor: sender.value?.color },
-    ui: { fallback: 'bg-transparent' }
+    alt: sender.value?.name
   }
 })
 </script>
@@ -42,8 +40,7 @@ const avatarConfig = computed(() => {
       <UAvatar
         :alt="sender?.name"
         size="xs"
-        :style="{ backgroundColor: sender?.color }"
-        class="font-semibold text-white"
+        class="font-semibold"
       >
         <template #fallback>
           {{ sender?.initials }}

@@ -89,7 +89,7 @@ export default defineAppConfig({
     },
     avatar: {
       slots: {
-        fallback: 'font-semibold bg-transparent'
+        fallback: 'font-semibold'
       }
     },
     user: {

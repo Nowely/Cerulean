@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useUserStore, useUIStore } from '~/shared/model'
+import { useUserStore } from '~/shared/model'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
 const emit = defineEmits<{
@@ -7,10 +7,8 @@ const emit = defineEmits<{
 }>()
 
 const userStore = useUserStore()
-const uiStore = useUIStore()
 
 const currentUser = computed(() => userStore.currentUser.value)
-const searchQuery = computed(() => uiStore.searchQuery.value)
 </script>
 
 <template>
@@ -27,16 +25,6 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
       icon="i-lucide-plus"
       data-testid="new-thread-btn"
       @click="emit('newThread')"
-    />
-  </div>
-  <div class="px-4 pb-2">
-    <UInput
-      :model-value="searchQuery"
-      placeholder="Search threads..."
-      icon="i-lucide-search"
-      size="sm"
-      data-testid="thread-search-input"
-      @update:model-value="uiStore.setSearch($event)"
     />
   </div>
 </template>
