@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { Note } from '~/shared/types'
 import { relativeTime } from '~/shared/utils'
-import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 interface Props {
   note: Note
@@ -48,13 +47,13 @@ function removeTag(tag: string) {
 
 <template>
   <div class="flex h-full flex-col bg-[hsl(var(--background))]">
-    <ContentPanelHeader variant="toolbar">
-      <template #start>
+    <UDashboardNavbar>
+      <template #leading>
         <span class="text-xs text-gray-500">
           Edited {{ relativeTime(note.updatedAt) }}
         </span>
       </template>
-      <template #end>
+      <template #right>
         <UButton
           :icon="note.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
           color="neutral"
@@ -80,7 +79,7 @@ function removeTag(tag: string) {
           @click="emit('close')"
         />
       </template>
-    </ContentPanelHeader>
+    </UDashboardNavbar>
 
     <UScrollArea class="flex-1 px-4 py-3">
       <UInput

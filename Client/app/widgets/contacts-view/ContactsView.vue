@@ -3,7 +3,6 @@ import { useContactStore, useThreadStore } from '~/shared/model'
 import { createContact } from '~/shared/lib'
 import ContactCard from './components/ContactCard.vue'
 import ContactDetail from './components/ContactDetail.vue'
-import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const threadStore = useThreadStore()
 const contactStore = useContactStore()
@@ -54,29 +53,32 @@ function addContact() {
 </script>
 
 <template>
-  <ContentPanelHeader>
-    <div class="flex items-center gap-2">
-      <UIcon
-        name="i-lucide-contact"
-        class="h-5 w-5 text-sky-500"
-      />
-      <h2 class="text-lg font-semibold">
-        {{ threadStore.activeThread.value?.name }}
-      </h2>
-      <span class="text-xs text-gray-500">
-        {{ filteredContacts.length }} contacts
-      </span>
-    </div>
-    <template #end>
-      <UButton
-        :icon="showNewForm ? 'i-lucide-x' : 'i-lucide-plus'"
-        color="neutral"
-        variant="ghost"
-        size="sm"
-        @click="showNewForm = !showNewForm"
-      />
-    </template>
-    <template #subheader>
+  <div class="flex flex-1 flex-col">
+    <UDashboardNavbar
+      :title="threadStore.activeThread.value?.name"
+      icon="i-lucide-contact"
+    >
+      <template #trailing>
+        <UBadge
+          color="neutral"
+          variant="subtle"
+          size="xs"
+        >
+          {{ filteredContacts.length }} contacts
+        </UBadge>
+      </template>
+      <template #right>
+        <UButton
+          :icon="showNewForm ? 'i-lucide-x' : 'i-lucide-plus'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          @click="showNewForm = !showNewForm"
+        />
+      </template>
+    </UDashboardNavbar>
+
+    <UDashboardToolbar class="flex-col items-stretch">
       <UCard
         v-if="showNewForm"
         variant="soft"
@@ -109,45 +111,46 @@ function addContact() {
         icon="i-lucide-search"
         variant="soft"
       />
-    </template>
-  </ContentPanelHeader>
+    </UDashboardToolbar>
 
-  <div class="flex flex-1 overflow-hidden">
-    <UScrollArea
-      class="flex-1"
-      :class="{ 'hidden md:block md:w-2/5': isDetailOpen }"
-    >
-      <UEmpty
-        v-if="filteredContacts.length === 0"
-        icon="i-lucide-contact"
-        :title="searchQuery ? 'No contacts match your search' : 'No contacts yet'"
-      />
-
-      <div
-        v-for="[letter, contacts] in grouped"
-        :key="letter"
-        class="px-2"
+    <div class="flex flex-1 overflow-hidden">
+      <UScrollArea
+        class="flex-1"
+        :class="{ 'hidden md:block md:w-2/5': isDetailOpen }"
       >
-        <p class="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-          {{ letter }}
-        </p>
-        <ContactCard
-          v-for="contact in contacts"
-          :key="contact.id"
-          :contact="contact"
-          :is-active="contactStore.activeContactId.value === contact.id"
-          @click="openContact(contact.id)"
+        <UEmpty
+          v-if="filteredContacts.length === 0"
+          icon="i-lucide-contact"
+          :title="searchQuery ? 'No contacts match your search' : 'No contacts yet'"
         />
-      </div>
-    </UScrollArea>
 
-    <ContactDetail
-      v-if="isDetailOpen && contactStore.activeContact.value"
-      :contact="contactStore.activeContact.value"
-      class="w-full md:w-3/5 border-l border-[hsl(var(--border))]"
-      @close="closeDetail"
-      @update="(updates) => contactStore.update(contactStore.activeContactId.value!, updates)"
-      @delete="() => { contactStore.remove(contactStore.activeContactId.value!); closeDetail() }"
-    />
+        <div
+          v-for="[letter, contacts] in grouped"
+          :key="letter"
+          class="px-2"
+        >
+          <USeparator
+            :label="letter"
+            class="px-3 pt-3"
+          />
+          <ContactCard
+            v-for="contact in contacts"
+            :key="contact.id"
+            :contact="contact"
+            :is-active="contactStore.activeContactId.value === contact.id"
+            @click="openContact(contact.id)"
+          />
+        </div>
+      </UScrollArea>
+
+      <ContactDetail
+        v-if="isDetailOpen && contactStore.activeContact.value"
+        :contact="contactStore.activeContact.value"
+        class="w-full md:w-3/5 border-l border-[hsl(var(--border))]"
+        @close="closeDetail"
+        @update="(updates) => contactStore.update(contactStore.activeContactId.value!, updates)"
+        @delete="() => { contactStore.remove(contactStore.activeContactId.value!); closeDetail() }"
+      />
+    </div>
   </div>
 </template>

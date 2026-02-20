@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { useThreadStore, useTaskStore, useUserStore, useNotificationStore, useUIStore } from '~/shared/model'
-import { useIsMobile } from '~/shared/lib'
+import { useThreadStore, useTaskStore, useUserStore, useNotificationStore } from '~/shared/model'
 import { resolveByIds } from '~/shared/utils'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 
@@ -8,8 +7,6 @@ const threadStore = useThreadStore()
 const taskStore = useTaskStore()
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()
-const uiStore = useUIStore()
-const isMobile = useIsMobile()
 
 const members = computed(() => {
   if (!threadStore.activeThread.value) return []
@@ -23,26 +20,13 @@ const taskCount = computed(() => {
 </script>
 
 <template>
-  <header
+  <UDashboardNavbar
     v-if="threadStore.activeThread.value"
-    class="flex h-14 shrink-0 items-center justify-between border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3"
+    :title="threadStore.activeThread.value.name"
   >
-    <div class="flex items-center gap-3">
-      <UButton
-        v-if="isMobile"
-        icon="i-lucide-menu"
-        color="neutral"
-        variant="ghost"
-        size="lg"
-        aria-label="Toggle sidebar"
-        data-testid="toggle-sidebar-btn"
-        @click="uiStore.toggleSidebar()"
-      />
+    <template #trailing>
       <div class="flex flex-col">
         <div class="flex items-center gap-2">
-          <h2 class="text-sm font-semibold">
-            {{ threadStore.activeThread.value.name }}
-          </h2>
           <UBadge
             v-if="threadStore.activeThread.value.category"
             color="neutral"
@@ -59,8 +43,8 @@ const taskCount = computed(() => {
           </template>
         </p>
       </div>
-    </div>
-    <div class="flex items-center gap-1">
+    </template>
+    <template #right>
       <AvatarStack
         :users="members"
         :max-visible="3"
@@ -80,6 +64,6 @@ const taskCount = computed(() => {
           @click="notificationStore.setShowPanel(true)"
         />
       </UChip>
-    </div>
-  </header>
+    </template>
+  </UDashboardNavbar>
 </template>

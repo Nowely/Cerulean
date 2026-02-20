@@ -2,7 +2,6 @@
 import { useNotificationStore, useThreadStore, useTaskStore } from '~/shared/model'
 import { useToastHelpers } from '~/shared/lib'
 import { relativeTime } from '~/shared/utils'
-import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const notificationStore = useNotificationStore()
 const threadStore = useThreadStore()
@@ -57,11 +56,18 @@ function handleMarkAllRead() {
   >
     <template #content>
       <div class="flex flex-col h-full">
-        <ContentPanelHeader>
-          <h3 class="text-sm font-semibold">
-            Notifications{{ notificationStore.unreadCount.value > 0 ? ` (${notificationStore.unreadCount.value})` : '' }}
-          </h3>
-          <template #end>
+        <UDashboardNavbar title="Notifications">
+          <template #trailing>
+            <UBadge
+              v-if="notificationStore.unreadCount.value > 0"
+              color="primary"
+              variant="subtle"
+              size="xs"
+            >
+              {{ notificationStore.unreadCount.value }}
+            </UBadge>
+          </template>
+          <template #right>
             <UButton
               v-if="notificationStore.unreadCount.value > 0"
               icon="i-lucide-check-check"
@@ -73,7 +79,7 @@ function handleMarkAllRead() {
               @click="handleMarkAllRead"
             />
           </template>
-        </ContentPanelHeader>
+        </UDashboardNavbar>
 
         <UScrollArea class="flex-1">
           <UEmpty

@@ -5,7 +5,6 @@ import type { TaskStatus, TaskPriority } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
 import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
-import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 const taskStore = useTaskStore()
 const userStore = useUserStore()
@@ -121,238 +120,229 @@ function closeDrawer() {
     @update:open="(o) => !o && closeDrawer()"
   >
     <template #content>
-      <ContentPanelHeader
-        v-if="task"
-        variant="header"
-        align="start"
-        class="flex-none"
-      >
-        <div>
-          <h3 class="text-base font-semibold leading-snug">
-            {{ task.title }}
-          </h3>
-          <p class="mt-1 text-[12px] text-gray-500">
-            Created by {{ creator?.name }} on
-            {{ new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
-          </p>
-        </div>
-        <template #end>
-          <UButton
-            icon="i-lucide-edit-3"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            aria-label="Edit task"
-            @click="taskStore.setEditing(task); uiStore.setShowTaskForm(true)"
-          />
-          <UButton
-            icon="i-lucide-trash-2"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            class="hover:bg-red-500/10 hover:text-red-500"
-            aria-label="Delete task"
-            @click="handleDelete"
-          />
-        </template>
-      </ContentPanelHeader>
+      <template v-if="task">
+        <UDashboardNavbar :title="task.title">
+          <template #leading>
+            <p class="text-[12px] text-gray-500">
+              Created by {{ creator?.name }} on
+              {{ new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+            </p>
+          </template>
+          <template #right>
+            <UButton
+              icon="i-lucide-edit-3"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              aria-label="Edit task"
+              @click="taskStore.setEditing(task); uiStore.setShowTaskForm(true)"
+            />
+            <UButton
+              icon="i-lucide-trash-2"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              class="hover:bg-red-500/10 hover:text-red-500"
+              aria-label="Delete task"
+              @click="handleDelete"
+            />
+          </template>
+        </UDashboardNavbar>
 
-      <UScrollArea
-        v-if="task"
-        class="flex-1 px-4 pb-6"
-      >
-        <div class="space-y-5 pt-2">
-          <div class="flex flex-wrap gap-3">
-            <UFormField label="Status">
-              <UDropdownMenu
-                :items="Object.entries(STATUS_CONFIG).map(([key, config]) => ({
-                  label: config.label,
-                  click: () => changeStatus(key as TaskStatus)
-                }))"
-              >
-                <UButton
-                  color="neutral"
-                  variant="ghost"
-                  class="bg-gray-100 dark:bg-gray-800"
+        <UScrollArea class="flex-1 px-4 pb-6">
+          <div class="space-y-5 pt-2">
+            <div class="flex flex-wrap gap-3">
+              <UFormField label="Status">
+                <UDropdownMenu
+                  :items="Object.entries(STATUS_CONFIG).map(([key, config]) => ({
+                    label: config.label,
+                    click: () => changeStatus(key as TaskStatus)
+                  }))"
                 >
-                  <PropertyBadge
-                    type="status"
-                    :value="task.status"
-                  />
-                </UButton>
-              </UDropdownMenu>
-            </UFormField>
+                  <UButton
+                    color="neutral"
+                    variant="ghost"
+                    class="bg-gray-100 dark:bg-gray-800"
+                  >
+                    <PropertyBadge
+                      type="status"
+                      :value="task.status"
+                    />
+                  </UButton>
+                </UDropdownMenu>
+              </UFormField>
 
-            <UFormField label="Priority">
-              <UDropdownMenu
-                :items="Object.entries(PRIORITY_CONFIG).map(([key, config]) => ({
-                  label: config.label,
-                  click: () => changePriority(key as TaskPriority)
-                }))"
-              >
-                <UButton
-                  color="neutral"
-                  variant="ghost"
-                  class="bg-gray-100 dark:bg-gray-800"
+              <UFormField label="Priority">
+                <UDropdownMenu
+                  :items="Object.entries(PRIORITY_CONFIG).map(([key, config]) => ({
+                    label: config.label,
+                    click: () => changePriority(key as TaskPriority)
+                  }))"
                 >
-                  <PropertyBadge
-                    type="priority"
-                    :value="task.priority"
-                  />
-                </UButton>
-              </UDropdownMenu>
+                  <UButton
+                    color="neutral"
+                    variant="ghost"
+                    class="bg-gray-100 dark:bg-gray-800"
+                  >
+                    <PropertyBadge
+                      type="priority"
+                      :value="task.priority"
+                    />
+                  </UButton>
+                </UDropdownMenu>
+              </UFormField>
+
+              <UFormField
+                v-if="task.dueDate"
+                label="Due Date"
+              >
+                <UBadge
+                  color="neutral"
+                  variant="subtle"
+                  :class="overdue ? '!text-red-500 !bg-red-500/10' : dueSoon ? '!text-amber-500 !bg-amber-500/10' : ''"
+                >
+                  <template #leading>
+                    <UIcon
+                      name="i-lucide-calendar"
+                      class="h-3.5 w-3.5"
+                    />
+                  </template>
+                  {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                </UBadge>
+              </UFormField>
+            </div>
+
+            <UFormField
+              v-if="task.description"
+              label="Description"
+            >
+              <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                {{ task.description }}
+              </p>
             </UFormField>
 
             <UFormField
-              v-if="task.dueDate"
-              label="Due Date"
+              v-if="assignees.length > 0"
+              label="Assignees"
             >
-              <UBadge
-                color="neutral"
-                variant="subtle"
-                :class="overdue ? '!text-red-500 !bg-red-500/10' : dueSoon ? '!text-amber-500 !bg-amber-500/10' : ''"
-              >
-                <template #leading>
-                  <UIcon
-                    name="i-lucide-calendar"
-                    class="h-3.5 w-3.5"
-                  />
-                </template>
-                {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
-              </UBadge>
+              <UAvatarGroup>
+                <UAvatar
+                  v-for="user in assignees"
+                  :key="user.id"
+                  :alt="user.name"
+                  :style="{ backgroundColor: user.color }"
+                  class="font-semibold text-white"
+                  :ui="{ fallback: 'bg-transparent' }"
+                >
+                  <template #fallback>
+                    {{ user.initials }}
+                  </template>
+                </UAvatar>
+              </UAvatarGroup>
+            </UFormField>
+
+            <UFormField
+              v-if="task.tags.length > 0"
+              label="Tags"
+            >
+              <div class="flex flex-wrap gap-1.5">
+                <UBadge
+                  v-for="tag in task.tags"
+                  :key="tag"
+                  color="primary"
+                  variant="soft"
+                  size="xs"
+                >
+                  {{ tag }}
+                </UBadge>
+              </div>
+            </UFormField>
+
+            <UFormField
+              v-if="dependencies.length > 0"
+              label="Dependencies"
+            >
+              <div class="flex flex-col gap-1.5">
+                <UButton
+                  v-for="dep in dependencies"
+                  :key="dep.id"
+                  color="neutral"
+                  variant="ghost"
+                  class="justify-start bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  @click="taskStore.setActive(dep.id)"
+                >
+                  <template #leading>
+                    <UIcon
+                      name="i-lucide-link-2"
+                      class="h-3.5 w-3.5 text-gray-500"
+                    />
+                  </template>
+                  <span
+                    class="flex-1 text-left"
+                    :class="dep.status === 'done' && 'line-through text-gray-500'"
+                  >
+                    {{ dep.title }}
+                  </span>
+                  <template #trailing>
+                    <PropertyBadge
+                      type="status"
+                      :value="dep.status"
+                      :show-label="false"
+                    />
+                  </template>
+                </UButton>
+              </div>
+            </UFormField>
+
+            <UFormField :label="`Subtasks${subtasks.length > 0 ? ` (${completedSubtasks}/${subtasks.length})` : ''}`">
+              <template v-if="subtasks.length > 0">
+                <UProgress
+                  :value="progress"
+                  class="h-1.5 mb-2"
+                />
+                <UButton
+                  v-for="sub in subtasks"
+                  :key="sub.id"
+                  color="neutral"
+                  variant="ghost"
+                  class="justify-start"
+                  @click="toggleSubtask(sub.id)"
+                >
+                  <template #leading>
+                    <UIcon
+                      :name="sub.status === 'done' ? 'i-lucide-check-circle-2' : 'i-lucide-circle'"
+                      class="h-4 w-4"
+                      :style="sub.status === 'done' ? { color: getStatusColor('done') } : {}"
+                      :class="sub.status !== 'done' && 'text-gray-400'"
+                    />
+                  </template>
+                  <span
+                    class="text-sm"
+                    :class="sub.status === 'done' && 'line-through text-gray-500'"
+                  >
+                    {{ sub.title }}
+                  </span>
+                </UButton>
+              </template>
+
+              <div class="flex gap-2 mt-2">
+                <UInput
+                  v-model="newSubtask"
+                  placeholder="Add subtask..."
+                  data-testid="new-subtask-input"
+                  class="flex-1"
+                  @keydown.enter="addSubtask"
+                />
+                <UButton
+                  icon="i-lucide-plus"
+                  :disabled="!newSubtask.trim()"
+                  @click="addSubtask"
+                />
+              </div>
             </UFormField>
           </div>
-
-          <UFormField
-            v-if="task.description"
-            label="Description"
-          >
-            <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-              {{ task.description }}
-            </p>
-          </UFormField>
-
-          <UFormField
-            v-if="assignees.length > 0"
-            label="Assignees"
-          >
-            <UAvatarGroup>
-              <UAvatar
-                v-for="user in assignees"
-                :key="user.id"
-                :alt="user.name"
-                :style="{ backgroundColor: user.color }"
-                class="font-semibold text-white"
-                :ui="{ fallback: 'bg-transparent' }"
-              >
-                <template #fallback>
-                  {{ user.initials }}
-                </template>
-              </UAvatar>
-            </UAvatarGroup>
-          </UFormField>
-
-          <UFormField
-            v-if="task.tags.length > 0"
-            label="Tags"
-          >
-            <div class="flex flex-wrap gap-1.5">
-              <UBadge
-                v-for="tag in task.tags"
-                :key="tag"
-                color="primary"
-                variant="soft"
-                size="xs"
-              >
-                {{ tag }}
-              </UBadge>
-            </div>
-          </UFormField>
-
-          <UFormField
-            v-if="dependencies.length > 0"
-            label="Dependencies"
-          >
-            <div class="flex flex-col gap-1.5">
-              <UButton
-                v-for="dep in dependencies"
-                :key="dep.id"
-                color="neutral"
-                variant="ghost"
-                class="justify-start bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-                @click="taskStore.setActive(dep.id)"
-              >
-                <template #leading>
-                  <UIcon
-                    name="i-lucide-link-2"
-                    class="h-3.5 w-3.5 text-gray-500"
-                  />
-                </template>
-                <span
-                  class="flex-1 text-left"
-                  :class="dep.status === 'done' && 'line-through text-gray-500'"
-                >
-                  {{ dep.title }}
-                </span>
-                <template #trailing>
-                  <PropertyBadge
-                    type="status"
-                    :value="dep.status"
-                    :show-label="false"
-                  />
-                </template>
-              </UButton>
-            </div>
-          </UFormField>
-
-          <UFormField :label="`Subtasks${subtasks.length > 0 ? ` (${completedSubtasks}/${subtasks.length})` : ''}`">
-            <template v-if="subtasks.length > 0">
-              <UProgress
-                :value="progress"
-                class="h-1.5 mb-2"
-              />
-              <UButton
-                v-for="sub in subtasks"
-                :key="sub.id"
-                color="neutral"
-                variant="ghost"
-                class="justify-start"
-                @click="toggleSubtask(sub.id)"
-              >
-                <template #leading>
-                  <UIcon
-                    :name="sub.status === 'done' ? 'i-lucide-check-circle-2' : 'i-lucide-circle'"
-                    class="h-4 w-4"
-                    :style="sub.status === 'done' ? { color: getStatusColor('done') } : {}"
-                    :class="sub.status !== 'done' && 'text-gray-400'"
-                  />
-                </template>
-                <span
-                  class="text-sm"
-                  :class="sub.status === 'done' && 'line-through text-gray-500'"
-                >
-                  {{ sub.title }}
-                </span>
-              </UButton>
-            </template>
-
-            <div class="flex gap-2 mt-2">
-              <UInput
-                v-model="newSubtask"
-                placeholder="Add subtask..."
-                data-testid="new-subtask-input"
-                class="flex-1"
-                @keydown.enter="addSubtask"
-              />
-              <UButton
-                icon="i-lucide-plus"
-                :disabled="!newSubtask.trim()"
-                @click="addSubtask"
-              />
-            </div>
-          </UFormField>
-        </div>
-      </UScrollArea>
+        </UScrollArea>
+      </template>
     </template>
   </USlideover>
 </template>

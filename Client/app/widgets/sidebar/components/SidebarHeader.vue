@@ -14,35 +14,35 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
 </script>
 
 <template>
-  <header class="flex flex-col gap-3 p-4 pb-2">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <UserAvatar
-          :user="currentUser ?? undefined"
-          size="md"
-        />
-        <div>
-          <h1 class="text-sm font-semibold">
-            Cerulean
-          </h1>
-          <p class="text-[11px] text-gray-500 dark:text-gray-400">
-            {{ currentUser?.name }}
-          </p>
-        </div>
-      </div>
-      <UButton
-        icon="i-lucide-plus"
+  <div class="flex items-center justify-between p-4 pb-2">
+    <div class="flex items-center gap-2">
+      <UserAvatar
+        :user="currentUser ?? undefined"
         size="md"
-        color="primary"
-        data-testid="new-thread-btn"
-        @click="emit('newThread')"
       />
+      <div>
+        <h1 class="text-sm font-semibold">
+          Cerulean
+        </h1>
+        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+          {{ currentUser?.name }}
+        </p>
+      </div>
     </div>
+    <UButton
+      icon="i-lucide-plus"
+      size="md"
+      color="primary"
+      data-testid="new-thread-btn"
+      @click="emit('newThread')"
+    />
+  </div>
+  <div class="px-4 pb-2">
     <UInput
       :model-value="searchQuery"
       placeholder="Search threads..."
       data-testid="thread-search-input"
-      :ui="{ base: 'h-9', leading: 'pointer-events-none' }"
+      :ui="{ base: 'h-9' }"
       @update:model-value="uiStore.setSearch($event)"
     >
       <template #leading>
@@ -52,5 +52,5 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
         />
       </template>
     </UInput>
-  </header>
+  </div>
 </template>

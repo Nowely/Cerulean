@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { useShoppingStore, useThreadStore } from '~/shared/model'
-import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 import InputBar from '~/widgets/chat-view/components/InputBar.vue'
 
 const threadStore = useThreadStore()
 const shoppingStore = useShoppingStore()
-
-const showChecked = ref(true)
 
 const threadId = computed(() => threadStore.activeThreadId.value ?? '')
 
@@ -26,17 +23,11 @@ function clearChecked() {
 
 <template>
   <div class="flex flex-1 flex-col">
-    <ContentPanelHeader>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-lucide-shopping-cart"
-          class="h-5 w-5 text-amber-500"
-        />
-        <h2 class="text-lg font-semibold">
-          {{ threadStore.activeThread.value?.name }}
-        </h2>
-      </div>
-      <template #end>
+    <UDashboardNavbar
+      :title="threadStore.activeThread.value?.name"
+      icon="i-lucide-shopping-cart"
+    >
+      <template #right>
         <UButton
           v-if="checkedCount > 0"
           label="Clear checked"
@@ -51,25 +42,23 @@ function clearChecked() {
           </template>
         </UButton>
       </template>
-      <template
-        v-if="totalCount > 0"
-        #subheader
+    </UDashboardNavbar>
+
+    <UDashboardToolbar v-if="totalCount > 0">
+      <UProgress
+        :model-value="checkedCount"
+        :max="totalCount"
+        color="warning"
+        size="sm"
       >
-        <UProgress
-          :model-value="checkedCount"
-          :max="totalCount"
-          color="warning"
-          size="sm"
-        >
-          <template #status>
-            <div class="flex items-center justify-between text-xs text-gray-500">
-              <span>{{ checkedCount }} of {{ totalCount }} items</span>
-              <span>{{ progress }}%</span>
-            </div>
-          </template>
-        </UProgress>
-      </template>
-    </ContentPanelHeader>
+        <template #status>
+          <div class="flex items-center justify-between text-xs text-gray-500 w-full">
+            <span>{{ checkedCount }} of {{ totalCount }} items</span>
+            <span>{{ progress }}%</span>
+          </div>
+        </template>
+      </UProgress>
+    </UDashboardToolbar>
 
     <UScrollArea class="flex-1">
       <UEmpty
@@ -107,7 +96,7 @@ function clearChecked() {
           </div>
         </div>
 
-        <div
+        <UCollapsible
           v-if="checkedItems.length > 0"
           class="px-2"
         >
@@ -116,17 +105,17 @@ function clearChecked() {
             variant="ghost"
             size="xs"
             class="w-full justify-start px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500"
-            @click="showChecked = !showChecked"
           >
             <template #leading>
               <UIcon
-                :name="showChecked ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                name="i-lucide-chevron-down"
                 class="h-3 w-3"
               />
             </template>
             Completed ({{ checkedItems.length }})
           </UButton>
-          <template v-if="showChecked">
+
+          <template #content>
             <div
               v-for="item in checkedItems"
               :key="item.id"
@@ -148,7 +137,7 @@ function clearChecked() {
               />
             </div>
           </template>
-        </div>
+        </UCollapsible>
       </template>
     </UScrollArea>
 

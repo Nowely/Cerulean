@@ -71,7 +71,6 @@ const threadName = computed(() =>
 <template>
   <UUser
     :name="threadName"
-    :description="description"
     :avatar="{
       icon: kindConfig.icon,
       size: 'lg',
@@ -85,22 +84,20 @@ const threadName = computed(() =>
     @click="emit('click')"
   >
     <template #description>
-      <div class="flex items-center justify-between gap-2 w-full min-w-0">
-        <p class="truncate text-[13px] text-gray-500">
-          {{ description }}
-        </p>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <span class="text-xs text-gray-500">
-            {{ relativeTime(thread.lastActivity) }}
-          </span>
-          <UBadge
-            v-if="thread.unreadCount > 0"
-            color="primary"
-            size="xs"
-          >
-            {{ thread.unreadCount }}
-          </UBadge>
-        </div>
+      <p class="truncate text-[13px] text-gray-500">
+        {{ description }}
+      </p>
+      <div class="flex items-center gap-1.5 shrink-0 ml-auto">
+        <span class="text-xs text-gray-500">
+          {{ relativeTime(thread.lastActivity) }}
+        </span>
+        <UBadge
+          v-if="thread.unreadCount > 0"
+          color="primary"
+          size="xs"
+        >
+          {{ thread.unreadCount }}
+        </UBadge>
       </div>
     </template>
   </UUser>

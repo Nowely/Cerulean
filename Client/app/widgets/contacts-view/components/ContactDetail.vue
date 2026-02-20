@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Contact } from '~/shared/types'
-import ContentPanelHeader from '~/shared/ui/ContentPanelHeader.vue'
 
 interface Props {
   contact: Contact
@@ -57,8 +56,8 @@ function getAvatarColor(name: string): string {
 
 <template>
   <div class="flex h-full flex-col bg-[hsl(var(--background))]">
-    <ContentPanelHeader variant="toolbar">
-      <template #end>
+    <UDashboardNavbar>
+      <template #right>
         <UButton
           :icon="editing ? 'i-lucide-check' : 'i-lucide-pencil'"
           color="neutral"
@@ -85,7 +84,7 @@ function getAvatarColor(name: string): string {
           @click="emit('close')"
         />
       </template>
-    </ContentPanelHeader>
+    </UDashboardNavbar>
 
     <UScrollArea class="flex-1 px-4 py-6">
       <div class="flex flex-col items-center gap-3 mb-6">

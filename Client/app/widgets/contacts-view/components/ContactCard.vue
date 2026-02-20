@@ -20,7 +20,6 @@ function getAvatarColor(name: string): string {
 <template>
   <UUser
     :name="contact.name"
-    :description="contact.company"
     :avatar="{
       alt: contact.name,
       size: 'md',
@@ -33,28 +32,26 @@ function getAvatarColor(name: string): string {
     @click="emit('click')"
   >
     <template #description>
-      <div class="flex items-center justify-between gap-2 w-full min-w-0">
-        <span
-          v-if="contact.company"
-          class="text-xs text-gray-500 truncate"
+      <span
+        v-if="contact.company"
+        class="text-xs text-gray-500 truncate"
+      >
+        {{ contact.company }}
+      </span>
+      <div
+        v-if="contact.tags.length > 0"
+        class="flex gap-1 ml-auto shrink-0"
+      >
+        <UBadge
+          v-for="tag in contact.tags.slice(0, 2)"
+          :key="tag"
+          color="primary"
+          variant="soft"
+          size="xs"
+          class="text-sky-400"
         >
-          {{ contact.company }}
-        </span>
-        <div
-          v-if="contact.tags.length > 0"
-          class="flex gap-1 ml-auto shrink-0"
-        >
-          <UBadge
-            v-for="tag in contact.tags.slice(0, 2)"
-            :key="tag"
-            color="primary"
-            variant="soft"
-            size="xs"
-            class="text-sky-400"
-          >
-            {{ tag }}
-          </UBadge>
-        </div>
+          {{ tag }}
+        </UBadge>
       </div>
     </template>
   </UUser>

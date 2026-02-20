@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { ThreadKind } from '~/shared/types'
-import { useThreadStore, useUIStore } from '~/shared/model'
+import { useThreadStore } from '~/shared/model'
 import { useThreadManage } from '~/features/thread-manage'
-import { useIsMobile, useToastHelpers, THREAD_KINDS } from '~/shared/lib'
+import { useToastHelpers, THREAD_KINDS } from '~/shared/lib'
 import SidebarHeader from './components/SidebarHeader.vue'
 import SidebarFooter from './components/SidebarFooter.vue'
 import ThreadItem from './components/ThreadItem.vue'
@@ -12,9 +12,7 @@ defineOptions({
 })
 
 const threadStore = useThreadStore()
-const uiStore = useUIStore()
 const { create: createThreadAction, results } = useThreadManage()
-const isMobile = useIsMobile()
 const toast = useToastHelpers()
 
 const showNewThread = ref(false)
@@ -77,141 +75,133 @@ function backToKindPicker() {
 
 function selectThread(threadId: string) {
   threadStore.setActive(threadId)
-  uiStore.setSidebar(false)
 }
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-[hsl(var(--sidebar-background))]">
-    <SidebarHeader @new-thread="openNewThread" />
+  <SidebarHeader @new-thread="openNewThread" />
 
-    <UScrollArea
-      class="flex-1 px-2 pb-4"
-      data-testid="thread-list"
-    >
-      <template v-if="pinnedThreads.length > 0">
-        <USeparator
-          label="Pinned"
-          class="px-3 pt-3"
-        />
-        <ThreadItem
-          v-for="thread in pinnedThreads"
-          :key="thread.id"
-          :thread="thread"
-          :is-active="activeThreadId === thread.id"
-          @click="selectThread(thread.id)"
-        />
-      </template>
+  <template v-if="pinnedThreads.length > 0">
+    <USeparator
+      label="Pinned"
+      class="px-3 pt-3"
+    />
+    <ThreadItem
+      v-for="thread in pinnedThreads"
+      :key="thread.id"
+      :thread="thread"
+      :is-active="activeThreadId === thread.id"
+      @click="selectThread(thread.id)"
+    />
+  </template>
 
-      <template v-if="unpinnedThreads.length > 0">
-        <USeparator
-          v-if="pinnedThreads.length > 0"
-          label="All Threads"
-          class="px-3 pt-3"
-        />
-        <ThreadItem
-          v-for="thread in unpinnedThreads"
-          :key="thread.id"
-          :thread="thread"
-          :is-active="activeThreadId === thread.id"
-          @click="selectThread(thread.id)"
-        />
-      </template>
+  <template v-if="unpinnedThreads.length > 0">
+    <USeparator
+      v-if="pinnedThreads.length > 0"
+      label="All Threads"
+      class="px-3 pt-3"
+    />
+    <ThreadItem
+      v-for="thread in unpinnedThreads"
+      :key="thread.id"
+      :thread="thread"
+      :is-active="activeThreadId === thread.id"
+      @click="selectThread(thread.id)"
+    />
+  </template>
 
-      <UEmpty
-        v-if="results.length === 0"
-        title="No threads found"
-        class="py-12"
-      />
-    </UScrollArea>
+  <UEmpty
+    v-if="results.length === 0"
+    title="No threads found"
+    class="py-12"
+  />
 
-    <SidebarFooter />
+  <SidebarFooter />
 
-    <USlideover
-      v-model:open="showNewThread"
-      :side="isMobile ? 'bottom' : 'right'"
-      :ui="{ content: 'max-h-[70dvh] p-4' }"
-    >
-      <template #content>
-        <template v-if="creationStep === 'kind'">
-          <h3 class="text-lg font-semibold mb-1">
-            New Thread
-          </h3>
-          <p class="text-sm text-gray-500 mb-4">
-            Choose what kind of thread to create
-          </p>
-          <div class="flex flex-col gap-2">
-            <UButton
-              v-for="opt in kindOptions"
-              :key="opt.kind"
-              color="neutral"
-              variant="ghost"
-              block
-              class="justify-start h-auto p-3"
-              @click="selectKind(opt.kind)"
-            >
-              <template #leading>
-                <UAvatar
-                  :icon="opt.icon"
-                  size="lg"
-                  :style="{ backgroundColor: opt.color }"
-                  class="text-white shrink-0"
-                />
-              </template>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-left">
-                  {{ opt.label }}
-                </p>
-                <p class="text-xs text-gray-500 text-left">
-                  {{ opt.description }}
-                </p>
-              </div>
-            </UButton>
-          </div>
-        </template>
-
-        <template v-else>
-          <div class="flex items-center gap-2 mb-4">
-            <UButton
-              icon="i-lucide-arrow-left"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              @click="backToKindPicker"
-            />
-            <UAvatar
-              :style="{ backgroundColor: THREAD_KINDS[newThreadKind].color }"
-              size="sm"
-            >
-              <UIcon
-                :name="THREAD_KINDS[newThreadKind].icon"
-                class="h-4 w-4 text-white"
-              />
-            </UAvatar>
-            <h3 class="text-sm font-semibold">
-              New {{ THREAD_KINDS[newThreadKind].label }} Thread
-            </h3>
-          </div>
-
-          <UInput
-            v-model="newThreadName"
-            :placeholder="`${THREAD_KINDS[newThreadKind].label} name...`"
-            data-testid="new-thread-name-input"
-            autofocus
-            class="mb-3"
-            @keydown.enter="handleCreateThread"
-          />
-
+  <USlideover
+    v-model:open="showNewThread"
+    side="right"
+    :ui="{ content: 'max-h-[70dvh] p-4' }"
+  >
+    <template #content>
+      <template v-if="creationStep === 'kind'">
+        <h3 class="text-lg font-semibold mb-1">
+          New Thread
+        </h3>
+        <p class="text-sm text-gray-500 mb-4">
+          Choose what kind of thread to create
+        </p>
+        <div class="flex flex-col gap-2">
           <UButton
+            v-for="opt in kindOptions"
+            :key="opt.kind"
+            color="neutral"
+            variant="ghost"
             block
-            :disabled="!newThreadName.trim()"
-            data-testid="create-thread-submit-btn"
-            @click="handleCreateThread"
+            class="justify-start h-auto p-3"
+            @click="selectKind(opt.kind)"
           >
-            Create Thread
+            <template #leading>
+              <UAvatar
+                :icon="opt.icon"
+                size="lg"
+                :style="{ backgroundColor: opt.color }"
+                class="text-white shrink-0"
+              />
+            </template>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-left">
+                {{ opt.label }}
+              </p>
+              <p class="text-xs text-gray-500 text-left">
+                {{ opt.description }}
+              </p>
+            </div>
           </UButton>
-        </template>
+        </div>
       </template>
-    </USlideover>
-  </div>
+
+      <template v-else>
+        <div class="flex items-center gap-2 mb-4">
+          <UButton
+            icon="i-lucide-arrow-left"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="backToKindPicker"
+          />
+          <UAvatar
+            :style="{ backgroundColor: THREAD_KINDS[newThreadKind].color }"
+            size="sm"
+          >
+            <UIcon
+              :name="THREAD_KINDS[newThreadKind].icon"
+              class="h-4 w-4 text-white"
+            />
+          </UAvatar>
+          <h3 class="text-sm font-semibold">
+            New {{ THREAD_KINDS[newThreadKind].label }} Thread
+          </h3>
+        </div>
+
+        <UInput
+          v-model="newThreadName"
+          :placeholder="`${THREAD_KINDS[newThreadKind].label} name...`"
+          data-testid="new-thread-name-input"
+          autofocus
+          class="mb-3"
+          @keydown.enter="handleCreateThread"
+        />
+
+        <UButton
+          block
+          :disabled="!newThreadName.trim()"
+          data-testid="create-thread-submit-btn"
+          @click="handleCreateThread"
+        >
+          Create Thread
+        </UButton>
+      </template>
+    </template>
+  </USlideover>
 </template>
