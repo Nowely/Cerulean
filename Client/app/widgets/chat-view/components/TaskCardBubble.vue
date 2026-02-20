@@ -2,7 +2,6 @@
 import type { Message } from '~/shared/types'
 import { useUserStore, useTaskStore } from '~/shared/model'
 import { formatTime, getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
-import UserAvatar from '~/shared/ui/UserAvatar.vue'
 import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 
@@ -50,129 +49,116 @@ function handleClick() {
 </script>
 
 <template>
-  <div
+  <UCard
     v-if="task"
-    class="flex items-end gap-2 px-3"
-    :class="isOwn ? 'flex-row-reverse' : 'flex-row'"
+    variant="outline"
+    class="max-w-[85%] cursor-pointer transition-transform active:scale-[0.98] mx-3"
+    :class="[isOwn ? 'ml-auto rounded-br-md' : 'mr-auto rounded-bl-md']"
+    :ui="{
+      root: 'border-l-4',
+      header: 'p-3 pb-0',
+      body: 'p-3 pt-2 flex flex-col gap-2',
+      footer: 'p-3 pt-0'
+    }"
+    :style="{ borderLeftColor: getStatusColor(task.status) }"
+    @click="handleClick"
   >
-    <UserAvatar
-      v-if="showAvatar && !isOwn"
-      :user="sender"
+    <template #header>
+      <div class="flex items-center justify-between gap-2">
+        <UBadge
+          v-if="showAvatar && !isOwn"
+          color="primary"
+          variant="subtle"
+          size="xs"
+          class="font-medium"
+        >
+          {{ sender?.name }}
+        </UBadge>
+        <h3 class="text-sm font-semibold leading-snug flex-1 min-w-0">
+          {{ task.title }}
+        </h3>
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="h-4 w-4 shrink-0 text-gray-400"
+        />
+      </div>
+    </template>
+
+    <p
+      v-if="task.description"
+      class="text-[13px] leading-relaxed text-gray-500 line-clamp-2"
+    >
+      {{ task.description }}
+    </p>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <PropertyBadge
+        type="status"
+        :value="task.status"
+      />
+      <PropertyBadge
+        type="priority"
+        :value="task.priority"
+      />
+
+      <UBadge
+        v-if="task.dueDate"
+        color="neutral"
+        variant="subtle"
+        size="xs"
+        :class="overdue ? '!text-red-500' : dueSoon ? '!text-amber-500' : ''"
+      >
+        <template #leading>
+          <UIcon
+            name="i-lucide-calendar"
+            class="h-3 w-3"
+          />
+        </template>
+        {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}
+      </UBadge>
+
+      <UBadge
+        v-if="subtasks.length > 0"
+        color="neutral"
+        variant="subtle"
+        size="xs"
+      >
+        <template #leading>
+          <UIcon
+            name="i-lucide-list-checks"
+            class="h-3 w-3"
+          />
+        </template>
+        {{ completedSubtasks }}/{{ subtasks.length }}
+      </UBadge>
+    </div>
+
+    <div
+      v-if="task.tags.length > 0"
+      class="flex flex-wrap gap-1"
+    >
+      <UBadge
+        v-for="tag in task.tags"
+        :key="tag"
+        color="neutral"
+        variant="subtle"
+        size="xs"
+      >
+        {{ tag }}
+      </UBadge>
+    </div>
+
+    <AvatarStack
+      v-if="assigneeUsers.length > 0"
+      :users="assigneeUsers"
+      :max-visible="4"
       size="sm"
     />
 
-    <UCard
-      variant="outline"
-      class="max-w-[85%] cursor-pointer transition-transform active:scale-[0.98]"
-      :class="isOwn ? 'rounded-br-md' : 'rounded-bl-md'"
-      :ui="{
-        root: 'border-l-4',
-        header: 'p-3 pb-0',
-        body: 'p-3 pt-2 flex flex-col gap-2',
-        footer: 'p-3 pt-0'
-      }"
-      :style="{ borderLeftColor: getStatusColor(task.status) }"
-      @click="handleClick"
-    >
-      <template #header>
-        <div class="flex items-start justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <UBadge
-              v-if="showAvatar && !isOwn"
-              color="primary"
-              variant="subtle"
-              size="xs"
-              class="font-medium"
-            >
-              {{ sender?.name }}
-            </UBadge>
-            <h3 class="text-sm font-semibold leading-snug">
-              {{ task.title }}
-            </h3>
-          </div>
-          <UIcon
-            name="i-lucide-chevron-right"
-            class="h-4 w-4 shrink-0 text-gray-400 mt-0.5"
-          />
-        </div>
-      </template>
-
-      <p
-        v-if="task.description"
-        class="text-[13px] leading-relaxed text-gray-500 line-clamp-2"
-      >
-        {{ task.description }}
-      </p>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <PropertyBadge
-          type="status"
-          :value="task.status"
-        />
-        <PropertyBadge
-          type="priority"
-          :value="task.priority"
-        />
-
-        <UBadge
-          v-if="task.dueDate"
-          color="neutral"
-          variant="subtle"
-          size="xs"
-          :class="overdue ? '!text-red-500' : dueSoon ? '!text-amber-500' : ''"
-        >
-          <template #leading>
-            <UIcon
-              name="i-lucide-calendar"
-              class="h-3 w-3"
-            />
-          </template>
-          {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}
-        </UBadge>
-
-        <UBadge
-          v-if="subtasks.length > 0"
-          color="neutral"
-          variant="subtle"
-          size="xs"
-        >
-          <template #leading>
-            <UIcon
-              name="i-lucide-list-checks"
-              class="h-3 w-3"
-            />
-          </template>
-          {{ completedSubtasks }}/{{ subtasks.length }}
-        </UBadge>
-      </div>
-
-      <div
-        v-if="task.tags.length > 0"
-        class="flex flex-wrap gap-1"
-      >
-        <UBadge
-          v-for="tag in task.tags"
-          :key="tag"
-          color="neutral"
-          variant="subtle"
-          size="xs"
-        >
-          {{ tag }}
-        </UBadge>
-      </div>
-
-      <AvatarStack
-        v-if="assigneeUsers.length > 0"
-        :users="assigneeUsers"
-        :max-visible="4"
-        size="sm"
-      />
-
-      <template #footer>
-        <span class="text-[10px] text-gray-500">
-          {{ formatTime(message.timestamp) }}
-        </span>
-      </template>
-    </UCard>
-  </div>
+    <template #footer>
+      <span class="text-[10px] text-gray-500">
+        {{ formatTime(message.timestamp) }}
+      </span>
+    </template>
+  </UCard>
 </template>

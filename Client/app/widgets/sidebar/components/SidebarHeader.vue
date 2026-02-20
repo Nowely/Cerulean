@@ -15,20 +15,18 @@ const searchQuery = computed(() => uiStore.searchQuery.value)
 
 <template>
   <div class="flex items-center justify-between p-4 pb-2">
-    <div class="flex items-center gap-2">
-      <UserAvatar
-        :user="currentUser ?? undefined"
-        size="md"
-      />
-      <div>
-        <h1 class="text-sm font-semibold">
-          Cerulean
-        </h1>
-        <p class="text-[11px] text-gray-500 dark:text-gray-400">
-          {{ currentUser?.name }}
-        </p>
-      </div>
-    </div>
+    <UUser
+      name="Cerulean"
+      :description="currentUser?.name"
+      size="md"
+    >
+      <template #avatar>
+        <UserAvatar
+          :user="currentUser ?? undefined"
+          size="md"
+        />
+      </template>
+    </UUser>
     <UButton
       icon="i-lucide-plus"
       size="md"

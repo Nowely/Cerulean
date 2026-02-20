@@ -87,7 +87,24 @@ function getAvatarColor(name: string): string {
     </UDashboardNavbar>
 
     <UScrollArea class="flex-1 px-4 py-6">
-      <div class="flex flex-col items-center gap-3 mb-6">
+      <UUser
+        v-if="!editing"
+        :name="contact.name"
+        :description="contact.company"
+        orientation="vertical"
+        size="xl"
+        :avatar="{
+          alt: contact.name,
+          size: '3xl',
+          style: { backgroundColor: getAvatarColor(contact.name) },
+          ui: { root: 'font-bold text-white', fallback: 'bg-transparent text-2xl' }
+        }"
+        class="mb-6 justify-center"
+      />
+      <div
+        v-else
+        class="flex flex-col items-center gap-3 mb-6"
+      >
         <UAvatar
           :alt="contact.name"
           size="3xl"
@@ -96,22 +113,10 @@ function getAvatarColor(name: string): string {
           :ui="{ fallback: 'bg-transparent text-2xl' }"
         />
         <UInput
-          v-if="editing"
           v-model="form.name"
-          class="text-center"
+          class="text-center w-48"
           :ui="{ base: 'text-xl font-semibold text-center bg-transparent' }"
         />
-        <template v-else>
-          <h2 class="text-xl font-semibold">
-            {{ contact.name }}
-          </h2>
-          <p
-            v-if="contact.company"
-            class="text-sm text-gray-500"
-          >
-            {{ contact.company }}
-          </p>
-        </template>
       </div>
 
       <div class="flex flex-col gap-4">
