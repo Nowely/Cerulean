@@ -1,7 +1,5 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/geist-mono";
 
 @theme static {
   --font-sans: 'Geist Variable', 'Geist', sans-serif;
