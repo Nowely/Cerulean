@@ -19,7 +19,6 @@ export default defineAppConfig({
         }
       },
       defaultVariants: {
-        size: 'md',
         variant: 'soft'
       }
     },
@@ -33,7 +32,6 @@ export default defineAppConfig({
         }
       },
       defaultVariants: {
-        size: 'md',
         variant: 'soft'
       }
     },
@@ -42,7 +40,6 @@ export default defineAppConfig({
         base: 'rounded-lg font-medium'
       },
       defaultVariants: {
-        size: 'md',
         variant: 'solid'
       }
     },
@@ -51,7 +48,6 @@ export default defineAppConfig({
         base: 'rounded-full px-2 py-0.5 text-xs font-medium inline-flex items-center gap-1'
       },
       defaultVariants: {
-        size: 'md',
         variant: 'soft'
       }
     },
@@ -89,9 +85,6 @@ export default defineAppConfig({
     formField: {
       slots: {
         label: 'text-xs font-medium text-muted'
-      },
-      defaultVariants: {
-        size: 'md'
       }
     },
     avatar: {

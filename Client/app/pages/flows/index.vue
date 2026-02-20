@@ -24,13 +24,13 @@ useHead({
               class="h-8 w-8 text-primary-600 dark:text-primary-400"
             />
           </div>
-          <h1 class="text-2xl md:text-3xl font-bold text-highlighted dark:text-highlighted">
+          <h1 class="text-2xl md:text-3xl font-bold text-highlighted">
             TaskChat User Flows
           </h1>
           <p class="mt-2 text-muted dark:text-dimmed max-w-md">
             Interactive documentation showing how to use TaskChat features. Each flow includes step-by-step walkthroughs with live previews.
           </p>
-          <div class="mt-4 inline-flex items-center gap-2 rounded-full bg-elevated dark:bg-elevated px-4 py-2 text-xs text-muted dark:text-dimmed">
+          <div class="mt-4 inline-flex items-center gap-2 rounded-full bg-elevated px-4 py-2 text-xs text-muted">
             <UIcon
               name="i-lucide-clock"
               class="h-3.5 w-3.5"
@@ -80,7 +80,7 @@ useHead({
                 />
               </div>
               <div class="min-w-0 flex-1">
-                <div class="font-semibold text-highlighted dark:text-highlighted group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                <div class="font-semibold text-highlighted group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                   {{ flow.title }}
                 </div>
                 <div class="mt-0.5 text-sm text-muted dark:text-dimmed line-clamp-2">
@@ -89,7 +89,7 @@ useHead({
               </div>
               <UIcon
                 name="i-lucide-arrow-right"
-                class="h-5 w-5 text-toned dark:text-toned transition-all group-hover:text-primary-500 group-hover:translate-x-1"
+                class="h-5 w-5 text-toned transition-all group-hover:text-primary-500 group-hover:translate-x-1"
               />
             </div>
           </UCard>

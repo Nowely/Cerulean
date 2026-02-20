@@ -78,7 +78,7 @@ const threadName = computed(() =>
       ui: { root: 'text-white' }
     }"
     :ui="{
-      root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : 'hover:bg-elevated dark:hover:bg-elevated'}`
+      root: `w-full px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-primary-500/10 dark:bg-primary-400/10' : 'hover:bg-elevated'}`
     }"
     :data-testid="`thread-item-${thread.id}`"
     @click="emit('click')"

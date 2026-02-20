@@ -51,7 +51,7 @@ function handleSend() {
 <template>
   <div
     v-if="threadStore.activeThread.value"
-    class="shrink-0 border-t border-default dark:border-muted bg-white dark:bg-muted px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+    class="shrink-0 border-t border-default bg-white dark:bg-muted px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
   >
     <UChatPrompt
       v-model="text"

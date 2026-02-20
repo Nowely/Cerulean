@@ -161,7 +161,7 @@ function closeDrawer() {
                   <UButton
                     color="neutral"
                     variant="ghost"
-                    class="bg-elevated dark:bg-elevated"
+                    class="bg-elevated"
                   >
                     <PropertyBadge
                       type="status"
@@ -181,7 +181,7 @@ function closeDrawer() {
                   <UButton
                     color="neutral"
                     variant="ghost"
-                    class="bg-elevated dark:bg-elevated"
+                    class="bg-elevated"
                   >
                     <PropertyBadge
                       type="priority"
@@ -215,7 +215,7 @@ function closeDrawer() {
               v-if="task.description"
               label="Description"
             >
-              <p class="text-sm leading-relaxed text-default dark:text-default">
+              <p class="text-sm leading-relaxed text-default">
                 {{ task.description }}
               </p>
             </UFormField>
@@ -265,7 +265,7 @@ function closeDrawer() {
                   :key="dep.id"
                   color="neutral"
                   variant="ghost"
-                  class="justify-start bg-elevated dark:bg-elevated hover:bg-accented dark:hover:bg-accented"
+                  class="justify-start bg-elevated hover:bg-accented"
                   @click="taskStore.setActive(dep.id)"
                 >
                   <template #leading>
