@@ -1,20 +1,8 @@
-import {
-  useMessageStore,
-  useNotificationStore,
-  useTaskStore,
-  useThreadStore,
-  useUserStore,
-  useShoppingStore,
-  useNoteStore,
-  useContactStore
-} from '~/shared/model'
+import { useBlockStore, useUserStore, useNotificationStore } from '~/shared/model'
 import type { Notification } from '../types/user'
-import type { ShoppingItem } from '../types/shopping'
-import type { Note } from '../types/note'
-import type { Contact } from '../types/contact'
 
 const STORAGE_KEY = 'cerulean-workspace-state'
-const STORAGE_VERSION = 3
+const STORAGE_VERSION = 4
 
 interface PersistedState {
   version: number
@@ -22,9 +10,6 @@ interface PersistedState {
   thread: { activeThreadId: string | null }
   task: { activeTaskId: string | null }
   notification: { notifications: Notification[] }
-  shopping: { items: ShoppingItem[] }
-  notes: { notes: Note[] }
-  contacts: { contacts: Contact[] }
 }
 
 export function useAppInit() {
@@ -55,26 +40,16 @@ export function useAppInit() {
     }
   }
 
-  function init() {
+  async function init() {
     if (initialized.value) return
 
+    const blockStore = useBlockStore()
     const userStore = useUserStore()
     const notificationStore = useNotificationStore()
-    const threadStore = useThreadStore()
-    const messageStore = useMessageStore()
-    const taskStore = useTaskStore()
-    const shoppingStore = useShoppingStore()
-    const noteStore = useNoteStore()
-    const contactStore = useContactStore()
 
+    await blockStore.init()
     userStore.init()
     notificationStore.init()
-    threadStore.init()
-    messageStore.init()
-    taskStore.init()
-    shoppingStore.init()
-    noteStore.init()
-    contactStore.init()
 
     const persisted = loadPersistedState()
     if (persisted) {
@@ -82,22 +57,13 @@ export function useAppInit() {
         userStore.setCurrentUser(persisted.user.currentUserId)
       }
       if (persisted.thread.activeThreadId) {
-        threadStore.setActive(persisted.thread.activeThreadId)
+        blockStore.setActiveThread(persisted.thread.activeThreadId)
       }
       if (persisted.task.activeTaskId) {
-        taskStore.setActive(persisted.task.activeTaskId)
+        blockStore.setActiveTask(persisted.task.activeTaskId)
       }
       if (persisted.notification.notifications) {
         notificationStore.notifications.value = persisted.notification.notifications
-      }
-      if (persisted.shopping?.items) {
-        shoppingStore.items.value = persisted.shopping.items
-      }
-      if (persisted.notes?.notes) {
-        noteStore.notes.value = persisted.notes.notes
-      }
-      if (persisted.contacts?.contacts) {
-        contactStore.contacts.value = persisted.contacts.contacts
       }
     }
 
@@ -105,23 +71,17 @@ export function useAppInit() {
       watch(
         () => [
           userStore.currentUserId.value,
-          threadStore.activeThreadId.value,
-          taskStore.activeTaskId.value,
-          notificationStore.notifications.value,
-          shoppingStore.items.value,
-          noteStore.notes.value,
-          contactStore.contacts.value
+          blockStore.activeThreadId.value,
+          blockStore.activeTaskId.value,
+          notificationStore.notifications.value
         ],
         () => {
           saveState({
             version: STORAGE_VERSION,
             user: { currentUserId: userStore.currentUserId.value },
-            thread: { activeThreadId: threadStore.activeThreadId.value },
-            task: { activeTaskId: taskStore.activeTaskId.value },
-            notification: { notifications: notificationStore.notifications.value },
-            shopping: { items: shoppingStore.items.value },
-            notes: { notes: noteStore.notes.value },
-            contacts: { contacts: contactStore.contacts.value }
+            thread: { activeThreadId: blockStore.activeThreadId.value },
+            task: { activeTaskId: blockStore.activeTaskId.value },
+            notification: { notifications: notificationStore.notifications.value }
           })
         },
         { deep: true }

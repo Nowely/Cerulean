@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useTaskStore, useUIStore } from '~/shared/model'
+import { useBlockStore, useUIStore } from '~/shared/model'
 import { useToastHelpers } from '~/shared/lib'
 import { useTaskManage } from '~/features/task-manage'
 
-const taskStore = useTaskStore()
+const blockStore = useBlockStore()
 const uiStore = useUIStore()
 const toast = useToastHelpers()
 const { applyTemplate } = useTaskManage()
@@ -15,12 +15,12 @@ const TEMPLATE_ICONS: Record<string, string> = {
   tmpl4: 'i-lucide-calendar-check'
 }
 
-function handleSelect(templateId: string) {
-  const template = taskStore.getTemplateById(templateId)
+async function handleSelect(templateId: string) {
+  const template = blockStore.getTemplateById(templateId)
   if (!template) return
 
-  const created = applyTemplate(templateId)
-  if (!created) {
+  const result = await applyTemplate(templateId)
+  if (!result) {
     toast.warning({
       title: 'Select a thread first',
       description: 'Template tasks need an active thread.'
@@ -57,7 +57,7 @@ function closeDrawer() {
 
         <div class="flex flex-col gap-2">
           <UCard
-            v-for="template in taskStore.templates.value"
+            v-for="template in blockStore.templates.value"
             :key="template.id"
             variant="soft"
             class="cursor-pointer hover:bg-accented dark:hover:bg-accented transition-colors"

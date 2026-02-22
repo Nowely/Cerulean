@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Contact } from '~/shared/types'
+import type { ContactBlock } from '~/shared/types'
 
 interface Props {
-  contact: Contact
+  contact: ContactBlock
   isActive: boolean
 }
 
@@ -25,17 +25,17 @@ const emit = defineEmits<{ click: [] }>()
   >
     <template #description>
       <span
-        v-if="contact.company"
+        v-if="contact.data.company"
         class="text-xs text-muted truncate"
       >
-        {{ contact.company }}
+        {{ contact.data.company }}
       </span>
       <div
-        v-if="contact.tags.length > 0"
+        v-if="contact.data.tags.length > 0"
         class="flex gap-1 ml-auto shrink-0"
       >
         <UBadge
-          v-for="tag in contact.tags.slice(0, 2)"
+          v-for="tag in contact.data.tags.slice(0, 2)"
           :key="tag"
           variant="soft"
           size="xs"

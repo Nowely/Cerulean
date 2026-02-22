@@ -1,45 +1,99 @@
 <script setup lang="ts">
-import { useNoteStore, useThreadStore } from '~/shared/model'
-import { createNote } from '~/shared/lib'
+import { useBlockStore } from '~/shared/model'
+import { createBlock } from '~/shared/lib'
+import type { NoteBlock } from '~/shared/types'
 import NoteCard from './components/NoteCard.vue'
 import NoteEditor from './components/NoteEditor.vue'
 
-const threadStore = useThreadStore()
-const noteStore = useNoteStore()
+const blockStore = useBlockStore()
 
 const searchQuery = ref('')
-const threadId = computed(() => threadStore.activeThreadId.value ?? '')
+const threadId = computed(() => blockStore.activeThreadId.value ?? '')
 
-const filteredNotes = computed(() =>
-  noteStore.searchNotes(threadId.value, searchQuery.value)
+const allNotes = computed(() => blockStore.getThreadNotes(threadId.value))
+
+const filteredNotes = computed(() => {
+  if (!searchQuery.value) return allNotes.value
+  const q = searchQuery.value.toLowerCase()
+  return allNotes.value.filter(n =>
+    n.name.toLowerCase().includes(q)
+    || n.data.content.toLowerCase().includes(q)
+  )
+})
+
+const activeNoteId = ref<string | null>(null)
+
+const activeNote = computed(() =>
+  activeNoteId.value ? blockStore.get(activeNoteId.value) as NoteBlock | undefined : undefined
 )
 
-const isEditing = computed(() => noteStore.activeNoteId.value !== null)
+const isEditing = computed(() => activeNoteId.value !== null)
 
-function createNewNote() {
-  const note = createNote(threadId.value, '', '')
-  noteStore.add(note)
-  noteStore.setActive(note.id)
-  threadStore.updateLastActivity(threadId.value, new Date().toISOString())
+async function createNewNote() {
+  const thread = blockStore.getThread(threadId.value)
+  if (!thread) return
+  const note = createBlock({
+    name: '',
+    type: 'note',
+    data: {
+      content: '',
+      pinned: false,
+      tags: []
+    },
+    parents: [threadId.value]
+  })
+  await blockStore.add(note)
+  activeNoteId.value = note.id
+  await blockStore.update(threadId.value, {
+    data: {
+      ...thread.data,
+      lastActivity: new Date().toISOString()
+    }
+  })
 }
 
 function openNote(id: string) {
-  noteStore.setActive(id)
+  activeNoteId.value = id
 }
 
 function closeEditor() {
-  noteStore.setActive(null)
+  activeNoteId.value = null
 }
 
-function deleteNote(id: string) {
-  noteStore.remove(id)
+async function deleteNote(id: string) {
+  await blockStore.remove(id)
+  if (activeNoteId.value === id) {
+    activeNoteId.value = null
+  }
+}
+
+async function togglePin(id: string) {
+  const note = blockStore.get(id)
+  if (!note || note.meta.type !== 'note') return
+  const noteData = note.data as { content: string, pinned: boolean, tags: string[] }
+  await blockStore.update(id, {
+    data: { ...noteData, pinned: !noteData.pinned }
+  })
+}
+
+async function updateNote(id: string, updates: { name?: string, data?: Partial<{ content: string, pinned: boolean, tags: string[] }> }) {
+  const note = blockStore.get(id)
+  if (!note || note.meta.type !== 'note') return
+  const noteData = note.data as { content: string, pinned: boolean, tags: string[] }
+
+  if (updates.name !== undefined) {
+    await blockStore.update(id, { name: updates.name })
+  }
+  if (updates.data !== undefined) {
+    await blockStore.update(id, { data: { ...noteData, ...updates.data } })
+  }
 }
 </script>
 
 <template>
   <div class="flex flex-1 flex-col">
     <UDashboardNavbar
-      :title="threadStore.activeThread.value?.name"
+      :title="blockStore.activeThread.value?.name"
       icon="i-lucide-notebook-pen"
     >
       <template #trailing>
@@ -92,21 +146,21 @@ function deleteNote(id: string) {
             v-for="note in filteredNotes"
             :key="note.id"
             :note="note"
-            :is-active="noteStore.activeNoteId.value === note.id"
+            :is-active="activeNoteId === note.id"
             @click="openNote(note.id)"
-            @pin="noteStore.togglePin(note.id)"
+            @pin="togglePin(note.id)"
             @delete="deleteNote(note.id)"
           />
         </div>
       </UScrollArea>
 
       <NoteEditor
-        v-if="isEditing && noteStore.activeNote.value"
-        :note="noteStore.activeNote.value"
+        v-if="isEditing && activeNote"
+        :note="activeNote"
         class="w-full md:w-1/2 lg:w-3/5 border-l border-default"
         @close="closeEditor"
-        @update="(updates) => noteStore.update(noteStore.activeNoteId.value!, updates)"
-        @delete="deleteNote(noteStore.activeNoteId.value!)"
+        @update="(updates) => updateNote(activeNoteId!, updates)"
+        @delete="deleteNote(activeNoteId!)"
       />
     </div>
   </div>

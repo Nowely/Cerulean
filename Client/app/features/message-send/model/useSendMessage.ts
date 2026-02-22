@@ -1,37 +1,46 @@
-import { useMessageStore, useThreadStore, useUserStore, createMessage } from '~/shared/model'
-import type { MessageType, Message } from '~/shared/types'
+import { useBlockStore, useUserStore } from '~/shared/model'
+import { createBlock } from '~/shared/lib'
+import type { MessageBlock, MessageType, BlockId } from '~/shared/types'
 
 interface SendMessageInput {
   content: string
   type?: MessageType
-  taskId?: string
+  taskId?: BlockId
   metadata?: Record<string, string>
 }
 
 export function useSendMessage() {
-  const messageStore = useMessageStore()
-  const threadStore = useThreadStore()
+  const blockStore = useBlockStore()
   const userStore = useUserStore()
 
-  function execute(input: SendMessageInput): Message | null {
-    const threadId = threadStore.activeThreadId.value
+  async function execute(input: SendMessageInput): Promise<MessageBlock | null> {
+    const threadId = blockStore.activeThreadId.value
     const userId = userStore.currentUserId.value
 
     if (!threadId || !userId) return null
 
-    const message = createMessage(
-      threadId,
-      input.content,
-      userId,
-      input.type ?? 'text',
-      input.taskId,
-      input.metadata
-    )
+    const message = createBlock({
+      name: '',
+      type: 'message',
+      data: {
+        type: input.type ?? 'text',
+        content: input.content,
+        senderId: userId,
+        taskId: input.taskId,
+        metadata: input.metadata
+      },
+      parents: [threadId]
+    })
 
-    messageStore.add(message)
-    threadStore.updateLastActivity(threadId, message.timestamp)
+    await blockStore.add(message)
+    await blockStore.update(threadId, {
+      data: {
+        ...blockStore.getThread(threadId)!.data,
+        lastActivity: message.updated
+      }
+    })
 
-    return message
+    return message as MessageBlock
   }
 
   return {

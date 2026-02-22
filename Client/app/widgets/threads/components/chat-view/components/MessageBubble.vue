@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Message } from '~/shared/types'
+import type { MessageBlock } from '~/shared/types'
 import { useUserStore } from '~/shared/model'
 import { formatTime } from '~/shared/utils'
 
 interface Props {
-  message: Message
+  message: MessageBlock
   showAvatar?: boolean
 }
 
@@ -14,9 +14,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 const userStore = useUserStore()
 
-const sender = computed(() => userStore.getUserById(props.message.senderId))
-const isOwn = computed(() => props.message.senderId === userStore.currentUserId.value)
-const timeString = computed(() => formatTime(props.message.timestamp))
+const sender = computed(() => userStore.getUserById(props.message.data.senderId))
+const isOwn = computed(() => props.message.data.senderId === userStore.currentUserId.value)
+const timeString = computed(() => formatTime(props.message.updated))
 </script>
 
 <template>
@@ -42,7 +42,7 @@ const timeString = computed(() => formatTime(props.message.timestamp))
         : 'bg-elevated dark:bg-muted rounded-bl-sm'"
     >
       <p class="whitespace-pre-wrap break-words leading-snug">
-        {{ message.content }}
+        {{ message.data.content }}
       </p>
       <span
         class="text-[10px] block text-right mt-0.5 -mb-0.5"

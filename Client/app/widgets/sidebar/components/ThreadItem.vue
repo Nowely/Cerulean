@@ -1,63 +1,60 @@
 <script setup lang="ts">
-import type { Thread } from '~/shared/types'
-import { useMessageStore, useUserStore, useShoppingStore, useNoteStore, useContactStore, useTaskStore } from '~/shared/model'
+import type { ThreadBlock } from '~/shared/types'
+import { useBlockStore, useUserStore } from '~/shared/model'
 import { THREAD_KINDS } from '~/shared/lib'
 import { relativeTime } from '~/shared/utils'
 
 interface Props {
-  thread: Thread
+  thread: ThreadBlock
   isActive: boolean
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{ click: [] }>()
 
-const messageStore = useMessageStore()
+const blockStore = useBlockStore()
 const userStore = useUserStore()
-const shoppingStore = useShoppingStore()
-const noteStore = useNoteStore()
-const contactStore = useContactStore()
-const taskStore = useTaskStore()
 
-const kindConfig = computed(() => THREAD_KINDS[props.thread.kind])
+const kindConfig = computed(() => THREAD_KINDS[props.thread.data.kind])
 
 const lastMessage = computed(() => {
-  if (props.thread.kind !== 'chat' && props.thread.kind !== 'tasks') return null
-  return messageStore.getLastMessageForThread(props.thread.id)
+  if (props.thread.data.kind !== 'chat' && props.thread.data.kind !== 'tasks') return null
+  return blockStore.getLastMessageForThread(props.thread.id)
 })
 
 const previewText = computed(() => {
-  const kind = props.thread.kind
+  const kind = props.thread.data.kind
   if (kind === 'shopping') {
-    const checked = shoppingStore.checkedCount(props.thread.id)
-    const total = shoppingStore.totalCount(props.thread.id)
+    const items = blockStore.getThreadShoppingItems(props.thread.id)
+    const checked = items.filter(i => i.data.checked).length
+    const total = items.length
     return total > 0 ? `${checked}/${total} items` : 'No items'
   }
   if (kind === 'notes') {
-    const count = noteStore.totalCount(props.thread.id)
+    const count = blockStore.getThreadNotes(props.thread.id).length
     return count > 0 ? `${count} note${count !== 1 ? 's' : ''}` : 'No notes'
   }
   if (kind === 'contacts') {
-    const count = contactStore.totalCount(props.thread.id)
+    const count = blockStore.getThreadContacts(props.thread.id).length
     return count > 0 ? `${count} contact${count !== 1 ? 's' : ''}` : 'No contacts'
   }
   if (kind === 'tasks') {
-    const tasks = taskStore.threadTasks(props.thread.id)
+    const tasks = blockStore.getThreadTasks(props.thread.id)
     if (tasks.length === 0) return 'No tasks'
-    const done = tasks.filter(t => t.status === 'done').length
+    const done = tasks.filter(t => t.data.status === 'done').length
     return `${done}/${tasks.length} done`
   }
-  return lastMessage.value?.content ?? 'No messages'
+  return lastMessage.value?.data.content ?? 'No messages'
 })
 
 const senderName = computed(() => {
   if (!lastMessage.value) return null
-  const user = userStore.getUserById(lastMessage.value.senderId)
+  const user = userStore.getUserById(lastMessage.value.data.senderId)
   return user?.name?.split(' ')[0]
 })
 
 const description = computed(() => {
-  const prefix = senderName.value && (props.thread.kind === 'chat' || props.thread.kind === 'tasks')
+  const prefix = senderName.value && (props.thread.data.kind === 'chat' || props.thread.data.kind === 'tasks')
     ? `${senderName.value}: `
     : ''
   return `${prefix}${previewText.value}`
@@ -80,14 +77,14 @@ const description = computed(() => {
       <div class="flex items-center gap-1.5">
         <span
           class="font-medium text-sm truncate"
-          :class="thread.unreadCount > 0 ? 'text-highlighted' : 'text-default'"
+          :class="thread.data.unreadCount > 0 ? 'text-highlighted' : 'text-default'"
         >
-          {{ thread.pinned ? `📌 ${thread.name}` : thread.name }}
+          {{ thread.data.pinned ? `📌 ${thread.name}` : thread.name }}
         </span>
       </div>
       <span
         class="text-xs truncate"
-        :class="thread.unreadCount > 0 ? 'text-default font-medium' : 'text-muted'"
+        :class="thread.data.unreadCount > 0 ? 'text-default font-medium' : 'text-muted'"
       >
         {{ description }}
       </span>
@@ -95,14 +92,14 @@ const description = computed(() => {
 
     <div class="flex flex-col items-end gap-0.5 shrink-0">
       <span class="text-[10px] text-muted leading-tight">
-        {{ relativeTime(thread.lastActivity) }}
+        {{ relativeTime(thread.data.lastActivity) }}
       </span>
       <UBadge
-        v-if="thread.unreadCount > 0"
+        v-if="thread.data.unreadCount > 0"
         size="xs"
         class="h-4 min-w-4 px-1 text-[10px]"
       >
-        {{ thread.unreadCount }}
+        {{ thread.data.unreadCount }}
       </UBadge>
     </div>
   </div>

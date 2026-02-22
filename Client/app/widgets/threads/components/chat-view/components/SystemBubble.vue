@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import type { Message } from '~/shared/types'
+import type { MessageBlock } from '~/shared/types'
 import { useUserStore } from '~/shared/model'
 import { getStatusColor } from '~/shared/utils'
 
 interface Props {
-  message: Message
+  message: MessageBlock
 }
 
 const props = defineProps<Props>()
 
 const userStore = useUserStore()
 
-const sender = computed(() => userStore.getUserById(props.message.senderId))
+const sender = computed(() => userStore.getUserById(props.message.data.senderId))
 
-const toStatus = computed(() => props.message.metadata?.to)
+const toStatus = computed(() => props.message.data.metadata?.to)
 const statusColor = computed(() =>
   toStatus.value ? getStatusColor(toStatus.value) : undefined
 )
@@ -25,29 +25,29 @@ const statusColor = computed(() =>
     variant="subtle"
     class="mx-auto my-2 flex justify-center rounded-full px-3 py-0.5 text-xs"
   >
-    <template v-if="message.type === 'status-change'">
+    <template v-if="message.data.type === 'status-change'">
       <UIcon
         name="i-lucide-arrow-right"
         class="size-3 mr-1"
       />
       <span class="font-medium text-default">{{ sender?.name }}</span>
-      {{ ' ' }}{{ message.content }}
+      {{ ' ' }}{{ message.data.content }}
       <span
         v-if="statusColor"
         class="ml-1 size-2 rounded-full"
         :style="{ backgroundColor: statusColor }"
       />
     </template>
-    <template v-else-if="message.type === 'assignment'">
+    <template v-else-if="message.data.type === 'assignment'">
       <UIcon
         name="i-lucide-user-plus"
         class="size-3 mr-1 text-primary-500"
       />
       <span class="font-medium text-default">{{ sender?.name }}</span>
-      {{ ' ' }}{{ message.content }}
+      {{ ' ' }}{{ message.data.content }}
     </template>
     <template v-else>
-      {{ message.content }}
+      {{ message.data.content }}
     </template>
   </UBadge>
 </template>

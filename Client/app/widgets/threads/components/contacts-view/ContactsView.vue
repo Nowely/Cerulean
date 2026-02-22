@@ -1,24 +1,37 @@
 <script setup lang="ts">
-import { useContactStore, useThreadStore } from '~/shared/model'
-import { createContact } from '~/shared/lib'
+import { useBlockStore } from '~/shared/model'
+import { createBlock } from '~/shared/lib'
+import type { ContactBlock } from '~/shared/types'
 import ContactCard from './components/ContactCard.vue'
 import ContactDetail from './components/ContactDetail.vue'
 
-const threadStore = useThreadStore()
-const contactStore = useContactStore()
+const blockStore = useBlockStore()
 
 const searchQuery = ref('')
 const showNewForm = ref(false)
 const newName = ref('')
 const newEmail = ref('')
+const activeContactId = ref<string | null>(null)
 
-const threadId = computed(() => threadStore.activeThreadId.value ?? '')
+const threadId = computed(() => blockStore.activeThreadId.value ?? '')
 
-const filteredContacts = computed(() =>
-  contactStore.searchContacts(threadId.value, searchQuery.value)
+const allContacts = computed(() => blockStore.getThreadContacts(threadId.value))
+
+const filteredContacts = computed(() => {
+  if (!searchQuery.value) return allContacts.value
+  const q = searchQuery.value.toLowerCase()
+  return allContacts.value.filter(c =>
+    c.name.toLowerCase().includes(q)
+    || c.data.email?.toLowerCase().includes(q)
+    || c.data.company?.toLowerCase().includes(q)
+  )
+})
+
+const activeContact = computed(() =>
+  activeContactId.value ? blockStore.get(activeContactId.value) as ContactBlock | undefined : undefined
 )
 
-const isDetailOpen = computed(() => contactStore.activeContactId.value !== null)
+const isDetailOpen = computed(() => activeContactId.value !== null)
 
 const grouped = computed(() => {
   const groups: Record<string, typeof filteredContacts.value> = {}
@@ -31,31 +44,64 @@ const grouped = computed(() => {
 })
 
 function openContact(id: string) {
-  contactStore.setActive(id)
+  activeContactId.value = id
 }
 
 function closeDetail() {
-  contactStore.setActive(null)
+  activeContactId.value = null
 }
 
-function addContact() {
+async function addContact() {
   const name = newName.value.trim()
   if (!name) return
-  const contact = createContact(threadId.value, name, {
-    email: newEmail.value.trim() || undefined
+  const thread = blockStore.getThread(threadId.value)
+  if (!thread) return
+  const contact = createBlock({
+    name,
+    type: 'contact',
+    data: {
+      email: newEmail.value.trim() || undefined,
+      tags: []
+    },
+    parents: [threadId.value]
   })
-  contactStore.add(contact)
-  threadStore.updateLastActivity(threadId.value, new Date().toISOString())
+  await blockStore.add(contact)
+  await blockStore.update(threadId.value, {
+    data: {
+      ...thread.data,
+      lastActivity: new Date().toISOString()
+    }
+  })
   newName.value = ''
   newEmail.value = ''
   showNewForm.value = false
+}
+
+async function deleteContact(id: string) {
+  await blockStore.remove(id)
+  if (activeContactId.value === id) {
+    activeContactId.value = null
+  }
+}
+
+async function updateContact(id: string, updates: { name?: string, data?: Partial<ContactBlock['data']> }) {
+  const contact = blockStore.get(id)
+  if (!contact || contact.meta.type !== 'contact') return
+  const contactData = contact.data as ContactBlock['data']
+
+  if (updates.name !== undefined) {
+    await blockStore.update(id, { name: updates.name })
+  }
+  if (updates.data !== undefined) {
+    await blockStore.update(id, { data: { ...contactData, ...updates.data } })
+  }
 }
 </script>
 
 <template>
   <div class="flex flex-1 flex-col">
     <UDashboardNavbar
-      :title="threadStore.activeThread.value?.name"
+      :title="blockStore.activeThread.value?.name"
       icon="i-lucide-contact"
     >
       <template #trailing>
@@ -136,19 +182,19 @@ function addContact() {
             v-for="contact in contacts"
             :key="contact.id"
             :contact="contact"
-            :is-active="contactStore.activeContactId.value === contact.id"
+            :is-active="activeContactId === contact.id"
             @click="openContact(contact.id)"
           />
         </div>
       </UScrollArea>
 
       <ContactDetail
-        v-if="isDetailOpen && contactStore.activeContact.value"
-        :contact="contactStore.activeContact.value"
+        v-if="isDetailOpen && activeContact"
+        :contact="activeContact"
         class="w-full md:w-3/5 border-l border-default"
         @close="closeDetail"
-        @update="(updates) => contactStore.update(contactStore.activeContactId.value!, updates)"
-        @delete="() => { contactStore.remove(contactStore.activeContactId.value!); closeDetail() }"
+        @update="(updates) => updateContact(activeContactId!, updates)"
+        @delete="deleteContact(activeContactId!)"
       />
     </div>
   </div>

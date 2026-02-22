@@ -1,47 +1,47 @@
 <script setup lang="ts">
-import type { Note } from '~/shared/types'
+import type { NoteBlock } from '~/shared/types'
 import { relativeTime } from '~/shared/utils'
 
 interface Props {
-  note: Note
+  note: NoteBlock
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
-  update: [updates: Partial<Pick<Note, 'title' | 'content' | 'tags' | 'pinned'>>]
+  update: [updates: { name?: string, data?: { content?: string, pinned?: boolean, tags?: string[] } }]
   delete: []
 }>()
 
-const localTitle = ref(props.note.title)
-const localContent = ref(props.note.content)
+const localTitle = ref(props.note.name)
+const localContent = ref(props.note.data.content)
 const newTag = ref('')
 
 watch(() => props.note.id, () => {
-  localTitle.value = props.note.title
-  localContent.value = props.note.content
+  localTitle.value = props.note.name
+  localContent.value = props.note.data.content
 })
 
 let debounceTimer: ReturnType<typeof setTimeout>
 function debouncedUpdate() {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
-    emit('update', { title: localTitle.value, content: localContent.value })
+    emit('update', { name: localTitle.value, data: { content: localContent.value } })
   }, 400)
 }
 
 function addTag() {
   const tag = newTag.value.trim().toLowerCase()
-  if (!tag || props.note.tags.includes(tag)) {
+  if (!tag || props.note.data.tags.includes(tag)) {
     newTag.value = ''
     return
   }
-  emit('update', { tags: [...props.note.tags, tag] })
+  emit('update', { data: { tags: [...props.note.data.tags, tag] } })
   newTag.value = ''
 }
 
 function removeTag(tag: string) {
-  emit('update', { tags: props.note.tags.filter(t => t !== tag) })
+  emit('update', { data: { tags: props.note.data.tags.filter(t => t !== tag) } })
 }
 </script>
 
@@ -50,17 +50,17 @@ function removeTag(tag: string) {
     <UDashboardNavbar>
       <template #leading>
         <span class="text-xs text-muted">
-          Edited {{ relativeTime(note.updatedAt) }}
+          Edited {{ relativeTime(note.updated) }}
         </span>
       </template>
       <template #right>
         <UButton
-          :icon="note.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
+          :icon="note.data.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
           color="neutral"
           variant="ghost"
           size="sm"
-          :class="note.pinned ? 'text-violet-500' : ''"
-          @click="emit('update', { pinned: !note.pinned })"
+          :class="note.data.pinned ? 'text-violet-500' : ''"
+          @click="emit('update', { data: { pinned: !note.data.pinned } })"
         />
         <UButton
           icon="i-lucide-trash-2"
@@ -102,7 +102,7 @@ function removeTag(tag: string) {
 
       <div class="mt-4 flex flex-wrap items-center gap-1.5">
         <UBadge
-          v-for="tag in note.tags"
+          v-for="tag in note.data.tags"
           :key="tag"
           variant="soft"
           size="xs"

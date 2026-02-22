@@ -1,31 +1,32 @@
 <script setup lang="ts">
-import type { ShoppingItem } from '~/shared/types/shopping'
-import { useShoppingStore, useThreadStore } from '~/shared/model'
+import type { ShoppingItemBlock, BlockId } from '~/shared/types'
+import { useBlockStore } from '~/shared/model'
 import InputBar from '~/widgets/threads/components/chat-view/components/InputBar.vue'
 
-const threadStore = useThreadStore()
-const shoppingStore = useShoppingStore()
+const blockStore = useBlockStore()
 
-const threadId = computed(() => threadStore.activeThreadId.value ?? '')
+const threadId = computed(() => blockStore.activeThreadId.value ?? '')
+
+const allItems = computed(() => blockStore.getThreadShoppingItems(threadId.value))
 
 const checkableItems = computed(() => {
-  return shoppingStore.checkableItems(threadId.value).filter(i => !i.checked)
+  return allItems.value.filter(i => i.data.type === 'checkable' && !i.data.checked)
 })
 
 const trackableItems = computed(() => {
-  return shoppingStore.trackableItems(threadId.value)
+  return allItems.value.filter(i => i.data.type === 'trackable')
 })
 
 const checkedItems = computed(() => {
-  return shoppingStore.checkableItems(threadId.value).filter(i => i.checked)
+  return allItems.value.filter(i => i.data.type === 'checkable' && i.data.checked)
 })
 
-const totalCount = computed(() => shoppingStore.totalCount(threadId.value))
+const totalCount = computed(() => allItems.value.length)
 
-const draggedItem = ref<ShoppingItem | null>(null)
+const draggedItem = ref<ShoppingItemBlock | null>(null)
 const dragOverId = ref<string | null>(null)
 
-function onDragStart(event: DragEvent, item: ShoppingItem) {
+function onDragStart(event: DragEvent, item: ShoppingItemBlock) {
   draggedItem.value = item
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move'
@@ -38,7 +39,7 @@ function onDragEnd() {
   dragOverId.value = null
 }
 
-function onDragOver(event: DragEvent, item: ShoppingItem) {
+function onDragOver(event: DragEvent, item: ShoppingItemBlock) {
   event.preventDefault()
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = 'move'
@@ -50,7 +51,7 @@ function onDragLeave() {
   dragOverId.value = null
 }
 
-function onDrop(event: DragEvent, targetItem: ShoppingItem, itemList: ShoppingItem[]) {
+async function onDrop(event: DragEvent, targetItem: ShoppingItemBlock, itemList: ShoppingItemBlock[]) {
   event.preventDefault()
   if (!draggedItem.value || draggedItem.value.id === targetItem.id) {
     return
@@ -65,17 +66,66 @@ function onDrop(event: DragEvent, targetItem: ShoppingItem, itemList: ShoppingIt
   newOrder.splice(fromIndex, 1)
   newOrder.splice(toIndex, 0, draggedItem.value)
 
-  shoppingStore.reorder(threadId.value, newOrder.map(i => i.id))
+  for (let i = 0; i < newOrder.length; i++) {
+    const item = newOrder[i]
+    if (!item) continue
+    const itemData = item.data
+    await blockStore.update(item.id, {
+      data: { ...itemData, sortOrder: i }
+    })
+  }
 
   draggedItem.value = null
   dragOverId.value = null
+}
+
+async function toggle(id: BlockId) {
+  const item = blockStore.get(id)
+  if (!item || item.meta.type !== 'shopping-item') return
+  const itemData = item.data as { checked: boolean }
+  await blockStore.update(id, {
+    data: { ...itemData, checked: !itemData.checked }
+  })
+}
+
+async function increment(id: BlockId) {
+  const item = blockStore.get(id)
+  if (!item || item.meta.type !== 'shopping-item') return
+  const itemData = item.data as { collected: number }
+  await blockStore.update(id, {
+    data: { ...itemData, collected: itemData.collected + 1 }
+  })
+}
+
+async function decrement(id: BlockId) {
+  const item = blockStore.get(id)
+  if (!item || item.meta.type !== 'shopping-item') return
+  const itemData = item.data as { collected: number }
+  if (itemData.collected > 0) {
+    await blockStore.update(id, {
+      data: { ...itemData, collected: itemData.collected - 1 }
+    })
+  }
+}
+
+async function convertType(id: BlockId) {
+  const item = blockStore.get(id)
+  if (!item || item.meta.type !== 'shopping-item') return
+  const itemData = item.data as { type: 'checkable' | 'trackable', checked: boolean, collected: number, sortOrder: number }
+  await blockStore.update(id, {
+    data: { ...itemData, type: itemData.type === 'checkable' ? 'trackable' : 'checkable' }
+  })
+}
+
+async function removeItem(id: BlockId) {
+  await blockStore.remove(id)
 }
 </script>
 
 <template>
   <div class="flex flex-1 flex-col">
     <UDashboardNavbar
-      :title="threadStore.activeThread.value?.name"
+      :title="blockStore.activeThread.value?.name"
       icon="i-lucide-shopping-cart"
     />
 
@@ -114,16 +164,16 @@ function onDrop(event: DragEvent, targetItem: ShoppingItem, itemList: ShoppingIt
             <UCheckbox
               :model-value="false"
               color="warning"
-              @update:model-value="shoppingStore.toggle(item.id)"
+              @update:model-value="toggle(item.id)"
             />
-            <span class="flex-1 text-sm">{{ item.text }}</span>
+            <span class="flex-1 text-sm">{{ item.name }}</span>
             <UButton
               icon="i-lucide-x"
               color="neutral"
               variant="ghost"
               size="xs"
               class="opacity-0 group-hover:opacity-100 transition-opacity text-dimmed hover:text-red-400"
-              @click="shoppingStore.remove(item.id)"
+              @click="removeItem(item.id)"
             />
           </div>
         </div>
@@ -157,26 +207,26 @@ function onDrop(event: DragEvent, targetItem: ShoppingItem, itemList: ShoppingIt
                 color="neutral"
                 variant="ghost"
                 size="xs"
-                :disabled="item.collected === 0"
-                @click="shoppingStore.decrement(item.id)"
+                :disabled="item.data.collected === 0"
+                @click="decrement(item.id)"
               />
-              <span class="w-6 text-center text-sm tabular-nums">{{ item.collected }}</span>
+              <span class="w-6 text-center text-sm tabular-nums">{{ item.data.collected }}</span>
               <UButton
                 icon="i-lucide-plus"
                 color="neutral"
                 variant="ghost"
                 size="xs"
-                @click="shoppingStore.increment(item.id)"
+                @click="increment(item.id)"
               />
             </div>
-            <span class="flex-1 text-sm">{{ item.text }}</span>
+            <span class="flex-1 text-sm">{{ item.name }}</span>
             <UButton
               icon="i-lucide-refresh-cw"
               color="neutral"
               variant="ghost"
               size="xs"
               class="opacity-0 group-hover:opacity-100 transition-opacity text-dimmed hover:text-primary"
-              @click="shoppingStore.convertType(item.id)"
+              @click="convertType(item.id)"
             />
             <UButton
               icon="i-lucide-x"
@@ -184,7 +234,7 @@ function onDrop(event: DragEvent, targetItem: ShoppingItem, itemList: ShoppingIt
               variant="ghost"
               size="xs"
               class="opacity-0 group-hover:opacity-100 transition-opacity text-dimmed hover:text-red-400"
-              @click="shoppingStore.remove(item.id)"
+              @click="removeItem(item.id)"
             />
           </div>
         </div>
@@ -228,16 +278,16 @@ function onDrop(event: DragEvent, targetItem: ShoppingItem, itemList: ShoppingIt
               <UCheckbox
                 :model-value="true"
                 color="warning"
-                @update:model-value="shoppingStore.toggle(item.id)"
+                @update:model-value="toggle(item.id)"
               />
-              <span class="flex-1 text-sm text-muted line-through">{{ item.text }}</span>
+              <span class="flex-1 text-sm text-muted line-through">{{ item.name }}</span>
               <UButton
                 icon="i-lucide-x"
                 color="neutral"
                 variant="ghost"
                 size="xs"
                 class="opacity-0 group-hover:opacity-100 transition-opacity text-dimmed hover:text-red-400"
-                @click="shoppingStore.remove(item.id)"
+                @click="removeItem(item.id)"
               />
             </div>
           </template>

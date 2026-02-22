@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useTaskStore, useUserStore, useUIStore } from '~/shared/model'
+import { useBlockStore, useUserStore, useUIStore } from '~/shared/model'
 import { STATUS_CONFIG, PRIORITY_CONFIG, useToastHelpers } from '~/shared/lib'
 import type { TaskStatus, TaskPriority } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
 import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
 
-const taskStore = useTaskStore()
+const blockStore = useBlockStore()
 const userStore = useUserStore()
 const uiStore = useUIStore()
 const { remove: deleteTask, changeStatus: updateTaskStatus, changePriority: updateTaskPriority, addSubtask: createSubtask, toggleSubtask: toggleTaskSubtask } = useTaskManage()
@@ -14,64 +14,70 @@ const toast = useToastHelpers()
 
 const newSubtask = ref('')
 
-const task = computed(() => taskStore.activeTask.value)
-const open = computed(() => taskStore.activeTask.value !== null)
+const task = computed(() => blockStore.activeTask.value)
+const open = computed(() => blockStore.activeTask.value !== null)
 
-const creator = computed(() => task.value ? userStore.getUserById(task.value.createdBy) : null)
+const creator = computed(() => task.value ? userStore.getUserById(task.value.data.createdBy) : null)
 const assignees = computed(() =>
-  task.value ? resolveByIds(task.value.assignees, id => userStore.getUserById(id)) : []
+  task.value ? resolveByIds(task.value.data.assignees, id => userStore.getUserById(id)) : []
 )
-const subtasks = computed(() =>
-  task.value ? taskStore.getSubtasks(task.value.id) : []
-)
+const subtasks = computed(() => {
+  if (!task.value) return []
+  return blockStore.getChildren(task.value.id).filter(b => b.meta.type === 'task')
+})
 const completedSubtasks = computed(() =>
-  subtasks.value.filter(s => s.status === 'done').length
+  subtasks.value.filter(s => (s.data as { status: TaskStatus }).status === 'done').length
 )
 const progress = computed(() =>
   subtasks.value.length > 0 ? (completedSubtasks.value / subtasks.value.length) * 100 : 0
 )
-const dependencies = computed(() =>
-  task.value ? resolveByIds(task.value.dependencies, id => taskStore.getTaskById(id)) : []
-)
+const dependencies = computed(() => {
+  if (!task.value) return []
+  return task.value.data.dependencies
+    .map(id => blockStore.getTask(id))
+    .filter((b): b is NonNullable<typeof b> => b !== undefined)
+})
 
 const overdue = computed(() =>
-  task.value && isDueOverdue(task.value.dueDate) && task.value.status !== 'done'
+  task.value && isDueOverdue(task.value.data.dueDate) && task.value.data.status !== 'done'
 )
 const dueSoon = computed(() =>
-  task.value && isDueSoon(task.value.dueDate) && task.value.status !== 'done'
+  task.value && isDueSoon(task.value.data.dueDate) && task.value.data.status !== 'done'
 )
 
-function changeStatus(newStatus: TaskStatus) {
+async function changeStatus(newStatus: TaskStatus) {
   if (!task.value) return
-  if (!updateTaskStatus(task.value.id, newStatus)) return
-  toast.success({
-    title: 'Task status updated',
-    description: `${task.value.title} -> ${STATUS_CONFIG[newStatus]?.label ?? newStatus}`,
-    icon: 'i-lucide-check-circle'
-  })
-}
-
-function changePriority(newPriority: TaskPriority) {
-  if (!task.value) return
-  if (!updateTaskPriority(task.value.id, newPriority)) return
-  toast.success({
-    title: 'Task priority updated',
-    description: `${task.value.title} -> ${PRIORITY_CONFIG[newPriority]?.label ?? newPriority}`,
-    icon: 'i-lucide-check-circle'
-  })
-}
-
-function toggleSubtask(subtaskId: string) {
-  const updated = toggleTaskSubtask(subtaskId)
+  const updated = await updateTaskStatus(task.value.id, newStatus)
   if (!updated) return
   toast.success({
-    title: updated.status === 'done' ? 'Subtask completed' : 'Subtask reopened',
-    description: updated.title,
+    title: 'Task status updated',
+    description: `${task.value.name} -> ${STATUS_CONFIG[newStatus]?.label ?? newStatus}`,
     icon: 'i-lucide-check-circle'
   })
 }
 
-function addSubtask() {
+async function changePriority(newPriority: TaskPriority) {
+  if (!task.value) return
+  const updated = await updateTaskPriority(task.value.id, newPriority)
+  if (!updated) return
+  toast.success({
+    title: 'Task priority updated',
+    description: `${task.value.name} -> ${PRIORITY_CONFIG[newPriority]?.label ?? newPriority}`,
+    icon: 'i-lucide-check-circle'
+  })
+}
+
+async function toggleSubtask(subtaskId: string) {
+  const updated = await toggleTaskSubtask(subtaskId)
+  if (!updated) return
+  toast.success({
+    title: updated.data.status === 'done' ? 'Subtask completed' : 'Subtask reopened',
+    description: updated.name,
+    icon: 'i-lucide-check-circle'
+  })
+}
+
+async function addSubtask() {
   if (!task.value || !newSubtask.value.trim()) {
     toast.warning({
       title: 'Subtask title is required'
@@ -79,7 +85,7 @@ function addSubtask() {
     return
   }
 
-  const subtask = createSubtask(task.value.id, newSubtask.value)
+  const subtask = await createSubtask(task.value.id, newSubtask.value)
   if (!subtask) {
     toast.warning({
       title: 'Subtask title is required'
@@ -89,17 +95,17 @@ function addSubtask() {
 
   toast.success({
     title: 'Subtask created',
-    description: subtask.title,
+    description: subtask.name,
     icon: 'i-lucide-check-circle'
   })
   newSubtask.value = ''
 }
 
-function handleDelete() {
+async function handleDelete() {
   if (!task.value) return
-  const title = task.value.title
-  deleteTask(task.value.id)
-  taskStore.setActive(null)
+  const title = task.value.name
+  await deleteTask(task.value.id)
+  blockStore.setActiveTask(null)
   toast.warning({
     title: 'Task deleted',
     description: title,
@@ -108,7 +114,7 @@ function handleDelete() {
 }
 
 function closeDrawer() {
-  taskStore.setActive(null)
+  blockStore.setActiveTask(null)
 }
 </script>
 
@@ -120,11 +126,11 @@ function closeDrawer() {
   >
     <template #content>
       <template v-if="task">
-        <UDashboardNavbar :title="task.title">
+        <UDashboardNavbar :title="task.name">
           <template #leading>
             <p class="text-xs text-muted">
               Created by {{ creator?.name }} on
-              {{ new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+              {{ new Date(task.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
             </p>
           </template>
           <template #right>
@@ -134,7 +140,7 @@ function closeDrawer() {
               variant="ghost"
               size="sm"
               aria-label="Edit task"
-              @click="taskStore.setEditing(task); uiStore.setShowTaskForm(true)"
+              @click="blockStore.setActiveTask(task.id); uiStore.setShowTaskForm(true)"
             />
             <UButton
               icon="i-lucide-trash-2"
@@ -165,7 +171,7 @@ function closeDrawer() {
                   >
                     <PropertyBadge
                       type="status"
-                      :value="task.status"
+                      :value="task.data.status"
                     />
                   </UButton>
                 </UDropdownMenu>
@@ -185,14 +191,14 @@ function closeDrawer() {
                   >
                     <PropertyBadge
                       type="priority"
-                      :value="task.priority"
+                      :value="task.data.priority"
                     />
                   </UButton>
                 </UDropdownMenu>
               </UFormField>
 
               <UFormField
-                v-if="task.dueDate"
+                v-if="task.data.dueDate"
                 label="Due Date"
               >
                 <UBadge
@@ -206,16 +212,16 @@ function closeDrawer() {
                       class="h-3.5 w-3.5"
                     />
                   </template>
-                  {{ new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                  {{ new Date(task.data.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
                 </UBadge>
               </UFormField>
             </div>
 
             <UFormField
-              v-if="task.description"
+              v-if="task.data.description"
               label="Description"
             >
-              <span class="text-sm leading-relaxed">{{ task.description }}</span>
+              <span class="text-sm leading-relaxed">{{ task.data.description }}</span>
             </UFormField>
 
             <UFormField
@@ -238,12 +244,12 @@ function closeDrawer() {
             </UFormField>
 
             <UFormField
-              v-if="task.tags.length > 0"
+              v-if="task.data.tags.length > 0"
               label="Tags"
             >
               <div class="flex flex-wrap gap-1.5">
                 <UBadge
-                  v-for="tag in task.tags"
+                  v-for="tag in task.data.tags"
                   :key="tag"
                   :label="tag"
                   variant="soft"
@@ -264,18 +270,18 @@ function closeDrawer() {
                   color="neutral"
                   variant="ghost"
                   class="justify-start bg-elevated hover:bg-accented"
-                  @click="taskStore.setActive(dep.id)"
+                  @click="blockStore.setActiveTask(dep.id)"
                 >
                   <span
                     class="flex-1 text-left"
-                    :class="dep.status === 'done' && 'line-through text-muted'"
+                    :class="dep.data.status === 'done' && 'line-through text-muted'"
                   >
-                    {{ dep.title }}
+                    {{ dep.name }}
                   </span>
                   <template #trailing>
                     <PropertyBadge
                       type="status"
-                      :value="dep.status"
+                      :value="dep.data.status"
                       :show-label="false"
                     />
                   </template>
@@ -299,17 +305,17 @@ function closeDrawer() {
                 >
                   <template #leading>
                     <UIcon
-                      :name="sub.status === 'done' ? 'i-lucide-check-circle-2' : 'i-lucide-circle'"
+                      :name="(sub.data as { status: TaskStatus }).status === 'done' ? 'i-lucide-check-circle-2' : 'i-lucide-circle'"
                       class="h-4 w-4"
-                      :style="sub.status === 'done' ? { color: getStatusColor('done') } : {}"
-                      :class="sub.status !== 'done' && 'text-dimmed'"
+                      :style="(sub.data as { status: TaskStatus }).status === 'done' ? { color: getStatusColor('done') } : {}"
+                      :class="(sub.data as { status: TaskStatus }).status !== 'done' && 'text-dimmed'"
                     />
                   </template>
                   <span
                     class="text-sm"
-                    :class="sub.status === 'done' && 'line-through text-muted'"
+                    :class="(sub.data as { status: TaskStatus }).status === 'done' && 'line-through text-muted'"
                   >
-                    {{ sub.title }}
+                    {{ sub.name }}
                   </span>
                 </UButton>
               </template>

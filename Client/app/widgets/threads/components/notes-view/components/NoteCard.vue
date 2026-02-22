@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { Note } from '~/shared/types'
+import type { NoteBlock } from '~/shared/types'
 import { relativeTime } from '~/shared/utils'
 
 interface Props {
-  note: Note
+  note: NoteBlock
   isActive: boolean
 }
 
@@ -31,12 +31,12 @@ const emit = defineEmits<{
     <template #header>
       <div class="flex items-start justify-between gap-2">
         <h3 class="text-sm font-medium leading-snug line-clamp-1">
-          {{ note.title || 'Untitled' }}
+          {{ note.name || 'Untitled' }}
         </h3>
         <div class="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <UButton
-            :icon="note.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
-            :color="note.pinned ? 'primary' : 'neutral'"
+            :icon="note.data.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin'"
+            :color="note.data.pinned ? 'primary' : 'neutral'"
             variant="ghost"
             size="xs"
             @click.stop="emit('pin')"
@@ -54,28 +54,28 @@ const emit = defineEmits<{
     </template>
 
     <p
-      v-if="note.content"
+      v-if="note.data.content"
       class="text-xs text-muted line-clamp-3 leading-relaxed px-3"
     >
-      {{ note.content }}
+      {{ note.data.content }}
     </p>
 
     <template #footer>
       <div class="flex items-center gap-2 p-3 pt-2">
         <UIcon
-          v-if="note.pinned"
+          v-if="note.data.pinned"
           name="i-lucide-pin"
           class="size-3 text-violet-500"
         />
         <UBadge
-          v-for="tag in note.tags.slice(0, 3)"
+          v-for="tag in note.data.tags.slice(0, 3)"
           :key="tag"
           :label="tag"
           variant="soft"
           size="xs"
         />
         <span class="ml-auto text-xs text-muted">
-          {{ relativeTime(note.updatedAt) }}
+          {{ relativeTime(note.updated) }}
         </span>
       </div>
     </template>

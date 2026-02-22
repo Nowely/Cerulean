@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ThreadKind } from '~/shared/types'
 import type { Component } from 'vue'
-import { useThreadStore } from '~/shared/model'
+import { useBlockStore } from '~/shared/model'
 import Sidebar from '~/widgets/sidebar/Sidebar.vue'
 import SidebarFooter from '~/widgets/sidebar/components/SidebarFooter.vue'
 import ChatHeader from '~/widgets/threads/components/chat-view/components/ChatHeader.vue'
@@ -24,9 +24,9 @@ const THREAD_VIEW_MAP: Record<ThreadKind, Component> = {
   chat: ChatView
 }
 
-const threadStore = useThreadStore()
+const blockStore = useBlockStore()
 
-const activeKind = computed(() => threadStore.activeThread.value?.kind)
+const activeKind = computed(() => blockStore.activeThread.value?.data.kind)
 const contentComponent = computed(() => {
   if (!activeKind.value) return null
   return THREAD_VIEW_MAP[activeKind.value] ?? ChatView
@@ -52,10 +52,10 @@ const contentComponent = computed(() => {
 
     <UDashboardPanel id="content">
       <template #header>
-        <ChatHeader v-if="threadStore.activeThread.value && activeKind === 'chat'" />
+        <ChatHeader v-if="blockStore.activeThread.value && activeKind === 'chat'" />
       </template>
 
-      <template v-if="threadStore.activeThread.value && contentComponent">
+      <template v-if="blockStore.activeThread.value && contentComponent">
         <component :is="contentComponent" />
       </template>
       <UEmpty

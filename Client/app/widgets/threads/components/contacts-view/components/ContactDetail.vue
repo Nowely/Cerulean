@@ -1,49 +1,53 @@
 <script setup lang="ts">
-import type { Contact } from '~/shared/types'
+import type { ContactBlock } from '~/shared/types'
 
 interface Props {
-  contact: Contact
+  contact: ContactBlock
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
-  update: [updates: Partial<Omit<Contact, 'id' | 'threadId' | 'createdAt'>>]
+  update: [updates: { name?: string, data?: Partial<ContactBlock['data']> }]
   delete: []
 }>()
 
 const editing = ref(false)
-const form = ref({ ...props.contact })
+const formName = ref(props.contact.name)
+const form = ref({ ...props.contact.data })
 const newTag = ref('')
 
 watch(() => props.contact.id, () => {
-  form.value = { ...props.contact }
+  formName.value = props.contact.name
+  form.value = { ...props.contact.data }
   editing.value = false
 })
 
 function save() {
   emit('update', {
-    name: form.value.name,
-    email: form.value.email,
-    phone: form.value.phone,
-    company: form.value.company,
-    notes: form.value.notes
+    name: formName.value,
+    data: {
+      email: form.value.email,
+      phone: form.value.phone,
+      company: form.value.company,
+      notes: form.value.notes
+    }
   })
   editing.value = false
 }
 
 function addTag() {
   const tag = newTag.value.trim().toLowerCase()
-  if (!tag || props.contact.tags.includes(tag)) {
+  if (!tag || props.contact.data.tags.includes(tag)) {
     newTag.value = ''
     return
   }
-  emit('update', { tags: [...props.contact.tags, tag] })
+  emit('update', { data: { tags: [...props.contact.data.tags, tag] } })
   newTag.value = ''
 }
 
 function removeTag(tag: string) {
-  emit('update', { tags: props.contact.tags.filter(t => t !== tag) })
+  emit('update', { data: { tags: props.contact.data.tags.filter(t => t !== tag) } })
 }
 </script>
 
@@ -83,7 +87,7 @@ function removeTag(tag: string) {
       <UUser
         v-if="!editing"
         :name="contact.name"
-        :description="contact.company"
+        :description="contact.data.company"
         orientation="vertical"
         size="xl"
         :avatar="{
@@ -104,7 +108,7 @@ function removeTag(tag: string) {
           :ui="{ fallback: 'text-2xl' }"
         />
         <UInput
-          v-model="form.name"
+          v-model="formName"
           class="text-center w-48"
           :ui="{ base: 'text-xl font-semibold text-center bg-transparent' }"
         />
@@ -121,7 +125,7 @@ function removeTag(tag: string) {
           <span
             v-else
             class="text-sm"
-          >{{ contact.email || '---' }}</span>
+          >{{ contact.data.email || '---' }}</span>
         </UFormField>
 
         <UFormField label="Phone">
@@ -134,7 +138,7 @@ function removeTag(tag: string) {
           <span
             v-else
             class="text-sm"
-          >{{ contact.phone || '---' }}</span>
+          >{{ contact.data.phone || '---' }}</span>
         </UFormField>
 
         <UFormField label="Company">
@@ -147,7 +151,7 @@ function removeTag(tag: string) {
           <span
             v-else
             class="text-sm"
-          >{{ contact.company || '---' }}</span>
+          >{{ contact.data.company || '---' }}</span>
         </UFormField>
 
         <UFormField label="Notes">
@@ -161,13 +165,13 @@ function removeTag(tag: string) {
           <span
             v-else
             class="text-sm whitespace-pre-wrap"
-          >{{ contact.notes || '---' }}</span>
+          >{{ contact.data.notes || '---' }}</span>
         </UFormField>
 
         <UFormField label="Tags">
           <div class="flex flex-wrap gap-1.5">
             <UBadge
-              v-for="tag in contact.tags"
+              v-for="tag in contact.data.tags"
               :key="tag"
               variant="soft"
               size="xs"

@@ -1,31 +1,30 @@
 <script setup lang="ts">
 import type { TaskStatus } from '~/shared/types'
-import { useTaskStore, useThreadStore, useUIStore, useUserStore } from '~/shared/model'
+import { useBlockStore, useUIStore, useUserStore } from '~/shared/model'
 import { STATUS_CONFIG } from '~/shared/lib'
 import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 import { relativeTime } from '~/shared/utils'
 
-const threadStore = useThreadStore()
-const taskStore = useTaskStore()
+const blockStore = useBlockStore()
 const userStore = useUserStore()
 const uiStore = useUIStore()
 
 const statusFilter = ref<TaskStatus | 'all'>('all')
 
-const threadId = computed(() => threadStore.activeThreadId.value ?? '')
+const threadId = computed(() => blockStore.activeThreadId.value ?? '')
 
-const allTasks = computed(() => taskStore.threadTasks(threadId.value))
+const allTasks = computed(() => blockStore.getThreadTasks(threadId.value))
 
 const filteredTasks = computed(() => {
   if (statusFilter.value === 'all') return allTasks.value
-  return allTasks.value.filter(t => t.status === statusFilter.value)
+  return allTasks.value.filter(t => t.data.status === statusFilter.value)
 })
 
 const statusCounts = computed(() => {
   const counts: Record<string, number> = { all: allTasks.value.length }
   for (const task of allTasks.value) {
-    counts[task.status] = (counts[task.status] ?? 0) + 1
+    counts[task.data.status] = (counts[task.data.status] ?? 0) + 1
   }
   return counts
 })
@@ -41,7 +40,7 @@ const statusTabs = computed(() =>
 )
 
 function openTask(taskId: string) {
-  taskStore.setActive(taskId)
+  blockStore.setActiveTask(taskId)
 }
 
 function openNewTaskForm() {
@@ -52,7 +51,7 @@ function openNewTaskForm() {
 <template>
   <div class="flex flex-1 flex-col">
     <UDashboardNavbar
-      :title="threadStore.activeThread.value?.name"
+      :title="blockStore.activeThread.value?.name"
       icon="i-lucide-check-square"
     >
       <template #trailing>
@@ -102,42 +101,42 @@ function openNewTaskForm() {
           variant="soft"
           compact
           class="cursor-pointer transition-colors hover:bg-muted"
-          :class="{ 'bg-emerald-500/5': taskStore.activeTaskId.value === task.id }"
+          :class="{ 'bg-emerald-500/5': blockStore.activeTaskId.value === task.id }"
           @click="openTask(task.id)"
         >
           <div class="flex items-start gap-3">
             <PropertyBadge
               type="status"
-              :value="task.status"
+              :value="task.data.status"
               :show-label="false"
               class="mt-0.5"
             />
             <div class="flex min-w-0 flex-1 flex-col gap-1">
-              <span class="text-sm font-medium leading-snug">{{ task.title }}</span>
+              <span class="text-sm font-medium leading-snug">{{ task.name }}</span>
               <div class="flex flex-wrap items-center gap-2">
                 <PropertyBadge
                   type="priority"
-                  :value="task.priority"
+                  :value="task.data.priority"
                   :show-label="false"
                 />
                 <UBadge
-                  v-for="tag in task.tags.slice(0, 3)"
+                  v-for="tag in task.data.tags.slice(0, 3)"
                   :key="tag"
                   :label="tag"
                   variant="soft"
                   size="xs"
                 />
                 <span
-                  v-if="task.dueDate"
+                  v-if="task.data.dueDate"
                   class="text-xs text-muted"
                 >
-                  Due {{ relativeTime(task.dueDate) }}
+                  Due {{ relativeTime(task.data.dueDate) }}
                 </span>
               </div>
             </div>
             <AvatarStack
-              v-if="task.assignees.length > 0"
-              :users="task.assignees.map(id => userStore.getUserById(id)).filter(Boolean) as any[]"
+              v-if="task.data.assignees.length > 0"
+              :users="task.data.assignees.map(id => userStore.getUserById(id)).filter(Boolean) as any[]"
               :max-visible="2"
               size="sm"
             />

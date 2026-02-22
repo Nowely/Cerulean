@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { useThreadStore, useUIStore, useShoppingStore } from '~/shared/model'
+import { useBlockStore, useUIStore } from '~/shared/model'
 import { useSendMessage } from '~/features/message-send'
-import { useToastHelpers, createShoppingItem } from '~/shared/lib'
+import { useToastHelpers, createBlock } from '~/shared/lib'
 import type { ShoppingItemType } from '~/shared/types/shopping'
 
-const threadStore = useThreadStore()
+const blockStore = useBlockStore()
 const uiStore = useUIStore()
-const shoppingStore = useShoppingStore()
 const { execute: sendMessage } = useSendMessage()
 const toast = useToastHelpers()
 
 const text = ref('')
 const itemType = ref<ShoppingItemType>('checkable')
 
-const isShoppingThread = computed(() => threadStore.activeThread.value?.kind === 'shopping')
+const isShoppingThread = computed(() => blockStore.activeThread.value?.data.kind === 'shopping')
 
 function toggleItemType() {
   itemType.value = itemType.value === 'checkable' ? 'trackable' : 'checkable'
@@ -29,9 +28,9 @@ function openTemplates() {
   text.value = ''
 }
 
-function handleSend() {
+async function handleSend() {
   const trimmed = text.value.trim()
-  const thread = threadStore.activeThread.value
+  const thread = blockStore.activeThread.value
   if (!trimmed || !thread) {
     toast.warning({
       title: 'Cannot send message',
@@ -40,12 +39,27 @@ function handleSend() {
     return
   }
 
-  if (thread.kind === 'shopping') {
-    const item = createShoppingItem(thread.id, trimmed, { type: itemType.value })
-    shoppingStore.add(item)
-    threadStore.updateLastActivity(thread.id, new Date().toISOString())
+  if (thread.data.kind === 'shopping') {
+    const item = createBlock({
+      name: trimmed,
+      type: 'shopping-item',
+      data: {
+        type: itemType.value,
+        checked: false,
+        collected: 0,
+        sortOrder: blockStore.getThreadShoppingItems(thread.id).length
+      },
+      parents: [thread.id]
+    })
+    await blockStore.add(item)
+    await blockStore.update(thread.id, {
+      data: {
+        ...thread.data,
+        lastActivity: new Date().toISOString()
+      }
+    })
   } else {
-    sendMessage({ content: trimmed, type: 'text' })
+    await sendMessage({ content: trimmed, type: 'text' })
     toast.success({
       title: 'Message sent',
       icon: 'i-lucide-check'
@@ -58,12 +72,12 @@ function handleSend() {
 
 <template>
   <div
-    v-if="threadStore.activeThread.value"
+    v-if="blockStore.activeThread.value"
     class="shrink-0 border-t border-default bg-white dark:bg-muted px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
   >
     <UChatPrompt
       v-model="text"
-      :placeholder="threadStore.activeThread.value?.kind === 'shopping' ? 'Add an item...' : 'Message...'"
+      :placeholder="blockStore.activeThread.value?.data.kind === 'shopping' ? 'Add an item...' : 'Message...'"
       variant="pill"
       @submit="handleSend"
     >

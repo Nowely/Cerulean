@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import type { ThreadKind } from '~/shared/types'
-import { useThreadStore } from '~/shared/model'
+import { useBlockStore } from '~/shared/model'
 import { useThreadManage } from '~/features/thread-manage'
 import { useToastHelpers, THREAD_KINDS } from '~/shared/lib'
 import SidebarHeader from './components/SidebarHeader.vue'
-import SidebarFooter from './components/SidebarFooter.vue'
 import ThreadItem from './components/ThreadItem.vue'
 
 defineOptions({
   name: 'AppSidebar'
 })
 
-const threadStore = useThreadStore()
+const blockStore = useBlockStore()
 const { create: createThreadAction } = useThreadManage()
 const toast = useToastHelpers()
 
@@ -20,16 +19,15 @@ const newThreadName = ref('')
 const newThreadKind = ref<ThreadKind>('tasks')
 const creationStep = ref<'kind' | 'name'>('kind')
 
-const activeThreadId = computed(() => threadStore.activeThreadId.value)
+const activeThreadId = computed(() => blockStore.activeThreadId.value)
 
 const pinnedThreads = computed(() =>
-  threadStore.sortedThreads.value.filter((t: { pinned: boolean }) => t.pinned)
+  blockStore.getSortedThreads().filter(t => t.data.pinned)
 )
 
 const unpinnedThreads = computed(() =>
-  threadStore.sortedThreads.value
-    .filter((t: { pinned: boolean }) => !t.pinned)
-    .sort((a: { lastActivity: string }, b: { lastActivity: string }) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
+  blockStore.getSortedThreads()
+    .filter(t => !t.data.pinned)
 )
 
 const kindOptions = computed(() => Object.values(THREAD_KINDS))
@@ -39,13 +37,13 @@ function selectKind(kind: ThreadKind) {
   creationStep.value = 'name'
 }
 
-function handleCreateThread() {
+async function handleCreateThread() {
   if (!newThreadName.value.trim()) {
     toast.warning({ title: 'Thread name is required' })
     return
   }
 
-  const thread = createThreadAction({
+  const thread = await createThreadAction({
     name: newThreadName.value.trim(),
     kind: newThreadKind.value
   })
@@ -74,7 +72,7 @@ function backToKindPicker() {
 }
 
 function selectThread(threadId: string) {
-  threadStore.setActive(threadId)
+  blockStore.setActiveThread(threadId)
 }
 </script>
 
@@ -111,7 +109,7 @@ function selectThread(threadId: string) {
   </template>
 
   <UEmpty
-    v-if="threadStore.threads.value.length === 0"
+    v-if="blockStore.getThreads().length === 0"
     title="No threads found"
     class="py-12"
   />

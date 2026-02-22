@@ -1,39 +1,38 @@
 <script setup lang="ts">
-import { useThreadStore, useTaskStore, useUserStore, useNotificationStore } from '~/shared/model'
+import { useBlockStore, useUserStore, useNotificationStore } from '~/shared/model'
 import { resolveByIds } from '~/shared/utils'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 
-const threadStore = useThreadStore()
-const taskStore = useTaskStore()
+const blockStore = useBlockStore()
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()
 
 const members = computed(() => {
-  if (!threadStore.activeThread.value) return []
-  return resolveByIds(threadStore.activeThread.value.members, id => userStore.getUserById(id))
+  if (!blockStore.activeThread.value) return []
+  return resolveByIds(blockStore.activeThread.value.data.members, id => userStore.getUserById(id))
 })
 
 const taskCount = computed(() => {
-  if (!threadStore.activeThread.value) return 0
-  return taskStore.threadTasks(threadStore.activeThread.value.id).length
+  if (!blockStore.activeThread.value) return 0
+  return blockStore.getThreadTasks(blockStore.activeThread.value.id).length
 })
 </script>
 
 <template>
   <UDashboardNavbar
-    v-if="threadStore.activeThread.value"
-    :title="threadStore.activeThread.value.name"
+    v-if="blockStore.activeThread.value"
+    :title="blockStore.activeThread.value.name"
   >
     <template #trailing>
       <div class="flex flex-col">
         <div class="flex items-center gap-2">
           <UBadge
-            v-if="threadStore.activeThread.value.category"
+            v-if="blockStore.activeThread.value.data.category"
             color="neutral"
             variant="subtle"
             size="xs"
           >
-            {{ threadStore.activeThread.value.category }}
+            {{ blockStore.activeThread.value.data.category }}
           </UBadge>
         </div>
         <p class="text-xs text-muted">

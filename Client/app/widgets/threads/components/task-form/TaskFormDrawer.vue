@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { useTaskStore, useThreadStore, useUserStore, useUIStore } from '~/shared/model'
+import { useBlockStore, useUserStore, useUIStore } from '~/shared/model'
 import { PRIORITY_CONFIG, STATUS_CONFIG, useToastHelpers } from '~/shared/lib'
 import type { TaskPriority, TaskStatus } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getPriorityColor, getStatusColor, resolveByIds } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
 
-const taskStore = useTaskStore()
-const threadStore = useThreadStore()
+const blockStore = useBlockStore()
 const userStore = useUserStore()
 const uiStore = useUIStore()
 const { create: createTaskAction, edit: editTaskAction } = useTaskManage()
 const toast = useToastHelpers()
 
-const isEditing = computed(() => taskStore.editingTask.value !== null)
+const isEditing = computed(() => blockStore.activeTask.value !== null)
 const open = computed(() => uiStore.showTaskForm.value)
 
 const title = ref('')
@@ -24,15 +23,15 @@ const assignees = ref<string[]>([])
 const dueDate = ref('')
 const tags = ref('')
 
-watch([() => taskStore.editingTask.value, open], ([editingTask, isOpen]) => {
+watch([() => blockStore.activeTask.value, open], ([editingTask, isOpen]) => {
   if (editingTask && isOpen) {
-    title.value = editingTask.title
-    description.value = editingTask.description ?? ''
-    status.value = editingTask.status
-    priority.value = editingTask.priority
-    assignees.value = [...editingTask.assignees]
-    dueDate.value = editingTask.dueDate ? editingTask.dueDate.split('T')[0]! : ''
-    tags.value = [...editingTask.tags].join(', ')
+    title.value = editingTask.name
+    description.value = editingTask.data.description ?? ''
+    status.value = editingTask.data.status
+    priority.value = editingTask.data.priority
+    assignees.value = [...editingTask.data.assignees]
+    dueDate.value = editingTask.data.dueDate ? editingTask.data.dueDate.split('T')[0]! : ''
+    tags.value = [...editingTask.data.tags].join(', ')
   } else if (!isOpen) {
     resetForm()
   }
@@ -57,7 +56,7 @@ function toggleAssignee(userId: string) {
   }
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   if (!title.value.trim()) {
     toast.warning({
       title: 'Task title is required'
@@ -65,7 +64,7 @@ function handleSubmit() {
     return
   }
 
-  if (!isEditing.value && !threadStore.activeThread.value) {
+  if (!isEditing.value && !blockStore.activeThread.value) {
     toast.error({
       title: 'Select a thread first',
       description: 'You need an active thread before creating a task.'
@@ -78,10 +77,10 @@ function handleSubmit() {
     .map(t => t.trim())
     .filter(Boolean)
 
-  if (isEditing.value && taskStore.editingTask.value) {
-    const updated = editTaskAction({
-      id: taskStore.editingTask.value.id,
-      title: title.value.trim(),
+  if (isEditing.value && blockStore.activeTask.value) {
+    const updated = await editTaskAction({
+      id: blockStore.activeTask.value.id,
+      name: title.value.trim(),
       description: description.value.trim() || undefined,
       status: status.value,
       priority: priority.value,
@@ -99,10 +98,10 @@ function handleSubmit() {
 
     toast.success({
       title: 'Task updated',
-      description: updated.title
+      description: updated.name
     })
   } else {
-    const created = createTaskAction({
+    const created = await createTaskAction({
       title: title.value.trim(),
       description: description.value.trim() || undefined,
       status: status.value,
@@ -121,7 +120,7 @@ function handleSubmit() {
 
     toast.success({
       title: 'Task created',
-      description: created.title
+      description: created.name
     })
   }
 
@@ -129,13 +128,13 @@ function handleSubmit() {
 }
 
 const members = computed(() => {
-  if (!threadStore.activeThread.value) return []
-  return resolveByIds(threadStore.activeThread.value.members, id => userStore.getUserById(id))
+  if (!blockStore.activeThread.value) return []
+  return resolveByIds(blockStore.activeThread.value.data.members, id => userStore.getUserById(id))
 })
 
 function closeDrawer() {
   uiStore.setShowTaskForm(false)
-  taskStore.setEditing(null)
+  blockStore.setActiveTask(null)
 }
 </script>
 

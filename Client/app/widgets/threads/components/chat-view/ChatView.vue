@@ -1,27 +1,26 @@
 <script setup lang="ts">
-import type { Message } from '~/shared/types'
-import { useMessageStore, useThreadStore } from '~/shared/model'
+import type { MessageBlock } from '~/shared/types'
+import { useBlockStore } from '~/shared/model'
 import { formatDate } from '~/shared/utils'
 import SystemBubble from './components/SystemBubble.vue'
 import TaskCardBubble from './components/TaskCardBubble.vue'
 import MessageBubble from './components/MessageBubble.vue'
 import InputBar from './components/InputBar.vue'
 
-const messageStore = useMessageStore()
-const threadStore = useThreadStore()
+const blockStore = useBlockStore()
 
-const threadMessages = computed(() =>
-  threadStore.activeThreadId.value
-    ? messageStore.threadMessages(threadStore.activeThreadId.value)
-    : []
-)
+const threadMessages = computed(() => {
+  const threadId = blockStore.activeThreadId.value
+  if (!threadId) return []
+  return blockStore.getThreadMessages(threadId)
+})
 
 const firstMessageDateMap = computed(() => {
   const map = new Map<string, string>()
   let currentDate = ''
 
   for (const msg of threadMessages.value) {
-    const date = formatDate(msg.timestamp)
+    const date = formatDate(msg.updated)
     if (date !== currentDate) {
       currentDate = date
       map.set(msg.id, date)
@@ -34,8 +33,8 @@ const firstMessageDateMap = computed(() => {
 const formattedMessages = computed(() =>
   threadMessages.value.map(msg => ({
     id: msg.id,
-    role: msg.senderId === 'system' ? 'assistant' : 'user',
-    parts: [{ type: 'text' as const, text: msg.content }],
+    role: msg.data.senderId === 'system' ? 'assistant' : 'user',
+    parts: [{ type: 'text' as const, text: msg.data.content }],
     _original: msg,
     _dateSeparator: firstMessageDateMap.value.get(msg.id)
   }))
@@ -47,17 +46,17 @@ function shouldShowAvatar(index: number): boolean {
   const prevMsg = index > 0 ? threadMessages.value[index - 1] : null
 
   return !prevMsg
-    || prevMsg.senderId !== msg.senderId
-    || prevMsg.type !== msg.type
-    || new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() > 1000 * 60 * 5
+    || prevMsg.data.senderId !== msg.data.senderId
+    || prevMsg.data.type !== msg.data.type
+    || new Date(msg.updated).getTime() - new Date(prevMsg.updated).getTime() > 1000 * 60 * 5
 }
 
-function isSystemType(msg: Message): boolean {
-  return msg.type === 'system' || msg.type === 'status-change' || msg.type === 'assignment'
+function isSystemType(msg: MessageBlock): boolean {
+  return msg.data.type === 'system' || msg.data.type === 'status-change' || msg.data.type === 'assignment'
 }
 
-function isTaskType(msg: Message): boolean {
-  return msg.type === 'task-created' || msg.type === 'task-updated'
+function isTaskType(msg: MessageBlock): boolean {
+  return msg.data.type === 'task-created' || msg.data.type === 'task-updated'
 }
 </script>
 
