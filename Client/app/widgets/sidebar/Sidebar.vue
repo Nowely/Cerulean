@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ThreadKind } from '~/shared/types'
+import type { ThreadKind, ThreadKindConfig } from '~/shared/types'
 import { useBlockStore } from '~/shared/model'
 import { useThreadManage } from '~/features/thread-manage'
 import { useToastHelpers, THREAD_KINDS } from '~/shared/lib'
@@ -30,7 +30,7 @@ const unpinnedThreads = computed(() =>
     .filter(t => !t.data.pinned)
 )
 
-const kindOptions = computed(() => Object.values(THREAD_KINDS))
+const kindOptions = computed(() => Object.values(THREAD_KINDS) as ThreadKindConfig[])
 
 function selectKind(kind: ThreadKind) {
   newThreadKind.value = kind

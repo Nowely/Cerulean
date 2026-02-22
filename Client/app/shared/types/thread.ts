@@ -15,23 +15,6 @@ export interface ThreadData {
   category?: string
 }
 
-/**
- * @deprecated Use Block<ThreadData> instead
- */
-export interface Thread {
-  id: ThreadId
-  name: string
-  kind: ThreadKind
-  icon?: string
-  color?: string
-  members: string[]
-  lastActivity: string
-  unreadCount: number
-  pinned: boolean
-  category?: string
-  itemCount?: number
-}
-
 export type MessageId = string
 
 export type MessageType
@@ -48,21 +31,6 @@ export interface MessageData {
   content: string
   senderId: string
   taskId?: string
-  replyToId?: MessageId
-  metadata?: Record<string, string>
-}
-
-/**
- * @deprecated Use Block<MessageData> instead
- */
-export interface Message {
-  id: MessageId
-  threadId: string
-  type: MessageType
-  content: string
-  senderId: string
-  taskId?: string
-  timestamp: string
   replyToId?: MessageId
   metadata?: Record<string, string>
 }

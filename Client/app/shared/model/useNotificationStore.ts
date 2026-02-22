@@ -1,6 +1,5 @@
 import type { Notification } from '../types/user'
-import { SEED_NOTIFICATIONS } from '~/shared/api/seed'
-import { generateId } from '~/shared/utils'
+import { generateId } from '../utils'
 
 const notifications = ref<Notification[]>([])
 const showPanel = ref(false)
@@ -32,7 +31,7 @@ export function useNotificationStore() {
   }
 
   function init() {
-    notifications.value = [...SEED_NOTIFICATIONS]
+    notifications.value = []
   }
 
   return {

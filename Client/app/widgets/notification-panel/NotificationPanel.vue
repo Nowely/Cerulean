@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { useNotificationStore, useThreadStore, useTaskStore } from '~/shared/model'
+import { useNotificationStore, useBlockStore } from '~/shared/model'
 import { useToastHelpers } from '~/shared/lib'
 import { relativeTime } from '~/shared/utils'
 
 const notificationStore = useNotificationStore()
-const threadStore = useThreadStore()
-const taskStore = useTaskStore()
+const blockStore = useBlockStore()
 const toast = useToastHelpers()
 
 const NOTIF_ICONS: Record<string, string> = {
@@ -19,10 +18,10 @@ const NOTIF_ICONS: Record<string, string> = {
 function handleNotificationClick(notif: { id: string, threadId?: string, taskId?: string }) {
   notificationStore.markRead(notif.id)
   if (notif.threadId) {
-    threadStore.setActive(notif.threadId)
+    blockStore.setActiveThread(notif.threadId)
   }
   if (notif.taskId) {
-    taskStore.setActive(notif.taskId)
+    blockStore.setActiveTask(notif.taskId)
   }
   notificationStore.setShowPanel(false)
 
