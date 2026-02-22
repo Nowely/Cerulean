@@ -85,7 +85,10 @@ const description = computed(() => {
           {{ thread.pinned ? `📌 ${thread.name}` : thread.name }}
         </span>
       </div>
-      <span class="text-xs truncate" :class="thread.unreadCount > 0 ? 'text-default font-medium' : 'text-muted'">
+      <span
+        class="text-xs truncate"
+        :class="thread.unreadCount > 0 ? 'text-default font-medium' : 'text-muted'"
+      >
         {{ description }}
       </span>
     </div>

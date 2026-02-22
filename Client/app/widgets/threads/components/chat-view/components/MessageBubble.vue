@@ -41,7 +41,9 @@ const timeString = computed(() => formatTime(props.message.timestamp))
         ? 'bg-primary-500 text-white rounded-br-sm'
         : 'bg-elevated dark:bg-muted rounded-bl-sm'"
     >
-      <p class="whitespace-pre-wrap break-words leading-snug">{{ message.content }}</p>
+      <p class="whitespace-pre-wrap break-words leading-snug">
+        {{ message.content }}
+      </p>
       <span
         class="text-[10px] block text-right mt-0.5 -mb-0.5"
         :class="isOwn ? 'text-white/60' : 'text-muted'"
