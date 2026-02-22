@@ -1,14 +1,18 @@
 export type BlockId = string
 
 export type BlockType
-  = | 'note'
+  = | 'thread'
     | 'task'
+    | 'note'
     | 'contact'
+    | 'shopping-item'
+    | 'message'
+    | 'view'
+    | 'folder'
     | 'text'
     | 'list'
     | 'list-item'
     | 'page'
-    | 'folder'
 
 export interface BlockMeta {
   type: BlockType

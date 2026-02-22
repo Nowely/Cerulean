@@ -1,4 +1,5 @@
 import type { Block, BlockId, BlockType } from '../types/block'
+import type { ThreadKind } from '../types/thread'
 import * as blockDb from '../lib/block-db'
 
 const blocks = ref(new Map<BlockId, Block>())
@@ -113,6 +114,48 @@ export function useBlockStore() {
     return c
   }
 
+  function getThreads(): Block[] {
+    return getByType('thread')
+  }
+
+  function getThreadsByKind(kind: ThreadKind): Block[] {
+    return getThreads().filter(b => (b.data as { kind: ThreadKind }).kind === kind)
+  }
+
+  function getThreadChildren(threadId: BlockId, type?: BlockType): Block[] {
+    const children = getChildren(threadId)
+    if (!type) return children
+    return children.filter(b => b.meta.type === type)
+  }
+
+  function getThreadTasks(threadId: BlockId): Block[] {
+    return getThreadChildren(threadId, 'task')
+  }
+
+  function getThreadNotes(threadId: BlockId): Block[] {
+    return getThreadChildren(threadId, 'note')
+  }
+
+  function getThreadContacts(threadId: BlockId): Block[] {
+    return getThreadChildren(threadId, 'contact')
+  }
+
+  function getThreadShoppingItems(threadId: BlockId): Block[] {
+    return getThreadChildren(threadId, 'shopping-item')
+  }
+
+  function getThreadMessages(threadId: BlockId): Block[] {
+    return getThreadChildren(threadId, 'message')
+  }
+
+  function getThreadViews(threadId: BlockId): Block[] {
+    return getThreadChildren(threadId, 'view')
+  }
+
+  function getRootThreads(): Block[] {
+    return getThreads().filter(b => b.parents.length === 0)
+  }
+
   return {
     blocks: readonly(blocks),
     initialized: readonly(initialized),
@@ -125,6 +168,16 @@ export function useBlockStore() {
     update,
     remove,
     search,
-    count
+    count,
+    getThreads,
+    getThreadsByKind,
+    getThreadChildren,
+    getThreadTasks,
+    getThreadNotes,
+    getThreadContacts,
+    getThreadShoppingItems,
+    getThreadMessages,
+    getThreadViews,
+    getRootThreads
   }
 }
