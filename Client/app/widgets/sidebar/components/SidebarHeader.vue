@@ -1,28 +1,33 @@
 <script setup lang="ts">
-import { useUserStore } from '~/shared/model'
-import UserAvatar from '~/shared/ui/UserAvatar.vue'
-
 const emit = defineEmits<{
   newThread: []
 }>()
 
-const userStore = useUserStore()
+const activeTab = ref('chats')
 
-const currentUser = computed(() => userStore.currentUser.value)
+const tabs = [
+  { value: 'chats', label: 'Chats', icon: 'i-lucide-message-circle' },
+  { value: 'search', label: 'Search', icon: 'i-lucide-search' },
+  { value: 'notes', label: 'Notes', icon: 'i-lucide-file-text' }
+]
 </script>
 
 <template>
-  <div class="flex items-center justify-between p-4 pb-2">
-    <UUser
-      name="Cerulean"
-      :description="currentUser?.name"
-    >
-      <template #avatar>
-        <UserAvatar :user="currentUser ?? undefined" />
-      </template>
-    </UUser>
+  <div class="flex items-center gap-1 p-2">
+    <UButton
+      v-for="tab in tabs"
+      :key="tab.value"
+      :icon="tab.icon"
+      :label="tab.label"
+      :color="activeTab === tab.value ? 'primary' : 'neutral'"
+      :variant="activeTab === tab.value ? 'soft' : 'ghost'"
+      size="xs"
+      @click="activeTab = tab.value"
+    />
+    <div class="flex-1" />
     <UButton
       icon="i-lucide-plus"
+      size="xs"
       data-testid="new-thread-btn"
       @click="emit('newThread')"
     />

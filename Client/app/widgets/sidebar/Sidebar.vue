@@ -26,8 +26,7 @@ const pinnedThreads = computed(() =>
 )
 
 const unpinnedThreads = computed(() =>
-  blockStore.getSortedThreads()
-    .filter(t => !t.data.pinned)
+  blockStore.getSortedThreads().filter(t => !t.data.pinned)
 )
 
 const kindOptions = computed(() => Object.values(THREAD_KINDS) as ThreadKindConfig[])
