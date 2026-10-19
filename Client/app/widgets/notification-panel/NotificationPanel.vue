@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { useNotificationStore, useThreadStore, useTaskStore } from '~/shared/model'
+import { useNotificationStore, useBlockStore } from '~/shared/model'
 import { useToastHelpers } from '~/shared/lib'
 import { relativeTime } from '~/shared/utils'
 
 const notificationStore = useNotificationStore()
-const threadStore = useThreadStore()
-const taskStore = useTaskStore()
+const blockStore = useBlockStore()
 const toast = useToastHelpers()
 
 const NOTIF_ICONS: Record<string, string> = {
@@ -19,10 +18,10 @@ const NOTIF_ICONS: Record<string, string> = {
 function handleNotificationClick(notif: { id: string, threadId?: string, taskId?: string }) {
   notificationStore.markRead(notif.id)
   if (notif.threadId) {
-    threadStore.setActive(notif.threadId)
+    blockStore.setActiveThread(notif.threadId)
   }
   if (notif.taskId) {
-    taskStore.setActive(notif.taskId)
+    blockStore.setActiveTask(notif.taskId)
   }
   notificationStore.setShowPanel(false)
 
@@ -56,81 +55,68 @@ function handleMarkAllRead() {
   >
     <template #content>
       <div class="flex flex-col h-full">
-        <div class="flex flex-row items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-          <div>
-            <h3 class="text-sm font-semibold">
-              Notifications{{ notificationStore.unreadCount.value > 0 ? ` (${notificationStore.unreadCount.value})` : '' }}
-            </h3>
-          </div>
-          <button
-            v-if="notificationStore.unreadCount.value > 0"
-            class="flex items-center gap-1 text-[12px] text-primary-500 hover:text-primary-600 transition-colors"
-            data-testid="mark-all-read-btn"
-            @click="handleMarkAllRead"
-          >
-            <UIcon
-              name="i-lucide-check-check"
-              class="h-3.5 w-3.5"
+        <UDashboardNavbar title="Notifications">
+          <template #trailing>
+            <UBadge
+              v-if="notificationStore.unreadCount.value > 0"
+              variant="subtle"
+              size="xs"
+            >
+              {{ notificationStore.unreadCount.value }}
+            </UBadge>
+          </template>
+          <template #right>
+            <UButton
+              v-if="notificationStore.unreadCount.value > 0"
+              icon="i-lucide-check-check"
+              variant="link"
+              size="xs"
+              label="Mark all read"
+              data-testid="mark-all-read-btn"
+              @click="handleMarkAllRead"
             />
-            Mark all read
-          </button>
-        </div>
+          </template>
+        </UDashboardNavbar>
 
-        <div class="flex-1 overflow-y-auto">
-          <div class="flex flex-col">
-            <div
-              v-if="notificationStore.notifications.value.length === 0"
-              class="flex flex-col items-center gap-2 px-4 py-16 text-center"
-            >
-              <UIcon
-                name="i-lucide-bell"
-                class="h-10 w-10 text-gray-300 dark:text-gray-600"
-              />
-              <p class="text-sm text-gray-500">
-                No notifications yet
-              </p>
-            </div>
+        <UScrollArea class="flex-1">
+          <UEmpty
+            v-if="notificationStore.notifications.value.length === 0"
+            icon="i-lucide-bell"
+            title="No notifications yet"
+            class="py-12"
+          />
 
-            <button
-              v-for="notif in notificationStore.notifications.value"
-              :key="notif.id"
-              :data-testid="`notification-item-${notif.id}`"
-              class="flex items-start gap-3 border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-              :class="!notif.read && 'bg-primary-500/5'"
-              @click="handleNotificationClick(notif)"
+          <UCard
+            v-for="notif in notificationStore.notifications.value"
+            :key="notif.id"
+            :data-testid="`notification-item-${notif.id}`"
+            variant="soft"
+            class="cursor-pointer border-b border-default last:border-b-0 transition-colors hover:bg-elevated"
+            :class="!notif.read && 'bg-primary-500/5'"
+            @click="handleNotificationClick(notif)"
+          >
+            <UUser
+              :name="notif.title"
+              :description="notif.body"
+              :avatar="{
+                icon: NOTIF_ICONS[notif.type] ?? 'i-lucide-bell',
+                size: 'sm',
+                ui: { root: !notif.read ? 'bg-primary-500/15 text-primary-500' : 'bg-elevated text-muted' }
+              }"
+              :chip="!notif.read"
+              class="gap-3"
             >
-              <div
-                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-                :class="!notif.read ? 'bg-primary-500/15 text-primary-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'"
-              >
-                <UIcon
-                  :name="NOTIF_ICONS[notif.type] ?? 'i-lucide-bell'"
-                  class="h-4 w-4"
-                />
-              </div>
-              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                <div class="flex items-center justify-between gap-2">
-                  <span
-                    class="text-[12px] font-semibold"
-                    :class="!notif.read ? '' : 'text-gray-500'"
-                  >
-                    {{ notif.title }}
-                  </span>
-                  <span
-                    v-if="!notif.read"
-                    class="h-2 w-2 shrink-0 rounded-full bg-primary-500"
-                  />
-                </div>
-                <p class="text-[12px] text-gray-500 line-clamp-2">
+              <template #description>
+                <p class="text-xs text-muted line-clamp-2">
                   {{ notif.body }}
                 </p>
-                <span class="text-[10px] text-gray-400">
+                <span class="text-2xs text-dimmed">
                   {{ relativeTime(notif.timestamp) }}
                 </span>
-              </div>
-            </button>
-          </div>
-        </div>
+              </template>
+            </UUser>
+          </UCard>
+        </UScrollArea>
       </div>
     </template>
   </USlideover>

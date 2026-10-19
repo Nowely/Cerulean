@@ -1,14 +1,10 @@
 export type ContactId = string
 
-export interface Contact {
-  id: ContactId
-  threadId: string
-  name: string
+export interface ContactData {
   email?: string
   phone?: string
   company?: string
   avatar?: string
   notes?: string
   tags: string[]
-  createdAt: string
 }

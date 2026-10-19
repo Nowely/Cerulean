@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useAppInit } from '~/shared/lib'
-import ToastContainer from '~/shared/ui/ToastContainer.vue'
 
 const colorMode = useColorMode()
 const { init } = useAppInit()
@@ -43,6 +42,5 @@ useSeoMeta({
 <template>
   <UApp>
     <NuxtPage />
-    <ToastContainer />
   </UApp>
 </template>

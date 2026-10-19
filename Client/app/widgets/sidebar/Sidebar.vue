@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import type { ThreadKind } from '~/shared/types'
-import { useThreadStore } from '~/shared/model'
+import type { ThreadKind, ThreadKindConfig } from '~/shared/types'
+import { useBlockStore } from '~/shared/model'
 import { useThreadManage } from '~/features/thread-manage'
-import { useIsMobile, useToastHelpers, THREAD_KINDS } from '~/shared/lib'
+import { useToastHelpers, THREAD_KINDS } from '~/shared/lib'
 import SidebarHeader from './components/SidebarHeader.vue'
-import SidebarFooter from './components/SidebarFooter.vue'
 import ThreadItem from './components/ThreadItem.vue'
 
 defineOptions({
-  name: 'AppSidebar',
+  name: 'AppSidebar'
 })
 
-const threadStore = useThreadStore()
-const { create: createThreadAction, results } = useThreadManage()
-const isMobile = useIsMobile()
+const blockStore = useBlockStore()
+const { create: createThreadAction } = useThreadManage()
 const toast = useToastHelpers()
 
 const showNewThread = ref(false)
@@ -21,41 +19,39 @@ const newThreadName = ref('')
 const newThreadKind = ref<ThreadKind>('tasks')
 const creationStep = ref<'kind' | 'name'>('kind')
 
-const activeThreadId = computed(() => threadStore.activeThreadId.value)
+const activeThreadId = computed(() => blockStore.activeThreadId.value)
 
 const pinnedThreads = computed(() =>
-  results.value.filter((t: { pinned: boolean }) => t.pinned),
+  blockStore.getSortedThreads().filter(t => t.data.pinned)
 )
 
 const unpinnedThreads = computed(() =>
-  results.value
-    .filter((t: { pinned: boolean }) => !t.pinned)
-    .sort((a: { lastActivity: string }, b: { lastActivity: string }) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()),
+  blockStore.getSortedThreads().filter(t => !t.data.pinned)
 )
 
-const kindOptions = computed(() => Object.values(THREAD_KINDS))
+const kindOptions = computed(() => Object.values(THREAD_KINDS) as ThreadKindConfig[])
 
 function selectKind(kind: ThreadKind) {
   newThreadKind.value = kind
   creationStep.value = 'name'
 }
 
-function handleCreateThread() {
+async function handleCreateThread() {
   if (!newThreadName.value.trim()) {
     toast.warning({ title: 'Thread name is required' })
     return
   }
 
-  const thread = createThreadAction({
+  const thread = await createThreadAction({
     name: newThreadName.value.trim(),
-    kind: newThreadKind.value,
+    kind: newThreadKind.value
   })
 
   if (thread) {
     toast.success({
       title: 'Thread created',
       description: `${thread.name} is ready`,
-      icon: 'i-lucide-check-circle',
+      icon: 'i-lucide-check-circle'
     })
   }
 
@@ -73,153 +69,133 @@ function openNewThread() {
 function backToKindPicker() {
   creationStep.value = 'kind'
 }
+
+function selectThread(threadId: string) {
+  blockStore.setActiveThread(threadId)
+}
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-[hsl(var(--sidebar-background))]">
-    <SidebarHeader @new-thread="openNewThread" />
+  <SidebarHeader @new-thread="openNewThread" />
 
-    <div
-      class="flex-1 overflow-y-auto scrollbar-thin"
-      data-testid="thread-list"
-    >
-      <div class="flex flex-col gap-0.5 px-2 pb-4">
-        <template v-if="pinnedThreads.length > 0">
-          <p class="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-            Pinned
-          </p>
-          <ThreadItem
-            v-for="thread in pinnedThreads"
-            :key="thread.id"
-            :thread="thread"
-            :is-active="activeThreadId === thread.id"
-            @click="threadStore.setActive(thread.id)"
-          />
-        </template>
+  <template v-if="pinnedThreads.length > 0">
+    <USeparator
+      label="Pinned"
+      class="px-3 pt-3"
+    />
+    <ThreadItem
+      v-for="thread in pinnedThreads"
+      :key="thread.id"
+      :thread="thread"
+      :is-active="activeThreadId === thread.id"
+      @click="selectThread(thread.id)"
+    />
+  </template>
 
-        <template v-if="unpinnedThreads.length > 0">
-          <p
-            v-if="pinnedThreads.length > 0"
-            class="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+  <template v-if="unpinnedThreads.length > 0">
+    <USeparator
+      v-if="pinnedThreads.length > 0"
+      label="All Threads"
+      class="px-3 pt-3"
+    />
+    <ThreadItem
+      v-for="thread in unpinnedThreads"
+      :key="thread.id"
+      :thread="thread"
+      :is-active="activeThreadId === thread.id"
+      @click="selectThread(thread.id)"
+    />
+  </template>
+
+  <UEmpty
+    v-if="blockStore.getThreads().length === 0"
+    title="No threads found"
+    class="py-12"
+  />
+
+  <USlideover
+    v-model:open="showNewThread"
+    side="right"
+  >
+    <template #content>
+      <template v-if="creationStep === 'kind'">
+        <h3 class="text-lg font-semibold mb-1">
+          New Thread
+        </h3>
+        <p class="text-sm text-muted mb-4">
+          Choose what kind of thread to create
+        </p>
+        <div class="flex flex-col gap-2">
+          <UButton
+            v-for="opt in kindOptions"
+            :key="opt.kind"
+            color="neutral"
+            variant="ghost"
+            block
+            class="justify-start h-auto p-3"
+            @click="selectKind(opt.kind)"
           >
-            All Threads
-          </p>
-          <ThreadItem
-            v-for="thread in unpinnedThreads"
-            :key="thread.id"
-            :thread="thread"
-            :is-active="activeThreadId === thread.id"
-            @click="threadStore.setActive(thread.id)"
-          />
-        </template>
-
-        <div
-          v-if="results.length === 0"
-          class="flex flex-col items-center gap-2 px-4 py-12 text-center"
-        >
-          <p class="text-sm text-gray-500">
-            No threads found
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <SidebarFooter />
-
-    <USlideover
-      v-model:open="showNewThread"
-      :side="isMobile ? 'bottom' : 'right'"
-      :ui="{ content: 'max-h-[70dvh]' }"
-    >
-      <template #content>
-        <div class="p-4">
-          <!-- Step 1: Kind picker -->
-          <template v-if="creationStep === 'kind'">
-            <h3 class="text-lg font-semibold mb-1">
-              New Thread
-            </h3>
-            <p class="text-sm text-gray-500 mb-4">
-              Choose what kind of thread to create
-            </p>
-            <div class="grid grid-cols-1 gap-2">
-              <button
-                v-for="opt in kindOptions"
-                :key="opt.kind"
-                class="flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-[hsl(var(--muted))]"
-                @click="selectKind(opt.kind)"
-              >
-                <div
-                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
-                  :style="{ backgroundColor: opt.color }"
-                >
-                  <UIcon
-                    :name="opt.icon"
-                    class="h-5 w-5"
-                  />
-                </div>
-                <div>
-                  <p class="text-sm font-medium">
-                    {{ opt.label }}
-                  </p>
-                  <p class="text-xs text-gray-500">
-                    {{ opt.description }}
-                  </p>
-                </div>
-              </button>
+            <template #leading>
+              <UAvatar
+                :icon="opt.icon"
+                size="lg"
+                :style="{ backgroundColor: opt.color }"
+                class="text-white shrink-0"
+              />
+            </template>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-left">
+                {{ opt.label }}
+              </p>
+              <p class="text-xs text-muted text-left">
+                {{ opt.description }}
+              </p>
             </div>
-          </template>
-
-          <!-- Step 2: Name input -->
-          <template v-else>
-            <div class="flex items-center gap-2 mb-4">
-              <button
-                class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition-colors"
-                @click="backToKindPicker"
-              >
-                <UIcon
-                  name="i-lucide-arrow-left"
-                  class="h-4 w-4"
-                />
-              </button>
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-full text-white"
-                :style="{ backgroundColor: THREAD_KINDS[newThreadKind].color }"
-              >
-                <UIcon
-                  :name="THREAD_KINDS[newThreadKind].icon"
-                  class="h-4 w-4"
-                />
-              </div>
-              <div>
-                <h3 class="text-sm font-semibold">
-                  New {{ THREAD_KINDS[newThreadKind].label }} Thread
-                </h3>
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-3">
-              <input
-                v-model="newThreadName"
-                type="text"
-                :placeholder="`${THREAD_KINDS[newThreadKind].label} name...`"
-                data-testid="new-thread-name-input"
-                class="w-full rounded-lg bg-[hsl(var(--muted))] px-3 py-2.5 text-sm outline-none placeholder:text-gray-500 focus:ring-1 focus:ring-[hsl(var(--ring))]"
-                autofocus
-                @keydown.enter="handleCreateThread"
-              >
-
-              <UButton
-                block
-                :disabled="!newThreadName.trim()"
-                data-testid="create-thread-submit-btn"
-                @click="handleCreateThread"
-              >
-                Create Thread
-              </UButton>
-            </div>
-          </template>
+          </UButton>
         </div>
       </template>
-    </USlideover>
-  </div>
+
+      <template v-else>
+        <div class="flex items-center gap-2 mb-4">
+          <UButton
+            icon="i-lucide-arrow-left"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="backToKindPicker"
+          />
+          <UAvatar
+            :style="{ backgroundColor: THREAD_KINDS[newThreadKind].color }"
+            size="sm"
+          >
+            <UIcon
+              :name="THREAD_KINDS[newThreadKind].icon"
+              class="h-4 w-4 text-white"
+            />
+          </UAvatar>
+          <h3 class="text-sm font-semibold">
+            New {{ THREAD_KINDS[newThreadKind].label }} Thread
+          </h3>
+        </div>
+
+        <UInput
+          v-model="newThreadName"
+          :placeholder="`${THREAD_KINDS[newThreadKind].label} name...`"
+          data-testid="new-thread-name-input"
+          autofocus
+          class="mb-3"
+          @keydown.enter="handleCreateThread"
+        />
+
+        <UButton
+          block
+          :disabled="!newThreadName.trim()"
+          data-testid="create-thread-submit-btn"
+          @click="handleCreateThread"
+        >
+          Create Thread
+        </UButton>
+      </template>
+    </template>
+  </USlideover>
 </template>

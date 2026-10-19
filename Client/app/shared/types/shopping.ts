@@ -1,12 +1,9 @@
 export type ShoppingItemId = string
+export type ShoppingItemType = 'checkable' | 'trackable'
 
-export interface ShoppingItem {
-  id: ShoppingItemId
-  threadId: string
-  text: string
+export interface ShoppingItemData {
+  type: ShoppingItemType
   checked: boolean
-  quantity?: number
-  category?: string
+  collected: number
   sortOrder: number
-  createdAt: string
 }

@@ -1,6 +1,6 @@
 import type { User, UserId } from '../types/user'
-import { SEED_USERS } from '~/shared/api/seed'
-import { resolveByIds } from '~/shared/utils'
+import { SEED_USERS } from '../api/block-seed'
+import { resolveByIds } from '../utils'
 
 const users = ref<User[]>([])
 const currentUserId = ref<UserId | null>(null)

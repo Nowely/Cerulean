@@ -1,5 +1,4 @@
 const sidebarOpen = ref(false)
-const searchQuery = ref('')
 const showTaskForm = ref(false)
 const showTemplates = ref(false)
 
@@ -12,10 +11,6 @@ export function useUIStore() {
     sidebarOpen.value = open
   }
 
-  function setSearch(query: string) {
-    searchQuery.value = query
-  }
-
   function setShowTaskForm(show: boolean) {
     showTaskForm.value = show
   }
@@ -26,12 +21,10 @@ export function useUIStore() {
 
   return {
     sidebarOpen,
-    searchQuery,
     showTaskForm,
     showTemplates,
     toggleSidebar,
     setSidebar,
-    setSearch,
     setShowTaskForm,
     setShowTemplates
   }

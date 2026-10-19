@@ -1,10 +1,10 @@
+import type { BlockId } from './block'
+
 export type ThreadId = string
 
-export type ThreadKind = 'tasks' | 'shopping' | 'notes' | 'contacts' | 'chat'
+export type ThreadKind = 'tasks' | 'shopping' | 'checklist' | 'notes' | 'contacts' | 'chat'
 
-export interface Thread {
-  id: ThreadId
-  name: string
+export interface ThreadData {
   kind: ThreadKind
   icon?: string
   color?: string
@@ -13,7 +13,6 @@ export interface Thread {
   unreadCount: number
   pinned: boolean
   category?: string
-  itemCount?: number
 }
 
 export type MessageId = string
@@ -27,14 +26,21 @@ export type MessageType
     | 'comment'
     | 'system'
 
-export interface Message {
-  id: MessageId
-  threadId: string
+export interface MessageData {
   type: MessageType
   content: string
   senderId: string
   taskId?: string
-  timestamp: string
   replyToId?: MessageId
   metadata?: Record<string, string>
+}
+
+export interface ViewData {
+  threadId: BlockId
+  filters: Record<string, unknown>
+  sortBy: string
+  sortOrder: 'asc' | 'desc'
+  groupBy?: string
+  columns?: string[]
+  isDefault: boolean
 }

@@ -17,8 +17,6 @@
     "test:e2e": "vitest --project e2e"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "^5.2.8",
-    "@fontsource-variable/geist-mono": "^5.2.7",
     "@iconify-json/lucide": "^1.2.89",
     "@iconify-json/simple-icons": "^1.2.70",
     "@nuxt/hints": "1.0.0-alpha.6",
