@@ -1,4 +1,7 @@
-export default defineAppConfig({
+// Plain object: `defineAppConfig` is an auto-import, and this file also runs in Nitro
+import type { AppConfigInput } from 'nuxt/schema'
+
+export default {
   ui: {
     colors: {
       primary: 'cerulean',
@@ -160,4 +163,4 @@ export default defineAppConfig({
       }
     }
   }
-})
+} satisfies AppConfigInput

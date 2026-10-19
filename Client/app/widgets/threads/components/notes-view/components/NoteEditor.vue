@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NoteBlock } from '~/shared/types'
 import { relativeTime } from '~/shared/utils'
+import { ref, watch } from 'vue'
 
 interface Props {
   note: NoteBlock

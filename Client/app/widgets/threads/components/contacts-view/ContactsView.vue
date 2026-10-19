@@ -4,6 +4,7 @@ import { createBlock } from '~/shared/lib'
 import type { ContactBlock } from '~/shared/types'
 import ContactCard from './components/ContactCard.vue'
 import ContactDetail from './components/ContactDetail.vue'
+import { computed, ref } from 'vue'
 
 const blockStore = useBlockStore()
 

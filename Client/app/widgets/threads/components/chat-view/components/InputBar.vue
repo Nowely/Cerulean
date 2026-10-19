@@ -3,6 +3,7 @@ import { useBlockStore, useUIStore } from '~/shared/model'
 import { useSendMessage } from '~/features/message-send'
 import { useToastHelpers, createBlock } from '~/shared/lib'
 import type { ShoppingItemType } from '~/shared/types/shopping'
+import { computed, ref } from 'vue'
 
 const blockStore = useBlockStore()
 const uiStore = useUIStore()

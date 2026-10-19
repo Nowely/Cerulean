@@ -1,5 +1,6 @@
 import type { Notification } from '../types/user'
 import { generateId } from '../utils'
+import { computed, ref } from 'vue'
 
 const notifications = ref<Notification[]>([])
 const showPanel = ref(false)

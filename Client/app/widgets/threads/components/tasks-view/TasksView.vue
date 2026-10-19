@@ -5,6 +5,7 @@ import { STATUS_CONFIG } from '~/shared/lib'
 import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
 import { relativeTime } from '~/shared/utils'
+import { computed, ref } from 'vue'
 
 const blockStore = useBlockStore()
 const userStore = useUserStore()

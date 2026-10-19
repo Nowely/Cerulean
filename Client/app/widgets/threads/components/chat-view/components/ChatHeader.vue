@@ -2,6 +2,7 @@
 import { useBlockStore, useUserStore, useNotificationStore } from '~/shared/model'
 import { resolveByIds } from '~/shared/utils'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
+import { computed } from 'vue'
 
 const blockStore = useBlockStore()
 const userStore = useUserStore()

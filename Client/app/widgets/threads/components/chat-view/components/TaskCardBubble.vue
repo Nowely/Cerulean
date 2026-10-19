@@ -4,6 +4,7 @@ import { useUserStore, useBlockStore } from '~/shared/model'
 import { formatTime, getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
 import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
 import AvatarStack from '~/shared/ui/AvatarStack.vue'
+import { computed } from 'vue'
 
 interface Props {
   message: MessageBlock

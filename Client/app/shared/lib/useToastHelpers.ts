@@ -1,3 +1,5 @@
+import { useToast } from '#imports'
+
 interface ToastOptions {
   title: string
   description?: string

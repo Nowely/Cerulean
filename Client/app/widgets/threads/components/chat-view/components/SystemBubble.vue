@@ -2,6 +2,7 @@
 import type { MessageBlock } from '~/shared/types'
 import { useUserStore } from '~/shared/model'
 import { getStatusColor } from '~/shared/utils'
+import { computed } from 'vue'
 
 interface Props {
   message: MessageBlock

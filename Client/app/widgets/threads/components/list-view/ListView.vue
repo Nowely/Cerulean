@@ -2,6 +2,7 @@
 import type { ShoppingItemBlock, BlockId } from '~/shared/types'
 import { useBlockStore } from '~/shared/model'
 import InputBar from '~/widgets/threads/components/chat-view/components/InputBar.vue'
+import { computed, ref } from 'vue'
 
 const blockStore = useBlockStore()
 
