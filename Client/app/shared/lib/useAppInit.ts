@@ -1,4 +1,5 @@
 import { useBlockStore, useUserStore, useNotificationStore } from '~/shared/model'
+import { ref } from 'vue'
 
 export function useAppInit() {
   const initialized = ref(false)

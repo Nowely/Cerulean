@@ -3,6 +3,7 @@ import type { ThreadBlock } from '~/shared/types'
 import { useBlockStore, useUserStore } from '~/shared/model'
 import { THREAD_KINDS } from '~/shared/lib'
 import { relativeTime } from '~/shared/utils'
+import { computed } from 'vue'
 
 interface Props {
   thread: ThreadBlock

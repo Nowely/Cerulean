@@ -4,6 +4,7 @@ import { createBlock } from '~/shared/lib'
 import type { NoteBlock } from '~/shared/types'
 import NoteCard from './components/NoteCard.vue'
 import NoteEditor from './components/NoteEditor.vue'
+import { computed, ref } from 'vue'
 
 const blockStore = useBlockStore()
 

@@ -14,6 +14,7 @@ import NotificationPanel from '~/widgets/notification-panel/NotificationPanel.vu
 import TaskDetailDrawer from '~/widgets/threads/components/task-detail/TaskDetailDrawer.vue'
 import TaskFormDrawer from '~/widgets/threads/components/task-form/TaskFormDrawer.vue'
 import TaskTemplatePicker from '~/widgets/threads/components/task-form/TaskTemplatePicker.vue'
+import { computed } from 'vue'
 
 const THREAD_VIEW_MAP: Record<ThreadKind, Component> = {
   tasks: TasksView,

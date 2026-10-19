@@ -5,6 +5,7 @@ import type { TaskPriority, TaskStatus } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getPriorityColor, getStatusColor, resolveByIds } from '~/shared/utils'
 import UserAvatar from '~/shared/ui/UserAvatar.vue'
+import { computed, ref, watch } from 'vue'
 
 const blockStore = useBlockStore()
 const userStore = useUserStore()

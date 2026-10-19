@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useAppInit } from '~/shared/lib'
+import { computed, onMounted } from 'vue'
+import { useColorMode, useHead, useSeoMeta } from '#imports'
 
 const colorMode = useColorMode()
 const { init } = useAppInit()

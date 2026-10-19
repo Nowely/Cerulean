@@ -3,6 +3,7 @@ import type { ThreadKind } from '../types/thread'
 import type { TaskTemplate } from '../types/task'
 import { getSeedBlocks, SEED_TEMPLATES } from '../api/block-seed'
 import * as blockDb from '../lib/block-db'
+import { computed, readonly, ref } from 'vue'
 
 const blocks = ref(new Map<BlockId, Block>())
 const initialized = ref(false)

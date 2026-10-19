@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 const sidebarOpen = ref(false)
 const showTaskForm = ref(false)
 const showTemplates = ref(false)

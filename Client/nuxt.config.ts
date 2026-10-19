@@ -9,6 +9,16 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxtjs/i18n'
   ],
+  ssr: false,
+
+  components: {
+    dirs: []
+  },
+
+  imports: {
+    autoImport: false
+  },
+
   devtools: {
     enabled: true
   },
@@ -22,10 +32,6 @@ export default defineNuxtConfig({
         color: 'primary'
       }
     }
-  },
-
-  routeRules: {
-    '/': { prerender: true }
   },
 
   compatibilityDate: '2025-01-15',

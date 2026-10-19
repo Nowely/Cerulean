@@ -2,6 +2,7 @@
 import type { TaskStatus, TaskPriority } from '~/shared/types'
 import { STATUS_CONFIG, PRIORITY_CONFIG } from '~/shared/lib'
 import { getStatusColor, getPriorityColor } from '~/shared/utils'
+import { computed } from 'vue'
 
 type PropertyType = 'status' | 'priority'
 

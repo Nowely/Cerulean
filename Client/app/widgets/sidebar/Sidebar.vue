@@ -5,6 +5,7 @@ import { useThreadManage } from '~/features/thread-manage'
 import { useToastHelpers, THREAD_KINDS } from '~/shared/lib'
 import SidebarHeader from './components/SidebarHeader.vue'
 import ThreadItem from './components/ThreadItem.vue'
+import { computed, ref } from 'vue'
 
 defineOptions({
   name: 'AppSidebar'

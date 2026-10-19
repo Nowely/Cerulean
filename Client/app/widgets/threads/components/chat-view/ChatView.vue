@@ -6,6 +6,7 @@ import SystemBubble from './components/SystemBubble.vue'
 import TaskCardBubble from './components/TaskCardBubble.vue'
 import MessageBubble from './components/MessageBubble.vue'
 import InputBar from './components/InputBar.vue'
+import { computed } from 'vue'
 
 const blockStore = useBlockStore()
 

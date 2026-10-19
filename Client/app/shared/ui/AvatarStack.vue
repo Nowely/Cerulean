@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { User } from '~/shared/types'
+import { computed } from 'vue'
 
 interface Props {
   users: (User | undefined)[]

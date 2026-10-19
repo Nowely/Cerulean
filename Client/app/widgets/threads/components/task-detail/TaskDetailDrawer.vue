@@ -5,6 +5,7 @@ import type { TaskStatus, TaskPriority } from '~/shared/types'
 import { useTaskManage } from '~/features/task-manage'
 import { getStatusColor, isDueOverdue, isDueSoon, resolveByIds } from '~/shared/utils'
 import PropertyBadge from '~/shared/ui/PropertyBadge.vue'
+import { computed, ref } from 'vue'
 
 const blockStore = useBlockStore()
 const userStore = useUserStore()

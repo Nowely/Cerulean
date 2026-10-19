@@ -1,18 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { $fetch, setup } from '@nuxt/test-utils/e2e'
+import { createPage, setup } from '@nuxt/test-utils/e2e'
 
 describe('taskchat e2e smoke', async () => {
-  await setup()
+  // SPA mode: the HTML is an empty shell, so assertions run against the rendered page
+  await setup({ browser: true })
 
   it('renders the migrated app shell', async () => {
-    const html = await $fetch('/')
-    expect(html).toContain('TaskChat')
-    expect(html).toContain('Website Redesign')
-    expect(html).toContain('Select a thread from the sidebar')
+    const page = await createPage('/')
+    await page.getByText('Website Redesign').first().waitFor()
+
+    expect(await page.title()).toBe('TaskChat')
+    expect(await page.textContent('body')).toContain('Select a thread from the sidebar')
   })
 
   it('includes viewport configuration for mobile behavior', async () => {
-    const html = await $fetch('/')
-    expect(html).toContain('width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover')
+    const page = await createPage('/')
+    await page.getByText('Website Redesign').first().waitFor()
+
+    const viewport = await page.locator('meta[name="viewport"]').getAttribute('content')
+    expect(viewport).toBe('width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover')
   })
 })

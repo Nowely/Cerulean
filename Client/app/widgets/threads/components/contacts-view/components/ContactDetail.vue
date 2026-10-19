@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ContactBlock } from '~/shared/types'
+import { ref, watch } from 'vue'
 
 interface Props {
   contact: ContactBlock
