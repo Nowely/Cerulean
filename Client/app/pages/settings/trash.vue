@@ -11,6 +11,7 @@ import { formatMoment } from '~/domain/dates'
 import { count, RECORD_FORMS } from '~/domain/text'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import DeskHeader from '~/components/shell/DeskHeader.vue'
+import BackHeader from '~/components/shell/BackHeader.vue'
 import PageTile from '~/components/common/PageTile.vue'
 
 useHead({ title: 'Корзина · Cerulean' })
@@ -19,6 +20,10 @@ const ui = useUiStore()
 const now = useNow()
 const notify = useNotify()
 const router = useRouter()
+/** Корзина goes back where it came from: «⋯» of Главная or Настройки */
+const back = (router.options.history.state.back as string | null) === '/'
+  ? { to: '/', label: 'Главная' }
+  : { to: '/settings', label: 'Настройки' }
 
 type Item = { kind: 'page', page: Page, at: number } | { kind: 'record', rec: Rec, at: number }
 const items = computed<Item[]>(() => data.trash)
@@ -37,28 +42,35 @@ function restore(i: Item) {
   if (i.kind === 'page') {
     data.restorePage(i.page.id)
     const id = i.page.id
-    notify(`Страница «${i.page.title || 'Без названия'}» вернулась`, { label: 'Открыть', run: () => router.push(`/p/${id}`) })
+    notify(`Страница ${i.page.title || 'Без названия'} вернулась`, { label: 'Открыть', run: () => router.push(`/p/${id}`) })
   } else {
     data.restoreRecords([i.rec.id])
     const pageId = i.rec.pageId
-    notify(`Вернул в «${data.pages[pageId]?.title || 'Без названия'}»`, { label: 'Открыть', run: () => router.push(`/p/${pageId}`) })
+    notify(`Запись вернулась в ${data.pages[pageId]?.title || 'Без названия'}`, { label: 'Открыть', run: () => router.push(`/p/${pageId}`) })
   }
 }
 
 function purge(i: Item) {
   ui.confirm({
-    title: 'Удалить навсегда?',
-    text: i.kind === 'page' ? `Страница «${i.page.title || 'Без названия'}» и её записи исчезнут без возможности вернуть.` : `«${i.rec.text}» исчезнет без возможности вернуть.`,
-    action: 'Удалить',
+    title: `Удалить «${i.kind === 'page' ? i.page.title || 'Без названия' : i.rec.text}» навсегда?`,
+    text: i.kind === 'page' ? 'Страница и её записи удалятся. Вернуть будет нельзя.' : 'Вернуть будет нельзя.',
+    action: 'Удалить навсегда',
     run: () => i.kind === 'page' ? data.purgePages([i.page.id]) : data.purgeRecords([i.rec.id])
   })
 }
 
+/** «2 записи и 1 страница» */
+const what = computed(() => {
+  const pages = items.value.filter(i => i.kind === 'page').length
+  const recs = items.value.length - pages
+  return [recs ? count(recs, RECORD_FORMS) : '', pages ? count(pages, ['страница', 'страницы', 'страниц']) : ''].filter(Boolean).join(' и ')
+})
+
 function empty() {
   ui.confirm({
-    title: 'Очистить корзину?',
-    text: `${count(items.value.length, ['объект', 'объекта', 'объектов'])} исчезнут без возможности вернуть.`,
-    action: 'Очистить',
+    title: 'Очистить Корзину?',
+    text: `${what.value} удалятся навсегда. Вернуть их будет нельзя.`,
+    action: 'Удалить навсегда',
     run: () => data.emptyTrash()
   })
 }
@@ -67,17 +79,10 @@ function empty() {
 <template>
   <AppScreen>
     <template #header>
-      <header class="flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
-        <NuxtLink
-          to="/settings"
-          class="flex h-11 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"
-        >
-          <UIcon
-            name="i-lucide-chevron-left"
-            class="size-6"
-          />Настройки
-        </NuxtLink>
-        <span class="flex-1" />
+      <BackHeader
+        :to="back.to"
+        :label="back.label"
+      >
         <UButton
           v-if="items.length"
           color="error"
@@ -88,7 +93,7 @@ function empty() {
         >
           Очистить
         </UButton>
-      </header>
+      </BackHeader>
       <DeskHeader>
         <nav
           aria-label="Путь"
@@ -142,8 +147,7 @@ function empty() {
             class="flex size-6 shrink-0 items-center justify-center"
             aria-hidden="true"
           ><span
-            class="size-1.5 rounded-full"
-            :style="{ background: `var(--c-${data.pages[i.rec.pageId]?.color ?? 'gray'})` }"
+            class="size-1.5 rounded-full bg-ring"
           /></span>
           <span class="min-w-0 flex-1 py-2">
             <span class="block truncate text-record text-highlighted">{{ i.kind === 'page' ? (i.page.title || 'Без названия') : i.rec.text }}</span>

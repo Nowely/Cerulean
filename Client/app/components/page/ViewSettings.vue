@@ -112,7 +112,7 @@ function removeView() {
       />
     </label>
 
-    <p class="px-2 pt-3 pb-1.5 text-caption text-toned">
+    <p class="px-2 pt-3 pb-1.5 text-cap text-toned">
       Как показывать
     </p>
     <div class="px-2">
@@ -157,7 +157,7 @@ function removeView() {
       </label>
     </div>
 
-    <p class="px-2 pt-4 pb-1 text-caption text-toned">
+    <p class="px-2 pt-4 pb-1 text-cap text-toned">
       Справа в строке
     </p>
     <div class="divide-y divide-default">

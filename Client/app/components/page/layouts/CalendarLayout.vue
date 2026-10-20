@@ -126,7 +126,7 @@ const pickedLabel = computed(() => keyToDate(picked.value).toLocaleDateString('r
       </button>
     </div>
     <template v-if="!isDesktop">
-      <h3 class="px-2 pt-4 pb-1 text-caption text-toned">
+      <h3 class="px-2 pt-4 pb-1 text-cap text-toned">
         {{ pickedLabel }}
       </h3>
       <RecordRow
@@ -147,7 +147,7 @@ const pickedLabel = computed(() => keyToDate(picked.value).toLocaleDateString('r
       </p>
     </template>
     <template v-if="undated.length">
-      <h3 class="px-2 pt-4 pb-1 text-caption text-toned">
+      <h3 class="px-2 pt-4 pb-1 text-cap text-toned">
         Без срока
       </h3>
       <RecordRow

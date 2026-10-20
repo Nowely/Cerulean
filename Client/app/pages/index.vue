@@ -1,211 +1,373 @@
 <script setup lang="ts">
-// Главная: Избранное, Входящие, the sections with their pages. Write at the bottom; the receipt shows above the composer.
-import { computed, ref } from 'vue'
-import { useHead } from '#imports'
-import type { Entry, Id } from '~/domain/types'
+// Главная: Входящие, then sections as quiet folding captions: Избранное, Недавнее (pages without a section),
+// the user's sections. Write at the bottom; what was written shows above the composer.
+import { computed, ref, useTemplateRef } from 'vue'
+import { useHead, useRouter } from '#imports'
+import type { Id, Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
-import { useJournalStore } from '~/stores/journal'
+import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
+import { useFind } from '~/composables/useFind'
 import { useCreatePage } from '~/composables/useCreatePage'
+import { pageBadge, recordBadge, type Badge } from '~/domain/summary'
+import { TEMPLATES } from '~/domain/templates'
 import AppScreen from '~/components/shell/AppScreen.vue'
-import MobileHeader from '~/components/shell/MobileHeader.vue'
-import DeskHeader from '~/components/shell/DeskHeader.vue'
+import HomeHeader from '~/components/home/HomeHeader.vue'
 import HomeRow from '~/components/home/HomeRow.vue'
-import FavCard from '~/components/home/FavCard.vue'
-import SectionHeader from '~/components/home/SectionHeader.vue'
-import KeyCard from '~/components/home/KeyCard.vue'
-import StartCard from '~/components/home/StartCard.vue'
-import AppComposer from '~/components/composer/AppComposer.vue'
-import EntryCard from '~/components/chat/EntryCard.vue'
+import HomeCaption from '~/components/home/HomeCaption.vue'
+import HomeDock from '~/components/home/HomeDock.vue'
 
 useHead({ title: 'Главная · Cerulean' })
 
+const RECENT_SHOWN = 5
+
 const data = useDataStore()
-const journal = useJournalStore()
+const now = useNow()
+const router = useRouter()
+const find = useFind()
 const { isDesktop } = useScreen()
 const { create } = useCreatePage()
+const screen = useTemplateRef<InstanceType<typeof AppScreen>>('screen')
 
 const compact = computed(() => data.settings.homeRows === 'compact')
+const folded = (key: string) => data.settings.folded.includes(key)
 const userPages = computed(() => data.livePages.filter(p => p.kind === 'page'))
-const loose = computed(() => data.livePages.filter(p => (p.kind === 'page' || p.kind === 'today') && !p.sectionId && p.favorite === null))
 const pagesOf = (sectionId: Id) => data.livePages.filter(p => p.sectionId === sectionId)
 const showKey = computed(() => !data.settings.apiKey && !data.settings.dismissed.includes('key-card'))
 const showStart = computed(() => !userPages.value.length && !data.settings.dismissed.includes('start-card'))
-const newSection = ref<Id | null>(null)
+const dismiss = (id: string) => data.setSettings({ dismissed: [...data.settings.dismissed, id] })
 
+const recentOpen = ref(false)
+const recent = computed(() => data.recentlyMade)
+const recentShown = computed(() => recentOpen.value ? recent.value : recent.value.slice(0, RECENT_SHOWN))
+
+const newSection = ref<Id | null>(null)
 function addSection() {
   newSection.value = data.createSection('Новая секция').id
 }
 
-// The last line written here: its card floats above the composer until it settles
-const sentId = ref<Id | null>(null)
-const sent = computed<Entry | undefined>(() => data.entries.find(e => e.id === sentId.value))
-const showSent = computed(() => {
-  const e = sent.value
-  if (!e) return false
-  if (e.kind === 'routed' || e.kind === 'undone') return journal.fresh.has(e.id)
-  return true
+// ---------- statuses: overdue is flagged once per screen, at its highest place ----------
+
+const badgeOf = (p: Page) => pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords)
+const recBadgeOf = (r: Rec) => recordBadge(data.subitemsOf(r.id), now.value)
+const RANK = { warn: 3, accent: 2, neutral: 1 } as const
+
+/** The strongest status of a folded group: «1 просрочено», «2 уточнить» or «3 новых» */
+function strongest(pages: Page[]): Badge | null {
+  let best: Badge | null = null
+  for (const p of pages) {
+    const b = badgeOf(p)
+    if (b && (!best || RANK[b.tone] > RANK[best.tone])) best = b
+  }
+  return best
+}
+
+const sections = computed(() => data.sectionList.map(s => ({ section: s, pages: pagesOf(s.id) })))
+
+/** Every place on screen that can say «просрочено», top to bottom; the first keeps warn */
+const loudKey = computed(() => {
+  const places: { key: string, badge: Badge | null }[] = [{ key: data.inbox.id, badge: badgeOf(data.inbox) }]
+  if (!folded('favorites')) {
+    for (const f of data.favorites) places.push(f.kind === 'page' ? { key: f.page.id, badge: badgeOf(f.page) } : { key: f.rec.id, badge: recBadgeOf(f.rec) })
+  }
+  if (folded('recent')) places.push({ key: 'recent', badge: strongest(recent.value) })
+  else for (const p of recentShown.value) places.push({ key: p.id, badge: badgeOf(p) })
+  for (const { section, pages } of sections.value) {
+    if (section.collapsed) places.push({ key: section.id, badge: strongest(pages) })
+    else for (const p of pages) places.push({ key: p.id, badge: badgeOf(p) })
+  }
+  return places.find(p => p.badge?.tone === 'warn')?.key ?? null
 })
+const quiet = (key: string) => loudKey.value !== key
+/** A folded caption's status, neutral when overdue was already said higher up */
+function foldStatus(key: string, pages: Page[]): Badge | null {
+  const b = strongest(pages)
+  return b && b.tone === 'warn' && quiet(key) ? { ...b, tone: 'neutral' } : b
+}
+
+// ---------- pull down opens Поиск, the title scrolls to the top ----------
+
+let y0: number | null = null
+function touchStart(e: TouchEvent) {
+  y0 = (screen.value?.scroller?.scrollTop ?? 0) <= 0 ? e.touches[0]!.clientY : null
+}
+function touchEnd(e: TouchEvent) {
+  if (y0 !== null && e.changedTouches[0]!.clientY - y0 > 90) find.open()
+  y0 = null
+}
+function toTop() {
+  screen.value?.scroller?.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <template>
-  <AppScreen wide>
+  <AppScreen
+    ref="screen"
+    wide
+  >
     <template #header>
-      <MobileHeader />
-      <DeskHeader title="Главная" />
+      <HomeHeader
+        @new-section="addSection"
+        @top="toTop"
+      />
     </template>
 
-    <div class="mx-auto w-full px-2 pt-1 pb-4 lg:max-w-180 lg:px-8 lg:pt-6">
-      <!-- Избранное: cards on a phone, rows on desktop -->
-      <section
-        v-if="data.favorites.length"
-        aria-labelledby="fav-title"
-      >
-        <h2
-          id="fav-title"
-          class="px-3 pt-3 pb-1.5 text-caption text-toned lg:px-2.5 lg:pt-0 lg:text-dimmed"
-        >
-          Избранное
-        </h2>
-        <div
-          v-if="!isDesktop"
-          class="grid grid-cols-2 gap-2 px-1"
-        >
-          <template
-            v-for="f in data.favorites"
-            :key="f.kind + (f.kind === 'page' ? f.page.id : f.rec.id)"
-          >
-            <FavCard
-              v-if="f.kind === 'page'"
-              :page="f.page"
-            />
-            <FavCard
-              v-else
-              :rec="f.rec"
-            />
-          </template>
-        </div>
-        <template v-else>
-          <template
-            v-for="f in data.favorites"
-            :key="f.kind + (f.kind === 'page' ? f.page.id : f.rec.id)"
-          >
-            <HomeRow
-              v-if="f.kind === 'page'"
-              :page="f.page"
-              :compact="compact"
-            />
-            <HomeRow
-              v-else
-              :rec="f.rec"
-              :compact="compact"
-            />
-          </template>
-        </template>
-      </section>
-
-      <div
-        v-if="showKey || showStart"
-        class="mt-2 flex flex-col gap-2 px-1 lg:px-0"
-      >
-        <KeyCard v-if="showKey" />
-        <StartCard v-if="showStart" />
-      </div>
-
-      <div class="mt-2">
+    <div
+      class="mx-auto w-full pt-1 pr-1.5 pb-4 pl-2 lg:max-w-196 lg:px-8 lg:pt-0"
+      @touchstart.passive="touchStart"
+      @touchend.passive="touchEnd"
+    >
+      <div role="list">
         <HomeRow
           :page="data.inbox"
           :compact="compact"
-        />
-        <HomeRow
-          v-for="p in loose"
-          :key="p.id"
-          :page="p"
-          :compact="compact"
+          :quiet="quiet(data.inbox.id)"
         />
       </div>
 
       <section
-        v-for="s in data.sectionList"
-        :key="s.id"
-        :aria-label="s.name"
+        v-if="data.favorites.length"
+        aria-labelledby="cap-favorites"
       >
-        <SectionHeader
-          :section="s"
-          :editing="newSection === s.id"
-          @done="newSection = null"
+        <HomeCaption
+          id="favorites"
+          name="Избранное"
+          :folded="folded('favorites')"
+          :count="data.favorites.length"
+          :compact="compact"
+          @toggle="data.toggleFolded('favorites')"
         />
-        <template v-if="!s.collapsed">
-          <HomeRow
-            v-for="p in pagesOf(s.id)"
-            :key="p.id"
-            :page="p"
-            :compact="compact"
-          />
-          <p
-            v-if="!pagesOf(s.id).length"
-            class="px-3 py-2 text-meta text-toned"
+        <div
+          v-if="!folded('favorites')"
+          role="list"
+        >
+          <template
+            v-for="f in data.favorites"
+            :key="f.kind + (f.kind === 'page' ? f.page.id : f.rec.id)"
           >
-            Пока пусто. <button
+            <HomeRow
+              v-if="f.kind === 'page'"
+              :page="f.page"
+              :compact="compact"
+              :quiet="quiet(f.page.id)"
+            />
+            <HomeRow
+              v-else
+              :rec="f.rec"
+              :compact="compact"
+              :quiet="quiet(f.rec.id)"
+            />
+          </template>
+        </div>
+      </section>
+
+      <!-- First run: templates as actions, then the key row -->
+      <section
+        v-if="showStart"
+        aria-labelledby="cap-start"
+      >
+        <div class="mt-4 flex h-6 items-center">
+          <h2
+            id="cap-start"
+            class="flex-1 px-2 text-cap text-toned"
+          >
+            Начать с шаблона
+          </h2>
+          <button
+            type="button"
+            class="hit-44 relative mr-0.5 flex size-9 cursor-pointer items-center justify-center rounded-item text-dimmed hover:text-highlighted"
+            aria-label="Скрыть шаблоны"
+            @click="dismiss('start-card')"
+          >
+            <UIcon
+              name="i-lucide-x"
+              class="size-4.5"
+            />
+          </button>
+        </div>
+        <div role="list">
+          <div
+            v-for="t in TEMPLATES"
+            :key="t.key"
+            role="listitem"
+          >
+            <button
               type="button"
-              class="cursor-pointer text-accent-ink hover:underline"
-              @click="create({ sectionId: s.id })"
+              class="flex w-full cursor-pointer items-center gap-3 rounded-card px-2 text-left hover:bg-muted active:bg-pressed lg:rounded-chip"
+              :class="compact ? 'min-h-8' : 'min-h-13 py-1.25 lg:min-h-12'"
+              @click="create({ template: t.key, stay: true })"
             >
-              Новая страница
+              <UIcon
+                name="i-lucide-plus"
+                class="size-4.5 shrink-0 text-toned"
+              />
+              <span class="flex min-w-0 flex-1 flex-col gap-px">
+                <span
+                  class="truncate"
+                  :class="compact ? 'text-15 text-toned' : 'text-base text-default lg:text-sm'"
+                >{{ t.name }}</span>
+                <span
+                  v-if="!compact"
+                  class="truncate text-sm text-toned lg:text-13"
+                >{{ t.description }}</span>
+              </span>
             </button>
-          </p>
+          </div>
+        </div>
+      </section>
+
+      <div
+        v-if="showKey"
+        class="mt-3 flex items-center rounded-card hover:bg-muted lg:rounded-chip"
+      >
+        <button
+          type="button"
+          class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-card px-2 text-left active:bg-pressed lg:rounded-chip"
+          :class="compact ? 'min-h-8' : 'min-h-13 py-1.25 lg:min-h-12'"
+          @click="router.push('/settings?key')"
+        >
+          <UIcon
+            name="i-lucide-key-round"
+            class="size-4.5 shrink-0 text-toned"
+          />
+          <span class="flex min-w-0 flex-1 flex-col gap-px">
+            <span
+              class="truncate"
+              :class="compact ? 'text-15 text-toned' : 'text-base text-default lg:text-sm'"
+            >Добавить ключ</span>
+            <span
+              v-if="!compact"
+              class="truncate text-sm text-toned lg:text-13"
+            >Пока работают простые правила</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          class="hit-44 relative mr-1.5 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed hover:text-highlighted"
+          aria-label="Скрыть строку про ключ"
+          @click="dismiss('key-card')"
+        >
+          <UIcon
+            name="i-lucide-x"
+            class="size-4.5"
+          />
+        </button>
+      </div>
+
+      <!-- Недавнее: pages without a section, newest first, five rows and «Ещё N» -->
+      <section
+        v-if="recent.length"
+        aria-labelledby="cap-recent"
+      >
+        <HomeCaption
+          id="recent"
+          name="Недавнее"
+          :folded="folded('recent')"
+          :count="recent.length"
+          :status="foldStatus('recent', recent)"
+          :compact="compact"
+          @toggle="data.toggleFolded('recent')"
+        />
+        <template v-if="!folded('recent')">
+          <div role="list">
+            <HomeRow
+              v-for="p in recentShown"
+              :key="p.id"
+              :page="p"
+              :compact="compact"
+              :quiet="quiet(p.id)"
+            />
+          </div>
+          <button
+            v-if="recent.length > RECENT_SHOWN"
+            type="button"
+            class="flex min-h-8 w-full cursor-pointer items-center gap-1 rounded-card pr-2 pl-9.5 text-left text-sm text-toned hover:bg-muted active:bg-pressed lg:rounded-chip"
+            :aria-expanded="recentOpen"
+            @click="recentOpen = !recentOpen"
+          >
+            {{ recentOpen ? 'Свернуть' : `Ещё ${recent.length - RECENT_SHOWN}` }}
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="size-3.5 text-dimmed transition-transform"
+              :class="recentOpen ? '-rotate-90' : ''"
+            />
+          </button>
+          <div
+            v-if="!isDesktop && !data.settings.dismissed.includes('hold-tip')"
+            class="mt-1 flex items-center"
+          >
+            <p class="flex min-w-0 flex-1 items-center gap-3 px-2 py-1.5 text-sm text-toned">
+              <UIcon
+                name="i-lucide-pointer"
+                class="size-4.5 shrink-0"
+              />
+              Удерживай строку, чтобы перенести страницу в секцию или в Избранное
+            </p>
+            <button
+              type="button"
+              class="hit-44 relative mr-0.5 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed hover:text-highlighted"
+              aria-label="Закрыть подсказку"
+              @click="dismiss('hold-tip')"
+            >
+              <UIcon
+                name="i-lucide-x"
+                class="size-4.5"
+              />
+            </button>
+          </div>
         </template>
       </section>
 
-      <div class="mt-3 flex flex-wrap gap-x-1 px-1 lg:px-0">
-        <button
-          type="button"
-          class="flex h-11 cursor-pointer items-center gap-2.5 rounded-chip pr-3 pl-2.5 text-15 text-toned hover:bg-muted hover:text-highlighted active:bg-pressed lg:h-9 lg:text-sm"
-          @click="create()"
+      <section
+        v-for="{ section: s, pages } in sections"
+        :key="s.id"
+        :aria-labelledby="`cap-${s.id}`"
+      >
+        <HomeCaption
+          :id="s.id"
+          :name="s.name"
+          :folded="s.collapsed"
+          :count="pages.length"
+          :status="foldStatus(s.id, pages)"
+          :compact="compact"
+          :section="s"
+          :editing="newSection === s.id"
+          @toggle="data.updateSection(s.id, { collapsed: !s.collapsed })"
+          @done="newSection = null"
+        />
+        <div
+          v-if="!s.collapsed"
+          role="list"
         >
-          <UIcon
-            name="i-lucide-plus"
-            class="size-4.5"
-          />Новая страница
-        </button>
-        <button
-          type="button"
-          class="flex h-11 cursor-pointer items-center gap-2.5 rounded-chip pr-3 pl-2.5 text-15 text-toned hover:bg-muted hover:text-highlighted active:bg-pressed lg:h-9 lg:text-sm"
-          @click="addSection"
-        >
-          <UIcon
-            name="i-lucide-folder-plus"
-            class="size-4.5"
-          />Новая секция
-        </button>
-      </div>
+          <HomeRow
+            v-for="p in pages"
+            :key="p.id"
+            :page="p"
+            :compact="compact"
+            :quiet="quiet(p.id)"
+          />
+          <div
+            v-if="!pages.length"
+            role="listitem"
+          >
+            <button
+              type="button"
+              class="flex w-full cursor-pointer items-center gap-3 rounded-card px-2 text-left hover:bg-muted active:bg-pressed lg:rounded-chip"
+              :class="compact ? 'min-h-8 text-15 text-toned' : 'min-h-11 text-base text-default lg:text-sm'"
+              @click="create({ sectionId: s.id })"
+            >
+              <UIcon
+                name="i-lucide-square-pen"
+                class="size-4.5 shrink-0 text-toned"
+              />Новая страница
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
 
     <template #dock>
-      <div
-        v-if="showSent && sent"
-        class="relative"
-      >
-        <EntryCard
-          :entry="sent"
-          float
-        />
-        <UButton
-          v-if="sent.kind !== 'routed' && sent.kind !== 'pending'"
-          icon="i-lucide-x"
-          variant="ghost"
-          square
-          size="sm"
-          aria-label="Скрыть"
-          class="absolute top-1 right-1"
-          @click="sentId = null"
-        />
-      </div>
-      <AppComposer
-        mode="auto"
-        float
-        @sent="e => sentId = e?.id ?? null"
-      />
+      <HomeDock />
     </template>
   </AppScreen>
 </template>

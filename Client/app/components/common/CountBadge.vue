@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Three kinds only: warn words («1 просрочено»), accent-soft («2 уточнить», «1 новая»), a neutral counter
+// A status is plain 13px text on the title line, «число + слово», no fill: «просрочено» in warn and
+// «уточнить» in accent-ink (both 500), neutral ones («1 новая», a repeated «просрочено») faint
 import type { Badge } from '~/domain/summary'
 
 defineProps<{ badge: Badge }>()
@@ -7,11 +8,11 @@ defineProps<{ badge: Badge }>()
 
 <template>
   <span
-    class="inline-flex h-5.5 shrink-0 items-center whitespace-nowrap text-caption tabular-nums lg:h-5"
+    class="shrink-0 whitespace-nowrap text-13 tabular-nums"
     :class="{
-      'text-warn-ink': badge.tone === 'warn',
-      'rounded-badge bg-accent-soft px-1.75 text-accent-ink': badge.tone === 'accent',
-      'min-w-5 justify-center rounded-full bg-elevated px-1.5 text-xs text-highlighted': badge.tone === 'neutral'
+      'font-medium text-warn': badge.tone === 'warn',
+      'font-medium text-accent-ink': badge.tone === 'accent',
+      'text-dimmed': badge.tone === 'neutral'
     }"
   >{{ badge.text }}</span>
 </template>

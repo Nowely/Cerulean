@@ -49,7 +49,7 @@ watch(() => colorMode.value, () => nextTick(() => {
 }), { immediate: true, flush: 'post' })
 useHead({ meta: [{ name: 'theme-color', content: themeColor }] })
 
-// A phone swipes between Главная and Чат
+// On a phone a swipe to the right goes back from Чат to Главная (Чат is a screen pushed from Главная)
 let x0 = 0
 let y0 = 0
 function touchStart(e: TouchEvent) {
@@ -57,14 +57,13 @@ function touchStart(e: TouchEvent) {
   y0 = e.touches[0]!.clientY
 }
 function touchEnd(e: TouchEvent) {
-  if (isDesktop.value || (route.path !== '/' && route.path !== '/chat')) return
+  if (isDesktop.value || route.path !== '/chat') return
   const t = e.changedTouches[0]!
   const dx = t.clientX - x0
   const dy = t.clientY - y0
   if (Math.abs(dx) < 80 || Math.abs(dy) > Math.abs(dx) * 0.6) return
   if ((e.target as HTMLElement).closest('input, textarea, [data-no-swipe], .no-scrollbar')) return
-  if (dx < 0 && route.path === '/') void router.push('/chat')
-  if (dx > 0 && route.path === '/chat') void router.push('/')
+  if (dx > 0) void router.push('/')
 }
 
 // Leaving a screen closes its preview on a phone

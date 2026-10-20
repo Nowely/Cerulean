@@ -1,30 +1,35 @@
 <script setup lang="ts">
-// Поиск. A sheet on a phone; on desktop a ⌘K palette with the found item previewed on the right.
+// Поиск. A full screen on a phone; on desktop a Ctrl K dialog with the found item previewed on the right.
+// Both use the same rows: without a query the six records added last, with one «Страницы» then «Записи».
 // A result opens as a preview (it is a link, not navigation); «Открыть» or ↵ opens it full.
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from '#imports'
-import type { Id, Page } from '~/domain/types'
+import type { Id } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
-import { useNow } from '~/composables/useNow'
+import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
 import { useFind } from '~/composables/useFind'
 import { encodeTarget, pathOf, type Target } from '~/composables/usePeek'
-import { recent, search, type Hit } from '~/domain/search'
-import { pageSummary } from '~/domain/summary'
+import { useFindRows } from '~/composables/useFindRows'
+import { lastAdded, search, type Hit } from '~/domain/search'
 import { splitMatch } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
-import RecordLine from '../record/RecordLine.vue'
+import RecordMark from '../common/RecordMark.vue'
 import PageView from '../page/PageView.vue'
 import RecordView from '../record/RecordView.vue'
+import FindScreen from './FindScreen.vue'
 
 const data = useDataStore()
-const now = useNow()
+const ui = useUiStore()
+const { pageLine, recLine } = useFindRows()
 const { isDesktop } = useScreen()
 const find = useFind()
 const route = useRoute()
 const router = useRouter()
 
 const q = ref('')
+/** The text Поиск opens with on a phone */
+const initial = ref('')
 const titlesOnly = ref(false)
 const sectionId = ref<Id | 'all'>('all')
 const active = ref(0)
@@ -38,7 +43,9 @@ const open = computed({
 })
 watch(open, async (v) => {
   if (!v) return
-  q.value = ''
+  q.value = ui.findQuery
+  initial.value = ui.findQuery
+  ui.findQuery = ''
   active.value = 0
   await nextTick()
   input.value?.focus()
@@ -50,9 +57,12 @@ const sections = computed(() => [
 ])
 
 const groups = computed<{ label: string, hits: Hit[] }[]>(() => {
-  const pages = data.livePages
-  if (!q.value.trim()) return recent(pages, data.liveRecords, now.value)
-  const hits = search(q.value, pages, data.liveRecords, { titlesOnly: titlesOnly.value, sectionId: sectionId.value === 'all' ? null : sectionId.value })
+  const inSection = sectionId.value === 'all' ? null : sectionId.value
+  if (!q.value.trim()) {
+    const recs = lastAdded(data.liveRecords.filter(r => !inSection || data.pages[r.pageId]?.sectionId === inSection))
+    return [{ label: 'Недавние записи', hits: recs.map(rec => ({ kind: 'record' as const, rec })) }]
+  }
+  const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: titlesOnly.value, sectionId: sectionId.value === 'all' ? null : sectionId.value })
   return [
     { label: 'Страницы', hits: hits.filter(h => h.kind === 'page') },
     { label: 'Записи', hits: hits.filter(h => h.kind === 'record') }
@@ -74,8 +84,9 @@ function go(h: Hit, how: 'peek' | 'full') {
   else void router.replace({ query: { ...query, peek: encodeTarget(t) } })
 }
 
+/** A page opens full (Поиск closes), a record opens the preview on a phone */
 function pick(h: Hit) {
-  go(h, isDesktop.value ? 'full' : 'peek')
+  go(h, isDesktop.value || h.kind === 'page' ? 'full' : 'peek')
 }
 
 function onKey(e: KeyboardEvent) {
@@ -91,10 +102,7 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
-const countOf = (p: Page) => {
-  const s = pageSummary(p, data.recordsOf(p.id), now.value, data.liveRecords)
-  return p.kind === 'inbox' ? (data.clarify.length ? `${data.clarify.length} уточнить` : '') : s.names ? s.lead : ''
-}
+const parts = (text: string) => splitMatch(text, q.value.trim())
 const indexOf = (h: Hit) => flat.value.indexOf(h)
 </script>
 
@@ -110,38 +118,42 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
         class="flex h-[min(38rem,80dvh)] flex-col"
         @keydown="onKey"
       >
-        <div class="flex shrink-0 items-center gap-2.5 px-4 pt-3.5 pb-2">
-          <UIcon
-            name="i-lucide-search"
-            class="size-5 text-toned"
-          />
-          <input
-            ref="input"
-            v-model="q"
-            class="h-9 min-w-0 flex-1 bg-transparent text-17 text-highlighted outline-none placeholder:text-dimmed"
-            placeholder="Искать страницы и записи"
-            aria-label="Найти"
-            role="combobox"
-            aria-expanded="true"
-            aria-controls="find-list"
-          >
-          <UKbd value="Esc" />
-          <UButton
-            icon="i-lucide-x"
-            variant="ghost"
-            square
-            size="sm"
-            aria-label="Закрыть"
-            @click="open = false"
-          />
+        <div class="shrink-0 px-3 pt-3 pb-2">
+          <label class="flex h-11 items-center gap-2.5 rounded-chip bg-trk pl-3 text-toned">
+            <UIcon
+              name="i-lucide-search"
+              class="size-4.5 shrink-0"
+            />
+            <input
+              ref="input"
+              v-model="q"
+              class="h-11 min-w-0 flex-1 bg-transparent text-17 text-highlighted outline-none placeholder:text-dimmed"
+              placeholder="Найти"
+              aria-label="Найти"
+              role="combobox"
+              aria-expanded="true"
+              aria-controls="find-list"
+            >
+            <button
+              type="button"
+              class="flex size-11 shrink-0 cursor-pointer items-center justify-center hover:text-highlighted"
+              :aria-label="q ? 'Стереть' : 'Закрыть'"
+              @click="q ? (q = '') : (open = false)"
+            >
+              <UIcon
+                name="i-lucide-x"
+                class="size-4.5"
+              />
+            </button>
+          </label>
         </div>
-        <div class="flex shrink-0 gap-2 border-b border-default px-4 pb-3">
+        <div class="flex shrink-0 gap-2 border-b border-default px-3 pb-3">
           <UButton
             :aria-pressed="titlesOnly"
             size="md"
             @click="titlesOnly = !titlesOnly"
           >
-            <span class="text-13 font-semibold text-toned">Aa</span>Только названия
+            Только названия
           </UButton>
           <USelect
             v-model="sectionId"
@@ -161,7 +173,7 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
               :key="g.label"
             >
               <li
-                class="px-2.5 pt-2.5 pb-1 text-caption text-dimmed"
+                class="px-2.5 pt-2.5 pb-1 text-cap text-toned"
                 role="presentation"
               >
                 {{ g.label }}
@@ -171,32 +183,55 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
                 :key="h.kind + (h.kind === 'page' ? h.page.id : h.rec.id)"
                 role="option"
                 :aria-selected="indexOf(h) === active"
-                class="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-chip px-2.5"
+                class="flex min-h-11 cursor-pointer items-center gap-3 rounded-chip px-3"
                 :class="indexOf(h) === active ? 'bg-elevated' : 'hover:bg-muted'"
                 @mouseenter="active = indexOf(h)"
                 @click="pick(h)"
               >
                 <template v-if="h.kind === 'page'">
-                  <PageTile
-                    :glyph="h.page.glyph"
-                    :color="h.page.color"
-                  />
-                  <span class="min-w-0 flex-1 truncate text-15 text-highlighted">
-                    <template v-if="q">{{ splitMatch(h.page.title, q).pre }}<mark class="rounded-[3px] bg-accent-soft font-semibold text-highlighted">{{ splitMatch(h.page.title, q).mid }}</mark>{{ splitMatch(h.page.title, q).post }}</template>
-                    <template v-else>{{ h.page.title || 'Без названия' }}</template>
+                  <span class="flex size-4.5 shrink-0 items-center justify-center">
+                    <PageTile :glyph="h.page.glyph" />
                   </span>
-                  <span class="text-13 text-toned">{{ countOf(h.page) }}</span>
-                  <UKbd
-                    v-if="indexOf(h) === active"
-                    value="enter"
-                  />
+                  <span class="flex min-w-0 flex-1 flex-col py-1">
+                    <span
+                      class="truncate text-sm font-medium"
+                      :class="q.trim() ? 'text-toned' : 'text-highlighted'"
+                    >
+                      <template v-if="q.trim()">{{ parts(h.page.title).pre }}<b class="font-medium text-highlighted">{{ parts(h.page.title).mid }}</b>{{ parts(h.page.title).post }}</template>
+                      <template v-else>{{ h.page.title || 'Без названия' }}</template>
+                    </span>
+                    <span
+                      v-if="pageLine(h.page)"
+                      class="truncate text-13 text-toned"
+                    >{{ pageLine(h.page) }}</span>
+                  </span>
                 </template>
-                <RecordLine
-                  v-else
-                  :rec="h.rec"
-                  :query="q"
-                  class="-ml-2 min-w-0 flex-1"
-                  @open="pick(h)"
+                <template v-else>
+                  <RecordMark
+                    :rec="h.rec"
+                    :page="data.pages[h.rec.pageId]"
+                    size="sm"
+                    area="tight"
+                    class="-mx-0.5"
+                    @toggle="data.toggleDone(h.rec.id)"
+                  />
+                  <span class="flex min-w-0 flex-1 flex-col py-1">
+                    <span
+                      class="truncate text-sm"
+                      :class="h.rec.done ? 'text-dimmed line-through' : q.trim() ? 'text-toned' : 'text-highlighted'"
+                    >
+                      <template v-if="q.trim() && parts(h.rec.text).mid">{{ parts(h.rec.text).pre }}<b class="font-medium text-highlighted">{{ parts(h.rec.text).mid }}</b>{{ parts(h.rec.text).post }}</template>
+                      <template v-else>{{ h.rec.text }}</template>
+                    </span>
+                    <span
+                      v-if="recLine(h.rec)"
+                      class="truncate text-13 text-toned"
+                    >{{ recLine(h.rec) }}</span>
+                  </span>
+                </template>
+                <UKbd
+                  v-if="indexOf(h) === active"
+                  value="enter"
                 />
               </li>
             </template>
@@ -204,13 +239,13 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
               v-if="!flat.length"
               class="px-2.5 py-6 text-meta text-toned"
             >
-              {{ q ? 'Ничего не нашлось' : 'Здесь появятся открытые страницы и записи' }}
+              {{ q ? 'Ничего не нашлось' : 'Пока нет записей' }}
             </li>
           </ul>
           <div class="min-h-0 flex-1 overflow-y-auto py-4">
             <template v-if="current">
               <div class="flex items-center px-4 pb-2">
-                <span class="flex-1 text-caption text-dimmed">{{ current.kind === 'page' ? 'Страница' : 'Запись' }}</span>
+                <span class="flex-1 text-cap text-toned">{{ current.kind === 'page' ? 'Страница' : 'Запись' }}</span>
                 <UButton @click="go(current, 'full')">
                   Открыть
                 </UButton>
@@ -236,7 +271,7 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
             class="-ml-1"
           />выбрать</span>
           <span class="flex items-center gap-1.5"><UKbd value="enter" />открыть</span>
-          <span class="flex items-center gap-1.5"><UKbd value="meta" /><UKbd
+          <span class="flex items-center gap-1.5"><UKbd value="ctrl" /><UKbd
             value="enter"
             class="-ml-1"
           />открыть справа</span>
@@ -246,112 +281,10 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
     </template>
   </UModal>
 
-  <UDrawer
-    v-else
-    v-model:open="open"
-    title="Поиск"
-    :ui="{ content: 'h-[94dvh]' }"
-  >
-    <template #content>
-      <div class="flex min-h-0 flex-1 flex-col">
-        <div class="flex shrink-0 items-center gap-1 pt-1 pr-1 pb-2 pl-3">
-          <label class="flex h-11 min-w-0 flex-1 items-center gap-1 rounded-card bg-trk pl-2.5 text-toned">
-            <UIcon
-              name="i-lucide-search"
-              class="size-5 shrink-0"
-            />
-            <input
-              ref="input"
-              v-model="q"
-              type="search"
-              enterkeyhint="search"
-              class="h-10 min-w-0 flex-1 bg-transparent px-0.5 text-input text-highlighted outline-none placeholder:text-dimmed"
-              placeholder="Страницы и записи"
-              aria-label="Найти"
-            >
-            <UButton
-              v-if="q"
-              icon="i-lucide-x"
-              variant="ghost"
-              square
-              aria-label="Очистить"
-              @click="q = ''; input?.focus()"
-            />
-          </label>
-          <UButton
-            variant="ghost"
-            color="primary"
-            size="lg"
-            class="px-2.5 font-normal"
-            @click="open = false"
-          >
-            Отмена
-          </UButton>
-        </div>
-        <div class="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-3 pb-2">
-          <button
-            type="button"
-            class="hit-44 relative inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.75 rounded-chip border px-3 text-sm"
-            :class="titlesOnly ? 'border-accent bg-accent-soft text-accent-ink' : 'border-default bg-default text-default'"
-            :aria-pressed="titlesOnly"
-            @click="titlesOnly = !titlesOnly"
-          >
-            <span class="text-13 font-semibold">Aa</span>Только названия
-          </button>
-          <USelect
-            v-model="sectionId"
-            :items="sections"
-            class="h-9 shrink-0"
-          />
-        </div>
-        <ul
-          class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-[max(env(safe-area-inset-bottom),1rem)]"
-          data-vaul-no-drag
-          aria-label="Найденное"
-        >
-          <template
-            v-for="g in groups"
-            :key="g.label"
-          >
-            <li class="px-3 pt-3 pb-1 text-caption text-toned">
-              {{ g.label }}
-            </li>
-            <li
-              v-for="h in g.hits"
-              :key="h.kind + (h.kind === 'page' ? h.page.id : h.rec.id)"
-            >
-              <button
-                v-if="h.kind === 'page'"
-                type="button"
-                class="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left active:bg-pressed"
-                @click="pick(h)"
-              >
-                <PageTile
-                  :glyph="h.page.glyph"
-                  :color="h.page.color"
-                />
-                <span class="min-w-0 flex-1 truncate text-base text-highlighted">
-                  <template v-if="q">{{ splitMatch(h.page.title, q).pre }}<mark class="rounded-[3px] bg-accent-soft font-semibold text-highlighted">{{ splitMatch(h.page.title, q).mid }}</mark>{{ splitMatch(h.page.title, q).post }}</template>
-                  <template v-else>{{ h.page.title || 'Без названия' }}</template>
-                </span>
-              </button>
-              <RecordLine
-                v-else
-                :rec="h.rec"
-                :query="q"
-                density="list"
-                @open="pick(h)"
-              />
-            </li>
-          </template>
-          <li
-            v-if="!flat.length"
-            class="px-3 py-6 text-meta text-toned"
-          >
-            {{ q ? 'Ничего не нашлось' : 'Здесь появятся открытые страницы и записи' }}
-          </li>
-        </ul>
-      </div>
-    </template>
-  </UDrawer>
+  <FindScreen
+    v-else-if="open"
+    :initial="initial"
+    @close="open = false"
+    @pick="pick"
+  />
 </template>

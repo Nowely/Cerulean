@@ -1,36 +1,62 @@
 <script setup lang="ts">
-// Desktop navigation: the same tabs, «Найти ⌘K», Избранное, Входящие and the sections with their pages
+// Desktop navigation, no tabs (as in Codex): Главная, Найти, Чат; then Входящие and the sections as folding
+// captions (Избранное, Недавнее, the user's sections); Настройки at the bottom. Folding is the same state as
+// on Главная. Next to Главная the rows are bare (Главная carries the statuses); elsewhere overdue is said once,
+// at its highest place.
 import { computed, ref } from 'vue'
 import { useRoute } from '#imports'
 import type { Id, Page, Rec, Section } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { useFind } from '~/composables/useFind'
-import { useCreatePage } from '~/composables/useCreatePage'
-import { pageBadge, recordBadge } from '~/domain/summary'
-import AppTabs from './AppTabs.vue'
+import { pageBadge, recordBadge, type Badge } from '~/domain/summary'
+import { count } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
 import CountBadge from '../common/CountBadge.vue'
 import SectionMenu from '../home/SectionMenu.vue'
+
+const RECENT_SHOWN = 5
 
 const data = useDataStore()
 const route = useRoute()
 const now = useNow()
 const find = useFind()
-const { create } = useCreatePage()
-const favOpen = ref(true)
 
-const current = computed(() => route.path)
-const loose = computed(() => data.livePages.filter(p => p.kind === 'page' && !p.sectionId && p.favorite === null))
+const isCurrent = (path: string) => route.path === path
+const onHome = computed(() => route.path === '/')
+const folded = (key: string) => data.settings.folded.includes(key)
 const pagesOf = (s: Section) => data.livePages.filter(p => p.sectionId === s.id)
 
-function badgeOf(p: Page) {
-  return pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords)
+const recentOpen = ref(false)
+const recent = computed(() => data.recentlyMade)
+const recentShown = computed(() => recentOpen.value ? recent.value : recent.value.slice(0, RECENT_SHOWN))
+
+const waiting = computed(() => data.clarify.length)
+const chatLabel = computed(() => waiting.value
+  ? `Чат: ${count(waiting.value, ['запись ждёт', 'записи ждут', 'записей ждут'])} уточнения`
+  : 'Чат')
+
+// ---------- statuses ----------
+
+const rawPage = (p: Page) => pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords)
+const rawRec = (r: Rec) => recordBadge(data.subitemsOf(r.id), now.value)
+
+/** The first visible row that says «просрочено» keeps warn */
+const loudId = computed(() => {
+  const rows: { id: Id, badge: Badge | null }[] = [{ id: data.inbox.id, badge: rawPage(data.inbox) }]
+  if (!folded('favorites')) {
+    for (const f of data.favorites) rows.push(f.kind === 'page' ? { id: f.page.id, badge: rawPage(f.page) } : { id: f.rec.id, badge: rawRec(f.rec) })
+  }
+  if (!folded('recent')) for (const p of recentShown.value) rows.push({ id: p.id, badge: rawPage(p) })
+  for (const s of data.sectionList) if (!s.collapsed) for (const p of pagesOf(s)) rows.push({ id: p.id, badge: rawPage(p) })
+  return rows.find(r => r.badge?.tone === 'warn')?.id ?? null
+})
+function shown(id: Id, b: Badge | null): Badge | null {
+  if (!b || onHome.value) return null
+  return b.tone === 'warn' && id !== loudId.value ? { ...b, tone: 'neutral' } : b
 }
-function recBadge(r: Rec) {
-  return recordBadge(data.subitemsOf(r.id), now.value)
-}
-const isCurrent = (path: string) => current.value === path
+const badgeOf = (p: Page) => shown(p.id, rawPage(p))
+const recBadge = (r: Rec) => shown(r.id, rawRec(r))
 
 // «Переименовать» from a section's «⋯»: the name becomes a field in place
 const renaming = ref<Id | null>(null)
@@ -53,42 +79,86 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
     class="flex w-65 shrink-0 flex-col bg-side text-default"
     aria-label="Навигация"
   >
-    <div class="shrink-0 px-2.5 pt-2.5 pb-1.5">
-      <AppTabs variant="stack" />
-    </div>
-    <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto px-2.5 pb-3.5">
+    <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto px-2.5 pt-2.5 pb-3.5">
+      <NuxtLink
+        to="/"
+        class="side-row"
+        :aria-current="onHome ? 'page' : undefined"
+      >
+        <UIcon
+          name="cer:home"
+          class="side-ico"
+        />
+        <span class="min-w-0 flex-1 truncate">Главная</span>
+      </NuxtLink>
       <button
         type="button"
-        class="side-row text-toned"
+        class="side-row"
+        :aria-current="find.isOpen.value ? 'page' : undefined"
         @click="find.open()"
       >
-        <span class="flex size-6 items-center justify-center"><UIcon
+        <UIcon
           name="i-lucide-search"
-          class="size-4.5"
-        /></span>
-        <span class="min-w-0 flex-1 truncate">Найти</span>
-        <UKbd value="meta" /><UKbd
-          value="K"
-          class="-ml-1"
+          class="side-ico"
         />
+        <span class="min-w-0 flex-1 truncate">Найти</span>
+        <span class="text-13 text-dimmed">Ctrl K</span>
       </button>
+      <NuxtLink
+        to="/chat"
+        class="side-row"
+        :aria-current="isCurrent('/chat') ? 'page' : undefined"
+        :aria-label="chatLabel"
+      >
+        <span class="relative flex">
+          <UIcon
+            name="i-lucide-message-square"
+            class="side-ico"
+          />
+          <span
+            v-if="waiting"
+            class="absolute -top-0.5 -right-0.75 size-2 rounded-full bg-accent ring-2 ring-side"
+            aria-hidden="true"
+          />
+        </span>
+        <span class="min-w-0 flex-1 truncate">Чат</span>
+      </NuxtLink>
 
-      <template v-if="data.favorites.length">
+      <NuxtLink
+        :to="`/p/${data.inbox.id}`"
+        class="side-row mt-3"
+        :aria-current="isCurrent(`/p/${data.inbox.id}`) ? 'page' : undefined"
+      >
+        <PageTile
+          :glyph="data.inbox.glyph"
+          :size="16"
+        />
+        <span class="min-w-0 flex-1 truncate">Входящие</span>
+        <CountBadge
+          v-if="badgeOf(data.inbox)"
+          :badge="badgeOf(data.inbox)!"
+        />
+      </NuxtLink>
+
+      <section
+        v-if="data.favorites.length"
+        aria-label="Избранное"
+      >
         <div class="side-head">
           <button
             type="button"
             class="side-head-btn"
-            :aria-expanded="favOpen"
-            @click="favOpen = !favOpen"
+            :aria-expanded="!folded('favorites')"
+            @click="data.toggleFolded('favorites')"
           >
             Избранное <UIcon
               name="i-lucide-chevron-down"
-              class="size-3.5 transition-transform"
-              :class="favOpen ? '' : '-rotate-90'"
+              class="side-chev"
+              :class="{ '-rotate-90': folded('favorites') }"
             />
           </button>
         </div>
-        <template v-if="favOpen">
+        <template v-if="!folded('favorites')">
           <template
             v-for="f in data.favorites"
             :key="f.kind + (f.kind === 'page' ? f.page.id : f.rec.id)"
@@ -101,7 +171,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
             >
               <PageTile
                 :glyph="f.page.glyph"
-                :color="f.page.color"
+                :size="16"
               />
               <span class="min-w-0 flex-1 truncate">{{ f.page.title || 'Без названия' }}</span>
               <CountBadge
@@ -117,7 +187,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
             >
               <PageTile
                 :glyph="f.rec.glyph ?? 'doc'"
-                :color="f.rec.color ?? data.pages[f.rec.pageId]?.color"
+                :size="16"
               />
               <span class="min-w-0 flex-1 truncate">{{ f.rec.text }}</span>
               <CountBadge
@@ -127,44 +197,58 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
             </NuxtLink>
           </template>
         </template>
-      </template>
+      </section>
 
-      <NuxtLink
-        :to="`/p/${data.inbox.id}`"
-        class="side-row mt-3.5"
-        :aria-current="isCurrent(`/p/${data.inbox.id}`) ? 'page' : undefined"
+      <section
+        v-if="recent.length"
+        aria-label="Недавнее"
       >
-        <PageTile
-          :glyph="data.inbox.glyph"
-          :color="data.inbox.color"
-        />
-        <span class="min-w-0 flex-1 truncate">Входящие</span>
-        <CountBadge
-          v-if="badgeOf(data.inbox)"
-          :badge="badgeOf(data.inbox)!"
-        />
-      </NuxtLink>
-
-      <NuxtLink
-        v-for="p in loose"
-        :key="p.id"
-        :to="`/p/${p.id}`"
-        class="side-row"
-        :aria-current="isCurrent(`/p/${p.id}`) ? 'page' : undefined"
-      >
-        <PageTile
-          :glyph="p.glyph"
-          :color="p.color"
-        />
-        <span
-          class="min-w-0 flex-1 truncate"
-          :class="p.title ? '' : 'text-dimmed'"
-        >{{ p.title || 'Без названия' }}</span>
-        <CountBadge
-          v-if="badgeOf(p)"
-          :badge="badgeOf(p)!"
-        />
-      </NuxtLink>
+        <div class="side-head">
+          <button
+            type="button"
+            class="side-head-btn"
+            :aria-expanded="!folded('recent')"
+            @click="data.toggleFolded('recent')"
+          >
+            Недавнее <UIcon
+              name="i-lucide-chevron-down"
+              class="side-chev"
+              :class="{ '-rotate-90': folded('recent') }"
+            />
+          </button>
+        </div>
+        <template v-if="!folded('recent')">
+          <NuxtLink
+            v-for="p in recentShown"
+            :key="p.id"
+            :to="`/p/${p.id}`"
+            class="side-row"
+            :aria-current="isCurrent(`/p/${p.id}`) ? 'page' : undefined"
+          >
+            <PageTile
+              :glyph="p.glyph"
+              :size="16"
+            />
+            <span
+              class="min-w-0 flex-1 truncate"
+              :class="{ 'text-dimmed': !p.title }"
+            >{{ p.title || 'Без названия' }}</span>
+            <CountBadge
+              v-if="badgeOf(p)"
+              :badge="badgeOf(p)!"
+            />
+          </NuxtLink>
+          <button
+            v-if="recent.length > RECENT_SHOWN"
+            type="button"
+            class="side-row text-toned"
+            :aria-expanded="recentOpen"
+            @click="recentOpen = !recentOpen"
+          >
+            <span class="w-4" />{{ recentOpen ? 'Свернуть' : `Ещё ${recent.length - RECENT_SHOWN}` }}
+          </button>
+        </template>
+      </section>
 
       <section
         v-for="s in data.sectionList"
@@ -193,8 +277,8 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
             <span class="truncate">{{ s.name }}</span>
             <UIcon
               name="i-lucide-chevron-down"
-              class="size-3.5 shrink-0 transition-transform"
-              :class="s.collapsed ? '-rotate-90' : ''"
+              class="side-chev"
+              :class="{ '-rotate-90': s.collapsed }"
             />
           </button>
           <span class="flex opacity-0 group-hover/head:opacity-100 group-focus-within/head:opacity-100 has-aria-expanded:opacity-100">
@@ -202,16 +286,6 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
               :section="s"
               @rename="startRename(s)"
             />
-            <UTooltip text="Новая страница">
-              <UButton
-                icon="i-lucide-plus"
-                variant="ghost"
-                square
-                size="xs"
-                :aria-label="`Новая страница в секции «${s.name}»`"
-                @click="create({ sectionId: s.id })"
-              />
-            </UTooltip>
           </span>
         </div>
         <template v-if="!s.collapsed">
@@ -224,51 +298,32 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
           >
             <PageTile
               :glyph="p.glyph"
-              :color="p.color"
+              :size="16"
             />
             <span
               class="min-w-0 flex-1 truncate"
-              :class="p.title ? '' : 'text-dimmed'"
+              :class="{ 'text-dimmed': !p.title }"
             >{{ p.title || 'Без названия' }}</span>
             <CountBadge
               v-if="badgeOf(p)"
               :badge="badgeOf(p)!"
             />
           </NuxtLink>
-          <button
-            v-if="!pagesOf(s).length"
-            type="button"
-            class="side-row text-toned"
-            @click="create({ sectionId: s.id })"
-          >
-            <span class="flex size-6 items-center justify-center"><UIcon
-              name="i-lucide-plus"
-              class="size-4"
-            /></span>Новая страница
-          </button>
         </template>
       </section>
-
-      <button
-        type="button"
-        class="side-row mt-3.5 text-toned"
-        @click="create()"
+    </div>
+    <div class="shrink-0 px-2.5 pb-2.5">
+      <NuxtLink
+        to="/settings"
+        class="side-row"
+        :aria-current="route.path.startsWith('/settings') ? 'page' : undefined"
       >
-        <span class="flex size-6 items-center justify-center"><UIcon
-          name="i-lucide-plus"
-          class="size-4"
-        /></span>Новая страница
-      </button>
-      <button
-        type="button"
-        class="side-row text-toned"
-        @click="data.createSection('Новая секция')"
-      >
-        <span class="flex size-6 items-center justify-center"><UIcon
-          name="i-lucide-folder-plus"
-          class="size-4"
-        /></span>Новая секция
-      </button>
+        <UIcon
+          name="i-lucide-settings"
+          class="side-ico"
+        />
+        <span class="min-w-0 flex-1 truncate">Настройки</span>
+      </NuxtLink>
     </div>
   </aside>
 </template>
@@ -277,7 +332,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
 @reference "~/assets/css/main.css";
 
 .side-row {
-  @apply relative flex min-h-9 w-full cursor-pointer items-center gap-2.5 rounded-item py-1 pr-2 pl-1.5 text-left text-sm text-default hover:bg-side-hover hover:text-highlighted active:bg-pressed;
+  @apply relative flex min-h-9 w-full cursor-pointer items-center gap-2.5 rounded-item py-1 pr-2 pl-2.5 text-left text-sm text-default hover:bg-side-hover hover:text-highlighted active:bg-pressed;
 }
 
 .side-row[aria-current="page"] {
@@ -289,11 +344,19 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
   @apply absolute top-2 bottom-2 left-0 w-0.5 rounded-r-[2px] bg-accent;
 }
 
+.side-ico {
+  @apply size-4 shrink-0 text-toned;
+}
+
 .side-head {
-  @apply mt-3.5 flex items-center gap-0.5;
+  @apply mt-3 flex items-center gap-0.5;
 }
 
 .side-head-btn {
-  @apply flex h-7 min-w-0 flex-1 cursor-pointer items-center gap-1.25 rounded-item px-2 text-left text-13 font-medium text-dimmed hover:text-highlighted;
+  @apply flex h-7 min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-item px-2.5 text-left text-cap text-toned hover:text-highlighted;
+}
+
+.side-chev {
+  @apply size-3.5 shrink-0 text-dimmed transition-transform;
 }
 </style>

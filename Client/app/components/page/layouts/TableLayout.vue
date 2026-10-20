@@ -38,7 +38,7 @@ function cell(rec: Rec, key: string): { text: string, warn?: boolean } {
     class="mt-2 w-full border-collapse text-15 tabular-nums"
   >
     <thead>
-      <tr class="border-b border-default text-left text-caption text-dimmed">
+      <tr class="border-b border-default text-left text-cap text-toned">
         <th class="w-9" />
         <th class="py-2 pr-3 font-medium">
           Запись

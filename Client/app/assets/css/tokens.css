@@ -1,44 +1,69 @@
 /*
  * Cerulean design tokens: the only place in the client with colour values.
  * Light is the default (:root), dark comes from color-mode (`.dark` on <html>).
- * Names and values follow «Цвета» in the principles doc; main.css maps them onto
- * Nuxt UI variables and Tailwind utilities, components only use those names.
+ * Values are the approved pair (strict light, blue-graphite dark) from the mockups'
+ * shared/tokens.css; main.css maps them onto Nuxt UI variables and Tailwind utilities,
+ * components only use those names.
  */
 :root {
-  --bg: #F6F8FA;
-  --surface: #FFFFFF;
-  --trk: #E9EDF1;
+  /* Canvas and surfaces: bg the canvas; surface the recessed cards lying on it; elev the raised things
+     (composer, sheets, menus, fields, the docked receipt); panel and side the desktop frame */
+  --bg: #FCFCFB;
+  --surface: #F1F1EF;
+  --elev: #FFFFFF;
+  --panel: #FFFFFF;
+  --side: #F1F1EF;
+  --side-hover: #E9E9E7;
+  --side-sel: #E2E2E0;
+  --rail: #EAEAE8;
+  --trk: #EAEAE8;
   --seg-on: #FFFFFF;
-  --seg-shadow: 0 1px 2px rgb(20 26 33 / 0.14);
-  --hover: #EEF1F4;
-  --pressed: #E1E6EB;
-  --sel: #E7EBEF;
-  --fresh: #E5EFF7;
-  --line: #E2E7EC;
-  --line2: #C6CED6;
-  --ring: #77818D;
-  --ink: #141A21;
-  --text: #27303A;
-  --muted: #434D5A;
-  --faint: #616B78;
-  --placeholder-lg: #808A96;
-  --accent: #1D6FA5;
-  --accent-ink: #165B88;
+  --seg-shadow: 0 1px 2px rgba(20,20,25,.12);
+
+  /* States */
+  --hover: #F4F4F2;
+  --pressed: #E6E6E4;
+  --sel: #ECECEA;
+  --fresh: #E5EDF3;
+  --bubble: #F1F1EF;
+
+  /* Chips: buttons inside cards and on bg (chip), the same on raised surfaces (chip-elev), their pressed and open state */
+  --chip: #FFFFFF;
+  --chip-pressed: #DEDEDB;
+  --chip-elev: #EAEAE8;
+  --chip-elev-pressed: #D2D2CE;
+
+  /* Lines and rings */
+  --line: #E4E4E1;
+  --line2: #CDCDC9;
+  --ring: #7C7C79;
+
+  /* Text */
+  --ink: #161618;
+  --text: #29292C;
+  --muted: #4E4E52;
+  --faint: #67676B;
+  --placeholder-lg: #7E7E82;
+
+  /* Accent, warn, ok */
+  --accent: #1F5F8B;
+  --accent-ink: #1A4F75;
   --on-accent: #FFFFFF;
-  --accent-soft: #E5EFF7;
-  --warn: #A84B0B;
-  --warn-ink: #924209;
-  --ok: #2E7D55;
+  --accent-soft: #E5EDF3;
+  --warn: #A4401C;
+  --warn-ink: #8E3613;
+  --warn-fill: #A4401C;
+  --on-warn: #FFFFFF;
+  --ok: #3B6F4B;
+
+  /* Switch, scrim, float */
   --knob: #FFFFFF;
-  --scrim: rgb(20 26 33 / 0.32);
-  --float: 0 6px 24px rgb(20 26 33 / 0.08);
-  --side: #EEF2F5;
-  --side-hover: #E3E8ED;
-  --side-sel: #D9E0E7;
+  --scrim: rgba(20,26,33,.32);
+  --float: 0 6px 24px rgba(20,26,33,.08);
 
   /* Page colours: glyph (--c-*) on its tile (--b-*). No orange, so nothing reads as warn. */
   --c-green: #2E7D55;
-  --c-blue: #1D6FA5;
+  --c-blue: #1F5F8B;
   --c-brown: #8B6446;
   --c-yellow: #9A6F0E;
   --c-pink: #B0457A;
@@ -46,7 +71,7 @@
   --c-gray: #66707C;
   --c-teal: #1C7A74;
   --b-green: #E3F2EA;
-  --b-blue: #E5EFF7;
+  --b-blue: #E5EDF3;
   --b-brown: #F1E9E2;
   --b-yellow: #F7EED3;
   --b-pink: #F7E6EF;
@@ -56,39 +81,55 @@
 }
 
 .dark {
-  --bg: #15181B;
-  --surface: #1E2328;
-  --trk: #24292F;
-  --seg-on: #3A424B;
-  --seg-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
-  --hover: #23282D;
-  --pressed: #30373E;
-  --sel: #2A3037;
-  --fresh: #16303F;
-  --line: #2A3037;
-  --line2: #3B444D;
-  --ring: #7A8591;
-  --ink: #EEF2F5;
-  --text: #D8DEE4;
-  --muted: #B0BAC4;
-  --faint: #8F9AA6;
-  --placeholder-lg: #76818D;
-  --accent: #5AB0E0;
-  --accent-ink: #8DCBEE;
-  --on-accent: #0B1620;
-  --accent-soft: #16303F;
-  --warn: #E39A5B;
-  --warn-ink: #F0B07A;
-  --ok: #6FBF8F;
+  --bg: #161F26;
+  --surface: #0D151A;
+  --elev: #1A2329;
+  --panel: #1A2329;
+  --side: #0B1216;
+  --side-hover: #131B21;
+  --side-sel: #1D282F;
+  --rail: #0B1216;
+  --trk: #0D151A;
+  --seg-on: #27333B;
+  --seg-shadow: none;
+
+  --hover: #1B252C;
+  --pressed: #232E36;
+  --sel: #1D282F;
+  --fresh: #153045;
+  --bubble: #0D151A;
+
+  --chip: #212C33;
+  --chip-pressed: #303D46;
+  --chip-elev: #27333B;
+  --chip-elev-pressed: #3A4852;
+
+  --line: #232D33;
+  --line2: #33414A;
+  --ring: #7B8990;
+
+  --ink: #E9F0F2;
+  --text: #D3DCE1;
+  --muted: #A5B4BB;
+  --faint: #8B9AA3;
+  --placeholder-lg: #6F7E87;
+
+  --accent: #78B2DF;
+  --accent-ink: #ADD3F3;
+  --on-accent: #0A1723;
+  --accent-soft: #153045;
+  --warn: #EF9F67;
+  --warn-ink: #F4B88D;
+  --warn-fill: #A84A26;
+  --on-warn: #FFFFFF;
+  --ok: #8EC899;
+
   --knob: #FFFFFF;
-  --scrim: rgb(0 0 0 / 0.55);
-  --float: 0 6px 24px rgb(0 0 0 / 0.4);
-  --side: #111416;
-  --side-hover: #1C2125;
-  --side-sel: #252B31;
+  --scrim: rgba(0,0,0,.55);
+  --float: 0 6px 24px rgba(0,0,0,.4);
 
   --c-green: #6FBF8F;
-  --c-blue: #5AB0E0;
+  --c-blue: #78B2DF;
   --c-brown: #C29A7C;
   --c-yellow: #D9B04E;
   --c-pink: #E07FAE;
@@ -96,7 +137,7 @@
   --c-gray: #9AA5B1;
   --c-teal: #5CC1B8;
   --b-green: #17352A;
-  --b-blue: #16303F;
+  --b-blue: #153045;
   --b-brown: #33281F;
   --b-yellow: #362D14;
   --b-pink: #3A1F2D;
@@ -106,33 +147,33 @@
 }
 
 /*
- * Scales for Nuxt UI's colour system (`primary: 'azure'`, `neutral: 'cool'` in app.config).
+ * Scales for Nuxt UI's colour system (`primary: 'steel'`, `neutral: 'graphite'` in app.config).
  * Nuxt UI's own components read the semantic variables mapped in main.css, not these steps;
  * the steps exist so every `primary-*` / `neutral-*` utility resolves to something on-brand.
- * Light accent is azure-700, dark accent azure-300.
+ * Light accent is steel-700, dark accent steel-300.
  */
 @theme static {
-  --color-azure-50: #F0F6FB;
-  --color-azure-100: #E5EFF7;
-  --color-azure-200: #8DCBEE;
-  --color-azure-300: #5AB0E0;
-  --color-azure-400: #3E98CF;
-  --color-azure-500: #2D84BD;
-  --color-azure-600: #2479B1;
-  --color-azure-700: #1D6FA5;
-  --color-azure-800: #165B88;
-  --color-azure-900: #12476A;
-  --color-azure-950: #0D2433;
+  --color-steel-50: #F1F6FA;
+  --color-steel-100: #E5EDF3;
+  --color-steel-200: #ADD3F3;
+  --color-steel-300: #78B2DF;
+  --color-steel-400: #5296C9;
+  --color-steel-500: #377DB0;
+  --color-steel-600: #286C9C;
+  --color-steel-700: #1F5F8B;
+  --color-steel-800: #1A4F75;
+  --color-steel-900: #153D5A;
+  --color-steel-950: #0A1723;
 
-  --color-cool-50: #F6F8FA;
-  --color-cool-100: #EEF1F4;
-  --color-cool-200: #E2E7EC;
-  --color-cool-300: #C6CED6;
-  --color-cool-400: #8F9AA6;
-  --color-cool-500: #616B78;
-  --color-cool-600: #434D5A;
-  --color-cool-700: #27303A;
-  --color-cool-800: #1E2328;
-  --color-cool-900: #15181B;
-  --color-cool-950: #0E1113;
+  --color-graphite-50: #FCFCFB;
+  --color-graphite-100: #F1F1EF;
+  --color-graphite-200: #E4E4E1;
+  --color-graphite-300: #CDCDC9;
+  --color-graphite-400: #7C7C79;
+  --color-graphite-500: #67676B;
+  --color-graphite-600: #4E4E52;
+  --color-graphite-700: #29292C;
+  --color-graphite-800: #1A2329;
+  --color-graphite-900: #161F26;
+  --color-graphite-950: #0D151A;
 }

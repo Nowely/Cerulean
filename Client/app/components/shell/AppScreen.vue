@@ -3,7 +3,8 @@
 import { computed, useTemplateRef } from 'vue'
 import { useScroll } from '@vueuse/core'
 
-withDefaults(defineProps<{ wide?: boolean }>(), { wide: false })
+/** The dock's column: Главная 720, Чат 640, pages 680 */
+withDefaults(defineProps<{ wide?: boolean, chat?: boolean }>(), { wide: false, chat: false })
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const { arrivedState } = useScroll(scroller)
 const fadeTop = computed(() => !arrivedState.top)
@@ -28,7 +29,7 @@ defineExpose({ scroller })
     >
       <div
         class="mx-auto flex w-full flex-col gap-2"
-        :class="wide ? 'lg:max-w-180' : 'lg:max-w-170'"
+        :class="wide ? 'lg:max-w-180' : chat ? 'lg:max-w-160' : 'lg:max-w-170'"
       >
         <slot name="dock" />
       </div>

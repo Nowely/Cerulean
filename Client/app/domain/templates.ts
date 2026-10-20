@@ -77,7 +77,7 @@ export const TEMPLATES: Template[] = [
     name: 'Цели',
     glyph: 'target',
     color: 'pink',
-    description: 'цели и шаги к ним',
+    description: 'цели с подпунктами',
     hasDone: true,
     noun: ['цель', 'цели', 'целей'],
     props: () => [],

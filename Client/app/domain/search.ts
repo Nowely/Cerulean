@@ -68,3 +68,11 @@ export function answer(question: string, records: Rec[], limit = 5): Rec[] {
     .slice(0, limit)
     .map(x => x.r)
 }
+
+/** Поиск on a phone without a query: the records added last, with their path (recent pages would repeat Главная) */
+export function lastAdded(records: Rec[], limit = 6): Rec[] {
+  return records
+    .filter(r => !r.parentId && !r.done)
+    .sort((a, b) => b.addedAt - a.addedAt)
+    .slice(0, limit)
+}

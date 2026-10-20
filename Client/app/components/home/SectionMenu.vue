@@ -1,11 +1,12 @@
 <script setup lang="ts">
-// «⋯» of a section: the «+» lives here. Deleting a section keeps its pages («Без секции»).
+// «⋯» of a section: «Новая страница» lives here. Deleting a section keeps its pages, they move to «Недавнее».
 import { computed } from 'vue'
 import type { Section } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useCreatePage } from '~/composables/useCreatePage'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
+import DotsButton from '../common/DotsButton.vue'
 
 const props = defineProps<{ section: Section }>()
 const emit = defineEmits<{ rename: [] }>()
@@ -15,7 +16,7 @@ const { create } = useCreatePage()
 
 const items = computed<MenuItem[][]>(() => [
   [
-    { label: 'Новая страница', icon: 'i-lucide-plus', onSelect: () => create({ sectionId: props.section.id }) },
+    { label: 'Новая страница', icon: 'i-lucide-square-pen', onSelect: () => create({ sectionId: props.section.id }) },
     { label: 'Переименовать', icon: 'i-lucide-pencil', onSelect: () => emit('rename') },
     {
       label: props.section.collapsed ? 'Развернуть' : 'Свернуть',
@@ -33,7 +34,7 @@ const items = computed<MenuItem[][]>(() => [
         if (!n) return data.removeSection(props.section.id)
         ui.confirm({
           title: `Удалить секцию «${props.section.name}»?`,
-          text: 'Страницы останутся, они переедут в «Без секции».',
+          text: 'Страницы останутся, они переедут в Недавнее.',
           action: 'Удалить секцию',
           run: () => data.removeSection(props.section.id)
         })
@@ -51,14 +52,7 @@ const items = computed<MenuItem[][]>(() => [
     :label="`Действия с секцией «${section.name}»`"
   >
     <template #default>
-      <UButton
-        icon="i-lucide-ellipsis"
-        variant="ghost"
-        square
-        size="xs"
-        :aria-label="`Действия с секцией «${section.name}»`"
-        class="max-lg:size-11 max-lg:rounded-card"
-      />
+      <DotsButton :label="`Действия с секцией «${section.name}»`" />
     </template>
   </ActionMenu>
 </template>

@@ -3,6 +3,7 @@
 // Until the menu code is in (useLater) the button stands on its own; a tap opens the menu once it is.
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
+import DotsButton from '../common/DotsButton.vue'
 
 export interface MenuItem {
   label: string
@@ -10,6 +11,8 @@ export interface MenuItem {
   /** Right side of the row: the current value («Дом», «еда, напитки…») */
   value?: string
   danger?: boolean
+  /** A switch row («Компактные строки»): the row toggles and shows its state */
+  checked?: boolean
   onSelect: () => void
 }
 
@@ -21,6 +24,8 @@ defineProps<{
   label: string
   /** Phone: no trigger of its own, opened through v-model:open from a line that already looks like a button */
   bare?: boolean
+  /** Phone: a sheet without the title row (the menu of Главная) */
+  headless?: boolean
 }>()
 
 const { isDesktop } = useScreen()
@@ -59,15 +64,15 @@ const afterClose = () => setTimeout(() => setTimeout(run))
   <LazyUDropdownMenu
     v-if="isDesktop && later.ready.value"
     v-model:open="open"
-    :items="items.map(g => g.map(i => ({ label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value })))"
+    :items="items.map(g => g.map(i => i.checked === undefined
+      ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value }
+      : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) }))"
     :content="{ align: 'end', onCloseAutoFocus: afterClose }"
   >
     <slot :open="open">
-      <UButton
-        icon="i-lucide-ellipsis"
-        variant="ghost"
-        square
-        :aria-label="label"
+      <DotsButton
+        :label="label"
+        tone="muted"
       />
     </slot>
     <template #item-trailing="{ item }">
@@ -84,11 +89,9 @@ const afterClose = () => setTimeout(() => setTimeout(run))
       @click="openNow"
     >
       <slot :open="open">
-        <UButton
-          icon="i-lucide-ellipsis"
-          variant="ghost"
-          square
-          :aria-label="label"
+        <DotsButton
+          :label="label"
+          tone="muted"
           :aria-expanded="open"
         />
       </slot>
@@ -102,7 +105,16 @@ const afterClose = () => setTimeout(() => setTimeout(run))
     >
       <template #content>
         <div class="flex flex-col">
-          <div class="mx-3 flex items-center gap-2.5 border-b border-default px-3 pt-1.5 pb-2.5">
+          <h2
+            v-if="headless"
+            class="sr-only"
+          >
+            {{ title ?? label }}
+          </h2>
+          <div
+            v-else
+            class="mx-3 flex items-center gap-2.5 border-b border-default px-3 pt-1.5 pb-2.5"
+          >
             <slot name="head">
               <span class="min-w-0 flex-1 truncate text-base font-semibold text-highlighted">{{ title ?? label }}</span>
             </slot>
@@ -126,7 +138,9 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                 type="button"
                 class="flex min-h-12.5 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base active:bg-pressed"
                 :class="item.danger ? 'text-warn-ink' : 'text-default'"
-                @click="select(item)"
+                :role="item.checked === undefined ? undefined : 'switch'"
+                :aria-checked="item.checked"
+                @click="item.checked === undefined ? select(item) : item.onSelect()"
               >
                 <UIcon
                   :name="item.icon"
@@ -141,6 +155,17 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                   v-if="item.value"
                   class="min-w-0 flex-1 truncate text-right text-meta text-toned"
                 >{{ item.value }}</span>
+                <span
+                  v-if="item.checked !== undefined"
+                  class="flex h-6 w-10 shrink-0 items-center rounded-full p-0.5 transition-colors"
+                  :class="item.checked ? 'bg-accent' : 'bg-trk'"
+                  aria-hidden="true"
+                >
+                  <span
+                    class="size-5 rounded-full bg-knob shadow-seg transition-transform"
+                    :class="item.checked ? 'translate-x-4' : 'ring-[1.5px] ring-ring ring-inset'"
+                  />
+                </span>
               </button>
             </template>
           </div>

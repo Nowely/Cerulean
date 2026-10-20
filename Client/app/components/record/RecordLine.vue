@@ -6,7 +6,7 @@ import type { Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { formatDue, formatDueBrief, isOverdue } from '~/domain/dates'
-import { splitMatch } from '~/domain/text'
+import { inPlace, splitMatch } from '~/domain/text'
 import RecordMark from '../common/RecordMark.vue'
 
 const props = withDefaults(defineProps<{
@@ -68,7 +68,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
         class="max-w-full truncate text-caption font-normal"
         :class="late ? 'text-warn-ink' : 'text-toned'"
       >
-        <template v-if="place && where">в {{ where }}</template>
+        <template v-if="place && where">{{ inPlace(where) }}</template>
         <template v-if="place && where && (when || tag)"> · </template>
         <template v-if="when">{{ when }}</template>
         <template v-if="when && tag"> · </template>

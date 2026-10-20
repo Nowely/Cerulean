@@ -1,73 +1,152 @@
 <script setup lang="ts">
-// A page on Главная: tile, name with its badge on the same line, the summary under it at full width
-import { computed } from 'vue'
+// A page on Главная: bare glyph, name with its status on the same line, the summary under it at full width.
+// Compact is its own list: 32px rows, no status text, only a dot on the glyph where the status would be loud.
+// The row's right end belongs to the page «⋯» (hover and keyboard focus on desktop); on a phone a long press
+// opens the same menu.
+import { computed, ref } from 'vue'
+import { useRouter } from '#imports'
 import type { Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
-import { pageBadge, pageSummary, recordBadge, recordSummary, type Summary } from '~/domain/summary'
+import { useScreen } from '~/composables/useScreen'
+import { pageBadge, pageSummary, recordBadge, recordSummary, type Badge, type Summary } from '~/domain/summary'
 import PageTile from '../common/PageTile.vue'
 import CountBadge from '../common/CountBadge.vue'
+import DotsButton from '../common/DotsButton.vue'
+import PageMenu from '../page/PageMenu.vue'
 
-const props = defineProps<{ page?: Page, rec?: Rec, compact?: boolean }>()
+const props = defineProps<{
+  page?: Page
+  rec?: Rec
+  compact?: boolean
+  /** Overdue is said once per screen: a repeat on a lower row reads neutral */
+  quiet?: boolean
+}>()
 const data = useDataStore()
 const now = useNow()
+const router = useRouter()
+const { isDesktop } = useScreen()
 
 const to = computed(() => props.page ? `/p/${props.page.id}` : `/r/${props.rec!.id}`)
 const name = computed(() => props.page ? props.page.title || 'Без названия' : props.rec!.text)
-const tile = computed(() => props.page
-  ? { glyph: props.page.glyph, color: props.page.color }
-  : { glyph: props.rec!.glyph ?? 'doc', color: props.rec!.color ?? data.pages[props.rec!.pageId]?.color })
+const glyph = computed(() => props.page ? props.page.glyph : props.rec!.glyph ?? 'doc')
 const summary = computed<Summary>(() => props.page
   ? pageSummary(props.page, data.recordsOf(props.page.id), now.value, data.liveRecords)
   : recordSummary(data.subitemsOf(props.rec!.id), now.value))
-const badge = computed(() => props.page
-  ? pageBadge(props.page, data.recordsOf(props.page.id), now.value, data.liveRecords)
-  : recordBadge(data.subitemsOf(props.rec!.id), now.value))
+const badge = computed<Badge | null>(() => {
+  const b = props.page
+    ? pageBadge(props.page, data.recordsOf(props.page.id), now.value, data.liveRecords)
+    : recordBadge(data.subitemsOf(props.rec!.id), now.value)
+  return b && props.quiet && b.tone === 'warn' ? { ...b, tone: 'neutral' } : b
+})
+/** Compact: the one signal left is a dot on the glyph's corner, only where the status would be coloured */
+const dot = computed(() => props.compact && badge.value && badge.value.tone !== 'neutral' ? badge.value.tone : null)
+
+// A long press on a phone opens the page menu; the click that follows it must not open the page
+const menuOpen = ref(false)
+let timer: ReturnType<typeof setTimeout> | undefined
+let pressed = false
+function down(e: PointerEvent) {
+  if (isDesktop.value || !props.page || e.pointerType === 'mouse') return
+  pressed = false
+  timer = setTimeout(() => {
+    pressed = true
+    menuOpen.value = true
+    navigator.vibrate?.(10)
+  }, 500)
+}
+function up() {
+  clearTimeout(timer)
+}
+function click(e: MouseEvent) {
+  if (pressed) {
+    e.preventDefault()
+    pressed = false
+    return
+  }
+  e.preventDefault()
+  void router.push(to.value)
+}
 </script>
 
 <template>
-  <NuxtLink
-    :to="to"
-    class="flex w-full items-center gap-3 rounded-card px-3 text-left hover:bg-muted active:bg-pressed lg:gap-3 lg:rounded-chip lg:px-2.5"
-    :class="compact ? 'min-h-12 py-1 lg:min-h-10' : 'min-h-15.5 py-2 lg:min-h-14'"
+  <div
+    role="listitem"
+    class="group/row relative flex items-center rounded-card hover:bg-muted focus-within:bg-muted lg:rounded-chip"
   >
-    <PageTile
-      :glyph="tile.glyph"
-      :color="tile.color"
-    />
-    <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-      <span class="flex min-w-0 items-center gap-2">
+    <a
+      :href="to"
+      class="flex min-w-0 flex-1 select-none items-center gap-3 rounded-card px-2 text-left [-webkit-touch-callout:none] active:bg-pressed lg:rounded-chip"
+      :class="compact ? 'min-h-8' : 'min-h-13 py-1.25 lg:min-h-12'"
+      @click="click"
+      @pointerdown="down"
+      @pointerup="up"
+      @pointercancel="up"
+      @pointerleave="up"
+      @contextmenu="page && !isDesktop && $event.preventDefault()"
+    >
+      <span class="relative flex size-4.5 shrink-0 items-center justify-center">
+        <PageTile
+          :glyph="glyph"
+          :size="compact ? 16 : 18"
+        />
         <span
-          class="min-w-0 truncate text-row text-highlighted"
-          :class="{ 'font-medium!': compact, 'text-dimmed': !page?.title && page }"
-        >{{ name }}</span>
-        <CountBadge
-          v-if="badge"
-          :badge="badge"
+          v-if="dot"
+          class="absolute -top-0.5 -right-0.75 size-2 rounded-full ring-2 ring-canvas"
+          :class="dot === 'warn' ? 'bg-warn' : 'bg-accent'"
+          aria-hidden="true"
         />
       </span>
-      <span
-        v-if="!compact && (summary.lead || summary.names)"
-        class="flex min-w-0 text-meta text-toned"
-      >
+      <span class="flex min-w-0 flex-1 flex-col gap-px">
+        <span class="flex min-w-0 items-center gap-2">
+          <span
+            class="min-w-0 truncate"
+            :class="[
+              compact ? 'text-15 leading-5 text-highlighted' : 'text-base leading-5.5 font-medium text-highlighted lg:text-sm lg:leading-5',
+              { 'text-dimmed': page && !page.title }
+            ]"
+          >{{ name }}</span>
+          <CountBadge
+            v-if="badge"
+            :badge="badge"
+            :class="{ 'sr-only': compact }"
+          />
+        </span>
         <span
-          v-if="summary.lead"
-          class="shrink-0"
-          :class="{ 'min-w-0 truncate': !summary.names }"
-        >{{ summary.lead }}</span>
-        <span
-          v-if="summary.lead && summary.names"
-          class="shrink-0"
-        >&nbsp;·&nbsp;</span>
-        <span
-          v-if="summary.names"
-          class="min-w-0 truncate"
-        >{{ summary.names }}</span>
-        <span
-          v-if="summary.more"
-          class="shrink-0"
-        >&nbsp;+{{ summary.more }}</span>
+          v-if="!compact && (summary.lead || summary.names)"
+          class="flex min-w-0 text-sm leading-4.75 text-toned lg:text-13 lg:leading-4.5"
+        >
+          <span
+            v-if="summary.lead"
+            class="shrink-0"
+            :class="{ 'min-w-0 truncate': !summary.names }"
+          >{{ summary.lead }}</span>
+          <span
+            v-if="summary.lead && summary.names"
+            class="shrink-0"
+          >&nbsp;·&nbsp;</span>
+          <span
+            v-if="summary.names"
+            class="min-w-0 truncate"
+          >{{ summary.names }}</span>
+          <span
+            v-if="summary.more"
+            class="shrink-0"
+          >&nbsp;+{{ summary.more }}</span>
+        </span>
       </span>
-    </span>
-  </NuxtLink>
+    </a>
+    <PageMenu
+      v-if="page && page.kind !== 'today'"
+      v-model:open="menuOpen"
+      :page="page"
+      home
+      :bare="!isDesktop"
+    >
+      <DotsButton
+        label="Действия со страницей"
+        class="mr-1 opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 aria-expanded:opacity-100"
+      />
+    </PageMenu>
+  </div>
 </template>

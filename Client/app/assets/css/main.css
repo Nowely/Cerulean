@@ -25,11 +25,13 @@
 
   /*
    * Type scale: nothing outside these sizes. Fixed steps for chrome
-   * (12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
+   * (11 the Чат counter, 12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
    * 16 inputs and journal text, 17 records, 20 sheet titles, 28 / 30 page titles)
    * and role steps that switch to their desktop size at lg (see the media block below).
    */
   --text-*: initial;
+  --text-11: 11px;
+  --text-11--line-height: 1;
   --text-xs: 12px;
   --text-xs--line-height: 16px;
   --text-13: 13px;
@@ -46,6 +48,8 @@
   --text-xl--line-height: 1.3;
   --text-28: 28px;
   --text-28--line-height: 1.2;
+  --text-30: 30px;
+  --text-30--line-height: 1.2;
 
   /* Roles from «Шрифт» in the doc: mobile value here, desktop value in the lg block */
   --text-title: 28px;
@@ -64,6 +68,11 @@
   --text-body--line-height: 1.45;
   --text-meta: 14px;
   --text-meta--line-height: 1.35;
+  /* Every group label: sections, page groups, Доска columns, Настройки groups, picker and Поиск groups, Чат days */
+  --text-cap: 12px;
+  --text-cap--line-height: 20px;
+  --text-cap--letter-spacing: 0.02em;
+  --text-cap--font-weight: 500;
   --text-caption: 13px;
   --text-caption--line-height: 1.35;
   --text-caption--font-weight: 500;
@@ -80,6 +89,8 @@
   --radius-tile-sm: 5px;
   --radius-tile-lg: 10px;
   --radius-sheet: 20px;
+  --radius-pill: 22px;
+  --radius-pill-grown: 20px;
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --animate-drain: drain 15s linear forwards;
@@ -119,7 +130,16 @@
 /* Token utilities: bg-canvas, bg-sel, text-accent-ink, bg-page-green-bg, shadow-float… */
 @theme inline {
   --color-canvas: var(--bg);
-  --color-surface: var(--surface);
+  --color-card: var(--surface);
+  --color-elev: var(--elev);
+  --color-panel: var(--panel);
+  --color-chip: var(--chip);
+  --color-chip-pressed: var(--chip-pressed);
+  --color-chip-elev: var(--chip-elev);
+  --color-chip-elev-pressed: var(--chip-elev-pressed);
+  /* Chip buttons take the fill of where they sit: chip on bg and cards, chip-elev inside `raised` */
+  --color-btn: var(--btn);
+  --color-btn-pressed: var(--btn-pressed);
   --color-trk: var(--trk);
   --color-seg-on: var(--seg-on);
   --color-hover: var(--hover);
@@ -130,6 +150,8 @@
   --color-line2: var(--line2);
   --color-ring: var(--ring);
   --color-ink: var(--ink);
+  --color-toned: var(--muted);
+  --color-faint: var(--faint);
   --color-placeholder-lg: var(--placeholder-lg);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
@@ -137,12 +159,15 @@
   --color-on-accent: var(--on-accent);
   --color-warn: var(--warn);
   --color-warn-ink: var(--warn-ink);
+  --color-warn-fill: var(--warn-fill);
+  --color-on-warn: var(--on-warn);
   --color-ok: var(--ok);
   --color-knob: var(--knob);
   --color-scrim: var(--scrim);
   --color-side: var(--side);
   --color-side-hover: var(--side-hover);
   --color-side-sel: var(--side-sel);
+  --color-rail: var(--rail);
 
   --color-page-green: var(--c-green);
   --color-page-blue: var(--c-blue);
@@ -166,13 +191,14 @@
 }
 
 /*
- * Nuxt UI semantic variables. `--ui-bg` is the surface (cards, sheets, fields, menus stay white
- * in light); the screen background is the separate `bg-canvas`. Text steps:
+ * Nuxt UI semantic variables. `--ui-bg` is the raised role `elev` (composer, sheets, fields, menus,
+ * dialogs); cards lying on the page are the separate `bg-card` (surface, a recess) and the screen
+ * background is `bg-canvas`. Text steps:
  * highlighted = ink, default = text, toned = muted (~8:1), muted and dimmed = faint (~5:1).
  * One declaration covers both themes because the tokens themselves switch with `.dark`.
  */
 :root {
-  --ui-bg: var(--surface);
+  --ui-bg: var(--elev);
   --ui-bg-muted: var(--hover);
   --ui-bg-elevated: var(--sel);
   --ui-bg-accented: var(--pressed);
@@ -191,6 +217,14 @@
   --ui-error: var(--warn);
   --ui-success: var(--ok);
   --ui-radius: 5px;
+  --btn: var(--chip);
+  --btn-pressed: var(--chip-pressed);
+}
+
+/* A raised surface (sheet, dialog, menu, the docked receipt): chips and buttons inside it read raised too */
+@utility raised {
+  --btn: var(--chip-elev);
+  --btn-pressed: var(--chip-elev-pressed);
 }
 
 @layer base {

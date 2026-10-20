@@ -56,3 +56,19 @@ export function splitMatch(text: string, query: string): { pre: string, mid: str
   if (k < 0) return { pre: text, mid: '', post: '' }
   return { pre: text.slice(0, k), mid: text.slice(k, k + q.length), post: text.slice(k + q.length) }
 }
+
+/** «Без статуса», «Без отдела»: a rough genitive of a property name, good for the usual nouns */
+export function genitive(word: string): string {
+  const w = lowerFirst(word.trim())
+  if (/[бвгджзклмнпрстфхцчшщ]$/.test(w)) return `${w}а`
+  if (/ь$/.test(w)) return `${w.slice(0, -1)}я`
+  if (/[гкхжчшщ]а$/.test(w)) return `${w.slice(0, -1)}и`
+  if (/а$/.test(w)) return `${w.slice(0, -1)}ы`
+  if (/я$/.test(w)) return `${w.slice(0, -1)}и`
+  return w
+}
+
+/** «в Задачи», «во Входящие»: «во» before в or ф followed by a consonant */
+export function inPlace(name: string): string {
+  return `${/^[вф][^аеёиоуыэюя]/i.test(name) ? 'во' : 'в'} ${name}`
+}

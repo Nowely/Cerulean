@@ -6,6 +6,7 @@ import type { Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useRecordActions } from '~/composables/useRecordActions'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
+import { inPlace } from '~/domain/text'
 
 const props = defineProps<{ rec: Rec }>()
 const data = useDataStore()
@@ -38,7 +39,7 @@ const items = computed<MenuItem[][]>(() => [
   <ActionMenu
     :items="items"
     :title="rec.text"
-    :caption="`в ${place}`"
+    :caption="inPlace(place)"
     label="Действия с записью"
   />
 </template>

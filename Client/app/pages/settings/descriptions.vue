@@ -48,7 +48,7 @@ const empty = computed(() => !data.livePages.some(p => p.kind === 'page'))
         Описания для Авто
       </h1>
       <p class="px-5 pt-1.5 pb-3 text-15 leading-snug text-toned lg:px-0 lg:pt-2 lg:pb-5 lg:text-sm">
-        Авто читает их, когда решает, куда положить запись. Пиши, что класть на страницу, можно с примерами.
+        По описанию решается, куда положить запись. Пиши, что класть на страницу, можно с примерами.
       </p>
       <p
         v-if="empty"

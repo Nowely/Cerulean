@@ -126,7 +126,7 @@ function openPlace() {
           v-if="!parent"
           :glyph="page?.glyph"
           :color="page?.color"
-          :size="18"
+          :size="16"
         />
         <span class="text-default">{{ parent?.text ?? page?.title }}</span>
       </button>
@@ -282,7 +282,7 @@ function openPlace() {
     >
       <h2
         :id="linksTitle"
-        class="px-5 pb-1 text-caption text-toned lg:px-0 lg:text-17 lg:font-semibold lg:text-highlighted"
+        class="px-5 pb-1 text-cap text-toned lg:px-0"
         :class="container === 'preview' ? 'lg:px-4' : ''"
       >
         Связано
@@ -302,7 +302,7 @@ function openPlace() {
     >
       <h2
         id="subs-title"
-        class="px-5 pb-1 text-caption text-toned lg:px-0 lg:text-17 lg:font-semibold lg:text-highlighted"
+        class="px-5 pb-1 text-cap text-toned lg:px-0"
         :class="container === 'preview' ? 'lg:px-4' : ''"
       >
         Подпункты
@@ -326,7 +326,7 @@ function openPlace() {
         v-else
         class="px-5 py-1 text-meta text-toned lg:px-0"
       >
-        Пиши внизу, чтобы добавить шаги
+        Подпунктов пока нет. Пиши внизу, и они появятся здесь.
       </p>
     </section>
   </div>

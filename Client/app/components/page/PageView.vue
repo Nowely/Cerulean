@@ -116,7 +116,7 @@ function openRecord(rec: Rec) {
 /** A choice on a row of Входящие settles the same Уточнение as in Чат */
 function choose(rec: Rec, choice: Id | 'more' | 'new') {
   if (choice === 'more') {
-    ui.pick({ title: `Куда положить «${rec.text}»?`, current: rec.pageId, run: c => journal.chooseForRecord(rec.id, c) })
+    ui.pick({ title: 'Куда положить', subtitle: rec.text, current: rec.pageId, guesses: rec.guesses, run: c => journal.chooseForRecord(rec.id, c) })
     return
   }
   if (choice === 'new') return
@@ -182,6 +182,7 @@ const emptyText = computed(() => {
               :glyph="page.glyph"
               :color="page.color"
               :size="36"
+              tile
             />
           </button>
         </GlyphPicker>
@@ -190,6 +191,7 @@ const emptyText = computed(() => {
           :glyph="page.glyph"
           :color="page.color"
           :size="36"
+          tile
         />
         <input
           v-if="full && page.kind === 'page'"
@@ -316,8 +318,8 @@ const emptyText = computed(() => {
           :aria-label="g.label"
         >
           <h3
-            class="px-5 pt-4 pb-1 text-caption lg:px-2.5"
-            :class="g.tone === 'warn' ? 'text-warn-ink' : 'text-toned lg:text-dimmed'"
+            class="px-5 pt-4 pb-1 text-cap lg:px-2.5"
+            :class="g.tone === 'warn' ? 'text-warn-ink' : 'text-toned'"
           >
             {{ g.label }}
           </h3>

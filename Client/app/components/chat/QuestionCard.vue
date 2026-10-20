@@ -33,8 +33,10 @@ function newPage() {
 
 function more() {
   ui.pick({
-    title: `Куда положить «${subject.value}»?`,
+    title: 'Куда положить',
+    subtitle: rec.value?.text ?? props.entry.text,
     current: data.inbox.id,
+    guesses: rec.value?.guesses,
     newName: props.entry.newName,
     run: c => journal.choose(props.entry.id, c)
   })
@@ -43,8 +45,8 @@ function more() {
 
 <template>
   <div
-    class="flex flex-col gap-2.5 rounded-card border-[1.5px] border-accent bg-default p-3"
-    :class="{ 'shadow-float': float }"
+    class="flex flex-col gap-2.5 rounded-card border-[1.5px] border-accent p-3"
+    :class="float ? 'raised bg-default shadow-float' : 'bg-card'"
   >
     <p class="text-row font-semibold leading-snug text-highlighted lg:text-15">
       Куда положить «{{ subject }}»?

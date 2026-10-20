@@ -68,7 +68,7 @@ useHead({ title: computed(() => `${rec.value?.text ?? 'Запись'} · Cerulea
               <PageTile
                 :glyph="page!.glyph"
                 :color="page!.color"
-                :size="18"
+                :size="16"
               />{{ page!.title }}
             </NuxtLink>
             <template v-if="parent">
@@ -119,7 +119,7 @@ useHead({ title: computed(() => `${rec.value?.text ?? 'Запись'} · Cerulea
       class="hidden w-75 shrink-0 overflow-y-auto border-l border-default px-3 py-4.5 xl:block"
       aria-label="Связано"
     >
-      <h2 class="px-2.5 pb-1.5 text-caption text-dimmed">
+      <h2 class="px-2.5 pb-1.5 text-cap text-toned">
         Связано
       </h2>
       <RecordLinks :rec="rec" />

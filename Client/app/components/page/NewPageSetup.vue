@@ -1,12 +1,13 @@
 <script setup lang="ts">
 // A new page explains itself: templates, «Что сюда класть?» (Описание для Авто) and «Как показывать».
 // All of it goes away after the first record.
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Layout, Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { applyTemplate, TEMPLATES } from '~/domain/templates'
 import ChipButton from '../common/ChipButton.vue'
 import SegmentedControl from '../common/SegmentedControl.vue'
+import SectionSheet from './SectionSheet.vue'
 
 const props = defineProps<{ page: Page }>()
 const emit = defineEmits<{ focus: [boolean] }>()
@@ -22,6 +23,8 @@ const layout = computed({
   get: () => props.page.views[0]?.layout ?? 'list',
   set: (v: Layout) => data.updatePage(props.page.id, { views: props.page.views.map((x, i) => i === 0 ? { ...x, layout: v } : x) })
 })
+const sectionName = computed(() => props.page.sectionId ? data.sections[props.page.sectionId]?.name ?? 'Недавнее' : 'Недавнее')
+const choosing = ref(false)
 const description = computed({
   get: () => props.page.description,
   set: v => data.updatePage(props.page.id, { description: v })
@@ -30,7 +33,26 @@ const description = computed({
 
 <template>
   <div class="px-5 lg:px-0">
-    <p class="mt-5 text-sm font-medium text-highlighted">
+    <div class="mt-2 flex min-h-11 items-center text-base lg:min-h-9 lg:text-sm">
+      <span class="w-27 shrink-0 text-toned lg:w-36">Секция</span>
+      <button
+        type="button"
+        class="flex h-9 min-w-0 cursor-pointer items-center gap-1.5 rounded-item px-2 text-highlighted -mx-2 hover:bg-muted active:bg-pressed"
+        aria-haspopup="dialog"
+        @click="choosing = true"
+      >
+        <span class="truncate">{{ sectionName }}</span>
+        <UIcon
+          name="i-lucide-chevron-down"
+          class="size-4 shrink-0 text-toned"
+        />
+      </button>
+    </div>
+    <SectionSheet
+      v-model:open="choosing"
+      :page="page"
+    />
+    <p class="mt-4 text-cap text-toned">
       Начать с шаблона
     </p>
     <div class="mt-2 flex flex-wrap gap-1.5">
@@ -62,7 +84,7 @@ const description = computed({
       Описание для Авто: по нему сюда попадут подходящие записи.
     </p>
 
-    <p class="mt-5 mb-1.5 text-sm font-medium text-highlighted">
+    <p class="mt-5 mb-1.5 text-cap text-toned">
       Как показывать
     </p>
     <SegmentedControl

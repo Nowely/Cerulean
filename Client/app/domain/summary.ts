@@ -62,7 +62,7 @@ export function lowStock(page: Page, records: Rec[]): Rec[] {
 export function pageSummary(page: Page, records: Rec[], now: number, today: Rec[] = []): Summary {
   if (page.kind === 'today') {
     const due = dueToday(today, now)
-    if (!due.length) return { lead: 'На сегодня ничего, всё со сроком появится здесь', names: '', more: 0 }
+    if (!due.length) return { lead: 'Пока ничего на сегодня', names: '', more: 0 }
     return { lead: `${count(due.length, DEAL)} со всех страниц`, names: '', more: 0 }
   }
   if (page.kind === 'inbox') {
@@ -105,7 +105,7 @@ export function pageBadge(page: Page, records: Rec[], now: number, today: Rec[] 
   if (ask) return { text: `${ask} уточнить`, tone: 'accent' }
   if (page.kind === 'today') return null
   const fresh = records.filter(r => !r.done && r.addedAt > page.seenAt).length
-  if (fresh) return { text: `${fresh} ${plural(fresh, NEW)}`, tone: 'accent' }
+  if (fresh) return { text: `${fresh} ${plural(fresh, NEW)}`, tone: 'neutral' }
   return null
 }
 
