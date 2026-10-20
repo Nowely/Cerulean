@@ -7,7 +7,7 @@ defineProps<{ badge: Badge }>()
 
 <template>
   <span
-    class="inline-flex h-5.5 shrink-0 items-center whitespace-nowrap text-caption lg:h-5"
+    class="inline-flex h-5.5 shrink-0 items-center whitespace-nowrap text-caption tabular-nums lg:h-5"
     :class="{
       'text-warn-ink': badge.tone === 'warn',
       'rounded-badge bg-accent-soft px-1.75 text-accent-ink': badge.tone === 'accent',

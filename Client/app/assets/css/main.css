@@ -200,8 +200,9 @@
     text-size-adjust: 100%;
   }
 
+  /* Digits stay proportional in running text; times, counts and quantities that line up set tabular-nums */
   body {
-    @apply bg-canvas text-default font-sans tabular-nums;
+    @apply bg-canvas text-default font-sans;
     overscroll-behavior-y: none;
   }
 

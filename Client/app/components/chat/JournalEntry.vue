@@ -13,7 +13,7 @@ defineProps<{ entry: Entry }>()
     :aria-label="`${clock(entry.at)}: ${entry.text}`"
   >
     <time
-      class="w-9.5 shrink-0 pt-0.5 text-13 text-dimmed"
+      class="w-9.5 shrink-0 pt-0.5 text-13 text-dimmed tabular-nums"
       :datetime="new Date(entry.at).toISOString()"
     >{{ clock(entry.at) }}</time>
     <div class="flex min-w-0 flex-1 flex-col gap-2">

@@ -22,7 +22,9 @@ const props = withDefaults(defineProps<{
   /** Preview keeps reading and ticking only: no swipe, no hover actions */
   readonly?: boolean
   selected?: boolean
-}>(), { freshSince: Number.POSITIVE_INFINITY, readonly: false, selected: false })
+  /** Subitems under a record: a step is often a whole sentence, so it wraps instead of being cut */
+  wrap?: boolean
+}>(), { freshSince: Number.POSITIVE_INFINITY, readonly: false, selected: false, wrap: false })
 
 const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'] }>()
 
@@ -161,8 +163,8 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
           @click="emit('open')"
         >
           <span
-            class="truncate text-record"
-            :class="rec.done ? 'text-dimmed line-through' : 'text-highlighted'"
+            class="text-record"
+            :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
           >{{ rec.text }}</span>
           <span
             v-if="inbox"
@@ -185,7 +187,7 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
 
         <span
           v-if="!fresh"
-          class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned lg:group-hover/row:hidden lg:group-focus-within/row:hidden"
+          class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums lg:group-hover/row:hidden lg:group-focus-within/row:hidden"
           :class="readonly ? 'lg:group-hover/row:flex lg:group-focus-within/row:flex' : ''"
         >
           <UIcon

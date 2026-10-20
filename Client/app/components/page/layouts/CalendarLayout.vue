@@ -84,7 +84,7 @@ const pickedLabel = computed(() => keyToDate(picked.value).toLocaleDateString('r
         class="py-1"
       >{{ w }}</span>
     </div>
-    <div class="grid grid-cols-7 gap-px overflow-hidden rounded-card border border-default bg-line">
+    <div class="grid grid-cols-7 gap-px overflow-hidden rounded-card border border-default bg-line tabular-nums">
       <button
         v-for="d in days"
         :key="d"

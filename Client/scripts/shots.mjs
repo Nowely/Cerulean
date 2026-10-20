@@ -29,7 +29,13 @@ const scenarios = [
   { name: 'MobileToday', device: MOBILE, run: p => openPage(p, 'Сегодня', false) },
   { name: 'MobileInbox', device: MOBILE, run: p => openPage(p, 'Входящие') },
   { name: 'MobileTasks', device: MOBILE, run: p => openPage(p, 'Задачи') },
-  { name: 'MobileItem', device: MOBILE, run: p => openPage(p, 'Полумарафон к маю') },
+  { name: 'MobileItem', device: MOBILE, run: async (p) => {
+    await openPage(p, 'Продукты')
+    await p.getByRole('button', { name: /^Яйца/ }).click()
+    await p.waitForURL(/\/r\//)
+    await settle(p, 400)
+  } },
+  { name: 'MobileGoal', device: MOBILE, run: p => openPage(p, 'Полумарафон к маю') },
   { name: 'MobilePageMenu', device: MOBILE, run: async (p) => {
     await openPage(p, 'Продукты')
     await p.getByRole('button', { name: 'Действия со страницей' }).click()

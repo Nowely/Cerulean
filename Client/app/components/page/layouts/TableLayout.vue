@@ -35,7 +35,7 @@ function cell(rec: Rec, key: string): { text: string, warn?: boolean } {
 <template>
   <table
     v-if="isDesktop"
-    class="mt-2 w-full border-collapse text-15"
+    class="mt-2 w-full border-collapse text-15 tabular-nums"
   >
     <thead>
       <tr class="border-b border-default text-left text-caption text-dimmed">

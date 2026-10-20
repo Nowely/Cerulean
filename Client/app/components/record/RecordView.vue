@@ -155,8 +155,9 @@ function openPlace() {
           />
         </dd>
       </div>
+      <!-- A single subitem shows its own state, a bar would only repeat it -->
       <div
-        v-if="subs.length"
+        v-if="subs.length > 1"
         class="flex min-h-10 items-center"
       >
         <dt class="w-28 shrink-0 text-toned">
@@ -173,7 +174,7 @@ function openPlace() {
               :style="{ width: `${(done / subs.length) * 100}%` }"
             />
           </span>
-          <span class="text-highlighted">{{ done }} из {{ subs.length }}</span>
+          <span class="text-highlighted tabular-nums">{{ done }} из {{ subs.length }}</span>
         </dd>
       </div>
       <div
@@ -210,8 +211,8 @@ function openPlace() {
 
     <!-- Note: edited where it is -->
     <div
-      class="mt-3 border-t border-default px-5 pt-3 lg:mx-0 lg:px-0"
-      :class="container === 'preview' ? 'lg:mx-4' : 'mx-5 px-0'"
+      class="mt-3 border-t border-default pt-3"
+      :class="container === 'preview' ? 'px-5 lg:mx-4 lg:px-0' : 'mx-5 lg:mx-0'"
     >
       <UTextarea
         v-if="full && (noteEditing || rec.note)"
@@ -266,6 +267,7 @@ function openPlace() {
             :page="page"
             :view="undefined"
             :readonly="!full"
+            wrap
             @open="openSub(s)"
           />
         </li>
