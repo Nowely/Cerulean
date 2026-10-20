@@ -100,8 +100,17 @@ const scenarios = [
     await settle(p, 600)
   } },
   { name: 'Item', device: DESKTOP, run: p => openPage(p, 'Полумарафон к маю') },
-  { name: 'Chat', device: DESKTOP, run: p => open(p, '/chat') },
+  { name: 'Chat', device: DESKTOP, run: async (p) => {
+    await open(p, '/chat')
+    await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
+    await settle(p, 400)
+  } },
   { name: 'Palette', device: DESKTOP, run: async (p) => {
+    await open(p, '/chat')
+    await p.keyboard.press('Control+k')
+    await settle(p, 400)
+  } },
+  { name: 'PaletteTyped', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     await p.keyboard.press('Control+k')
     await p.getByRole('combobox', { name: 'Найти' }).fill('мол')

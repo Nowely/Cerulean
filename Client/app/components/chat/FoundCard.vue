@@ -10,7 +10,7 @@ import RecordLine from '../record/RecordLine.vue'
 const props = defineProps<{ entry: Entry, float?: boolean }>()
 const data = useDataStore()
 const journal = useJournalStore()
-const { peek } = usePeek()
+const { peek, target } = usePeek()
 const hits = computed(() => (props.entry.hits ?? []).map(id => data.records[id]).filter((r): r is Rec => !!r && !r.deletedAt))
 </script>
 
@@ -35,6 +35,7 @@ const hits = computed(() => (props.entry.hits ?? []).map(id => data.records[id])
       >
         <RecordLine
           :rec="r"
+          :selected="target?.kind === 'record' && target.id === r.id"
           @open="peek({ kind: 'record', id: r.id })"
         />
       </li>

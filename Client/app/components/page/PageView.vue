@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// One page, two containers: full (from navigation) or preview (from a link: sheet or right panel).
-// Preview reads and ticks only: no composer, no swipe, no editing of the title.
+// One page, three containers: full (from navigation), preview (from a link: sheet or right panel)
+// and glance (beside search results). Preview reads and ticks only: no composer, no swipe, no editing
+// of the title. Glance is a look before opening: the first view as a plain list, no tabs.
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from '#imports'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
@@ -25,7 +26,7 @@ import TableLayout from './layouts/TableLayout.vue'
 import CalendarLayout from './layouts/CalendarLayout.vue'
 import RecordLine from '../record/RecordLine.vue'
 
-const props = withDefaults(defineProps<{ page: Page, container?: 'full' | 'preview' }>(), { container: 'full' })
+const props = withDefaults(defineProps<{ page: Page, container?: 'full' | 'preview' | 'glance' }>(), { container: 'full' })
 const emit = defineEmits<{ editing: [boolean] }>()
 
 const data = useDataStore()
@@ -56,6 +57,9 @@ const TODAY_VIEW: ViewDef = listView('Сегодня и просрочено', {
 const views = computed(() => today.value ? [TODAY_VIEW] : props.page.views.length ? props.page.views : [listView('Список')])
 const viewId = ref<Id | null>(null)
 const view = computed(() => views.value.find(v => v.id === viewId.value) ?? views.value[0]!)
+const glance = computed(() => props.container === 'glance')
+/** What the records area draws: a glance shows any view as a list */
+const layout = computed(() => glance.value ? 'list' : view.value.layout)
 watch(() => props.page.id, () => {
   viewId.value = null
 })
@@ -137,12 +141,12 @@ const emptyText = computed(() => {
 <template>
   <div
     class="pb-4"
-    :style="container === 'preview' ? '--row-bg: var(--ui-bg)' : undefined"
+    :style="!full ? '--row-bg: var(--ui-bg)' : undefined"
   >
     <!-- Title -->
     <div
       class="px-5 pt-1 lg:px-0"
-      :class="container === 'preview' ? 'lg:px-4' : 'lg:pt-8'"
+      :class="!full ? 'lg:px-4' : 'lg:pt-8'"
     >
       <GlyphPicker
         v-if="full && setup && !page.glyph"
@@ -200,7 +204,7 @@ const emptyText = computed(() => {
         <h1
           v-else
           class="min-w-0 flex-1 truncate text-title text-highlighted"
-          :class="container === 'preview' ? 'lg:text-28' : ''"
+          :class="!full ? 'lg:text-28' : ''"
         >
           {{ page.title || 'Без названия' }}
         </h1>
@@ -221,8 +225,9 @@ const emptyText = computed(() => {
 
     <!-- Views: underlined tabs; search and «Настроить вид» on the right -->
     <div
+      v-if="!glance"
       class="mt-3 flex items-end border-b border-default pr-0.5 pl-2 lg:mt-5 lg:px-0"
-      :class="container === 'preview' ? 'lg:mx-4' : ''"
+      :class="!full ? 'lg:mx-4' : ''"
     >
       <div
         v-if="!searching"
@@ -301,7 +306,7 @@ const emptyText = computed(() => {
     </div>
 
     <!-- Records -->
-    <div :class="container === 'preview' ? 'lg:px-2' : ''">
+    <div :class="!full ? 'lg:px-2' : ''">
       <template v-if="today">
         <section
           v-for="g in todayGroups"
@@ -331,14 +336,14 @@ const emptyText = computed(() => {
           На сегодня ничего. Всё со сроком «сегодня» и просроченное со всех страниц появится здесь.
         </p>
       </template>
-      <template v-else-if="view.layout === 'list'">
+      <template v-else-if="layout === 'list'">
         <ListLayout
           :page="page"
           :view="view"
           :records="shown"
           :fresh-since="freshSince"
           :readonly="!full"
-          class="pt-1"
+          :class="glance ? 'pt-3' : 'pt-1'"
           @open="openRecord"
           @choose="choose"
         >
@@ -350,7 +355,7 @@ const emptyText = computed(() => {
         </ListLayout>
       </template>
       <BoardLayout
-        v-else-if="view.layout === 'board'"
+        v-else-if="layout === 'board'"
         :page="page"
         :view="view"
         :records="shown"
@@ -359,7 +364,7 @@ const emptyText = computed(() => {
         @need-prop="settingsOpen = true"
       />
       <TableLayout
-        v-else-if="view.layout === 'table'"
+        v-else-if="layout === 'table'"
         :page="page"
         :view="view"
         :records="shown"

@@ -219,7 +219,7 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
                 v-if="current.kind === 'page'"
                 :key="current.page.id"
                 :page="current.page"
-                container="preview"
+                container="glance"
               />
               <RecordView
                 v-else

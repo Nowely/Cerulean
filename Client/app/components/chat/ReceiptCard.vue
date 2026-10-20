@@ -19,7 +19,7 @@ const props = defineProps<{ entry: Entry, float?: boolean }>()
 const data = useDataStore()
 const journal = useJournalStore()
 const ui = useUiStore()
-const { peek } = usePeek()
+const { peek, target } = usePeek()
 
 const page = computed<Page | undefined>(() => props.entry.pageId ? data.pages[props.entry.pageId] : undefined)
 const records = computed(() => (props.entry.recordIds ?? []).map(id => data.records[id]).filter((r): r is Rec => !!r && !r.deletedAt))
@@ -139,6 +139,7 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
           <RecordLine
             :rec="r"
             :place="false"
+            :selected="target?.kind === 'record' && target.id === r.id"
             @open="peek({ kind: 'record', id: r.id })"
           />
         </li>

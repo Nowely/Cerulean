@@ -292,9 +292,9 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
       </div>
     </UContextMenu>
 
-    <!-- Входящие: the three guessed pages right on the row -->
+    <!-- Входящие: the three guessed pages right on the row (a preview only reads) -->
     <div
-      v-if="asking"
+      v-if="asking && !readonly"
       class="no-scrollbar flex gap-1.5 overflow-x-auto pr-3 pb-3 pl-13 lg:pl-11"
     >
       <ChipButton
