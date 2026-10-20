@@ -160,6 +160,62 @@ describe('Авто without a key', () => {
   })
 })
 
+describe('day one (v21 F1)', () => {
+  it('makes a page from a starter when no page fits, and «Отменить» takes it back', async () => {
+    const { data, journal } = await fresh()
+    const e = await journal.send('хлеб', 'auto')
+    const page = data.pages[e.pageId!]!
+    expect(e).toMatchObject({ kind: 'routed', made: true })
+    expect(page).toMatchObject({ title: 'Покупки', template: 'shop', sectionId: null })
+    expect(data.recentlyMade.map(p => p.title)).toEqual(['Покупки'])
+    journal.undo(e.id)
+    expect(data.livePages.some(p => p.title === 'Покупки')).toBe(false)
+  })
+
+  it('files calls into Дела and asks about a book with the starters to choose from', async () => {
+    const { data, journal } = await fresh()
+    const call = await journal.send('позвонить маме', 'auto')
+    expect(data.pages[call.pageId!]!.title).toBe('Дела')
+    const book = await journal.send('прочитать Канемана', 'auto')
+    expect(book.kind).toBe('ask')
+    expect(data.livePages.filter(p => p.kind === 'page').map(p => p.title)).toEqual(['Дела'])
+    const page = journal.choose(book.id, { template: 'note' })!
+    expect(page).toMatchObject({ title: 'Заметки', template: 'note' })
+    expect(data.recordsOf(page.id).map(r => r.text)).toEqual(['Прочитать Канемана'])
+  })
+
+  it('«Не туда» drops the page Авто made while it is empty', async () => {
+    const { data, journal } = await fresh()
+    const e = await journal.send('хлеб', 'auto')
+    const made = e.pageId!
+    journal.choose(e.id, { newPage: 'Дача' })
+    expect(data.pages[made]).toBeUndefined()
+    expect(data.pages[e.pageId!]!.title).toBe('Дача')
+  })
+
+  it('takes a choice in Входящие back with its Чат line', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const gift = data.liveRecords.find(r => r.text === 'Подарок маме на др')!
+    const tasks = data.livePages.find(p => p.title === 'Задачи')!
+    const entry = data.entries.find(x => x.recordIds?.includes(gift.id))!
+    const { undo } = journal.undoable([gift.id], () => journal.chooseForRecord(gift.id, { pageId: tasks.id }))
+    expect(data.records[gift.id]).toMatchObject({ pageId: tasks.id, tags: [] })
+    expect(entry.kind).toBe('routed')
+    undo()
+    expect(data.records[gift.id]).toMatchObject({ pageId: data.inbox.id, tags: ['clarify'] })
+    expect(entry.kind).toBe('ask')
+  })
+
+  it('works out the Входящие guesses again when pages change', async () => {
+    const { data, journal } = await fresh()
+    const e = await journal.send('прочитать Канемана', 'auto')
+    const rec = data.records[e.recordIds![0]!]!
+    expect(journal.guessesFor(rec)).toEqual([])
+    const books = data.createPage({ title: 'Книги' })
+    expect(journal.guessesFor(rec)).toEqual([books.id])
+  })
+})
+
 describe('Авто with a key', () => {
   it('waits for the network in Входящие and files the line when it is back', async () => {
     const { data, journal } = await fresh({ demo: true })

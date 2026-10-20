@@ -41,8 +41,10 @@ export const useUiStore = defineStore('ui', () => {
   const focusTitle = ref<Id | null>(null)
   /** Text Поиск opens with («Найти» on the toast after a question was written on a page) */
   const findQuery = ref('')
-  /** «Отменить» on a receipt in Чат: its text goes back to the composer there */
+  /** «Отменить» on a receipt: its text goes back to the composer on screen, aimed for that one send */
   const refill = ref<{ text: string, aim: Id | 'auto' } | null>(null)
+  /** When the last toast showed: a toast and a docked card never show together */
+  const toastAt = ref(0)
 
   return {
     picker,
@@ -50,6 +52,7 @@ export const useUiStore = defineStore('ui', () => {
     focusTitle,
     findQuery,
     refill,
+    toastAt,
     pick: (p: Picker) => { picker.value = p },
     confirm: (c: Confirm) => { confirming.value = c }
   }

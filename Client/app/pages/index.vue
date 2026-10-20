@@ -15,7 +15,7 @@ import AppScreen from '~/components/shell/AppScreen.vue'
 import HomeHeader from '~/components/home/HomeHeader.vue'
 import HomeRow from '~/components/home/HomeRow.vue'
 import HomeCaption from '~/components/home/HomeCaption.vue'
-import HomeDock from '~/components/home/HomeDock.vue'
+import ComposerDock from '~/components/composer/ComposerDock.vue'
 
 useHead({ title: 'Главная · Cerulean' })
 
@@ -37,6 +37,8 @@ const showKey = computed(() => !data.settings.apiKey && !data.settings.dismissed
 const showStart = computed(() => !userPages.value.length && !data.settings.dismissed.includes('start-card'))
 const dismiss = (id: string) => data.setSettings({ dismissed: [...data.settings.dismissed, id] })
 
+/** The key row steps aside while a card is docked above the composer */
+const docked = ref(false)
 const recentOpen = ref(false)
 const recent = computed(() => data.recentlyMade)
 const recentShown = computed(() => recentOpen.value ? recent.value : recent.value.slice(0, RECENT_SHOWN))
@@ -217,7 +219,7 @@ function toTop() {
       </section>
 
       <div
-        v-if="showKey"
+        v-if="showKey && !docked"
         class="mt-3 flex items-center rounded-card hover:bg-muted lg:rounded-chip"
       >
         <button
@@ -367,7 +369,10 @@ function toTop() {
     </div>
 
     <template #dock>
-      <HomeDock />
+      <ComposerDock
+        :intro="!data.entries.length"
+        @docked="v => docked = v"
+      />
     </template>
   </AppScreen>
 </template>

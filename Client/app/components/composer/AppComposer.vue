@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // The one place to write, the same on every screen: a 44px pill with the destination chip · a field that grows
 // with the text · mic → send. The chip is text only and opens the page picker. It never changes while typing,
-// so the text never moves: in Авто the guess is a line above the pill («→ Продукты»).
+// so the text never moves: in Авто the guess is a line right on the pill, at the chip's text («→ Продукты»).
+// «Отменить» on a receipt gives the text back aimed at its page for that one send («→ Продукты, только эта запись»).
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { refDebounced, useOnline } from '@vueuse/core'
 import type { Entry, Id } from '~/domain/types'
@@ -10,9 +11,8 @@ import { useJournalStore } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
 import { useSpeech } from '~/composables/useSpeech'
 import { useNotify } from '~/composables/useNotify'
-import { useFind } from '~/composables/useFind'
 import { draftsFor } from '~/domain/auto'
-import { capitalize, count, RECORD_FORMS } from '~/domain/text'
+import { capitalize } from '~/domain/text'
 import { useLater } from '~/composables/useLater'
 import DestChip from './DestChip.vue'
 
@@ -22,7 +22,9 @@ const props = withDefaults(defineProps<{
   pageId?: Id
   recordId?: Id
   placeholder?: string
-}>(), { pageId: undefined, recordId: undefined, placeholder: undefined })
+  /** Day one on Главная: the guess line says what the composer is for until the first record */
+  intro?: boolean
+}>(), { pageId: undefined, recordId: undefined, placeholder: undefined, intro: false })
 
 const emit = defineEmits<{ sent: [entry: Entry | null], focus: [boolean] }>()
 
@@ -30,25 +32,54 @@ const data = useDataStore()
 const journal = useJournalStore()
 const ui = useUiStore()
 const notify = useNotify()
-const find = useFind()
 const online = useOnline()
 const later = useLater()
 
 const text = ref('')
 const field = useTemplateRef<HTMLTextAreaElement>('field')
-const dest = ref<'auto' | Id>(props.mode === 'page' && props.pageId ? props.pageId : 'auto')
-watch(() => props.pageId, (id) => {
-  dest.value = props.mode === 'page' && id ? id : 'auto'
+const home = () => props.mode === 'page' && props.pageId ? props.pageId : 'auto'
+const dest = ref<'auto' | Id>(home())
+/** The aim «Отменить» gave back: it holds for one send, or until the text is cleared */
+const once = ref(false)
+watch(() => props.pageId, () => {
+  dest.value = home()
+  once.value = false
+})
+watch(text, (t) => {
+  if (once.value && !t.trim()) {
+    dest.value = home()
+    once.value = false
+  }
 })
 
+// Dictation: the field becomes a listening line (a small wave, «Слушаю…», then the words); stop leaves the words
+// as a draft with the keyboard up. Recognition needs the network.
 const speech = useSpeech((t) => {
   text.value = t
 })
+const heard = ref(false)
+/** Five bars of the listening wave: heights and offsets, still under reduced motion */
+const WAVE = [
+  { h: 'h-1.5', delay: '-0.3s' },
+  { h: 'h-3', delay: '-0.7s' },
+  { h: 'h-2.25', delay: '-0.1s' },
+  { h: 'h-4', delay: '-0.5s' },
+  { h: 'h-1.75', delay: '-0.9s' }
+]
 function dictate() {
-  if (speech.listening.value) return speech.stop()
+  if (!online.value) {
+    notify('Диктовка без сети не работает')
+    return
+  }
+  heard.value = false
   speech.start(text.value.trim())
-  field.value?.focus()
 }
+watch(text, () => {
+  if (speech.listening.value) heard.value = true
+})
+watch(speech.listening, (on) => {
+  if (!on) void nextTick(() => field.value?.focus())
+})
 watch(speech.error, (e) => {
   if (e) notify(e)
 })
@@ -62,11 +93,19 @@ const typed = refDebounced(text, 180)
 const decision = computed(() => dest.value === 'auto' ? journal.previewFor(typed.value) : { kind: 'idle' as const })
 /** Where the text would go: «Продукты», «Входящие», «Поиск», or nothing yet */
 const guess = computed(() => {
+  if (once.value) return `${destPage.value?.title || 'Без названия'}, только эта запись`
   const d = decision.value
   if (d.kind === 'search') return 'Поиск'
   if (d.kind === 'inbox') return 'Входящие'
   if (d.kind === 'page') return data.pages[d.pageId]?.title || 'Без названия'
   return ''
+})
+/** The line on the pill: the guess while there is text, the day-one hint before the first record */
+const guessLine = computed(() => {
+  if (props.mode === 'record') return null
+  if (guess.value && (text.value.trim() || once.value)) return { text: `→ ${guess.value}`, hint: false }
+  if (props.intro && !text.value && dest.value === 'auto' && !speech.listening.value) return { text: 'Пиши что угодно: разложится по страницам', hint: true }
+  return null
 })
 
 const chip = computed(() => {
@@ -75,7 +114,9 @@ const chip = computed(() => {
   }
   return { label: 'Авто', auto: true }
 })
-const chipLabel = computed(() => `Куда: ${chip.value.label}${guess.value ? `, похоже → ${guess.value}` : ''}`)
+const chipLabel = computed(() => once.value
+  ? `Куда записать: «${chip.value.label}», только эта запись. Выбрать другое`
+  : `Куда: ${chip.value.label}${guess.value ? `, похоже → ${guess.value}` : ''}`)
 
 function openPicker() {
   void later.load()
@@ -96,6 +137,7 @@ function openPicker() {
 
 function choose(d: 'auto' | Id) {
   dest.value = d
+  once.value = false
   void nextTick(() => field.value?.focus())
 }
 
@@ -133,8 +175,13 @@ function onKey(e: KeyboardEvent) {
 async function submit() {
   const t = text.value.trim()
   if (!t) return
+  const aimed = dest.value
   speech.stop()
   text.value = ''
+  if (once.value) {
+    dest.value = home()
+    once.value = false
+  }
   if (props.mode === 'record' && props.recordId) {
     const parent = data.records[props.recordId]
     if (parent) data.addRecord({ pageId: parent.pageId, parentId: parent.id, text: capitalize(t) })
@@ -142,49 +189,53 @@ async function submit() {
     return
   }
   // Writing on a page into the page itself: plain records, no journal line
-  if (props.mode === 'page' && destPage.value && destPage.value.id === props.pageId) {
-    const p = destPage.value
+  const target = aimed === 'auto' ? undefined : data.pages[aimed]
+  if (props.mode === 'page' && target && target.id === props.pageId) {
+    const p = target
     const drafts = p.kind === 'inbox' ? [{ text: capitalize(t), due: null, values: {} }] : draftsFor(t, p, Date.now())
     for (const d of [...drafts].reverse()) data.addRecord({ pageId: p.id, text: d.text, due: d.due, values: d.values, via: 'manual' })
     emit('sent', null)
     return
   }
-  const aimed = dest.value
-  const entry = await journal.send(t, aimed, {
+  // Anywhere else: the screen docks the receipt, Уточнение or found card above this composer
+  await journal.send(t, aimed, {
     today: props.mode === 'today' && aimed === 'auto',
     onStart: e => emit('sent', e)
   })
-  // From a page to somewhere else: say where it went, the receipt lives in Чат
-  if (props.mode !== 'auto' && entry.kind === 'routed' && entry.pageId !== props.pageId) {
-    const to = data.pages[entry.pageId!]
-    notify(`${count(entry.recordIds?.length ?? 1, RECORD_FORMS)} → ${to?.title ?? ''}`, { label: 'Не туда', run: () => journal.choose(entry.id, { pageId: props.pageId! }) })
-  }
-  if (props.mode !== 'auto' && entry.kind === 'ask') notify('Не удалось разложить, запись во Входящих', undefined, 5000)
-  if (props.mode !== 'auto' && entry.kind === 'found') {
-    notify('Похоже на вопрос, ничего не записано', { label: 'Найти', run: () => find.open(t) }, 5000)
-  }
 }
+
+/** Puts text in the field with the keyboard open; an aim other than this composer's own lasts one send */
+function setText(t: string, aim?: 'auto' | Id) {
+  text.value = t
+  if (aim && aim !== home()) {
+    dest.value = aim
+    once.value = true
+  }
+  void nextTick(() => field.value?.focus())
+}
+
+// «Отменить» on a receipt: the text comes back here
+watch(() => ui.refill, (r) => {
+  if (!r || props.mode === 'record') return
+  setText(r.text, r.aim)
+  ui.refill = null
+})
 
 defineExpose({
   focus: () => field.value?.focus(),
   blur: () => field.value?.blur(),
-  /** «Отменить» puts the text back, aimed at the same page, with the keyboard open */
-  setText: (t: string, aim?: 'auto' | Id) => {
-    text.value = t
-    if (aim) dest.value = aim
-    void nextTick(() => field.value?.focus())
-  }
+  setText
 })
 </script>
 
 <template>
   <div class="flex flex-col">
     <p
-      v-if="guess && text.trim()"
-      class="truncate pb-1.5 pl-8.5 text-13 text-toned"
+      v-if="guessLine"
+      class="-mb-1 h-5 truncate pl-4 text-13 leading-5 text-toned"
       aria-hidden="true"
     >
-      → {{ guess }}
+      {{ guessLine.text }}
     </p>
     <form
       class="relative flex items-end gap-1 border border-default bg-default p-0.75 transition-[border-color] focus-within:border-line2 dark:border-line2"
@@ -209,7 +260,33 @@ defineExpose({
         />
       </span>
 
-      <div class="grid min-w-0 flex-1">
+      <span
+        v-if="speech.listening.value"
+        class="flex h-9 min-w-0 flex-1 items-center gap-2.5 pr-1 pl-2"
+        role="status"
+        aria-live="polite"
+      >
+        <span
+          class="flex h-4 shrink-0 items-center gap-0.5 text-accent-ink"
+          aria-hidden="true"
+        >
+          <i
+            v-for="(bar, n) in WAVE"
+            :key="n"
+            class="block w-0.75 rounded-full bg-current motion-safe:animate-wave"
+            :class="bar.h"
+            :style="{ animationDelay: bar.delay }"
+          />
+        </span>
+        <span
+          class="min-w-0 flex-1 truncate text-input"
+          :class="heard && text ? 'text-highlighted' : 'text-toned'"
+        >{{ heard && text ? text : 'Слушаю…' }}</span>
+      </span>
+      <div
+        v-show="!speech.listening.value"
+        class="grid min-w-0 flex-1"
+      >
         <span
           ref="mirror"
           class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words text-input leading-5.5"
@@ -223,7 +300,7 @@ defineExpose({
           enterkeyhint="send"
           autocomplete="off"
           autocapitalize="sentences"
-          :placeholder="speech.listening.value ? 'Говори…' : hint"
+          :placeholder="hint"
           :aria-label="mode === 'record' ? 'Новый подпункт' : 'Новая запись'"
           class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent text-input leading-5.5 text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
           :class="mode === 'record' ? 'py-2.25 pr-1 pl-3' : 'py-2.25 pr-1 pl-1'"
@@ -234,7 +311,16 @@ defineExpose({
       </div>
 
       <button
-        v-if="canSend || !speech.supported"
+        v-if="speech.listening.value"
+        type="button"
+        class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent text-on-accent hover:bg-accent/90"
+        aria-label="Остановить"
+        @click="speech.stop()"
+      >
+        <span class="size-3.5 rounded-xs bg-current" />
+      </button>
+      <button
+        v-else-if="canSend || !speech.supported"
         type="submit"
         :disabled="!canSend"
         class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent text-on-accent transition-opacity hover:bg-accent/90 disabled:cursor-default disabled:opacity-40"
@@ -249,19 +335,15 @@ defineExpose({
       <button
         v-else
         type="button"
-        class="hit-44 relative flex shrink-0 cursor-pointer items-center justify-center"
-        :class="[
-          'size-9 rounded-full',
-          speech.listening.value ? 'bg-accent-soft text-accent-ink' : 'text-toned hover:bg-muted hover:text-highlighted active:bg-pressed'
-        ]"
-        :aria-label="speech.listening.value ? 'Остановить диктовку' : 'Диктовать'"
-        :aria-pressed="speech.listening.value"
+        class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full"
+        :class="online ? 'text-toned hover:bg-muted hover:text-highlighted active:bg-pressed' : 'text-dimmed'"
+        :aria-label="online ? 'Надиктовать' : 'Надиктовать: без сети не работает'"
+        :aria-disabled="!online"
         @click="dictate"
       >
         <UIcon
-          :name="speech.listening.value ? 'i-lucide-square' : 'i-lucide-mic'"
+          name="i-lucide-mic"
           class="size-5"
-          :class="{ 'motion-safe:animate-pulse': speech.listening.value }"
         />
       </button>
     </form>

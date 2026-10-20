@@ -87,6 +87,20 @@ function inTime(days: number): string {
   return `через ${y} ${plural(y, ['год', 'года', 'лет'])}`
 }
 
+/** The day choices of the «Срок» sheet: today, tomorrow, the coming Saturday after tomorrow («В субботу, 24 окт») */
+export function dueChoices(now: number): { key: string, label: string }[] {
+  const today = dayKey(now)
+  const tomorrow = addDays(today, 1)
+  let sat = addDays(today, 2)
+  while (keyToDate(sat).getDay() !== 6) sat = addDays(sat, 1)
+  const d = keyToDate(sat)
+  return [
+    { key: today, label: 'Сегодня' },
+    { key: tomorrow, label: 'Завтра' },
+    { key: sat, label: `В субботу, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}` }
+  ]
+}
+
 export function isOverdue(due: Due | null | undefined, now: number): boolean {
   return !!due && due.date < dayKey(now)
 }
@@ -115,7 +129,7 @@ export function formatMoment(t: number, now: number): string {
   return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`
 }
 
-/** «Добавлено»: «из чата · сегодня, 8:40» or «вручную · 12 окт» */
+/** «Добавлено» always has a date: «из чата · сегодня, 8:40», «вручную · 17 окт», «вручную · сейчас» for a record just made */
 export function formatAdded(via: 'chat' | 'manual', at: number, now: number): string {
-  return `${via === 'chat' ? 'из чата' : 'вручную'} · ${formatMoment(at, now)}`
+  return `${via === 'chat' ? 'из чата' : 'вручную'} · ${now - at < 60_000 ? 'сейчас' : formatMoment(at, now)}`
 }

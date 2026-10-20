@@ -139,6 +139,10 @@ export interface Entry {
   hits?: Id[]
   /** A guessed name for «Новая страница «…»» */
   newName?: string | null
+  /** Авто made the page for this line from a template: «Отменить» and «Не туда» take the page back while it is empty */
+  made?: boolean
+  /** Filed when the network came back: the receipt says «разобрано, когда появилась сеть» */
+  resumed?: boolean
 }
 
 export type ModelChoice = 'fast' | 'exact'

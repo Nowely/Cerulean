@@ -1,7 +1,7 @@
 // Everything the user has, in memory, written through to IndexedDB on every change
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import type { Entry, Id, Page, Rec, Section, Settings } from '~/domain/types'
+import type { Entry, Id, Page, Rec, Section, Settings, TemplateKey } from '~/domain/types'
 import type { Learned } from '~/domain/rules'
 import type { Snapshot } from '~/domain/export'
 import type { Hit } from '~/domain/search'
@@ -10,6 +10,7 @@ import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/facto
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
 import { learn } from '~/domain/rules'
 import { topOrder } from '~/domain/views'
+import { applyTemplate, TEMPLATES } from '~/domain/templates'
 
 const TRASH_DAYS = 30
 
@@ -179,6 +180,20 @@ export const useDataStore = defineStore('data', () => {
     pages.value[page.id] = page
     save('pages', page)
     return pages.value[page.id]!
+  }
+
+  /** A page made from a starter (icon, description, views, «Готово»); without a section it lands in «Недавнее» */
+  function createFromTemplate(key: TemplateKey, init: Partial<Page> = {}): Page {
+    const page = createPage({ title: '', ...init })
+    updatePage(page.id, applyTemplate(page, key))
+    return pages.value[page.id]!
+  }
+
+  /** «Новая страница «Покупки»»: a starter's name makes the page from that starter while there is none yet */
+  function createNamed(title: string): Page {
+    const t = TEMPLATES.find(x => x.name.toLowerCase() === title.trim().toLowerCase())
+    if (t && !livePages.value.some(p => p.template === t.key)) return createFromTemplate(t.key)
+    return createPage({ title })
   }
 
   function updatePage(id: Id, patch: Partial<Page>) {
@@ -409,7 +424,7 @@ export const useDataStore = defineStore('data', () => {
     livePages, liveRecords, inbox, clarify, sectionList, recentlyMade, favorites, trash, recent,
     recordsOf, subitemsOf, linksOf, placeOf,
     init, setSettings, toggleFolded,
-    createPage, updatePage, removePage, restorePage, visitPage, toggleFavorite,
+    createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     addRecord, updateRecord, toggleLink, toggleDone, moveRecords, removeRecords, restoreRecords, purgeRecords, purgePages, emptyTrash,
     createSection, updateSection, removeSection,
     addEntry, updateEntry,

@@ -5,7 +5,14 @@
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
 
-withDefaults(defineProps<{ title: string, width?: string, dialog?: boolean, align?: 'start' | 'end' }>(), { align: 'end' })
+withDefaults(defineProps<{
+  title: string
+  /** What the overlay is about, under the title («Срок» of «Позвонить стоматологу») */
+  subtitle?: string
+  width?: string
+  dialog?: boolean
+  align?: 'start' | 'end'
+}>(), { subtitle: undefined, width: undefined, align: 'end' })
 const open = defineModel<boolean>('open', { default: false })
 const { isDesktop } = useScreen()
 const later = useLater()
@@ -54,10 +61,18 @@ function openNow() {
         class="flex max-h-[min(36rem,var(--reka-popover-content-available-height))] flex-col overflow-hidden"
         :class="width ?? 'w-96'"
       >
-        <div class="flex shrink-0 items-center gap-2 pt-2.5 pr-1.5 pl-4">
-          <h2 class="min-w-0 flex-1 truncate text-15 font-semibold text-highlighted">
-            {{ title }}
-          </h2>
+        <div class="flex shrink-0 items-start gap-2 pt-2.5 pr-1.5 pl-4">
+          <div class="min-w-0 flex-1 py-1">
+            <h2 class="truncate text-15 font-semibold text-highlighted">
+              {{ title }}
+            </h2>
+            <p
+              v-if="subtitle"
+              class="truncate text-sm text-toned"
+            >
+              {{ subtitle }}
+            </p>
+          </div>
           <UButton
             icon="i-lucide-x"
             variant="ghost"
@@ -89,9 +104,15 @@ function openNow() {
       <template #content>
         <div class="flex max-h-[85dvh] flex-col">
           <div class="flex shrink-0 items-center gap-2 pt-1 pr-2 pl-6">
-            <h2 class="min-w-0 flex-1 truncate text-sheet text-highlighted">
+            <h2 class="min-w-0 shrink-0 truncate text-sheet text-highlighted">
               {{ title }}
             </h2>
+            <p
+              class="min-w-0 flex-1 truncate text-right text-sm text-toned"
+              :class="{ invisible: !subtitle }"
+            >
+              {{ subtitle }}
+            </p>
             <UButton
               icon="i-lucide-x"
               variant="ghost"

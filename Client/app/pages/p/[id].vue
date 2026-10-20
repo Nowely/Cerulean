@@ -11,7 +11,7 @@ import PageView from '~/components/page/PageView.vue'
 import PageMenu from '~/components/page/PageMenu.vue'
 import PageAside from '~/components/page/PageAside.vue'
 import PageTile from '~/components/common/PageTile.vue'
-import AppComposer from '~/components/composer/AppComposer.vue'
+import ComposerDock from '~/components/composer/ComposerDock.vue'
 
 const route = useRoute()
 const data = useDataStore()
@@ -76,8 +76,9 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
       </div>
 
       <template #dock>
-        <AppComposer
+        <ComposerDock
           v-show="!editing"
+          :key="page.id"
           :mode="page.kind === 'today' ? 'today' : 'page'"
           :page-id="page.kind === 'today' ? undefined : page.id"
         />

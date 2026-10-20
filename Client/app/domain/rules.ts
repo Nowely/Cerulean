@@ -1,5 +1,5 @@
 // Simple rules: file a line on the device, without a model. Clear cases only; the rest goes to Входящие.
-import type { Id, Page, PropDef } from './types'
+import type { Id, Page, PropDef, TemplateKey } from './types'
 import { fold, stems } from './text'
 
 type Topic = 'shop' | 'todo' | 'home' | 'goal' | 'idea' | 'note' | 'book' | 'film' | 'gift' | 'health' | 'travel'
@@ -149,6 +149,31 @@ export function classify(text: string, pages: Page[], learned: Learned = {}, rec
   const named = NEW_NAMES.find(([t]) => t === topic)?.[1] ?? null
   const taken = named && pages.some(p => fold(p.title) === fold(named))
   return { pageId: confident ? best.pageId : null, guesses, newName: confident || taken ? null : named }
+}
+
+/** Which starter a kind of line belongs to: calls, payments and visits are Дела, thoughts are Заметки */
+const TOPIC_TEMPLATE: Partial<Record<Topic, TemplateKey>> = {
+  shop: 'shop',
+  todo: 'todo',
+  health: 'todo',
+  travel: 'todo',
+  home: 'todo',
+  goal: 'goal',
+  idea: 'note',
+  note: 'note'
+}
+
+/**
+ * Day one, or a kind of line no page holds yet: the starter that fits it, when no page of that kind exists
+ * (`classify` found no page). Books, films and gifts have no starter: they stay an Уточнение.
+ */
+export function templateFor(text: string, pages: Page[]): TemplateKey | null {
+  const topic = textTopics(text)[0]
+  const key = topic ? TOPIC_TEMPLATE[topic] : undefined
+  if (!key) return null
+  const own = pages.filter(p => p.kind === 'page')
+  if (own.some(p => p.template === key || pageTopic(p) === key)) return null
+  return key
 }
 
 /** Department for a shopping line, by the same word beginnings */
