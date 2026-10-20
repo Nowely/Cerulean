@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Entry, Id, Page, Rec } from '~/domain/types'
 import { useDataStore } from './data'
-import { askModel, ModelError, type ModelResult } from '~/domain/openai'
+import { askModel, isConnected, ModelError, type ModelResult } from '~/domain/model'
 import { classify } from '~/domain/rules'
 import { draftsFor, draftsFromModel, preview, type Draft, type Preview } from '~/domain/auto'
 import { cleanRecordText, isQuestion, parseDue } from '~/domain/parse'
@@ -24,7 +24,7 @@ export const useJournalStore = defineStore('journal', () => {
   /** Models calls in flight, so a second «online» event does not run them twice */
   const busy = new Set<Id>()
 
-  const hasModel = () => !!data.settings.apiKey && data.settings.keyState !== 'bad'
+  const hasModel = () => isConnected(data.settings) && data.settings.keyState !== 'bad'
 
   /** The chip while typing in Авто: a clear rule shows its page; with a reachable model an unclear line stays «Авто» */
   function previewFor(text: string): Preview {
@@ -98,10 +98,10 @@ export const useJournalStore = defineStore('journal', () => {
     let result: ModelResult
     busy.add(entry.id)
     try {
-      result = await askModel(data.settings.apiKey, data.settings.model, text, data.livePages, now)
+      result = await askModel(data.settings, text, data.livePages, now)
       if (data.settings.keyState !== 'ok') data.setSettings({ keyState: 'ok' })
     } catch (e) {
-      if (e instanceof ModelError && e.reason === 'key') data.setSettings({ keyState: 'bad' })
+      if (e instanceof ModelError && (e.reason === 'key' || e.reason === 'model')) data.setSettings({ keyState: 'bad' })
       if (e instanceof ModelError && e.reason === 'offline') return park(entry, text, opts.today)
       return rulePage ? place(entry, rulePage, draftsFor(text, rulePage, now), opts) : ask(entry, text, rules.guesses, rules.newName, opts.today)
     } finally {

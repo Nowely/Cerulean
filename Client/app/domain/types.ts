@@ -143,9 +143,16 @@ export interface Entry {
 
 export type ModelChoice = 'fast' | 'exact'
 export type HomeRows = 'summary' | 'compact'
+/** Where Авто's model runs: «Другой» is any OpenAI-compatible API at its own address */
+export type Provider = 'openai' | 'anthropic' | 'openrouter' | 'custom'
 
 export interface Settings {
+  provider: Provider
   apiKey: string
+  /** «Другой»: the API address, like https://example.com/v1 */
+  baseUrl: string
+  /** A model id typed in by hand; empty: Быстрая or Точная of the service */
+  modelId: string
   keyState: 'unknown' | 'ok' | 'bad'
   model: ModelChoice
   rulesFirst: boolean
@@ -153,6 +160,9 @@ export interface Settings {
   /** One-time tips and cards that were closed */
   dismissed: string[]
 }
+
+/** The connection to a model stays in this browser: never in an export, kept through an import */
+export type ConnectionField = 'provider' | 'apiKey' | 'baseUrl' | 'modelId' | 'keyState'
 
 export const GLYPHS = {
   basket: 'i-lucide-shopping-basket',

@@ -54,7 +54,10 @@ export function newEntry(init: Omit<Entry, 'id'>): Entry {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  provider: 'openai',
   apiKey: '',
+  baseUrl: '',
+  modelId: '',
   keyState: 'unknown',
   model: 'fast',
   rulesFirst: true,

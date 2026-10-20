@@ -3,11 +3,11 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 
-vi.mock('~/domain/openai', async (orig) => {
-  const real = await orig<typeof import('~/domain/openai')>()
+vi.mock('~/domain/model', async (orig) => {
+  const real = await orig<typeof import('~/domain/model')>()
   return {
     ...real,
-    askModel: vi.fn(async (_key: string, _model: string, text: string, pages: { id: string, title: string }[]) => ({
+    askModel: vi.fn(async (_c: unknown, text: string, pages: { id: string, title: string }[]) => ({
       kind: 'record',
       pageId: pages.find(p => p.title === 'Продукты')!.id,
       items: [{ text: text.replace(/ для пульта/, ''), date: null, time: null, qty: '4 шт', option: 'Прочее' }],

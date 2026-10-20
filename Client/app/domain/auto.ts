@@ -1,7 +1,7 @@
 // Авто: where a line goes and what records it becomes. The stores run it; this file only decides.
 import type { Due, Id, Page, Rec } from './types'
 import type { Learned } from './rules'
-import type { ModelResult } from './openai'
+import type { ModelResult } from './model'
 import { classify, guessOption } from './rules'
 import { cleanRecordText, isQuestion, parseDue, parseQty, splitItems } from './parse'
 import { capitalize, fold } from './text'

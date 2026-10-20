@@ -1,13 +1,14 @@
 <script setup lang="ts">
 // Настройки: Авто, Оформление, Данные. Everything here acts at once, nothing to save.
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
-import { useColorMode, useHead, useRouter } from '#imports'
+import { useColorMode, useHead, useRoute, useRouter } from '#imports'
 import type { HomeRows, ModelChoice } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
 import { useNotify } from '~/composables/useNotify'
-import { checkKey, maskKey, ModelError } from '~/domain/openai'
+import { checkConnection, maskKey, modelOf, ModelError, PROVIDERS } from '~/domain/model'
+import { finishOpenRouter } from '~/domain/openrouter'
 import { parseSnapshot, toJSON, toMarkdown } from '~/domain/export'
 import { dayKey } from '~/domain/dates'
 import { count, RECORD_FORMS } from '~/domain/text'
@@ -17,7 +18,7 @@ import DeskHeader from '~/components/shell/DeskHeader.vue'
 import SegmentedControl from '~/components/common/SegmentedControl.vue'
 import ActionMenu from '~/components/overlay/ActionMenu.vue'
 import SettingRow from '~/components/settings/SettingRow.vue'
-import KeyEditor from '~/components/settings/KeyEditor.vue'
+import ConnectionEditor from '~/components/settings/ConnectionEditor.vue'
 import DescriptionList from '~/components/settings/DescriptionList.vue'
 
 useHead({ title: 'Настройки · Cerulean' })
@@ -25,29 +26,50 @@ useHead({ title: 'Настройки · Cerulean' })
 const data = useDataStore()
 const ui = useUiStore()
 const router = useRouter()
+const route = useRoute()
 const notify = useNotify()
 const colorMode = useColorMode()
 const { isDesktop } = useScreen()
-const keyEditor = useTemplateRef<InstanceType<typeof KeyEditor>>('keyEditor')
+const keyEditor = useTemplateRef<InstanceType<typeof ConnectionEditor>>('keyEditor')
 
 // Авто
 
 const key = computed(() => data.settings.apiKey)
+const service = computed(() => PROVIDERS[data.settings.provider].name)
 const keyStatus = computed(() => {
   if (!key.value) return { text: 'Без ключа работают только простые правила', tone: undefined, icon: '' }
-  if (data.settings.keyState === 'bad') return { text: 'Не работает: проверь ключ', tone: 'warn' as const, icon: 'i-lucide-circle-alert' }
-  if (data.settings.keyState === 'ok') return { text: 'Работает · не попадает в экспорт', tone: undefined, icon: 'i-lucide-check' }
-  return { text: 'Ещё не проверен · не попадает в экспорт', tone: undefined, icon: '' }
+  if (data.settings.keyState === 'bad') return { text: 'Не работает: проверь ключ и модель', tone: 'warn' as const, icon: 'i-lucide-circle-alert' }
+  if (data.settings.keyState === 'ok') return { text: `Работает · ${modelOf(data.settings)}`, tone: undefined, icon: 'i-lucide-check' }
+  return { text: 'Ещё не проверено · не попадает в экспорт', tone: undefined, icon: '' }
 })
 
-// A key saved offline is checked as soon as Настройки is opened with a network
-onMounted(async () => {
+async function check() {
   if (!key.value || data.settings.keyState !== 'unknown' || !navigator.onLine) return
   try {
-    data.setSettings({ keyState: await checkKey(key.value) ? 'ok' : 'bad' })
+    data.setSettings({ keyState: await checkConnection(data.settings) === 'ok' ? 'ok' : 'bad' })
   } catch (e) {
     if (!(e instanceof ModelError && e.reason === 'offline')) throw e
   }
+}
+
+onMounted(async () => {
+  // Back from «Войти через OpenRouter» with a code: it becomes the key
+  const code = route.query.code
+  if (typeof code === 'string') {
+    const { code: _, ...query } = route.query
+    void router.replace({ query })
+    try {
+      const apiKey = await finishOpenRouter(code)
+      if (apiKey) {
+        data.setSettings({ provider: 'openrouter', apiKey, baseUrl: '', modelId: '', keyState: 'unknown' })
+        notify('Вход через OpenRouter выполнен', undefined, 3000)
+      }
+    } catch {
+      notify('Не получилось войти через OpenRouter. Попробуй ещё раз', undefined, 5000)
+    }
+  }
+  // A connection saved offline is checked as soon as Настройки is opened with a network
+  await check()
 })
 
 const model = computed({
@@ -205,12 +227,12 @@ async function persist() {
           Авто
         </h2>
         <SettingRow
-          label="Ключ OpenAI"
+          label="Подключение"
           icon="i-lucide-key-round"
           :hint="keyStatus.text"
           :hint-tone="keyStatus.tone"
           desk-hint="Без ключа работают только простые правила"
-          :value="key ? maskKey(key) : 'Добавить'"
+          :value="key ? `${service} · ${maskKey(key)}` : 'Добавить'"
           opens
           @open="keyEditor?.open()"
         >
@@ -219,7 +241,7 @@ async function persist() {
               <span
                 v-if="key"
                 class="inline-flex h-9 items-center rounded-chip border border-default bg-default px-3 text-sm tracking-wide text-highlighted"
-              >{{ maskKey(key) }}</span>
+              >{{ service }} · {{ maskKey(key) }}</span>
               <UButton
                 :color="key ? 'neutral' : 'primary'"
                 :variant="key ? 'outline' : 'solid'"
@@ -242,6 +264,7 @@ async function persist() {
           </div>
         </SettingRow>
         <SettingRow
+          v-if="!data.settings.modelId && data.settings.provider !== 'custom'"
           label="Модель"
           icon="i-lucide-split"
           desk-hint="Точная медленнее, зато лучше с непонятными записями"
@@ -257,7 +280,7 @@ async function persist() {
         <SettingRow
           label="Сначала простые правила"
           icon="i-lucide-text"
-          hint="Понятное разбирается на устройстве, в OpenAI уходит только остальное"
+          hint="Понятное разбирается на устройстве, в модель уходит только остальное"
         >
           <USwitch
             v-model="rulesFirst"
@@ -427,7 +450,7 @@ async function persist() {
           </UButton>
         </SettingRow>
         <p class="px-5 pt-3.5 text-13 leading-normal text-toned lg:px-0 lg:pt-4.5 lg:text-sm">
-          Синхронизации между устройствами нет: данные переносятся экспортом. Ключ хранится здесь же и уходит только в OpenAI.
+          Синхронизации между устройствами нет: данные переносятся экспортом. Ключ хранится здесь же и уходит только в выбранный сервис.
         </p>
       </section>
     </div>
@@ -439,7 +462,7 @@ async function persist() {
       class="hidden"
       @change="onFile"
     >
-    <KeyEditor ref="keyEditor" />
+    <ConnectionEditor ref="keyEditor" />
     <ActionMenu
       v-if="!isDesktop"
       v-model:open="exporting"

@@ -364,7 +364,7 @@ export const useDataStore = defineStore('data', () => {
   // whole database
 
   function snapshot(): Omit<Snapshot, 'app' | 'version' | 'exportedAt'> {
-    const { apiKey: _key, keyState: _state, ...rest } = settings.value
+    const { provider: _p, apiKey: _key, baseUrl: _url, modelId: _model, keyState: _state, ...rest } = settings.value
     return {
       pages: Object.values(pages.value),
       records: Object.values(records.value),
@@ -382,9 +382,10 @@ export const useDataStore = defineStore('data', () => {
     await storage.value?.replaceAll(data, new Map<string, unknown>([['settings', settings.value]]))
   }
 
-  /** Import replaces everything; the key stays, it is never in a file */
+  /** Import replaces everything; the connection to the model stays, it is never in a file */
   async function importSnapshot(s: Snapshot) {
-    await replaceAll(s, { ...s.settings, apiKey: settings.value.apiKey, keyState: settings.value.keyState })
+    const { provider, apiKey, baseUrl, modelId, keyState } = settings.value
+    await replaceAll(s, { ...s.settings, provider, apiKey, baseUrl, modelId, keyState })
     learned.value = s.learned
     saveMeta('learned', learned.value)
   }

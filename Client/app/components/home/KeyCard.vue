@@ -34,7 +34,7 @@ const close = () => data.setSettings({ dismissed: [...data.settings.dismissed, '
       />
     </div>
     <p class="mt-1 pr-2 text-sm leading-relaxed text-toned">
-      Остальное попадёт во Входящие с меткой «уточнить». С ключом OpenAI записи раскладываются точнее, ключ хранится только в этом браузере.
+      Остальное попадёт во Входящие с меткой «уточнить». С ключом от OpenAI, Anthropic или OpenRouter записи раскладываются точнее, ключ хранится только в этом браузере.
     </p>
     <UButton
       color="primary"

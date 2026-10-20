@@ -98,6 +98,7 @@ const scenarios = [
   } },
   { name: 'MobileSettings', device: MOBILE, run: p => open(p, '/settings') },
   { name: 'MobileTrash', device: MOBILE, run: p => open(p, '/settings/trash') },
+  { name: 'MobileConnect', device: MOBILE, run: p => openConnection(p, 'OpenRouter') },
 
   { name: 'Home', device: DESKTOP, run: p => openHome(p) },
   { name: 'Page', device: DESKTOP, run: p => openPage(p, 'Продукты') },
@@ -139,7 +140,8 @@ const scenarios = [
     await p.getByRole('combobox', { name: 'Найти' }).fill('мол')
     await settle(p)
   } },
-  { name: 'Settings', device: DESKTOP, run: p => open(p, '/settings') }
+  { name: 'Settings', device: DESKTOP, run: p => open(p, '/settings') },
+  { name: 'Connect', device: DESKTOP, run: p => openConnection(p, 'Другой') }
 ]
 
 async function settle(page, ms = 250) {
@@ -165,6 +167,13 @@ async function dismissKeyCard(page) {
   await settle(page)
 }
 
+/** Подключение with another service picked */
+async function openConnection(page, service) {
+  await open(page, '/settings?key')
+  await page.getByRole('radio', { name: service }).click()
+  await settle(page, 400)
+}
+
 const OPENAI = '**/api.openai.com/**'
 
 /**
@@ -174,7 +183,7 @@ const OPENAI = '**/api.openai.com/**'
 async function addKey(page) {
   await page.route(OPENAI, route => route.abort('internetdisconnected'))
   await open(page, '/settings')
-  await page.getByRole('button', { name: /^Ключ OpenAI/ }).click()
+  await page.getByRole('button', { name: /^Подключение/ }).click()
   await page.getByRole('textbox', { name: 'Ключ OpenAI' }).fill('sk-demo-0000000000000000000000000000000000007Qa2')
   await page.getByRole('button', { name: 'Сохранить' }).click()
   await page.getByRole('switch', { name: 'Сначала простые правила' }).click()

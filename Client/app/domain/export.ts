@@ -1,5 +1,5 @@
-// Export and import: the only way data moves between devices. The OpenAI key never goes into a file.
-import type { Entry, Page, Rec, Section, Settings } from './types'
+// Export and import: the only way data moves between devices. The model key never goes into a file.
+import type { ConnectionField, Entry, Page, Rec, Section, Settings } from './types'
 import type { Learned } from './rules'
 import { formatDue } from './dates'
 
@@ -11,7 +11,7 @@ export interface Snapshot {
   records: Rec[]
   sections: Section[]
   entries: Entry[]
-  settings: Omit<Settings, 'apiKey' | 'keyState'>
+  settings: Omit<Settings, ConnectionField>
   learned: Learned
 }
 

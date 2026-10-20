@@ -2,13 +2,14 @@
 
 Notion-like notes, lists and pages that run entirely in the browser: data lives in IndexedDB,
 the app works offline as a PWA, and «Авто» sorts entries with local rules and, with the user's
-own OpenAI key, a model call.
+own key, a model call: OpenAI, Anthropic, OpenRouter (key or «Войти через OpenRouter») or any
+OpenAI-compatible API. The prompt lives in `app/domain/prompt.ts`, the calls in `app/domain/model.ts`.
 
 ## Stack
 
 - Nuxt 4 as a SPA (`ssr: false`), Vue 3.5, auto-imports off: every file imports what it uses
 - Nuxt UI 4 and Tailwind CSS 4, themed from `app/assets/css/tokens.css` → `main.css` → `app.config.ts`
-- Pinia, IndexedDB (`idb`), OpenAI SDK (loaded only when a key is set), `@vite-pwa/nuxt`
+- Pinia, IndexedDB (`idb`), OpenAI SDK (loaded only when Авто calls a model), `@vite-pwa/nuxt`
 - Vitest with fake-indexeddb
 
 ## Commands
