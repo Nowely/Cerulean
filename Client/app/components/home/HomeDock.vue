@@ -210,24 +210,40 @@ function wrong() {
         @focusin="hovered = true"
         @focusout="hovered = false"
       >
-        <button
-          type="button"
-          class="flex min-h-11 w-full cursor-pointer items-center gap-3 pr-2.5 pl-3 text-left text-sm text-toned hover:bg-muted active:bg-pressed"
-          @click="page && peek({ kind: 'page', id: page.id })"
-        >
-          <PageTile :glyph="page?.glyph" />
-          <span class="min-w-0 flex-1 truncate">
-            {{ title }} → <b class="font-medium text-highlighted">{{ page?.title || 'Без названия' }}</b>
-            <span
-              v-if="last.moved"
-              class="text-dimmed"
-            > · перемещено</span>
-          </span>
-          <UIcon
-            name="i-lucide-chevron-right"
-            class="size-4 shrink-0 text-dimmed"
-          />
-        </button>
+        <div class="flex items-center">
+          <button
+            type="button"
+            class="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 pr-2.5 pl-3 text-left text-sm text-toned hover:bg-muted active:bg-pressed"
+            @click="page && peek({ kind: 'page', id: page.id })"
+          >
+            <PageTile :glyph="page?.glyph" />
+            <span class="min-w-0 flex-1 truncate">
+              {{ title }} → <b class="font-medium text-highlighted">{{ page?.title || 'Без названия' }}</b>
+              <span
+                v-if="last.moved"
+                class="text-dimmed"
+              > · перемещено</span>
+            </span>
+          </button>
+          <button
+            v-if="isDesktop"
+            type="button"
+            class="h-11 shrink-0 cursor-pointer px-2.5 text-13 font-medium text-toned hover:text-highlighted aria-pressed:text-highlighted"
+            :aria-pressed="wrongOpen"
+            @click="wrongOpen = !wrongOpen"
+          >
+            Не туда
+          </button>
+          <NuxtLink
+            to="/chat"
+            class="flex h-11 shrink-0 items-center gap-0.5 pr-2 pl-2.5 text-13 text-dimmed hover:text-highlighted"
+          >
+            в Чате<UIcon
+              name="i-lucide-chevron-right"
+              class="size-3.5"
+            />
+          </NuxtLink>
+        </div>
         <ul>
           <li
             v-for="r in records"
@@ -270,6 +286,7 @@ function wrong() {
         </div>
         <div class="flex gap-2 px-3 pt-1 pb-3">
           <UButton
+            v-if="!isDesktop"
             :aria-pressed="wrongOpen"
             @click="wrongOpen = !wrongOpen"
           >
@@ -314,7 +331,6 @@ function wrong() {
     <AppComposer
       ref="composer"
       mode="auto"
-      variant="slim"
       @sent="onSent"
       @focus="v => typing = v"
     />

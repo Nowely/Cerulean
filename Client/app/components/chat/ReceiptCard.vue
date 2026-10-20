@@ -1,17 +1,19 @@
 <script setup lang="ts">
-// Квитанция: what was created and where. While fresh: «Не туда» and «Отменить».
+// Квитанция: what was created and where, on Поиск's row grid (glyph or mark at 12px, text at 42px, record rows
+// 36px). While fresh: «Не туда» and «Отменить», whose countdown is a line along its own bottom edge. Once
+// settled, «Не туда» stays as a quiet header button; on desktop it is always there.
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { Entry, Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
 import { usePeek } from '~/composables/usePeek'
+import { useScreen } from '~/composables/useScreen'
 import { count, RECORD_FORMS } from '~/domain/text'
 import { rank } from '~/domain/rules'
 import PageTile from '../common/PageTile.vue'
 import ChipButton from '../common/ChipButton.vue'
-import RecordLine from '../record/RecordLine.vue'
-import DrainLine from './DrainLine.vue'
+import RecordMark from '../common/RecordMark.vue'
 
 const FRESH_MS = 15_000
 
@@ -19,7 +21,8 @@ const props = defineProps<{ entry: Entry, float?: boolean }>()
 const data = useDataStore()
 const journal = useJournalStore()
 const ui = useUiStore()
-const { peek, target } = usePeek()
+const { peek } = usePeek()
+const { isDesktop } = useScreen()
 
 const page = computed<Page | undefined>(() => props.entry.pageId ? data.pages[props.entry.pageId] : undefined)
 const records = computed(() => (props.entry.recordIds ?? []).map(id => data.records[id]).filter((r): r is Rec => !!r && !r.deletedAt))
@@ -29,6 +32,8 @@ const wrongOpen = ref(false)
 const hovered = ref(false)
 const focused = ref(false)
 const paused = computed(() => hovered.value || focused.value || wrongOpen.value)
+/** «Не туда» in the header: always on desktop, once settled on a phone */
+const wrongInHead = computed(() => !offline.value && (isDesktop.value || !fresh.value))
 
 // The window runs on its own clock so pausing is exact; the line only shows it
 let left = FRESH_MS
@@ -106,10 +111,10 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
     @focusout="setPaused('focus', false)"
   >
     <template v-if="entry.kind === 'undone'">
-      <div class="flex min-h-11 items-center gap-2 px-3 text-meta text-toned">
+      <div class="flex min-h-11 items-center gap-3 px-3 text-meta text-toned">
         <UIcon
           name="i-lucide-undo-2"
-          class="size-3.5"
+          class="size-4.5"
         />Отменено, ничего не записано
       </div>
     </template>
@@ -117,13 +122,10 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
       <div class="flex items-center">
         <button
           type="button"
-          class="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 pr-2.5 pl-3 text-left text-sm text-toned hover:bg-muted active:bg-pressed"
+          class="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 pr-2.5 pl-3 text-left text-sm text-toned hover:bg-muted active:bg-pressed"
           @click="page && peek({ kind: 'page', id: page.id })"
         >
-          <PageTile
-            :glyph="page?.glyph"
-            :size="14"
-          />
+          <PageTile :glyph="page?.glyph" />
           <span class="min-w-0 flex-1 truncate">
             {{ title }} → <b class="font-medium text-highlighted">{{ page?.title || 'Без названия' }}</b>
             <span
@@ -137,7 +139,7 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
           />
         </button>
         <button
-          v-if="!fresh && !offline"
+          v-if="wrongInHead"
           type="button"
           class="h-11 shrink-0 cursor-pointer px-3 text-13 font-medium text-toned hover:text-highlighted aria-pressed:text-highlighted"
           :aria-pressed="wrongOpen"
@@ -150,29 +152,39 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
         <li
           v-for="r in records"
           :key="r.id"
-          class="border-t border-canvas"
+          class="flex min-h-9 items-center pr-3"
         >
-          <RecordLine
+          <RecordMark
             :rec="r"
-            :place="false"
-            :selected="target?.kind === 'record' && target.id === r.id"
-            @open="peek({ kind: 'record', id: r.id })"
+            :page="page"
+            size="sm"
+            area="tight"
+            class="-mr-0.5 ml-0.5"
+            @toggle="data.toggleDone(r.id)"
           />
+          <button
+            type="button"
+            class="min-w-0 flex-1 cursor-pointer truncate py-1.5 text-left text-15 text-highlighted"
+            :class="{ 'text-dimmed line-through': r.done }"
+            @click="peek({ kind: 'record', id: r.id })"
+          >
+            {{ r.text }}
+          </button>
         </li>
       </ul>
       <div
         v-if="offline"
-        class="flex items-start gap-2 border-t border-canvas px-3 pt-2.75 pb-2.25 text-meta text-toned"
+        class="flex items-start gap-3 px-3 pt-1 pb-2.5 text-meta text-toned"
       >
         <UIcon
           name="i-lucide-wifi-off"
-          class="mt-0.5 size-3.5 shrink-0"
+          class="mt-0.5 size-4.5 shrink-0"
         />
         Нет сети. Запись во Входящих и разберётся, когда сеть появится.
       </div>
       <div
         v-if="wrongOpen && !offline"
-        class="flex flex-wrap gap-1.5 border-t border-canvas px-2.5 pt-2.5 pb-2.5"
+        class="flex flex-wrap gap-1.5 px-3 pt-1 pb-1"
       >
         <ChipButton
           v-for="p in others"
@@ -186,23 +198,29 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
           @click="more"
         />
       </div>
-      <template v-if="fresh && !offline">
-        <div class="flex gap-2 border-t border-canvas px-2.5 pt-2 pb-2.5">
-          <UButton
-            :aria-pressed="wrongOpen"
-            @click="wrongOpen = !wrongOpen"
-          >
-            Не туда
-          </UButton>
-          <UButton @click="undo">
-            Отменить
-          </UButton>
-        </div>
-        <DrainLine
-          :paused="paused"
-          :duration="FRESH_MS"
-        />
-      </template>
+      <div
+        v-if="fresh && !offline"
+        class="flex gap-2 px-3 pt-1 pb-3"
+      >
+        <UButton
+          v-if="!wrongInHead"
+          :aria-pressed="wrongOpen"
+          @click="wrongOpen = !wrongOpen"
+        >
+          Не туда
+        </UButton>
+        <UButton
+          class="relative overflow-hidden"
+          @click="undo"
+        >
+          Отменить
+          <span
+            class="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-ring motion-safe:animate-drain motion-reduce:animate-none"
+            :style="{ animationDuration: `${FRESH_MS}ms`, animationPlayState: paused ? 'paused' : 'running' }"
+            aria-hidden="true"
+          />
+        </UButton>
+      </div>
     </template>
   </div>
 </template>

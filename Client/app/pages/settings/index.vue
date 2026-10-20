@@ -2,7 +2,7 @@
 // Настройки: Авто, Оформление, Данные. Everything here acts at once, nothing to save.
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { useColorMode, useHead, useRoute, useRouter } from '#imports'
-import type { HomeRows, ModelChoice } from '~/domain/types'
+import type { ModelChoice } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
@@ -13,8 +13,8 @@ import { parseSnapshot, toJSON, toMarkdown } from '~/domain/export'
 import { dayKey } from '~/domain/dates'
 import { count, RECORD_FORMS } from '~/domain/text'
 import AppScreen from '~/components/shell/AppScreen.vue'
-import MobileHeader from '~/components/shell/MobileHeader.vue'
-import DeskHeader from '~/components/shell/DeskHeader.vue'
+import BackHeader from '~/components/shell/BackHeader.vue'
+import TitleHeader from '~/components/shell/TitleHeader.vue'
 import SegmentedControl from '~/components/common/SegmentedControl.vue'
 import ActionMenu from '~/components/overlay/ActionMenu.vue'
 import SettingRow from '~/components/settings/SettingRow.vue'
@@ -91,9 +91,9 @@ const theme = computed({
   get: () => colorMode.preference as Theme,
   set: (v: Theme) => { colorMode.preference = v }
 })
-const homeRows = computed({
-  get: () => data.settings.homeRows,
-  set: (v: HomeRows) => data.setSettings({ homeRows: v })
+const compactRows = computed({
+  get: () => data.settings.homeRows === 'compact',
+  set: (v: boolean) => data.setSettings({ homeRows: v ? 'compact' : 'summary' })
 })
 
 // Данные
@@ -186,16 +186,19 @@ async function persist() {
 <template>
   <AppScreen>
     <template #header>
-      <MobileHeader />
-      <DeskHeader title="Настройки" />
+      <BackHeader
+        to="/"
+        label="Главная"
+      />
+      <TitleHeader title="Настройки" />
     </template>
 
-    <div class="mx-auto w-full pb-8 lg:max-w-180 lg:px-8 lg:pt-7 lg:pb-16">
-      <h1 class="hidden text-title text-highlighted lg:block">
+    <div class="mx-auto w-full pb-8 lg:max-w-180 lg:px-8 lg:pb-16">
+      <h1 class="px-5 pb-1 text-28 font-semibold tracking-[-.015em] text-highlighted lg:hidden">
         Настройки
       </h1>
       <div
-        class="flex items-center gap-2.5 px-5 pt-2 pb-1 text-sm text-default lg:mt-2 lg:gap-2 lg:px-0 lg:pt-0 lg:text-sm lg:text-toned"
+        class="flex items-center gap-2.5 px-5 pt-2 pb-1 text-sm text-default lg:-mt-2 lg:gap-2 lg:px-0 lg:pt-0 lg:text-sm lg:text-toned"
         role="status"
       >
         <template v-if="data.storageError">
@@ -222,7 +225,7 @@ async function persist() {
       <section aria-labelledby="s-auto">
         <h2
           id="s-auto"
-          class="px-5 pt-5 pb-1 text-caption text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:text-13 lg:font-semibold"
+          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
         >
           Авто
         </h2>
@@ -325,7 +328,7 @@ async function persist() {
       <section aria-labelledby="s-look">
         <h2
           id="s-look"
-          class="px-5 pt-5 pb-1 text-caption text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:text-13 lg:font-semibold"
+          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
         >
           Оформление
         </h2>
@@ -342,16 +345,13 @@ async function persist() {
           />
         </SettingRow>
         <SettingRow
-          label="Строки на главной"
-          icon="i-lucide-align-left"
-          desk-hint="Сводка: одна строка под страницей о том, что в ней сейчас"
-          below
+          label="Компактные строки"
+          icon="i-lucide-rows-3"
+          hint="На Главной только названия страниц, без сводки"
         >
-          <SegmentedControl
-            v-model="homeRows"
-            label="Строки на главной"
-            :options="[{ value: 'summary', label: 'Со сводкой' }, { value: 'compact', label: 'Компактно' }]"
-            class="lg:w-73"
+          <USwitch
+            v-model="compactRows"
+            aria-label="Компактные строки"
           />
         </SettingRow>
       </section>
@@ -360,7 +360,7 @@ async function persist() {
       <section aria-labelledby="s-data">
         <h2
           id="s-data"
-          class="px-5 pt-5 pb-1 text-caption text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:text-13 lg:font-semibold"
+          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
         >
           Данные
         </h2>

@@ -63,7 +63,7 @@ function save() {
     >
       <button
         type="button"
-        class="hit-44 relative flex h-6 min-w-0 cursor-pointer items-center gap-1 rounded-item px-2 text-left text-xs font-medium tracking-[.02em] text-toned hover:text-highlighted"
+        class="hit-44 relative flex h-6 min-w-0 cursor-pointer items-center gap-1 rounded-item px-2 text-left text-cap text-toned hover:text-highlighted"
         :aria-expanded="!folded"
         @click="emit('toggle')"
       >

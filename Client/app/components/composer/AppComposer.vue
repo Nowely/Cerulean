@@ -1,8 +1,7 @@
 <script setup lang="ts">
-// The one place to write: destination chip · a field that grows with the text · mic → send.
-// The chip opens the page picker. `box` (Чат, pages): radius 12, in Авто the chip shows the decision while
-// typing («⑂ → Продукты»). `slim` (Главная): a 44px pill; the chip stays «Авто» so the text never moves, and
-// the guess is a line above the field («→ Продукты»).
+// The one place to write, the same on every screen: a 44px pill with the destination chip · a field that grows
+// with the text · mic → send. The chip is text only and opens the page picker. It never changes while typing,
+// so the text never moves: in Авто the guess is a line above the pill («→ Продукты»).
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { refDebounced, useOnline } from '@vueuse/core'
 import type { Entry, Id } from '~/domain/types'
@@ -23,10 +22,7 @@ const props = withDefaults(defineProps<{
   pageId?: Id
   recordId?: Id
   placeholder?: string
-  variant?: 'box' | 'slim'
-  /** Docked over content: carries the float shadow (box) */
-  float?: boolean
-}>(), { variant: 'box', float: false })
+}>(), { pageId: undefined, recordId: undefined, placeholder: undefined })
 
 const emit = defineEmits<{ sent: [entry: Entry | null], focus: [boolean] }>()
 
@@ -44,7 +40,6 @@ const dest = ref<'auto' | Id>(props.mode === 'page' && props.pageId ? props.page
 watch(() => props.pageId, (id) => {
   dest.value = props.mode === 'page' && id ? id : 'auto'
 })
-const slim = computed(() => props.variant === 'slim')
 
 const speech = useSpeech((t) => {
   text.value = t
@@ -76,12 +71,11 @@ const guess = computed(() => {
 
 const chip = computed(() => {
   if (destPage.value) {
-    return { label: untitled.value ? 'Эта страница' : destPage.value.title || 'Без названия', glyph: destPage.value.glyph, auto: false, arrow: false }
+    return { label: untitled.value ? 'Эта страница' : destPage.value.title || 'Без названия', auto: false }
   }
-  if (!slim.value && guess.value) return { label: guess.value, auto: true, arrow: true }
-  return { label: 'Авто', auto: true, arrow: false }
+  return { label: 'Авто', auto: true }
 })
-const chipLabel = computed(() => `Куда: ${chip.value.label}${slim.value && guess.value ? `, похоже → ${guess.value}` : ''}`)
+const chipLabel = computed(() => `Куда: ${chip.value.label}${guess.value ? `, похоже → ${guess.value}` : ''}`)
 
 function openPicker() {
   void later.load()
@@ -186,23 +180,20 @@ defineExpose({
 <template>
   <div class="flex flex-col">
     <p
-      v-if="slim && guess && text.trim()"
+      v-if="guess && text.trim()"
       class="truncate pb-1.5 pl-8.5 text-13 text-toned"
       aria-hidden="true"
     >
       → {{ guess }}
     </p>
     <form
-      class="relative flex items-end border bg-default transition-[border-color,box-shadow]"
-      :class="slim
-        ? ['gap-1 border-default p-0.75 focus-within:border-line2 dark:border-line2', multi ? 'rounded-pill-grown' : 'rounded-pill']
-        : ['flex-wrap gap-0.5 rounded-card border-default p-1 focus-within:border-accent focus-within:shadow-[0_0_0_0.5px_var(--accent)]', { 'shadow-float': float }]"
+      class="relative flex items-end gap-1 border border-default bg-default p-0.75 transition-[border-color] focus-within:border-line2 dark:border-line2"
+      :class="multi ? 'rounded-pill-grown' : 'rounded-pill'"
       @submit.prevent="submit"
     >
       <DestChip
         v-if="mode !== 'record'"
         v-bind="chip"
-        :slim="slim"
         :aria-label="chipLabel"
         @click="openPicker"
       />
@@ -218,15 +209,11 @@ defineExpose({
         />
       </span>
 
-      <!-- Box: once the text no longer fits beside the chip, the field takes the full width above it -->
-      <div
-        class="grid min-w-0 flex-1"
-        :class="{ 'order-first basis-full': !slim && multi }"
-      >
+      <div class="grid min-w-0 flex-1">
         <span
           ref="mirror"
           class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words text-input leading-5.5"
-          :class="slim ? 'py-2.25 pr-1 pl-1' : 'py-2.25 pr-1 pl-2'"
+          :class="mode === 'record' ? 'py-2.25 pr-1 pl-3' : 'py-2.25 pr-1 pl-1'"
           aria-hidden="true"
         >{{ text }}&#8203;</span>
         <textarea
@@ -239,23 +226,18 @@ defineExpose({
           :placeholder="speech.listening.value ? 'Говори…' : hint"
           :aria-label="mode === 'record' ? 'Новый подпункт' : 'Новая запись'"
           class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent text-input leading-5.5 text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
-          :class="slim ? 'py-2.25 pr-1 pl-1' : 'py-2.25 pr-1 pl-2'"
+          :class="mode === 'record' ? 'py-2.25 pr-1 pl-3' : 'py-2.25 pr-1 pl-1'"
           @keydown="onKey"
           @focus="emit('focus', true)"
           @blur="emit('focus', false)"
         />
       </div>
-      <span
-        v-if="!slim && multi"
-        class="flex-1"
-      />
 
       <button
         v-if="canSend || !speech.supported"
         type="submit"
         :disabled="!canSend"
-        class="hit-44 relative flex shrink-0 cursor-pointer items-center justify-center bg-accent text-on-accent transition-opacity hover:bg-accent/90 disabled:cursor-default disabled:opacity-40"
-        :class="slim ? 'size-9 rounded-full' : 'size-10 rounded-chip lg:size-9'"
+        class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent text-on-accent transition-opacity hover:bg-accent/90 disabled:cursor-default disabled:opacity-40"
         aria-label="Отправить"
         @pointerdown.prevent
       >
@@ -269,7 +251,7 @@ defineExpose({
         type="button"
         class="hit-44 relative flex shrink-0 cursor-pointer items-center justify-center"
         :class="[
-          slim ? 'size-9 rounded-full' : 'size-10 rounded-chip lg:size-9',
+          'size-9 rounded-full',
           speech.listening.value ? 'bg-accent-soft text-accent-ink' : 'text-toned hover:bg-muted hover:text-highlighted active:bg-pressed'
         ]"
         :aria-label="speech.listening.value ? 'Остановить диктовку' : 'Диктовать'"

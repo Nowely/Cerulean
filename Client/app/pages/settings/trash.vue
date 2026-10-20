@@ -11,6 +11,7 @@ import { formatMoment } from '~/domain/dates'
 import { count, RECORD_FORMS } from '~/domain/text'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import DeskHeader from '~/components/shell/DeskHeader.vue'
+import BackHeader from '~/components/shell/BackHeader.vue'
 import PageTile from '~/components/common/PageTile.vue'
 
 useHead({ title: 'Корзина · Cerulean' })
@@ -19,6 +20,10 @@ const ui = useUiStore()
 const now = useNow()
 const notify = useNotify()
 const router = useRouter()
+/** Корзина goes back where it came from: «⋯» of Главная or Настройки */
+const back = (router.options.history.state.back as string | null) === '/'
+  ? { to: '/', label: 'Главная' }
+  : { to: '/settings', label: 'Настройки' }
 
 type Item = { kind: 'page', page: Page, at: number } | { kind: 'record', rec: Rec, at: number }
 const items = computed<Item[]>(() => data.trash)
@@ -74,17 +79,10 @@ function empty() {
 <template>
   <AppScreen>
     <template #header>
-      <header class="flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
-        <NuxtLink
-          to="/settings"
-          class="flex h-11 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"
-        >
-          <UIcon
-            name="i-lucide-chevron-left"
-            class="size-6"
-          />Настройки
-        </NuxtLink>
-        <span class="flex-1" />
+      <BackHeader
+        :to="back.to"
+        :label="back.label"
+      >
         <UButton
           v-if="items.length"
           color="error"
@@ -95,7 +93,7 @@ function empty() {
         >
           Очистить
         </UButton>
-      </header>
+      </BackHeader>
       <DeskHeader>
         <nav
           aria-label="Путь"

@@ -22,7 +22,7 @@ const glyphs = Object.keys(GLYPHS) as Glyph[]
       <slot />
     </template>
     <div class="px-2 pt-1">
-      <p class="pb-1.5 text-caption text-toned">
+      <p class="pb-1.5 text-cap text-toned">
         Цвет
       </p>
       <div
@@ -48,7 +48,7 @@ const glyphs = Object.keys(GLYPHS) as Glyph[]
           />
         </button>
       </div>
-      <p class="pt-3 pb-1.5 text-caption text-toned">
+      <p class="pt-3 pb-1.5 text-cap text-toned">
         Значок
       </p>
       <div class="grid grid-cols-7 gap-1 pb-2">

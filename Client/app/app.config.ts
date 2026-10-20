@@ -3,7 +3,7 @@ import type { AppConfigInput } from 'nuxt/schema'
 
 // Theme-defined sizes (main.css @theme) that tailwind-merge has to know about,
 // otherwise `text-record` reads as a colour and `rounded-card` never replaces `rounded-md`
-const textRoles = ['11', '13', '15', '17', '28', 'title', 'sheet', 'record', 'row', 'body', 'meta', 'caption', 'input']
+const textRoles = ['11', '13', '15', '17', '28', '30', 'title', 'sheet', 'record', 'row', 'body', 'meta', 'cap', 'caption', 'input']
 const radii = ['card', 'chip', 'item', 'badge', 'tile', 'tile-sm', 'tile-lg', 'sheet', 'pill', 'pill-grown']
 
 // Focus is one accent outline everywhere, as in the mockups

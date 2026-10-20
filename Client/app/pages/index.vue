@@ -12,7 +12,6 @@ import { useCreatePage } from '~/composables/useCreatePage'
 import { pageBadge, recordBadge, type Badge } from '~/domain/summary'
 import { TEMPLATES } from '~/domain/templates'
 import AppScreen from '~/components/shell/AppScreen.vue'
-import DeskHeader from '~/components/shell/DeskHeader.vue'
 import HomeHeader from '~/components/home/HomeHeader.vue'
 import HomeRow from '~/components/home/HomeRow.vue'
 import HomeCaption from '~/components/home/HomeCaption.vue'
@@ -111,11 +110,10 @@ function toTop() {
         @new-section="addSection"
         @top="toTop"
       />
-      <DeskHeader title="Главная" />
     </template>
 
     <div
-      class="mx-auto w-full pt-1 pr-1.5 pb-4 pl-2 lg:max-w-180 lg:px-6 lg:pt-5"
+      class="mx-auto w-full pt-1 pr-1.5 pb-4 pl-2 lg:max-w-196 lg:px-8 lg:pt-0"
       @touchstart.passive="touchStart"
       @touchend.passive="touchEnd"
     >
@@ -171,7 +169,7 @@ function toTop() {
         <div class="mt-4 flex h-6 items-center">
           <h2
             id="cap-start"
-            class="flex-1 px-2 text-xs font-medium tracking-[.02em] text-toned"
+            class="flex-1 px-2 text-cap text-toned"
           >
             Начать с шаблона
           </h2>

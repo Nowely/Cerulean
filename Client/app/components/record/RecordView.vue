@@ -282,7 +282,7 @@ function openPlace() {
     >
       <h2
         :id="linksTitle"
-        class="px-5 pb-1 text-caption text-toned lg:px-0 lg:text-17 lg:font-semibold lg:text-highlighted"
+        class="px-5 pb-1 text-cap text-toned lg:px-0"
         :class="container === 'preview' ? 'lg:px-4' : ''"
       >
         Связано
@@ -302,7 +302,7 @@ function openPlace() {
     >
       <h2
         id="subs-title"
-        class="px-5 pb-1 text-caption text-toned lg:px-0 lg:text-17 lg:font-semibold lg:text-highlighted"
+        class="px-5 pb-1 text-cap text-toned lg:px-0"
         :class="container === 'preview' ? 'lg:px-4' : ''"
       >
         Подпункты

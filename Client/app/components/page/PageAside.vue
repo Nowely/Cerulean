@@ -29,7 +29,7 @@ function save() {
     aria-label="О странице"
   >
     <template v-if="fromChat.length">
-      <h2 class="px-2.5 pt-4 pb-1.5 text-caption text-dimmed first:pt-0">
+      <h2 class="px-2.5 pt-4 pb-1.5 text-cap text-toned first:pt-0">
         Из чата
       </h2>
       <ul class="flex flex-col gap-3 px-2.5">
@@ -47,7 +47,7 @@ function save() {
       </ul>
     </template>
     <template v-if="page.kind === 'page'">
-      <h2 class="px-2.5 pt-5 pb-1.5 text-caption text-dimmed">
+      <h2 class="px-2.5 pt-5 pb-1.5 text-cap text-toned">
         Описание для Авто
       </h2>
       <form

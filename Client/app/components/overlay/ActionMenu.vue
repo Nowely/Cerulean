@@ -3,6 +3,7 @@
 // Until the menu code is in (useLater) the button stands on its own; a tap opens the menu once it is.
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
+import DotsButton from '../common/DotsButton.vue'
 
 export interface MenuItem {
   label: string
@@ -69,11 +70,9 @@ const afterClose = () => setTimeout(() => setTimeout(run))
     :content="{ align: 'end', onCloseAutoFocus: afterClose }"
   >
     <slot :open="open">
-      <UButton
-        icon="i-lucide-ellipsis"
-        variant="ghost"
-        square
-        :aria-label="label"
+      <DotsButton
+        :label="label"
+        tone="muted"
       />
     </slot>
     <template #item-trailing="{ item }">
@@ -90,11 +89,9 @@ const afterClose = () => setTimeout(() => setTimeout(run))
       @click="openNow"
     >
       <slot :open="open">
-        <UButton
-          icon="i-lucide-ellipsis"
-          variant="ghost"
-          square
-          :aria-label="label"
+        <DotsButton
+          :label="label"
+          tone="muted"
           :aria-expanded="open"
         />
       </slot>

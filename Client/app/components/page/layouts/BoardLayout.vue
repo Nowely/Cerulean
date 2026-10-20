@@ -91,7 +91,7 @@ const menuFor = (rec: Rec, colId: string) => [columns.value.filter(c => c.id !==
         class="flex min-w-0 flex-1 flex-col gap-1.5 lg:w-60 lg:flex-none lg:rounded-card lg:bg-trk lg:p-2"
         :aria-label="c.name"
       >
-        <h3 class="hidden items-center gap-2 px-1.5 pb-1 text-caption text-toned lg:flex">
+        <h3 class="hidden items-center gap-2 px-1.5 pb-1 text-cap text-toned lg:flex">
           {{ c.name }}<span class="text-xs text-dimmed">{{ c.records.length }}</span>
         </h3>
         <article

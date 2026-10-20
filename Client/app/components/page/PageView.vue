@@ -318,8 +318,8 @@ const emptyText = computed(() => {
           :aria-label="g.label"
         >
           <h3
-            class="px-5 pt-4 pb-1 text-caption lg:px-2.5"
-            :class="g.tone === 'warn' ? 'text-warn-ink' : 'text-toned lg:text-dimmed'"
+            class="px-5 pt-4 pb-1 text-cap lg:px-2.5"
+            :class="g.tone === 'warn' ? 'text-warn-ink' : 'text-toned'"
           >
             {{ g.label }}
           </h3>

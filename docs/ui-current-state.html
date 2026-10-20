@@ -114,13 +114,13 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
 <header class="wrap hero">
   <p class="eyebrow">Cerulean · клиент · 20 октября 2026</p>
   <h1>Приложение рядом с макетом</h1>
-  <p class="lead">Каждое состояние: слева макет, справа приложение, в светлой и тёмной теме. Главная и Поиск v20 перенесены полностью; остальные экраны уже в новой теме и ждут, пока перенос макетов закончится.</p>
+  <p class="lead">Каждое состояние: слева макет (холст, версия 55), справа приложение, в светлой и тёмной теме. Перенос v20 закончен на всех экранах телефона и компьютера.</p>
   <dl class="facts">
-    <div><dt>Состояний</dt><dd>43</dd></div>
-    <div><dt>Кадров (светлая и тёмная)</dt><dd>172</dd></div>
-    <div><dt>Как в макете или лучше</dt><dd>17</dd></div>
-    <div><dt>Иначе, с причиной</dt><dd>0</dd></div>
-    <div><dt>Ждут переноса макетов</dt><dd>26</dd></div>
+    <div><dt>Состояний</dt><dd>48</dd></div>
+    <div><dt>Кадров (светлая и тёмная)</dt><dd>192</dd></div>
+    <div><dt>Как в макете или лучше</dt><dd>43</dd></div>
+    <div><dt>Иначе, с причиной</dt><dd>5</dd></div>
+    
   </dl>
 </header>
 
@@ -144,7 +144,6 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
       <span class="seg" data-ctl="tag">
         <button type="button" data-v="all" aria-pressed="true">Все</button>
         <button type="button" data-v="diff" aria-pressed="false">Отличия</button>
-        <button type="button" data-v="wait" aria-pressed="false">Ждут</button>
       </span>
     </span>
   </div>
@@ -153,14 +152,14 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
 <section class="block">
   <div class="wrap prose">
     <h2>Что сделано</h2>
-    <ul><li>Утверждённая пара тем: светлая «Строгий, плоский» и тёмная ночная, с ролями elev, panel, chip, warn-fill. Цвета только в <code>tokens.css</code>.</li><li>Правила «Меньше шума»: значки без плашек (плашка только в шапке страницы), счётчики простым текстом, кнопки без рамок.</li><li>Правки v16-app-sync и ревью v19: тексты, второй вид у Целей, связь Полумарафона, Корзина с подтверждением.</li><li>Главная v20: шапка с «⋯», секция Недавнее, сворачивание секций, компактный режим без статусов, «⋯» у строки и долгое нажатие.</li><li>Правки Fable: поле не прыгает при наборе, клавиатура не закрывается после отправки, серия «3 записи → Продукты», «Отменить» возвращает текст.</li><li>Полноэкранный Поиск на телефоне и один выбор страницы с поиском вместо четырёх.</li></ul>
+    <ul><li>Утверждённая пара тем: светлая «Строгий, плоский» и тёмная ночная, с ролями elev, panel, chip, warn-fill. Цвета только в <code>tokens.css</code>.</li><li>Правила «Меньше шума»: значки без плашек (плашка только в шапке страницы), счётчики простым текстом, кнопки без рамок.</li><li>Правки v16-app-sync и ревью v19: тексты, второй вид у Целей, связь Полумарафона, Корзина с подтверждением.</li><li>Главная v20: шапка с «⋯», секция Недавнее, сворачивание секций, компактный режим без статусов, «⋯» у строки и долгое нажатие.</li><li>Правки Fable: поле не прыгает при наборе, клавиатура не закрывается после отправки, серия «3 записи → Продукты», «Отменить» возвращает текст.</li><li>Полноэкранный Поиск на телефоне и один выбор страницы с поиском вместо четырёх.</li><li>Перенос на все экраны: без вкладок (Чат и Настройки открываются с Главной), боковая панель как в Codex, один тонкий composer, квитанции на сетке Поиска, подписи групп 12/500, утопленные поля поиска, строка «Секция» у новой страницы, «во Входящие».</li><li>На компьютере: шапки 72 px у Главной, Чата и Настроек, Поиск по Ctrl K с недавними записями, четыре новых состояния Главной.</li></ul>
   </div>
 </section>
 
 
     <section class="group" id="home">
       <h2>Главная</h2>
-      <p class="lead">Экран v20 с правками Fable: перенесён целиком.</p>
+      <p class="lead">Экран v20 с правками Fable, без вкладок: Чат и Настройки открываются отсюда.</p>
       <div class="cards">
       <article class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Со сводкой</h3><span class="tag same">Как в макете</span></header>
@@ -258,155 +257,180 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
         <p>Лист с числом записей и страниц и кнопкой «Удалить навсегда».</p>
       </article></div>
     </section>
-    <section class="group" id="wait">
-      <h2>Ждут переноса: телефон</h2>
-      <p class="lead">Эти экраны уже в новой теме, но их раскладку поменяет перенос макетов, который сейчас идёт.</p>
+    <section class="group" id="phone">
+      <h2>Остальные экраны: телефон</h2>
+      <p class="lead">Перенос v20 на все экраны: нет вкладок, один тонкий composer, квитанции на сетке Поиска, подписи групп 12/500.</p>
       <div class="cards">
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Чат</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Чат</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileChat-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileChat-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileChat-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileChat-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Экран из Главной: «‹ Главная», Найти справа, заголовок «Чат» уезжает вместе с журналом. Каждая отправка своей квитанцией.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Чат пустой</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Чат пустой</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileChatEmpty-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileChatEmpty-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileChatEmpty-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileChatEmpty-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Подсказка и примеры над тонким composer.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Нет сети</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Нет сети</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileOffline-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileOffline-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileOffline-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileOffline-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Квитанция «ждёт сети» на той же сетке строк.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Входящие</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Входящие</h3><span class="tag diff">Иначе</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileInbox-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileInbox-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileInbox-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileInbox-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Чипы выбора пока прокручиваются вбок, в макете они переносятся. Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Чипы выбора пока прокручиваются вбок, в макете они переносятся. Справа у записи метка «уточнить».</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Сегодня</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Сегодня</h3><span class="tag diff">Иначе</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileToday-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileToday-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileToday-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileToday-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>В приложении есть вкладка вида «Сегодня и просрочено», в макете вкладок нет.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Задачи</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Задачи</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileTasks-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileTasks-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileTasks-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileTasks-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Подписи групп в новой роли, «⋯» в шапке muted.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Список</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Список</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileList-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileList-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileList-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileList-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Чип composer — название страницы, без значка.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Цель</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Цель</h3><span class="tag diff">Иначе</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileGoal-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileGoal-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileGoal-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileGoal-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Статус в приложении — плашка, подпункты показаны с готовыми.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Доска</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Доска</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileBoard-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileBoard-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileBoard-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileBoard-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Заголовки колонок в роли подписи.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Календарь</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Календарь</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileCal-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileCal-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileCalendar-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileCalendar-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p></p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Запись</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Запись</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileItem-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileItem-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileItem-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileItem-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Composer «Подпункт» без чипа.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Настроить вид</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Настроить вид</h3><span class="tag diff">Иначе</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileView-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileView-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileView-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileView-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Лист называется «Вид «Купить»», в макете «Настроить вид».</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Лист записи</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Лист записи</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileSheet-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileSheet-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileSheet-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileSheet-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p></p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Меню страницы</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Меню страницы</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobilePageMenu-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobilePageMenu-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobilePageMenu-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobilePageMenu-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>«Переместить в секцию» открывает лист «Секция», после переноса тост с «Отменить».</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Новая страница</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Новая страница</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileBlank-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileBlank-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileBlank-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileBlank-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Строка «Секция  Недавнее ⌄» под названием, подписи «Начать с шаблона» и «Как показывать».</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Настройки</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Настройки</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileSettings-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileSettings-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileSettings-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileSettings-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Экран из Главной без вкладок. «Компактные строки» стали переключателем, как в «⋯» Главной.</p>
       </article>
-      <article class="card phone" data-tag="wait" data-dev="phone">
-        <header><h3>Подключение</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Подключение</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileConnect-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileConnect-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileConnect-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileConnect-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p></p>
       </article></div>
     </section>
     <section class="group" id="desk">
-      <h2>Ждут переноса: компьютер</h2>
-      <p class="lead">Главная на компьютере уже устроена как v20 на телефоне; остальное ждёт макетов для компьютера.</p>
+      <h2>Компьютер</h2>
+      <p class="lead">Боковая панель без вкладок: Главная, Найти, Чат, затем Входящие и секции, Настройки внизу. Сворачивание секций общее с Главной.</p>
       <div class="cards">
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Главная</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Главная</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Home-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Home-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Home-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Home-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Структура v20 с телефона; боковая панель пока повторяет просрочку. Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Шапка 72 px с «Главная» и одним «⋯». Рядом с Главной строки панели без статусов.</p>
       </article>
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Чат</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Главная, компактно</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeCompact-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeCompact-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeCompact-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeCompact-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
+        <p>Строки 32 px, точка на значке вместо статуса.</p>
+      </article>
+      <article class="card desk" data-tag="diff" data-dev="desk">
+        <header><h3>Меню «⋯»</h3><span class="tag diff">Иначе</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeMenu-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeMenu-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeMenu-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeMenu-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
+        <p>Те же пункты, что на телефоне. «Компактные строки» в меню компьютера — галочка, а не переключатель.</p>
+      </article>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Недавнее</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeRecent-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeRecent-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeRecent-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeRecent-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
+        <p>Семь страниц без секции, пять и «Ещё 2»; панель показывает те же. Дом и Личное свёрнуты в обоих местах сразу.</p>
+      </article>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Пишу</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeWrite-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeWrite-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeWrite-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeWrite-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
+        <p>Чип остаётся «Авто», догадка строкой над полем, поле растёт вверх.</p>
+      </article>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Серия</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeSent-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeSent-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeSent-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeSent-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
+        <p>Две отправки в Продукты в одной квитанции. «Не туда» в шапке, «в Чате ›», внизу только «Отменить» с отсчётом.</p>
+      </article>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Чат</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Main-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Main-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Chat-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Chat-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Шапка 72 px в колонке 640 с Найти справа; запись открыта в панели.</p>
       </article>
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Страница</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Страница</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/List-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/List-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Page-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Page-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Подписи групп, «⋯» muted, тонкий composer с чипом «Продукты».</p>
       </article>
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Запись</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Запись</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Page-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Page-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Item-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Item-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p></p>
       </article>
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Доска</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Доска</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Board-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Board-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Board-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Board-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p></p>
       </article>
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Палитра команд</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Поиск</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Palette-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Palette-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Palette-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Palette-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Утопленное поле, «Недавние записи» с путём.</p>
       </article>
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Палитра с запросом</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Поиск с запросом</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/PaletteTyped-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/PaletteTyped-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/PaletteTyped-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/PaletteTyped-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Совпадение ink 500, остальное muted; у страниц секция второй строкой.</p>
       </article>
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Настройки</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Настройки</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Settings-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Settings-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Settings-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Settings-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p>Шапка 72 px, строка статуса сразу под ней, переключатель «Компактные строки».</p>
       </article>
-      <article class="card desk" data-tag="wait" data-dev="desk">
-        <header><h3>Подключение</h3><span class="tag wait">Ждёт переноса</span></header>
+      <article class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Подключение</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Connect-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Connect-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Connect-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Connect-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Цвета, роли и правила «Меньше шума» уже новые. Раскладка ждёт переноса этого экрана в макетах.</p>
+        <p></p>
       </article></div>
     </section>
 
 <section class="block">
   <div class="wrap prose">
     <h2>Что дальше</h2>
-    <ul><li>Когда перенос макетов закончится: Чат, страница, вид, настройки и компьютер в этом же PR, отчёт пересоберётся.</li><li>Открытый вопрос: оставить серию «3 записи → Продукты» или простую квитанцию. Переключается константой <code>SERIES_MS</code> в <code>HomeDock.vue</code>.</li></ul>
+    <ul><li>Идёт ревью Fable этих макетов; принятые Josh правки придут отдельной небольшой дельтой и попадут в этот же PR.</li><li>Открытый вопрос: серия «3 записи → Продукты» или простая квитанция. Переключается константой <code>SERIES_MS</code> в <code>HomeDock.vue</code>.</li><li>Не нарисовано в макетах, поэтому оставлено как было: «⋯» строки и «Корзина» на компьютере открывают то же, что на телефоне; «Все секции» в Поиске на компьютере — список.</li></ul>
   </div>
 </section>
 
-<footer class="wrap">Кадры сняты <code>pnpm shots</code> со статической сборки (390×844 и 1440×900). Макеты: v20, «Главная и поиск».</footer>
+<footer class="wrap">Кадры сняты <code>pnpm shots</code> со статической сборки (390×844 и 1440×900). Макеты: холст, версия 55.</footer>
 
 <script>
 (() => {

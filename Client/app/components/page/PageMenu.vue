@@ -7,7 +7,7 @@ import { useDataStore } from '~/stores/data'
 import { useNotify } from '~/composables/useNotify'
 import { toMarkdown } from '~/domain/export'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
-import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
+import SectionSheet from './SectionSheet.vue'
 import PageTile from '../common/PageTile.vue'
 
 const DescriptionDialog = defineAsyncComponent(() => import('./DescriptionDialog.vue'))
@@ -95,26 +95,8 @@ const items = computed<MenuItem[][]>(() => {
     :page="page"
   />
 
-  <AdaptiveOverlay
+  <SectionSheet
     v-model:open="moving"
-    title="Переместить в секцию"
-    dialog
-  >
-    <div class="flex flex-col pb-2">
-      <button
-        v-for="s in [...data.sectionList, null]"
-        :key="s?.id ?? 'none'"
-        type="button"
-        class="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base text-highlighted hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
-        @click="data.updatePage(page.id, { sectionId: s?.id ?? null }); moving = false"
-      >
-        <span class="min-w-0 flex-1 truncate">{{ s?.name ?? 'Недавнее' }}</span>
-        <UIcon
-          v-if="(s?.id ?? null) === page.sectionId"
-          name="i-lucide-check"
-          class="size-4.5 text-accent"
-        />
-      </button>
-    </div>
-  </AdaptiveOverlay>
+    :page="page"
+  />
 </template>

@@ -67,3 +67,8 @@ export function genitive(word: string): string {
   if (/я$/.test(w)) return `${w.slice(0, -1)}и`
   return w
 }
+
+/** «в Задачи», «во Входящие»: «во» before в or ф followed by a consonant */
+export function inPlace(name: string): string {
+  return `${/^[вф][^аеёиоуыэюя]/i.test(name) ? 'во' : 'в'} ${name}`
+}

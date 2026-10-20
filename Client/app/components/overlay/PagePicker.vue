@@ -110,6 +110,8 @@ function auto() {
           <UInput
             v-model="q"
             icon="i-lucide-search"
+            variant="soft"
+            size="lg"
             placeholder="Найти страницу"
             class="w-full"
             aria-label="Найти страницу"
@@ -165,7 +167,7 @@ function auto() {
             :key="g.label"
             :aria-label="g.label"
           >
-            <h3 class="px-3 pt-3 pb-1 text-13 font-medium text-toned">
+            <h3 class="px-3 pt-3 pb-1 text-cap text-toned">
               {{ g.label }}
             </h3>
             <ul>

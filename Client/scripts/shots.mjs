@@ -34,18 +34,7 @@ const scenarios = [
     await homeMenu(p, 'Компактные строки')
     await fold(p, ['Избранное', 'Личное'])
   } },
-  { name: 'MobileRecent', device: MOBILE, run: async (p) => {
-    await openHome(p)
-    for (const title of ['Английский', 'Фильмы', 'Отпуск в июле: билеты, жильё', 'Рецепты', 'Подарки', 'Ремонт', 'Велосипед'].reverse()) {
-      await homeMenu(p, 'Новая страница')
-      await p.waitForURL(/\/p\//)
-      await p.getByRole('textbox', { name: 'Название страницы' }).fill(title)
-      await p.goBack()
-      await p.waitForURL(u => new URL(u).pathname === '/')
-    }
-    await p.getByRole('button', { name: 'Компактные строки' }).waitFor({ state: 'detached' }).catch(() => {})
-    await settle(p, 400)
-  } },
+  { name: 'MobileRecent', device: MOBILE, run: p => recentPages(p) },
   { name: 'MobileFirst', device: MOBILE, run: p => open(p, '/', false) },
   { name: 'MobileChat', device: MOBILE, run: p => open(p, '/chat') },
   { name: 'MobileChatEmpty', device: MOBILE, run: p => open(p, '/chat', false) },
@@ -155,6 +144,35 @@ const scenarios = [
   { name: 'MobileConnect', device: MOBILE, run: p => openConnection(p, 'OpenRouter') },
 
   { name: 'Home', device: DESKTOP, run: p => openHome(p) },
+  { name: 'HomeCompact', device: DESKTOP, run: async (p) => {
+    await openHome(p)
+    await homeMenu(p, 'Компактные строки')
+  } },
+  { name: 'HomeMenu', device: DESKTOP, run: async (p) => {
+    await openHome(p)
+    await p.getByRole('button', { name: 'Действия с Главной' }).click()
+    await settle(p, 600)
+  } },
+  { name: 'HomeRecent', device: DESKTOP, run: async (p) => {
+    await recentPages(p)
+    await fold(p, ['Дом', 'Личное'])
+  } },
+  { name: 'HomeWrite', device: DESKTOP, run: async (p) => {
+    await openHome(p)
+    await p.getByRole('textbox', { name: 'Новая запись' }).fill('купить кефир, творог, сметану и ещё хлеб к ужину, и не забыть про корм для кота, он почти закончился')
+    await settle(p, 400)
+  } },
+  { name: 'HomeSent', device: DESKTOP, run: async (p) => {
+    await openHome(p)
+    const field = p.getByRole('textbox', { name: 'Новая запись' })
+    await field.fill('купить кефир и творог')
+    await p.keyboard.press('Enter')
+    await field.fill('масло')
+    await p.keyboard.press('Enter')
+    await p.getByRole('button', { name: 'Не туда' }).click()
+    await p.mouse.move(0, 0)
+    await settle(p, 400)
+  } },
   { name: 'Page', device: DESKTOP, run: p => openPage(p, 'Продукты') },
   { name: 'Board', device: DESKTOP, run: async (p) => {
     await openPage(p, 'Цели')
@@ -215,18 +233,34 @@ async function openHome(page) {
   await dismissKeyCard(page)
 }
 
-/** A row of the «⋯» sheet of Главная */
+/** A row of the «⋯» of Главная: a sheet on a phone, a popover on desktop */
 async function homeMenu(page, item) {
+  const desktop = page.viewportSize().width >= 1024
+  const toggle = item === 'Компактные строки'
   await page.getByRole('button', { name: 'Действия с Главной' }).click()
   await settle(page, 500)
-  await page.getByRole('dialog').getByRole(item === 'Компактные строки' ? 'switch' : 'button', { name: item }).click()
-  if (item === 'Компактные строки') {
+  if (desktop) await page.getByRole(toggle ? 'menuitemcheckbox' : 'menuitem', { name: item }).click()
+  else await page.getByRole('dialog').getByRole(toggle ? 'switch' : 'button', { name: item }).click()
+  if (toggle && !desktop) {
     await page.keyboard.press('Escape')
   }
   // The sheet hands focus back to «⋯» once it has closed: drop it so no focus ring shows
   await settle(page, 1000)
   await page.evaluate(() => document.activeElement?.blur())
   await settle(page, 200)
+}
+
+/** Seven pages made without a section, newest first in «Недавнее» */
+async function recentPages(page) {
+  await openHome(page)
+  for (const title of ['Английский', 'Фильмы', 'Отпуск в июле: билеты, жильё', 'Рецепты', 'Подарки', 'Ремонт', 'Велосипед'].reverse()) {
+    await homeMenu(page, 'Новая страница')
+    await page.waitForURL(/\/p\//)
+    await page.getByRole('textbox', { name: 'Название страницы' }).fill(title)
+    await page.goBack()
+    await page.waitForURL(u => new URL(u).pathname === '/')
+  }
+  await settle(page, 400)
 }
 
 async function fold(page, names) {

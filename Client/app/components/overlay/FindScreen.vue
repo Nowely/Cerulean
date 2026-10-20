@@ -2,11 +2,10 @@
 // Поиск on a phone: a full screen opened focused with the keyboard up. Finding is recessed (a trk field),
 // writing is the raised pill. Without a query the six records added last; with one «Страницы» and «Записи».
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
-import type { Id, Page, Rec } from '~/domain/types'
+import type { Id } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
-import { useNow } from '~/composables/useNow'
+import { useFindRows } from '~/composables/useFindRows'
 import { lastAdded, search, type Hit } from '~/domain/search'
-import { formatDue, isOverdue } from '~/domain/dates'
 import { count, splitMatch } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
 import RecordMark from '../common/RecordMark.vue'
@@ -15,7 +14,6 @@ import AdaptiveOverlay from './AdaptiveOverlay.vue'
 const props = defineProps<{ initial?: string }>()
 const emit = defineEmits<{ close: [], pick: [hit: Hit] }>()
 const data = useDataStore()
-const now = useNow()
 const q = ref(props.initial ?? '')
 const sectionId = ref<Id | null>(null)
 const where = ref(false)
@@ -41,12 +39,7 @@ const groups = computed<{ label: string, hits: Hit[] }[]>(() => {
 const total = computed(() => groups.value.reduce((n, g) => n + g.hits.length, 0))
 const sectionLabel = computed(() => sectionId.value ? data.sections[sectionId.value]?.name ?? 'Все секции' : 'Все секции')
 
-const sectionOf = (p: Page) => p.kind === 'inbox' ? '' : p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Недавнее'
-function recLine(r: Rec) {
-  const place = data.placeOf(r).title
-  const due = r.due ? `${!r.done && isOverdue(r.due, now.value) ? 'было ' : ''}${formatDue(r.due, now.value)}` : ''
-  return [place ? `в ${place}` : '', due].filter(Boolean).join(' · ')
-}
+const { pageLine, recLine } = useFindRows()
 const parts = (text: string) => splitMatch(text, query.value)
 
 function choose(id: Id | null) {
@@ -152,7 +145,7 @@ function choose(id: Id | null) {
         :key="g.label"
         :aria-label="g.label"
       >
-        <h2 class="px-2 pt-3 pb-1 text-xs font-medium tracking-[.02em] text-toned">
+        <h2 class="px-2 pt-3 pb-1 text-cap text-toned">
           {{ g.label }}
         </h2>
         <ul>
@@ -171,14 +164,17 @@ function choose(id: Id | null) {
                   <PageTile :glyph="h.page.glyph" />
                 </span>
                 <span class="flex min-w-0 flex-1 flex-col">
-                  <span class="truncate text-base leading-5.5 font-medium text-highlighted">
-                    <template v-if="query">{{ parts(h.page.title).pre }}<b class="font-medium">{{ parts(h.page.title).mid }}</b>{{ parts(h.page.title).post }}</template>
+                  <span
+                    class="truncate text-base leading-5.5 font-medium"
+                    :class="query ? 'text-toned' : 'text-highlighted'"
+                  >
+                    <template v-if="query">{{ parts(h.page.title).pre }}<b class="font-medium text-highlighted">{{ parts(h.page.title).mid }}</b>{{ parts(h.page.title).post }}</template>
                     <template v-else>{{ h.page.title || 'Без названия' }}</template>
                   </span>
                   <span
-                    v-if="sectionOf(h.page)"
+                    v-if="pageLine(h.page)"
                     class="truncate text-13 text-toned"
-                  >в {{ sectionOf(h.page) }}</span>
+                  >{{ pageLine(h.page) }}</span>
                 </span>
               </button>
             </template>

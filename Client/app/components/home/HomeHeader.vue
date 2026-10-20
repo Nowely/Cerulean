@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// Top of Главная on a phone: the title in the page-title role and three glyphs, Найти, Чат and «⋯».
+// Top of Главная. Phone: the title in the page-title role and three glyphs, Найти, Чат and «⋯».
 // Чат carries an 8px accent dot while records wait for «уточнить» (the number stays on Входящие).
+// Desktop: the 72px title header with «⋯» only (Найти and Чат are in the sidebar).
 // «⋯» of Главная: «Компактные строки», «Новая страница», «Новая секция», «Настройки», «Корзина».
 import { computed } from 'vue'
 import { useRouter } from '#imports'
@@ -10,6 +11,7 @@ import { useCreatePage } from '~/composables/useCreatePage'
 import { count } from '~/domain/text'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import DotsButton from '../common/DotsButton.vue'
+import TitleHeader from '../shell/TitleHeader.vue'
 
 const emit = defineEmits<{ newSection: [], top: [] }>()
 const data = useDataStore()
@@ -41,6 +43,18 @@ const items = computed<MenuItem[][]>(() => [
 </script>
 
 <template>
+  <TitleHeader title="Главная">
+    <ActionMenu
+      :items="items"
+      title="Главная"
+      label="Действия с Главной"
+    >
+      <DotsButton
+        label="Действия с Главной"
+        tone="muted"
+      />
+    </ActionMenu>
+  </TitleHeader>
   <header class="flex h-15 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1 pl-4 lg:hidden">
     <h1 class="min-w-0 flex-1">
       <button

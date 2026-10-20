@@ -9,6 +9,7 @@ import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import PageTile from '../common/PageTile.vue'
+import { inPlace } from '~/domain/text'
 
 const props = defineProps<{ rec: Rec }>()
 const data = useDataStore()
@@ -54,6 +55,8 @@ const groups = computed(() => {
       <UInput
         v-model="q"
         icon="i-lucide-search"
+        variant="soft"
+        size="lg"
         placeholder="Страницы и записи"
         aria-label="Найти, что связать"
         class="w-full"
@@ -70,7 +73,7 @@ const groups = computed(() => {
       >
         <li
           v-if="g.label"
-          class="px-3 pt-3 pb-1 text-caption text-toned"
+          class="px-3 pt-3 pb-1 text-cap text-toned"
           role="presentation"
         >
           {{ g.label }}
@@ -102,7 +105,7 @@ const groups = computed(() => {
               <span
                 v-if="h.kind === 'record'"
                 class="truncate text-caption text-toned"
-              >в {{ data.placeOf(h.rec).title }}</span>
+              >{{ inPlace(data.placeOf(h.rec).title) }}</span>
             </span>
             <UIcon
               v-if="linked.has(idOf(h))"
