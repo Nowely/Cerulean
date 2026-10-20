@@ -179,7 +179,7 @@ export function demo(now = Date.now()): Dataset {
   // Задачи
   const dentist = add(tasks, 'Позвонить стоматологу', { ...chat(8, 52), due: { date: date(0), time: '10:00' } })
   add(tasks, 'Оплатить интернет', { due: { date: date(-1) }, addedAt: at(20, 0, -5) })
-  add(tasks, 'Вернуть книгу в библиотеку', { due: { date: date(6) }, addedAt: at(20, 5, -5) })
+  const library = add(tasks, 'Вернуть книгу в библиотеку', { due: { date: date(6) }, addedAt: at(20, 5, -5) })
   add(tasks, 'Отправить документы', { done: true, doneAt: at(17, 0, -1), addedAt: at(9, 0, -6) })
 
   // Цели: «Полумарафон к маю» is a record with its own page, icon and steps
@@ -206,7 +206,8 @@ export function demo(now = Date.now()): Dataset {
   add(goals, '24 книги за год', { addedAt: at(9, 40, -7) })
 
   add(ideas, 'Семейный бюджет в приложении', { addedAt: at(21, 0, -4) })
-  add(books, 'Атомные привычки', { addedAt: at(22, 0, -9) })
+  const habits = add(books, 'Атомные привычки', { addedAt: at(22, 0, -9) })
+  library.links = [habits.id]
   const filter = add(chores, 'Поменять фильтр воды', { due: { date: date(2) }, addedAt: at(18, 0, -2) })
   add(chores, 'Вызвать мастера', { addedAt: at(18, 5, -2) })
 

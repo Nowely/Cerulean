@@ -4,6 +4,7 @@ import { computed, ref, shallowRef } from 'vue'
 import type { Entry, Id, Page, Rec, Section, Settings } from '~/domain/types'
 import type { Learned } from '~/domain/rules'
 import type { Snapshot } from '~/domain/export'
+import type { Hit } from '~/domain/search'
 import { Storage, type Kind } from '~/db/idb'
 import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/factory'
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
@@ -56,6 +57,40 @@ export const useDataStore = defineStore('data', () => {
 
   const recordsOf = (pageId: Id) => byPage.value.get(pageId) ?? []
   const subitemsOf = (recId: Id) => byParent.value.get(recId) ?? []
+
+  /** Records that link to a record, by the record they link to */
+  const backlinks = computed(() => {
+    const map = new Map<Id, Rec[]>()
+    for (const r of liveRecords.value) {
+      for (const id of r.links ?? []) {
+        const list = map.get(id) ?? []
+        list.push(r)
+        map.set(id, list)
+      }
+    }
+    return map
+  })
+
+  /** «Связано» of a record: what it links to, then what links to it; live things only, each once */
+  function linksOf(recId: Id): Hit[] {
+    const out: Hit[] = []
+    const seen = new Set<Id>([recId])
+    for (const id of records.value[recId]?.links ?? []) {
+      if (seen.has(id)) continue
+      const rec = records.value[id]
+      const page = pages.value[id]
+      if (rec && !rec.deletedAt && liveIds.value.has(rec.pageId)) out.push({ kind: 'record', rec })
+      else if (page && !page.deletedAt) out.push({ kind: 'page', page })
+      else continue
+      seen.add(id)
+    }
+    for (const rec of backlinks.value.get(recId) ?? []) {
+      if (seen.has(rec.id)) continue
+      out.push({ kind: 'record', rec })
+      seen.add(rec.id)
+    }
+    return out
+  }
 
   const inbox = computed(() => livePages.value.find(p => p.kind === 'inbox')!)
   const clarify = computed(() => liveRecords.value.filter(r => r.tags.includes('clarify') && !r.done))
@@ -192,6 +227,16 @@ export const useDataStore = defineStore('data', () => {
     if (!rec) return
     Object.assign(rec, patch)
     save('records', rec)
+  }
+
+  /** Links a record to a record or a page, or undoes the link from whichever side holds it */
+  function toggleLink(recId: Id, targetId: Id) {
+    const rec = records.value[recId]
+    if (!rec || recId === targetId) return
+    const other = records.value[targetId]
+    if (rec.links?.includes(targetId)) updateRecord(recId, { links: rec.links.filter(id => id !== targetId) })
+    else if (other?.links?.includes(recId)) updateRecord(targetId, { links: other.links.filter(id => id !== recId) })
+    else updateRecord(recId, { links: [...(rec.links ?? []), targetId] })
   }
 
   function toggleDone(id: Id) {
@@ -352,10 +397,10 @@ export const useDataStore = defineStore('data', () => {
   return {
     pages, records, sections, entries, settings, learned, ready, storageError,
     livePages, liveRecords, inbox, clarify, sectionList, favorites, trash, recent,
-    recordsOf, subitemsOf, placeOf,
+    recordsOf, subitemsOf, linksOf, placeOf,
     init, setSettings,
     createPage, updatePage, removePage, restorePage, visitPage, toggleFavorite,
-    addRecord, updateRecord, toggleDone, moveRecords, removeRecords, restoreRecords, purgeRecords, purgePages, emptyTrash,
+    addRecord, updateRecord, toggleLink, toggleDone, moveRecords, removeRecords, restoreRecords, purgeRecords, purgePages, emptyTrash,
     createSection, updateSection, removeSection,
     addEntry, updateEntry,
     snapshot, importSnapshot, wipe,

@@ -5,7 +5,7 @@
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
 
-defineProps<{ title: string, width?: string, dialog?: boolean }>()
+withDefaults(defineProps<{ title: string, width?: string, dialog?: boolean, align?: 'start' | 'end' }>(), { align: 'end' })
 const open = defineModel<boolean>('open', { default: false })
 const { isDesktop } = useScreen()
 const later = useLater()
@@ -46,7 +46,7 @@ function openNow() {
   <LazyUPopover
     v-else-if="isDesktop && later.ready.value"
     v-model:open="open"
-    :content="{ align: 'end', sideOffset: 6, collisionPadding: 12 }"
+    :content="{ align, sideOffset: 6, collisionPadding: 12 }"
   >
     <slot name="trigger" />
     <template #content>

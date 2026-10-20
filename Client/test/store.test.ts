@@ -68,6 +68,28 @@ describe('data store', () => {
     data.emptyTrash()
     expect(data.pages[books.id]).toBeUndefined()
   })
+
+  it('shows a link on both sides, once, and undoes it from either', async () => {
+    const { data, dbName } = await fresh({ demo: true })
+    const find = (text: string) => data.liveRecords.find(r => r.text === text)!
+    const library = find('Вернуть книгу в библиотеку')
+    const book = find('Атомные привычки')
+    const titles = (id: string) => data.linksOf(id).map(h => h.kind === 'page' ? h.page.title : h.rec.text)
+    expect(titles(library.id)).toEqual(['Атомные привычки'])
+    expect(titles(book.id)).toEqual(['Вернуть книгу в библиотеку'])
+
+    const goals = data.livePages.find(p => p.title === 'Цели')!
+    data.toggleLink(book.id, goals.id)
+    data.toggleLink(book.id, library.id)
+    expect(titles(book.id)).toEqual(['Цели'])
+    expect(titles(library.id)).toEqual([])
+
+    data.removePage(goals.id)
+    expect(titles(book.id)).toEqual([])
+    data.restorePage(goals.id)
+    await data.flush()
+    expect((await reload(dbName)).linksOf(book.id).map(h => h.kind)).toEqual(['page'])
+  })
 })
 
 describe('Авто without a key', () => {

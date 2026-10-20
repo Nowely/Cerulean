@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Every record is a page: its properties, a note edited in place, Подпункты.
-// Same component full (from navigation) and as a preview (from a link).
-import { computed, nextTick, ref, useTemplateRef } from 'vue'
+// Same component full (from navigation) and as a preview (from a link). A preview reads and ticks;
+// the desktop panel (edit) also takes the note and the properties, the title stays for «Открыть».
+import { computed, nextTick, ref, useId, useTemplateRef } from 'vue'
 import { useRouter } from '#imports'
 import type { PropDef, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -12,8 +13,17 @@ import RecordMark from '../common/RecordMark.vue'
 import PageTile from '../common/PageTile.vue'
 import RecordRow from './RecordRow.vue'
 import PropValue from './PropValue.vue'
+import RecordLinks from './RecordLinks.vue'
+import LinkPicker from './LinkPicker.vue'
 
-const props = withDefaults(defineProps<{ rec: Rec, container?: 'full' | 'preview' }>(), { container: 'full' })
+const props = withDefaults(defineProps<{
+  rec: Rec
+  container?: 'full' | 'preview'
+  /** The desktop panel: the note and the properties can be changed there too */
+  edit?: boolean
+  /** The screen shows «Связано» in a column of its own on wide screens */
+  aside?: boolean
+}>(), { container: 'full', edit: false, aside: false })
 const emit = defineEmits<{ editing: [boolean] }>()
 const data = useDataStore()
 const now = useNow()
@@ -21,10 +31,13 @@ const router = useRouter()
 const peek = usePeek()
 
 const full = computed(() => props.container === 'full')
+const editable = computed(() => full.value || props.edit)
 const page = computed(() => data.pages[props.rec.pageId])
 const parent = computed(() => props.rec.parentId ? data.records[props.rec.parentId] : undefined)
 const subs = computed(() => data.subitemsOf(props.rec.id))
 const done = computed(() => subs.value.filter(s => s.done).length)
+const links = computed(() => data.linksOf(props.rec.id))
+const linksTitle = useId()
 
 const title = computed({
   get: () => props.rec.text,
@@ -136,7 +149,7 @@ function openPlace() {
           <PropValue
             :rec="rec"
             :prop="p"
-            :readonly="!full"
+            :readonly="!editable"
           />
         </dd>
       </div>
@@ -151,7 +164,7 @@ function openPlace() {
           <PropValue
             :rec="rec"
             due
-            :readonly="!full"
+            :readonly="!editable"
           />
         </dd>
       </div>
@@ -196,17 +209,33 @@ function openPlace() {
           {{ formatAdded(rec.via, rec.addedAt, now) }}
         </dd>
       </div>
-      <button
-        v-if="full && hasHidden && !showAll"
-        type="button"
-        class="-ml-1 flex h-10 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted"
-        @click="showAll = true"
+      <div
+        v-if="editable"
+        class="-ml-1 flex gap-3"
       >
-        <UIcon
-          name="i-lucide-plus"
-          class="size-4.5"
-        />Свойство
-      </button>
+        <button
+          v-if="hasHidden && !showAll"
+          type="button"
+          class="flex h-10 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted"
+          @click="showAll = true"
+        >
+          <UIcon
+            name="i-lucide-plus"
+            class="size-4.5"
+          />Свойство
+        </button>
+        <LinkPicker :rec="rec">
+          <button
+            type="button"
+            class="flex h-10 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted"
+          >
+            <UIcon
+              name="i-lucide-link"
+              class="size-4.5"
+            />Связать
+          </button>
+        </LinkPicker>
+      </div>
     </dl>
 
     <!-- Note: edited where it is -->
@@ -215,7 +244,7 @@ function openPlace() {
       :class="container === 'preview' ? 'px-5 lg:mx-4 lg:px-0' : 'mx-5 lg:mx-0'"
     >
       <UTextarea
-        v-if="full && (noteEditing || rec.note)"
+        v-if="editable && (noteEditing || rec.note)"
         ref="noteBox"
         v-model="note"
         autoresize
@@ -235,7 +264,7 @@ function openPlace() {
         {{ rec.note }}
       </p>
       <button
-        v-else-if="full"
+        v-else-if="editable"
         type="button"
         class="-ml-1 flex h-10 cursor-pointer items-center rounded-item px-1 text-15 text-toned hover:text-highlighted"
         @click="editNote"
@@ -243,6 +272,27 @@ function openPlace() {
         Добавить заметку
       </button>
     </div>
+
+    <!-- Связано: both ways; on a wide screen the record page shows it in a column instead -->
+    <section
+      v-if="links.length"
+      class="mt-5"
+      :class="aside ? 'xl:hidden' : ''"
+      :aria-labelledby="linksTitle"
+    >
+      <h2
+        :id="linksTitle"
+        class="px-5 pb-1 text-caption text-toned lg:px-0 lg:text-17 lg:font-semibold lg:text-highlighted"
+        :class="container === 'preview' ? 'lg:px-4' : ''"
+      >
+        Связано
+      </h2>
+      <RecordLinks
+        :rec="rec"
+        class="px-2 lg:px-0"
+        :class="container === 'preview' ? 'lg:px-2' : '-ml-2.5'"
+      />
+    </section>
 
     <!-- Подпункты always have «Готово» -->
     <section

@@ -72,6 +72,7 @@ function openFull() {
         :key="rec.id"
         :rec="rec"
         container="preview"
+        edit
       />
       <p
         v-else

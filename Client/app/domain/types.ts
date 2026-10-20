@@ -106,6 +106,8 @@ export interface Rec {
   tags: Tag[]
   /** Pages Авто would offer for a record tagged «уточнить» */
   guesses?: Id[]
+  /** «Связано»: records and pages this one is linked to. A link reads both ways: the other side lists it too */
+  links?: Id[]
   via: 'chat' | 'manual'
   addedAt: number
   order: number
