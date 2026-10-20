@@ -1,118 +1,269 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import "@fontsource-variable/onest/wght.css";
+@import "./tokens.css";
 
-@theme static {
-  --font-sans: 'Geist Variable', 'Geist', sans-serif;
-  --font-mono: 'Geist Mono Variable', 'Geist Mono', monospace;
+/*
+ * The theme in one place: tokens.css holds the colours, this file turns them into
+ * Nuxt UI variables and Tailwind utilities, app.config.ts shapes Nuxt UI components.
+ * Components use only the names defined here, never colour values or arbitrary sizes.
+ */
 
-  --color-cerulean-50: #E6F5FA;
-  --color-cerulean-100: #CCEAF5;
-  --color-cerulean-200: #99D5EB;
-  --color-cerulean-300: #66BFE0;
-  --color-cerulean-400: #33A9D6;
-  --color-cerulean-500: #007BA7;
-  --color-cerulean-600: #006285;
-  --color-cerulean-700: #004A64;
-  --color-cerulean-800: #003142;
-  --color-cerulean-900: #001921;
-  --color-cerulean-950: #000C10;
-
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
-  --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
-
-  --color-status-todo-light: #64748b;
-  --color-status-todo-dark: #94a3b8;
-  --color-status-in-progress-light: #06b6d4;
-  --color-status-in-progress-dark: #22d3ee;
-  --color-status-review-light: #a855f7;
-  --color-status-review-dark: #c084fc;
-  --color-status-done-light: #22c55e;
-  --color-status-done-dark: #4ade80;
-  --color-status-blocked-light: #ef4444;
-  --color-status-blocked-dark: #f87171;
-
-  --color-priority-low-light: #64748b;
-  --color-priority-low-dark: #94a3b8;
-  --color-priority-medium-light: #f59e0b;
-  --color-priority-medium-dark: #fbbf24;
-  --color-priority-high-light: #f97316;
-  --color-priority-high-dark: #fb923c;
-  --color-priority-urgent-light: #ef4444;
-  --color-priority-urgent-dark: #f87171;
-
-  --color-kind-tasks-light: #22c55e;
-  --color-kind-tasks-dark: #4ade80;
-  --color-kind-shopping-light: #f59e0b;
-  --color-kind-shopping-dark: #fbbf24;
-  --color-kind-notes-light: #a855f7;
-  --color-kind-notes-dark: #c084fc;
-  --color-kind-contacts-light: #06b6d4;
-  --color-kind-contacts-dark: #22d3ee;
-  --color-kind-chat-light: #3b82f6;
-  --color-kind-chat-dark: #60a5fa;
-
-  --color-bubble-own-light: #00A155;
-  --color-bubble-own-dark: #00A155;
-  --color-bubble-other-light: #f1f5f9;
-  --color-bubble-other-dark: #1e293b;
+/* Onest is bundled with the app (works offline); the fallback is tuned to its metrics
+   so text doesn't jump if the font file is still loading. */
+@font-face {
+  font-family: "Onest Fallback";
+  src: local("Arial"), local("Liberation Sans"), local("Helvetica Neue"), local("Helvetica");
+  size-adjust: 101.3%;
+  ascent-override: 95.8%;
+  descent-override: 30.1%;
+  line-gap-override: 0%;
 }
 
+@theme {
+  --font-sans: "Onest Variable", "Onest Fallback", system-ui, sans-serif;
+
+  /*
+   * Type scale: nothing outside these sizes. Fixed steps for chrome
+   * (12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
+   * 16 inputs and journal text, 17 records, 20 sheet titles, 28 / 30 page titles)
+   * and role steps that switch to their desktop size at lg (see the media block below).
+   */
+  --text-*: initial;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-13: 13px;
+  --text-13--line-height: 1.35;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.4;
+  --text-15: 15px;
+  --text-15--line-height: 1.4;
+  --text-base: 16px;
+  --text-base--line-height: 1.4;
+  --text-17: 17px;
+  --text-17--line-height: 1.35;
+  --text-xl: 20px;
+  --text-xl--line-height: 1.3;
+  --text-28: 28px;
+  --text-28--line-height: 1.2;
+
+  /* Roles from «Шрифт» in the doc: mobile value here, desktop value in the lg block */
+  --text-title: 28px;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.01em;
+  --text-title--font-weight: 600;
+  --text-sheet: 20px;
+  --text-sheet--line-height: 1.3;
+  --text-sheet--font-weight: 600;
+  --text-record: 17px;
+  --text-record--line-height: 1.35;
+  --text-row: 16px;
+  --text-row--line-height: 1.3;
+  --text-row--font-weight: 600;
+  --text-body: 16px;
+  --text-body--line-height: 1.45;
+  --text-meta: 14px;
+  --text-meta--line-height: 1.35;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.35;
+  --text-caption--font-weight: 500;
+  --text-input: 16px;
+  --text-input--line-height: 1.4;
+
+  /* Radii: 12 composer, cards, buttons · 10 chips, segments, rows, 36px tiles · 8 menu items ·
+     7 badges and 24px tiles · 5 for 18px tiles · 20 sheet tops. Circles only for checkbox and dot. */
+  --radius-card: 12px;
+  --radius-chip: 10px;
+  --radius-item: 8px;
+  --radius-badge: 7px;
+  --radius-tile: 7px;
+  --radius-tile-sm: 5px;
+  --radius-tile-lg: 10px;
+  --radius-sheet: 20px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-drain: drain 15s linear forwards;
+  --animate-rise: rise 0.2s var(--ease-out-soft);
+
+  @keyframes drain {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media (width >= 64rem) {
+  :root {
+    --text-title: 30px;
+    --text-sheet: 15px;
+    --text-record: 15px;
+    --text-row: 14px;
+    --text-row--font-weight: 500;
+    --text-body: 14px;
+    --text-meta: 13px;
+    --text-caption: 12px;
+  }
+}
+
+/* Inputs stay at 16px on touch screens, otherwise iOS zooms the page on focus */
+@media (width >= 64rem) and (pointer: fine) {
+  :root {
+    --text-input: 14px;
+  }
+}
+
+/* Token utilities: bg-canvas, bg-sel, text-accent-ink, bg-page-green-bg, shadow-float… */
+@theme inline {
+  --color-canvas: var(--bg);
+  --color-surface: var(--surface);
+  --color-trk: var(--trk);
+  --color-seg-on: var(--seg-on);
+  --color-hover: var(--hover);
+  --color-pressed: var(--pressed);
+  --color-sel: var(--sel);
+  --color-fresh: var(--fresh);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-ring: var(--ring);
+  --color-ink: var(--ink);
+  --color-placeholder-lg: var(--placeholder-lg);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-warn: var(--warn);
+  --color-warn-ink: var(--warn-ink);
+  --color-ok: var(--ok);
+  --color-knob: var(--knob);
+  --color-scrim: var(--scrim);
+  --color-side: var(--side);
+  --color-side-hover: var(--side-hover);
+  --color-side-sel: var(--side-sel);
+
+  --color-page-green: var(--c-green);
+  --color-page-blue: var(--c-blue);
+  --color-page-brown: var(--c-brown);
+  --color-page-yellow: var(--c-yellow);
+  --color-page-pink: var(--c-pink);
+  --color-page-purple: var(--c-purple);
+  --color-page-gray: var(--c-gray);
+  --color-page-teal: var(--c-teal);
+  --color-page-green-bg: var(--b-green);
+  --color-page-blue-bg: var(--b-blue);
+  --color-page-brown-bg: var(--b-brown);
+  --color-page-yellow-bg: var(--b-yellow);
+  --color-page-pink-bg: var(--b-pink);
+  --color-page-purple-bg: var(--b-purple);
+  --color-page-gray-bg: var(--b-gray);
+  --color-page-teal-bg: var(--b-teal);
+
+  --shadow-float: var(--float);
+  --shadow-seg: var(--seg-shadow);
+}
+
+/*
+ * Nuxt UI semantic variables. `--ui-bg` is the surface (cards, sheets, fields, menus stay white
+ * in light); the screen background is the separate `bg-canvas`. Text steps:
+ * highlighted = ink, default = text, toned = muted (~8:1), muted and dimmed = faint (~5:1).
+ * One declaration covers both themes because the tokens themselves switch with `.dark`.
+ */
 :root {
-  --ui-radius: 0.5rem;
-  --status-todo: var(--color-status-todo-light);
-  --status-in-progress: var(--color-status-in-progress-light);
-  --status-review: var(--color-status-review-light);
-  --status-done: var(--color-status-done-light);
-  --status-blocked: var(--color-status-blocked-light);
-
-  --priority-low: var(--color-priority-low-light);
-  --priority-medium: var(--color-priority-medium-light);
-  --priority-high: var(--color-priority-high-light);
-  --priority-urgent: var(--color-priority-urgent-light);
-
-  --kind-tasks: var(--color-kind-tasks-light);
-  --kind-shopping: var(--color-kind-shopping-light);
-  --kind-notes: var(--color-kind-notes-light);
-  --kind-contacts: var(--color-kind-contacts-light);
-  --kind-chat: var(--color-kind-chat-light);
-
-  --bubble-own: var(--color-bubble-own-light);
-  --bubble-other: var(--color-bubble-other-light);
+  --ui-bg: var(--surface);
+  --ui-bg-muted: var(--hover);
+  --ui-bg-elevated: var(--sel);
+  --ui-bg-accented: var(--pressed);
+  --ui-bg-inverted: var(--ink);
+  --ui-text-dimmed: var(--faint);
+  --ui-text-muted: var(--faint);
+  --ui-text-toned: var(--muted);
+  --ui-text: var(--text);
+  --ui-text-highlighted: var(--ink);
+  --ui-text-inverted: var(--on-accent);
+  --ui-border: var(--line);
+  --ui-border-muted: var(--line);
+  --ui-border-accented: var(--ring);
+  --ui-border-inverted: var(--ink);
+  --ui-primary: var(--accent);
+  --ui-error: var(--warn);
+  --ui-success: var(--ok);
+  --ui-radius: 5px;
 }
 
-.dark {
-  --status-todo: var(--color-status-todo-dark);
-  --status-in-progress: var(--color-status-in-progress-dark);
-  --status-review: var(--color-status-review-dark);
-  --status-done: var(--color-status-done-dark);
-  --status-blocked: var(--color-status-blocked-dark);
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 
-  --priority-low: var(--color-priority-low-dark);
-  --priority-medium: var(--color-priority-medium-dark);
-  --priority-high: var(--color-priority-high-dark);
-  --priority-urgent: var(--color-priority-urgent-dark);
+  /* Digits stay proportional in running text; times, counts and quantities that line up set tabular-nums */
+  body {
+    @apply bg-canvas text-default font-sans;
+    overscroll-behavior-y: none;
+  }
 
-  --kind-tasks: var(--color-kind-tasks-dark);
-  --kind-shopping: var(--color-kind-shopping-dark);
-  --kind-notes: var(--color-kind-notes-dark);
-  --kind-contacts: var(--color-kind-contacts-dark);
-  --kind-chat: var(--color-kind-chat-dark);
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
 
-  --bubble-own: var(--color-bubble-own-dark);
-  --bubble-other: var(--color-bubble-other-dark);
+  /* Search fields draw their own clear button */
+  input[type="search"]::-webkit-search-cancel-button {
+    appearance: none;
+  }
+
+  :where(button, a, input, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
 }
 
-html, body, #__nuxt, #__layout {
-  height: 100%;
+/* Fades instead of hard cuts on scrolling areas: 16px under the header, 20px above the
+   composer. AppScreen sets the attributes only when there is content to fade. */
+@utility scroll-fade {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+
+  &[data-fade-top] {
+    --fade-top: 16px;
+  }
+
+  &[data-fade-bottom] {
+    --fade-bottom: 20px;
+  }
 }
 
+@utility no-scrollbar {
+  scrollbar-width: none;
 
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* A 44pt touch target around a smaller control without changing its layout */
+@utility hit-44 {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: min(0px, calc((100% - 44px) / 2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

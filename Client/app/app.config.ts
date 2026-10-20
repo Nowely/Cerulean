@@ -1,165 +1,289 @@
 // Plain object: `defineAppConfig` is an auto-import, and this file also runs in Nitro
 import type { AppConfigInput } from 'nuxt/schema'
 
+// Theme-defined sizes (main.css @theme) that tailwind-merge has to know about,
+// otherwise `text-record` reads as a colour and `rounded-card` never replaces `rounded-md`
+const textRoles = ['13', '15', '17', '28', 'title', 'sheet', 'record', 'row', 'body', 'meta', 'caption', 'input']
+const radii = ['card', 'chip', 'item', 'badge', 'tile', 'tile-sm', 'tile-lg', 'sheet']
+
+// Focus is one accent outline everywhere, as in the mockups
+const focus = 'outline-primary focus-visible:outline-2 focus-visible:outline-offset-1'
+
 export default {
+  // Lucide draws with a 2px stroke; the mockups use about 1.75, which reads calmer next to 14–17px text
+  icon: {
+    customize: (content: string) => content.replaceAll('stroke-width="2"', 'stroke-width="1.75"')
+  },
+
   ui: {
     colors: {
-      primary: 'cerulean',
-      neutral: 'slate'
+      primary: 'azure',
+      neutral: 'cool'
     },
+    tv: {
+      twMergeConfig: {
+        extend: {
+          theme: {
+            text: textRoles,
+            radius: radii,
+            shadow: ['float', 'seg']
+          }
+        }
+      }
+    },
+
+    // Buttons: radius 12; 36px by default, 32 for the dense desktop receipt actions,
+    // 44 for primary actions on touch. A square (icon-only) button is a 44pt target on
+    // mobile and a 32px one on desktop.
+    button: {
+      slots: {
+        base: 'rounded-card font-medium justify-center',
+        leadingIcon: 'shrink-0',
+        trailingIcon: 'shrink-0'
+      },
+      variants: {
+        size: {
+          xs: { base: 'h-7 px-2 text-13 gap-1', leadingIcon: 'size-4', trailingIcon: 'size-4' },
+          sm: { base: 'h-8 px-3 text-sm gap-1.5', leadingIcon: 'size-4', trailingIcon: 'size-4' },
+          md: { base: 'h-9 px-3 text-sm gap-1.5', leadingIcon: 'size-4.5', trailingIcon: 'size-4.5' },
+          lg: { base: 'h-11 px-4 text-base gap-2', leadingIcon: 'size-5', trailingIcon: 'size-5' },
+          xl: { base: 'h-12 px-5 text-base gap-2', leadingIcon: 'size-5', trailingIcon: 'size-5' }
+        }
+      },
+      compoundVariants: [
+        { color: ['primary', 'neutral', 'error'], class: focus },
+        { square: true, size: 'xs', class: 'size-7 p-0' },
+        { square: true, size: 'sm', class: 'size-8 p-0' },
+        { square: true, size: 'md', class: 'size-11 p-0 lg:size-8 lg:rounded-item' },
+        { square: true, size: 'lg', class: 'size-11 p-0' },
+        // Outlined button («Не туда», «Записать», «Открыть»): surface, hairline, ink text
+        {
+          color: 'neutral',
+          variant: 'outline',
+          class: 'ring ring-inset ring-default bg-default text-highlighted hover:bg-default hover:ring-accented active:bg-accented aria-pressed:bg-accented aria-pressed:ring-accented aria-expanded:bg-accented aria-expanded:ring-accented'
+        },
+        // Quiet icon and text buttons: muted ink, hover tint, pressed state
+        {
+          color: 'neutral',
+          variant: 'ghost',
+          class: 'text-toned hover:bg-muted hover:text-highlighted active:bg-accented aria-expanded:bg-elevated aria-expanded:text-highlighted'
+        },
+        {
+          color: 'neutral',
+          variant: 'link',
+          class: 'text-toned hover:text-highlighted active:text-highlighted px-0'
+        },
+        { color: 'primary', variant: 'solid', class: 'hover:bg-primary/90 active:bg-primary/85' },
+        {
+          color: 'primary',
+          variant: 'ghost',
+          class: 'text-accent-ink hover:bg-accent-soft active:bg-accent-soft'
+        },
+        { color: 'primary', variant: 'link', class: 'text-accent-ink hover:text-accent-ink/80 px-0' },
+        {
+          color: 'error',
+          variant: ['ghost', 'outline', 'link'],
+          class: 'text-warn-ink'
+        },
+        {
+          color: 'error',
+          variant: 'outline',
+          class: 'ring-default hover:bg-default hover:ring-accented'
+        }
+      ],
+      defaultVariants: {
+        color: 'neutral',
+        variant: 'outline',
+        size: 'md'
+      }
+    },
+
+    // Fields: surface, hairline, radius 10, accent ring on focus, 16px on touch screens
     input: {
       slots: {
-        base: 'rounded-lg'
+        base: 'rounded-chip text-input placeholder:text-dimmed'
       },
       variants: {
         variant: {
-          underline: 'bg-transparent border-0 border-b border-default rounded-none focus:border-primary-500'
+          outline: 'text-highlighted bg-default ring ring-inset ring-default',
+          soft: 'text-highlighted bg-trk hover:bg-trk focus:bg-trk'
         },
         size: {
-          sm: {
-            base: 'h-9 text-sm'
-          }
+          md: { base: 'h-11 lg:h-9 px-3 text-input', leading: 'ps-3', trailing: 'pe-2', leadingIcon: 'size-5', trailingIcon: 'size-5' },
+          lg: { base: 'h-11 px-3 text-input', leading: 'ps-3', trailing: 'pe-2', leadingIcon: 'size-5', trailingIcon: 'size-5' }
         }
       },
       defaultVariants: {
-        variant: 'soft'
+        variant: 'outline',
+        size: 'md'
       }
     },
     textarea: {
       slots: {
-        base: 'rounded-lg resize-none'
+        base: 'rounded-chip text-input placeholder:text-dimmed resize-none'
       },
       variants: {
         variant: {
-          underline: 'bg-transparent border-0 border-b border-default rounded-none focus:border-primary-500'
+          outline: 'text-highlighted bg-default ring ring-inset ring-default'
+        },
+        size: {
+          md: { base: 'px-3 py-2.5 text-input' }
         }
       },
       defaultVariants: {
-        variant: 'soft'
+        variant: 'outline',
+        size: 'md'
       }
     },
-    button: {
+
+    // Selects look like the outlined button; their list matches the dropdown menus
+    select: {
       slots: {
-        base: 'rounded-lg font-medium'
-      },
-      defaultVariants: {
-        variant: 'solid'
-      }
-    },
-    badge: {
-      slots: {
-        base: 'rounded-full px-2 py-0.5 text-xs font-medium inline-flex items-center gap-1'
-      },
-      defaultVariants: {
-        variant: 'soft'
-      }
-    },
-    separator: {
-      slots: {
-        label: 'text-xs font-semibold uppercase tracking-wider text-muted'
-      }
-    },
-    card: {
-      slots: {
-        body: 'p-4'
+        base: 'rounded-chip',
+        trailingIcon: 'text-toned',
+        content: 'rounded-card shadow-float',
+        item: 'before:rounded-item items-center'
       },
       variants: {
-        compact: {
-          body: 'p-3'
+        variant: {
+          outline: 'text-highlighted bg-default ring ring-inset ring-default hover:bg-default hover:ring-accented'
         },
-        flat: {
-          body: 'p-0'
-        },
-        flush: {
-          body: 'p-3 space-y-2'
-        },
-        task: {
-          root: 'border-l-4',
-          header: 'p-3 pb-0',
-          body: 'p-3 pt-2 flex flex-col gap-2',
-          footer: 'p-3 pt-0'
-        },
-        notification: {
-          root: 'rounded-none',
-          body: 'px-4 py-3'
+        size: {
+          md: { base: 'h-11 lg:h-9 px-3 gap-1.5 text-sm', trailing: 'pe-2.5', trailingIcon: 'size-4', item: 'min-h-9 px-2 py-1.5 text-body' }
         }
       }
     },
-    formField: {
+
+    // Switch: 40×24 track, 20px knob; off track is the ring token so it stays visible (3:1)
+    switch: {
       slots: {
-        label: 'text-xs font-medium text-muted'
-      }
-    },
-    avatar: {
-      slots: {
-        fallback: 'font-semibold'
-      }
-    },
-    user: {
-      slots: {
-        description: 'truncate text-muted'
-      }
-    },
-    slideover: {
-      slots: {
-        body: 'p-4 sm:p-5'
+        // The 44px touch target belongs to the button itself, so a tap anywhere on it toggles
+        base: 'hit-44 data-[state=unchecked]:bg-ring',
+        thumb: 'bg-knob shadow-seg'
       },
       variants: {
-        side: {
-          bottom: {
-            content: 'max-h-[85dvh] rounded-t-xl'
-          },
-          right: {
-            content: 'w-80 sm:w-96'
+        size: {
+          md: {
+            base: 'w-10',
+            container: 'h-6',
+            thumb: 'size-5 data-[state=checked]:translate-x-4 data-[state=checked]:rtl:-translate-x-4'
+          }
+        }
+      },
+      compoundVariants: [{ color: 'primary', class: { base: focus } }]
+    },
+
+    // Overlays: surface, hairline, radius 12, the float shadow
+    popover: {
+      slots: {
+        content: 'rounded-card shadow-float ring-default'
+      }
+    },
+    dropdownMenu: {
+      slots: {
+        content: 'rounded-card shadow-float min-w-48',
+        group: 'p-1',
+        separator: 'my-1',
+        item: 'before:rounded-item items-center',
+        itemLabel: 'truncate',
+        itemTrailing: 'text-toned'
+      },
+      variants: {
+        active: {
+          false: {
+            item: 'data-highlighted:before:bg-muted data-[state=open]:before:bg-muted',
+            itemLeadingIcon: 'text-toned group-data-highlighted:text-highlighted'
           }
         },
         size: {
-          sm: {
-            content: 'max-h-[70dvh]'
-          },
-          md: {
-            content: 'max-h-[85dvh]'
-          },
-          lg: {
-            content: 'max-h-[90dvh]'
-          }
+          md: { item: 'min-h-9 px-2 py-1.5 gap-2.5 text-body', label: 'px-2 py-1.5 text-caption text-muted', itemLeadingIcon: 'size-4.5' }
         }
       }
     },
-    empty: {
+    contextMenu: {
       slots: {
-        avatar: 'size-12 mb-3'
-      }
-    },
-    progress: {
-      slots: {
-        base: 'h-1.5 rounded-full'
-      }
-    },
-    collapsible: {
-      slots: {
-        content: 'overflow-hidden'
-      }
-    },
-    chatMessage: {
+        content: 'rounded-card shadow-float min-w-48',
+        group: 'p-1',
+        item: 'before:rounded-item items-center'
+      },
       variants: {
-        variant: {
-          own: {
-            content: 'bg-primary-500 text-white rounded-br-md'
-          },
-          other: {
-            content: 'bg-elevated rounded-bl-md'
+        active: {
+          false: {
+            item: 'data-highlighted:before:bg-muted',
+            itemLeadingIcon: 'text-toned group-data-highlighted:text-highlighted'
           }
+        },
+        size: {
+          md: { item: 'min-h-9 px-2 py-1.5 gap-2.5 text-body', itemLeadingIcon: 'size-4.5' }
         }
       }
     },
-    chatPrompt: {
+    modal: {
+      slots: {
+        overlay: 'bg-scrim',
+        content: 'rounded-card shadow-float ring ring-default divide-y-0',
+        header: 'min-h-0 px-5 pt-5 pb-0',
+        body: 'p-5',
+        footer: 'px-5 pb-5 pt-0 justify-end',
+        title: 'text-sheet text-highlighted',
+        description: 'text-meta text-toned'
+      }
+    },
+    // Mobile sheets: radius 20 on top, a handle in the ring colour
+    drawer: {
+      slots: {
+        overlay: 'bg-scrim',
+        content: 'bg-default ring ring-default',
+        handle: '!w-9 !h-1.25 !bg-ring rounded-full',
+        container: 'p-0 gap-0',
+        title: 'text-sheet text-highlighted',
+        description: 'text-meta text-toned'
+      },
+      compoundVariants: [
+        { direction: 'bottom', inset: false, class: { content: 'rounded-t-sheet', handle: 'mt-2 mb-1' } }
+      ]
+    },
+    tooltip: {
+      slots: {
+        content: 'bg-inverted text-canvas ring-0 shadow-none rounded-badge h-6 px-2 text-xs'
+      }
+    },
+    // The toast is inverted (ink on the canvas colour), sits above the composer and carries one action
+    toast: {
+      slots: {
+        root: 'bg-inverted ring-0 shadow-float rounded-card py-1 ps-4 pe-1 items-center gap-1',
+        wrapper: 'min-w-0',
+        title: 'text-sm font-normal text-canvas truncate',
+        description: 'text-13 text-canvas/80',
+        actions: 'shrink-0 gap-0',
+        close: 'text-canvas/80'
+      }
+    },
+    toaster: {
+      slots: {
+        viewport: 'sm:w-96'
+      }
+    },
+    kbd: {
+      base: 'rounded-badge font-sans normal-case',
       variants: {
-        variant: {
-          pill: {
-            root: 'rounded-2xl'
-          }
+        size: {
+          md: 'h-5 min-w-5 px-1.5 text-xs'
         }
+      },
+      compoundVariants: [
+        { color: 'neutral', variant: 'outline', class: 'ring-line2 text-toned bg-transparent' }
+      ],
+      defaultVariants: {
+        variant: 'outline'
+      }
+    },
+    skeleton: {
+      base: 'bg-sel rounded-full animate-none'
+    },
+    separator: {
+      slots: {
+        border: 'border-default'
       }
     }
   }
