@@ -73,6 +73,29 @@ const scenarios = [
     await p.locator('button', { hasText: 'Продукты' }).last().click()
     await settle(p, 600)
   } },
+  { name: 'MobileBlank', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await p.getByRole('button', { name: 'Новая страница' }).last().click()
+    await p.waitForURL(/\/p\//)
+    await settle(p, 400)
+  } },
+  { name: 'MobileOffline', device: MOBILE, run: async (p) => {
+    await addKey(p)
+    await open(p, '/chat')
+    await p.getByRole('textbox', { name: 'Новая запись' }).fill('батарейки для пульта')
+    await p.keyboard.press('Enter')
+    await settle(p, 600)
+  } },
+  { name: 'MobilePending', device: MOBILE, run: async (p) => {
+    await addKey(p)
+    // OpenAI does not answer yet: the entry waits for the model
+    await p.unroute(OPENAI)
+    await p.route(OPENAI, () => {})
+    await open(p, '/')
+    await p.getByRole('textbox', { name: 'Новая запись' }).fill('батарейки для пульта')
+    await p.keyboard.press('Enter')
+    await settle(p, 600)
+  } },
   { name: 'MobileSettings', device: MOBILE, run: p => open(p, '/settings') },
   { name: 'MobileTrash', device: MOBILE, run: p => open(p, '/settings/trash') },
 
@@ -140,6 +163,22 @@ async function dismissKeyCard(page) {
   await page.getByRole('region', { name: 'Без ключа работают только простые правила' }).getByRole('button', { name: 'Закрыть' }).click()
   await page.mouse.move(0, 0)
   await settle(page)
+}
+
+const OPENAI = '**/api.openai.com/**'
+
+/**
+ * A key saved while OpenAI is out of reach: the app keeps it and treats the network as gone.
+ * Rules go off so that the entry reaches the model, as in the mockups.
+ */
+async function addKey(page) {
+  await page.route(OPENAI, route => route.abort('internetdisconnected'))
+  await open(page, '/settings')
+  await page.getByRole('button', { name: /^Ключ OpenAI/ }).click()
+  await page.getByRole('textbox', { name: 'Ключ OpenAI' }).fill('sk-demo-0000000000000000000000000000000000007Qa2')
+  await page.getByRole('button', { name: 'Сохранить' }).click()
+  await page.getByRole('switch', { name: 'Сначала простые правила' }).click()
+  await settle(page, 300)
 }
 
 /** Opens a page by its title from Главная (or the sidebar on desktop) */

@@ -123,8 +123,10 @@ async function submit() {
     emit('sent', null)
     return
   }
-  const entry = await journal.send(t, dest.value, { today: props.mode === 'today' && dest.value === 'auto' })
-  emit('sent', entry)
+  const entry = await journal.send(t, dest.value, {
+    today: props.mode === 'today' && dest.value === 'auto',
+    onStart: e => emit('sent', e)
+  })
   // From a page to somewhere else: say where it went, the receipt lives in Чат
   if (props.mode !== 'auto' && entry.kind === 'routed' && entry.pageId !== props.pageId) {
     const to = data.pages[entry.pageId!]

@@ -262,7 +262,6 @@ async function persist() {
           <USwitch
             v-model="rulesFirst"
             aria-label="Сначала простые правила"
-            class="hit-44"
           />
         </SettingRow>
         <SettingRow

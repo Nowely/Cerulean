@@ -157,7 +157,8 @@ export default {
     // Switch: 40×24 track, 20px knob; off track is the ring token so it stays visible (3:1)
     switch: {
       slots: {
-        base: 'data-[state=unchecked]:bg-ring',
+        // The 44px touch target belongs to the button itself, so a tap anywhere on it toggles
+        base: 'hit-44 data-[state=unchecked]:bg-ring',
         thumb: 'bg-knob shadow-seg'
       },
       variants: {
