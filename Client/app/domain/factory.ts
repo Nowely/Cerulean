@@ -62,7 +62,8 @@ export const DEFAULT_SETTINGS: Settings = {
   model: 'fast',
   rulesFirst: true,
   homeRows: 'summary',
-  dismissed: []
+  dismissed: [],
+  folded: []
 }
 
 /** The system pages every database has: Входящие (pinned) and Сегодня (all pages, due today) */

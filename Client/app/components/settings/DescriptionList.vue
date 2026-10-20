@@ -53,7 +53,7 @@ const open = computed({
         <span
           role="cell"
           :class="p.description ? 'text-toned' : 'text-dimmed'"
-        >{{ p.description || 'Нет описания: Авто смотрит только на название' }}</span>
+        >{{ p.description || 'Нет описания: только по названию' }}</span>
         <UIcon
           name="i-lucide-pencil"
           class="size-4 text-dimmed"
@@ -84,7 +84,7 @@ const open = computed({
           <span
             class="mt-0.5 line-clamp-2 block text-sm leading-snug"
             :class="p.description ? 'text-toned' : 'text-dimmed'"
-          >{{ p.description || 'Нет описания: Авто смотрит только на название' }}</span>
+          >{{ p.description || 'Нет описания: только по названию' }}</span>
         </span>
         <UIcon
           name="i-lucide-chevron-right"

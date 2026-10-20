@@ -95,6 +95,10 @@ export const useDataStore = defineStore('data', () => {
   const inbox = computed(() => livePages.value.find(p => p.kind === 'inbox')!)
   const clarify = computed(() => liveRecords.value.filter(r => r.tags.includes('clarify') && !r.done))
   const sectionList = computed(() => Object.values(sections.value).sort((a, b) => a.order - b.order))
+  /** «Недавнее»: pages without a section and outside Избранное, newest first by creation (a list you aim at must not reorder) */
+  const recentlyMade = computed(() => livePages.value
+    .filter(p => p.kind === 'page' && !p.sectionId && p.favorite === null)
+    .sort((a, b) => b.createdAt - a.createdAt))
 
   /** Избранное: pages and records with a position */
   const favorites = computed(() => [
@@ -154,6 +158,11 @@ export const useDataStore = defineStore('data', () => {
       apply(opts.demo ? demo() : firstRun())
     }
     ready.value = true
+  }
+
+  function toggleFolded(key: string) {
+    const folded = settings.value.folded
+    setSettings({ folded: folded.includes(key) ? folded.filter(k => k !== key) : [...folded, key] })
   }
 
   function setSettings(patch: Partial<Settings>) {
@@ -339,7 +348,7 @@ export const useDataStore = defineStore('data', () => {
     save('sections', s)
   }
 
-  /** Deleting a section keeps its pages: they move to «Без секции» */
+  /** Deleting a section keeps its pages: they move to «Недавнее» (pages without a section) */
   function removeSection(id: Id) {
     for (const p of livePages.value.filter(p => p.sectionId === id)) updatePage(p.id, { sectionId: null })
     delete sections.value[id]
@@ -397,9 +406,9 @@ export const useDataStore = defineStore('data', () => {
 
   return {
     pages, records, sections, entries, settings, learned, ready, storageError,
-    livePages, liveRecords, inbox, clarify, sectionList, favorites, trash, recent,
+    livePages, liveRecords, inbox, clarify, sectionList, recentlyMade, favorites, trash, recent,
     recordsOf, subitemsOf, linksOf, placeOf,
-    init, setSettings,
+    init, setSettings, toggleFolded,
     createPage, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     addRecord, updateRecord, toggleLink, toggleDone, moveRecords, removeRecords, restoreRecords, purgeRecords, purgePages, emptyTrash,
     createSection, updateSection, removeSection,

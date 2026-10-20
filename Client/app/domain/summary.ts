@@ -105,7 +105,7 @@ export function pageBadge(page: Page, records: Rec[], now: number, today: Rec[] 
   if (ask) return { text: `${ask} уточнить`, tone: 'accent' }
   if (page.kind === 'today') return null
   const fresh = records.filter(r => !r.done && r.addedAt > page.seenAt).length
-  if (fresh) return { text: `${fresh} ${plural(fresh, NEW)}`, tone: 'accent' }
+  if (fresh) return { text: `${fresh} ${plural(fresh, NEW)}`, tone: 'neutral' }
   return null
 }
 

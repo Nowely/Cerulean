@@ -16,8 +16,8 @@ const hits = computed(() => (props.entry.hits ?? []).map(id => data.records[id])
 
 <template>
   <div
-    class="overflow-hidden rounded-card border border-default bg-default [--row-bg:var(--ui-bg)]"
-    :class="{ 'shadow-float': float }"
+    class="overflow-hidden rounded-card"
+    :class="float ? 'raised bg-default shadow-float dark:ring dark:ring-inset dark:ring-line2' : 'bg-card'"
   >
     <p class="flex items-start gap-2 px-3 pt-2.75 pb-2.25 text-meta leading-snug text-toned">
       <UIcon
@@ -31,7 +31,7 @@ const hits = computed(() => (props.entry.hits ?? []).map(id => data.records[id])
       <li
         v-for="r in hits"
         :key="r.id"
-        class="border-t border-default"
+        class="border-t border-canvas"
       >
         <RecordLine
           :rec="r"
@@ -40,9 +40,15 @@ const hits = computed(() => (props.entry.hits ?? []).map(id => data.records[id])
         />
       </li>
     </ul>
-    <div class="flex items-center gap-2 border-t border-default py-2 pr-2.5 pl-3">
+    <div class="flex items-center gap-2 border-t border-canvas py-1 pr-1 pl-3">
       <span class="min-w-0 flex-1 text-caption font-normal text-toned">Если это дело, запиши его</span>
-      <UButton @click="journal.record(entry.id)">
+      <UButton
+        variant="ghost"
+        color="primary"
+        size="lg"
+        class="px-3"
+        @click="journal.record(entry.id)"
+      >
         Записать
       </UButton>
     </div>

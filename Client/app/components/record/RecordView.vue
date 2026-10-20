@@ -126,7 +126,7 @@ function openPlace() {
           v-if="!parent"
           :glyph="page?.glyph"
           :color="page?.color"
-          :size="18"
+          :size="16"
         />
         <span class="text-default">{{ parent?.text ?? page?.title }}</span>
       </button>
@@ -326,7 +326,7 @@ function openPlace() {
         v-else
         class="px-5 py-1 text-meta text-toned lg:px-0"
       >
-        Пиши внизу, чтобы добавить шаги
+        Подпунктов пока нет. Пиши внизу, и они появятся здесь.
       </p>
     </section>
   </div>

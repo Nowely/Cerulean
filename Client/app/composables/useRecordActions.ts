@@ -23,7 +23,8 @@ export function useRecordActions() {
     if (!first) return
     const from = first.pageId
     ui.pick({
-      title: ids.length === 1 ? `Переместить «${first.text}»` : `Переместить ${count(ids.length, RECORD_FORMS)}`,
+      title: 'Переместить',
+      subtitle: ids.length === 1 ? first.text : count(ids.length, RECORD_FORMS),
       current: from,
       run: (choice) => {
         const target = 'pageId' in choice ? data.pages[choice.pageId] : data.createPage({ title: choice.newPage })

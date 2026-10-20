@@ -36,7 +36,7 @@ const groups = computed(() => {
   const lately = recent(data.livePages, data.liveRecords, now.value, 16).flatMap(g => g.hits).filter(h => own(h) && !was.has(idOf(h)))
   return [
     { label: 'Связано', hits: before.value },
-    { label: 'Недавние', hits: lately }
+    { label: 'Открыто недавно', hits: lately }
   ].filter(g => g.hits.length)
 })
 </script>

@@ -41,7 +41,7 @@ function openFull() {
           <PageTile
             :glyph="recPage.glyph"
             :color="recPage.color"
-            :size="18"
+            :size="16"
           /><span class="truncate">{{ data.placeOf(rec).title }}</span>
         </template>
         <template v-else-if="page">Страница</template>

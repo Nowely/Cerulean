@@ -411,7 +411,7 @@ async function persist() {
           v-if="persisted !== null && !data.storageError"
           label="Не удалять при нехватке места"
           icon="i-lucide-shield-check"
-          :hint="persisted ? 'Браузер обещал хранить данные' : 'Без этого браузер может очистить данные сам'"
+          :hint="persisted ? 'Браузер не удалит данные сам' : 'Без этого браузер может очистить данные сам'"
           :value="persisted ? undefined : 'Включить'"
           :opens="!persisted"
           @open="persist"

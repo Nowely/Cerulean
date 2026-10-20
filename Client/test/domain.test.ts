@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { formatDue, formatDueLong, formatDay, formatAdded } from '~/domain/dates'
 import { isQuestion, parseDue, parseQty, splitItems } from '~/domain/parse'
-import { plural, lowerFirst } from '~/domain/text'
+import { plural, lowerFirst, genitive } from '~/domain/text'
 import { demo } from '~/domain/seed'
 import { pageBadge, pageSubline, pageSummary, recordSummary, summaryText } from '~/domain/summary'
 import { classify, guessOption } from '~/domain/rules'
-import { answer, recent } from '~/domain/search'
+import { answer, lastAdded, recent } from '~/domain/search'
 import { applyView } from '~/domain/views'
 import { draftsFor } from '~/domain/auto'
 import { toMarkdown, parseSnapshot, toJSON } from '~/domain/export'
@@ -110,6 +110,19 @@ describe('demo summaries match the spec', () => {
     expect(json).not.toContain('apiKey')
     expect(parseSnapshot(json).pages).toHaveLength(d.pages.length)
     expect(() => parseSnapshot('{"a":1}')).toThrow('Это не файл экспорта Cerulean')
+  })
+})
+
+describe('words and lists', () => {
+  it('names a board column without a value', () => {
+    expect(genitive('Статус')).toBe('статуса')
+    expect(genitive('Отдел')).toBe('отдела')
+    expect(genitive('Стадия')).toBe('стадии')
+  })
+
+  it('shows the records added last on an empty Поиск', () => {
+    const d = demo(NOW)
+    expect(lastAdded(d.records).map(r => r.text)).toEqual(['Хлеб', 'Подарок маме на др', 'Позвонить стоматологу', 'Молоко', 'Сыр', 'Яйца'])
   })
 })
 

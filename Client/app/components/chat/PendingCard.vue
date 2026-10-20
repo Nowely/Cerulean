@@ -5,20 +5,20 @@ defineProps<{ float?: boolean }>()
 
 <template>
   <div
-    class="overflow-hidden rounded-card border border-default bg-default"
-    :class="{ 'shadow-float': float }"
+    class="overflow-hidden rounded-card"
+    :class="float ? 'raised bg-default shadow-float dark:ring dark:ring-inset dark:ring-line2' : 'bg-card'"
     role="status"
   >
     <div class="flex min-h-11 items-center gap-2 px-3 text-meta text-toned">
       <UIcon
         name="cer:auto"
-        class="size-4"
+        class="size-3.5"
       />Разбирается…
     </div>
     <div
       v-for="w in ['w-40', 'w-28']"
       :key="w"
-      class="flex min-h-11 items-center gap-3 border-t border-default px-3"
+      class="flex min-h-11 items-center gap-3 px-3"
     >
       <USkeleton class="size-3.5" />
       <USkeleton

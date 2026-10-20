@@ -76,13 +76,16 @@ describe('data store', () => {
     const book = find('Атомные привычки')
     const titles = (id: string) => data.linksOf(id).map(h => h.kind === 'page' ? h.page.title : h.rec.text)
     expect(titles(library.id)).toEqual(['Атомные привычки'])
-    expect(titles(book.id)).toEqual(['Вернуть книгу в библиотеку'])
+    expect(titles(book.id)).toEqual(['Вернуть книгу в библиотеку', 'Полумарафон к маю'])
 
+    const marathon = find('Полумарафон к маю')
+    data.toggleLink(book.id, marathon.id)
     const goals = data.livePages.find(p => p.title === 'Цели')!
     data.toggleLink(book.id, goals.id)
     data.toggleLink(book.id, library.id)
     expect(titles(book.id)).toEqual(['Цели'])
     expect(titles(library.id)).toEqual([])
+    expect(titles(marathon.id)).toEqual([])
 
     data.removePage(goals.id)
     expect(titles(book.id)).toEqual([])

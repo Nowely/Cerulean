@@ -100,7 +100,7 @@ export function demo(now = Date.now()): Dataset {
     description: 'цели на год',
     noun: ['цель', 'цели', 'целей'],
     props: [status],
-    views: [listView('Список', { shown: [status.id, 'due'] })],
+    views: [listView('Список', { shown: [status.id, 'due'] }), listView('По статусу', { layout: 'board', groupBy: status.id })],
     openedAt: at(19, 30, -2),
     seenAt: at(19, 30, -2)
   }, now)
@@ -208,6 +208,7 @@ export function demo(now = Date.now()): Dataset {
   add(ideas, 'Семейный бюджет в приложении', { addedAt: at(21, 0, -4) })
   const habits = add(books, 'Атомные привычки', { addedAt: at(22, 0, -9) })
   library.links = [habits.id]
+  marathon.links = [habits.id]
   const filter = add(chores, 'Поменять фильтр воды', { due: { date: date(2) }, addedAt: at(18, 0, -2) })
   add(chores, 'Вызвать мастера', { addedAt: at(18, 5, -2) })
 

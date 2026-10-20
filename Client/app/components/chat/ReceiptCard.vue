@@ -66,6 +66,13 @@ const others = computed(() => {
     .slice(0, 3)
 })
 
+/** «Отменить»: the records go, the text comes back to the composer aimed at the same page */
+function undo() {
+  const aim = props.entry.pageId && props.entry.pageId !== data.inbox.id ? props.entry.pageId : 'auto'
+  journal.undo(props.entry.id)
+  ui.refill = { text: props.entry.text, aim }
+}
+
 function choose(pageId: string) {
   journal.choose(props.entry.id, { pageId })
   wrongOpen.value = false
@@ -74,7 +81,9 @@ function choose(pageId: string) {
 
 function more() {
   ui.pick({
-    title: `Куда положить «${props.entry.text}»?`,
+    title: 'Куда положить',
+    subtitle: props.entry.text,
+    guesses: others.value.map(p => p.id),
     current: props.entry.pageId,
     run: (c) => {
       journal.choose(props.entry.id, 'pageId' in c ? c : { newPage: c.newPage })
@@ -89,8 +98,8 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
 
 <template>
   <div
-    class="overflow-hidden rounded-card border border-default bg-default [--row-bg:var(--ui-bg)]"
-    :class="{ 'shadow-float': float }"
+    class="relative overflow-hidden rounded-card"
+    :class="float ? 'raised bg-default shadow-float dark:ring dark:ring-inset dark:ring-line2' : 'bg-card'"
     @mouseenter="setPaused('hover', true)"
     @mouseleave="setPaused('hover', false)"
     @focusin="setPaused('focus', true)"
@@ -100,41 +109,48 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
       <div class="flex min-h-11 items-center gap-2 px-3 text-meta text-toned">
         <UIcon
           name="i-lucide-undo-2"
-          class="size-4"
+          class="size-3.5"
         />Отменено, ничего не записано
       </div>
     </template>
     <template v-else>
-      <button
-        type="button"
-        class="flex min-h-11 w-full cursor-pointer items-center gap-2 pr-2.5 pl-3 text-left text-meta text-toned hover:bg-muted active:bg-pressed"
-        @click="page && peek({ kind: 'page', id: page.id })"
-      >
-        <PageTile
-          :glyph="page?.glyph"
-          :color="page?.color"
-          :size="18"
-        />
-        <span class="min-w-0 flex-1 truncate">
-          {{ title }} <UIcon
-            name="i-lucide-arrow-right"
-            class="mx-0.5 inline-block size-3.5 align-[-2px]"
-          /> <b class="font-semibold text-highlighted">{{ page?.title || 'Без названия' }}</b>
-        </span>
-        <span
-          v-if="entry.moved"
-          class="rounded-[6px] bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent-ink"
-        >перемещено</span>
-        <UIcon
-          name="i-lucide-chevron-right"
-          class="size-4 shrink-0"
-        />
-      </button>
+      <div class="flex items-center">
+        <button
+          type="button"
+          class="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 pr-2.5 pl-3 text-left text-sm text-toned hover:bg-muted active:bg-pressed"
+          @click="page && peek({ kind: 'page', id: page.id })"
+        >
+          <PageTile
+            :glyph="page?.glyph"
+            :size="14"
+          />
+          <span class="min-w-0 flex-1 truncate">
+            {{ title }} → <b class="font-medium text-highlighted">{{ page?.title || 'Без названия' }}</b>
+            <span
+              v-if="entry.moved"
+              class="text-dimmed"
+            > · перемещено</span>
+          </span>
+          <UIcon
+            name="i-lucide-chevron-right"
+            class="size-4 shrink-0 text-dimmed"
+          />
+        </button>
+        <button
+          v-if="!fresh && !offline"
+          type="button"
+          class="h-11 shrink-0 cursor-pointer px-3 text-13 font-medium text-toned hover:text-highlighted aria-pressed:text-highlighted"
+          :aria-pressed="wrongOpen"
+          @click="wrongOpen = !wrongOpen"
+        >
+          Не туда
+        </button>
+      </div>
       <ul>
         <li
           v-for="r in records"
           :key="r.id"
-          class="border-t border-default"
+          class="border-t border-canvas"
         >
           <RecordLine
             :rec="r"
@@ -146,40 +162,39 @@ const title = computed(() => `${count(records.value.length || (props.entry.recor
       </ul>
       <div
         v-if="offline"
-        class="flex items-start gap-2 border-t border-default px-3 pt-2.75 pb-2.25 text-meta text-toned"
+        class="flex items-start gap-2 border-t border-canvas px-3 pt-2.75 pb-2.25 text-meta text-toned"
       >
         <UIcon
           name="i-lucide-wifi-off"
-          class="mt-0.5 size-4 shrink-0"
+          class="mt-0.5 size-3.5 shrink-0"
         />
         Нет сети. Запись во Входящих и разберётся, когда сеть появится.
       </div>
+      <div
+        v-if="wrongOpen && !offline"
+        class="flex flex-wrap gap-1.5 border-t border-canvas px-2.5 pt-2.5 pb-2.5"
+      >
+        <ChipButton
+          v-for="p in others"
+          :key="p.id"
+          :label="p.title"
+          :glyph="p.glyph"
+          @click="choose(p.id)"
+        />
+        <ChipButton
+          label="Ещё…"
+          @click="more"
+        />
+      </div>
       <template v-if="fresh && !offline">
-        <div
-          v-if="wrongOpen"
-          class="flex flex-wrap gap-1.5 border-t border-default px-2.5 pt-2.5 pb-2.5"
-        >
-          <ChipButton
-            v-for="p in others"
-            :key="p.id"
-            :label="p.title"
-            :glyph="p.glyph"
-            :color="p.color"
-            @click="choose(p.id)"
-          />
-          <ChipButton
-            label="Ещё…"
-            @click="more"
-          />
-        </div>
-        <div class="flex gap-2 border-t border-default px-2.5 pt-2 pb-2.5">
+        <div class="flex gap-2 border-t border-canvas px-2.5 pt-2 pb-2.5">
           <UButton
             :aria-pressed="wrongOpen"
             @click="wrongOpen = !wrongOpen"
           >
             Не туда
           </UButton>
-          <UButton @click="journal.undo(entry.id)">
+          <UButton @click="undo">
             Отменить
           </UButton>
         </div>

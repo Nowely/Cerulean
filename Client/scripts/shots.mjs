@@ -1,5 +1,5 @@
 // Screenshots of the running app for comparing with the mockups.
-// Usage: pnpm dev, then `pnpm shots [filter]` (SHOTS_URL, SHOTS_OUT to override).
+// Usage: pnpm dev, then `pnpm shots [filter,filter2]` (SHOTS_URL, SHOTS_OUT to override).
 // Every shot starts from a fresh browser profile with the demo data and the clock at 19 Oct 2026, 9:14,
 // the moment the mockups show; light and dark come from the system preference.
 import { mkdir } from 'node:fs/promises'
@@ -17,10 +17,34 @@ const DESKTOP = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 }
 const scenarios = [
   { name: 'MobileHome', device: MOBILE, run: p => openHome(p) },
   { name: 'MobileCompact', device: MOBILE, run: async (p) => {
-    await open(p, '/settings')
-    await p.getByRole('radio', { name: 'Компактно' }).click()
-    await p.getByRole('link', { name: 'Главная' }).click()
-    await dismissKeyCard(p)
+    await openHome(p)
+    await homeMenu(p, 'Компактные строки')
+  } },
+  { name: 'MobileHomeMenu', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await p.getByRole('button', { name: 'Действия с Главной' }).click()
+    await settle(p, 600)
+  } },
+  { name: 'MobileFolded', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await fold(p, ['Избранное', 'Личное'])
+  } },
+  { name: 'MobileCompactFolded', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await homeMenu(p, 'Компактные строки')
+    await fold(p, ['Избранное', 'Личное'])
+  } },
+  { name: 'MobileRecent', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    for (const title of ['Английский', 'Фильмы', 'Отпуск в июле: билеты, жильё', 'Рецепты', 'Подарки', 'Ремонт', 'Велосипед'].reverse()) {
+      await homeMenu(p, 'Новая страница')
+      await p.waitForURL(/\/p\//)
+      await p.getByRole('textbox', { name: 'Название страницы' }).fill(title)
+      await p.goBack()
+      await p.waitForURL(u => new URL(u).pathname === '/')
+    }
+    await p.getByRole('button', { name: 'Компактные строки' }).waitFor({ state: 'detached' }).catch(() => {})
+    await settle(p, 400)
   } },
   { name: 'MobileFirst', device: MOBILE, run: p => open(p, '/', false) },
   { name: 'MobileChat', device: MOBILE, run: p => open(p, '/chat') },
@@ -57,15 +81,33 @@ const scenarios = [
     await p.getByRole('searchbox', { name: 'Найти' }).fill('кни')
     await settle(p)
   } },
+  { name: 'MobileFindNone', device: MOBILE, run: async (p) => {
+    await open(p, '/')
+    await p.getByRole('button', { name: 'Найти' }).click()
+    await p.getByRole('searchbox', { name: 'Найти' }).fill('гараж')
+    await settle(p)
+  } },
   { name: 'MobileWrite', device: MOBILE, run: async (p) => {
     await openHome(p)
-    await p.getByRole('textbox', { name: 'Новая запись' }).fill('купить молоко и хлеб')
+    await p.getByRole('textbox', { name: 'Новая запись' }).fill('купить кефир и творог')
     await settle(p, 400)
   } },
   { name: 'MobileSent', device: MOBILE, run: async (p) => {
     await openHome(p)
-    await p.getByRole('textbox', { name: 'Новая запись' }).fill('купить молоко и хлеб')
+    const field = p.getByRole('textbox', { name: 'Новая запись' })
+    await field.fill('купить кефир и творог')
     await p.keyboard.press('Enter')
+    await field.blur()
+    await settle(p, 400)
+  } },
+  { name: 'MobileSeries', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    const field = p.getByRole('textbox', { name: 'Новая запись' })
+    await field.fill('купить кефир и творог')
+    await p.keyboard.press('Enter')
+    await field.fill('масло')
+    await p.keyboard.press('Enter')
+    await field.fill('яблоки')
     await settle(p, 400)
   } },
   { name: 'MobileSheet', device: MOBILE, run: async (p) => {
@@ -75,7 +117,7 @@ const scenarios = [
   } },
   { name: 'MobileBlank', device: MOBILE, run: async (p) => {
     await openHome(p)
-    await p.getByRole('button', { name: 'Новая страница' }).last().click()
+    await homeMenu(p, 'Новая страница')
     await p.waitForURL(/\/p\//)
     await settle(p, 400)
   } },
@@ -161,8 +203,25 @@ async function openHome(page) {
   await dismissKeyCard(page)
 }
 
+/** A row of the «⋯» sheet of Главная */
+async function homeMenu(page, item) {
+  await page.getByRole('button', { name: 'Действия с Главной' }).click()
+  await settle(page, 500)
+  await page.getByRole('dialog').getByRole(item === 'Компактные строки' ? 'switch' : 'button', { name: item }).click()
+  if (item === 'Компактные строки') {
+    await page.keyboard.press('Escape')
+    await page.evaluate(() => document.activeElement?.blur())
+  }
+  await settle(page, 500)
+}
+
+async function fold(page, names) {
+  for (const name of names) await page.getByRole('button', { name: new RegExp(`^${name}`) }).first().click()
+  await settle(page)
+}
+
 async function dismissKeyCard(page) {
-  await page.getByRole('region', { name: 'Без ключа работают только простые правила' }).getByRole('button', { name: 'Закрыть' }).click()
+  await page.getByRole('button', { name: 'Скрыть строку про ключ' }).click()
   await page.mouse.move(0, 0)
   await settle(page)
 }
@@ -201,7 +260,7 @@ async function openPage(page, title, exact = true) {
 await mkdir(OUT, { recursive: true })
 const browser = await chromium.launch({ executablePath: process.env.SHOTS_CHROMIUM ?? undefined })
 const failed = []
-for (const s of scenarios.filter(s => !filter || s.name.toLowerCase().includes(filter.toLowerCase()))) {
+for (const s of scenarios.filter(s => !filter || filter.split(',').some(f => s.name.toLowerCase().includes(f.toLowerCase())))) {
   for (const scheme of ['light', 'dark']) {
     const context = await browser.newContext({ ...s.device, colorScheme: scheme, locale: 'ru-RU', timezoneId: 'Europe/Moscow' })
     const page = await context.newPage()

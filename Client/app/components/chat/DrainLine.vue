@@ -6,7 +6,7 @@ defineProps<{ paused: boolean, duration: number }>()
 
 <template>
   <div
-    class="h-0.5 bg-line"
+    class="absolute inset-x-0 bottom-0 h-0.5"
     aria-hidden="true"
   >
     <div

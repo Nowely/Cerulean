@@ -3,8 +3,8 @@ import type { AppConfigInput } from 'nuxt/schema'
 
 // Theme-defined sizes (main.css @theme) that tailwind-merge has to know about,
 // otherwise `text-record` reads as a colour and `rounded-card` never replaces `rounded-md`
-const textRoles = ['13', '15', '17', '28', 'title', 'sheet', 'record', 'row', 'body', 'meta', 'caption', 'input']
-const radii = ['card', 'chip', 'item', 'badge', 'tile', 'tile-sm', 'tile-lg', 'sheet']
+const textRoles = ['11', '13', '15', '17', '28', 'title', 'sheet', 'record', 'row', 'body', 'meta', 'caption', 'input']
+const radii = ['card', 'chip', 'item', 'badge', 'tile', 'tile-sm', 'tile-lg', 'sheet', 'pill', 'pill-grown']
 
 // Focus is one accent outline everywhere, as in the mockups
 const focus = 'outline-primary focus-visible:outline-2 focus-visible:outline-offset-1'
@@ -17,8 +17,8 @@ export default {
 
   ui: {
     colors: {
-      primary: 'azure',
-      neutral: 'cool'
+      primary: 'steel',
+      neutral: 'graphite'
     },
     tv: {
       twMergeConfig: {
@@ -32,12 +32,12 @@ export default {
       }
     },
 
-    // Buttons: radius 12; 36px by default, 32 for the dense desktop receipt actions,
+    // Buttons: radius 8 (nested inside the 12 of cards); 36px by default, 32 for the dense desktop receipt actions,
     // 44 for primary actions on touch. A square (icon-only) button is a 44pt target on
     // mobile and a 32px one on desktop.
     button: {
       slots: {
-        base: 'rounded-card font-medium justify-center',
+        base: 'rounded-item font-medium justify-center',
         leadingIcon: 'shrink-0',
         trailingIcon: 'shrink-0'
       },
@@ -56,11 +56,12 @@ export default {
         { square: true, size: 'sm', class: 'size-8 p-0' },
         { square: true, size: 'md', class: 'size-11 p-0 lg:size-8 lg:rounded-item' },
         { square: true, size: 'lg', class: 'size-11 p-0' },
-        // Outlined button («Не туда», «Записать», «Открыть»): surface, hairline, ink text
+        // Chip button («Не туда», «Отменить», «Открыть»): no border, the chip fill of where it sits
+        // (chip on bg and cards, chip-elev inside a raised surface), chip-pressed for hover, pressed and open
         {
           color: 'neutral',
           variant: 'outline',
-          class: 'ring ring-inset ring-default bg-default text-highlighted hover:bg-default hover:ring-accented active:bg-accented aria-pressed:bg-accented aria-pressed:ring-accented aria-expanded:bg-accented aria-expanded:ring-accented'
+          class: 'ring-0 bg-btn text-highlighted hover:bg-btn-pressed active:bg-btn-pressed aria-pressed:bg-btn-pressed aria-expanded:bg-btn-pressed'
         },
         // Quiet icon and text buttons: muted ink, hover tint, pressed state
         {
@@ -88,8 +89,10 @@ export default {
         {
           color: 'error',
           variant: 'outline',
-          class: 'ring-default hover:bg-default hover:ring-accented'
-        }
+          class: 'ring-0 bg-btn hover:bg-btn-pressed active:bg-btn-pressed'
+        },
+        // The filled «Удалить» (desktop button, confirm dialogs)
+        { color: 'error', variant: 'solid', class: 'bg-warn-fill text-on-warn hover:bg-warn-fill/90 active:bg-warn-fill/85' }
       ],
       defaultVariants: {
         color: 'neutral',
@@ -176,12 +179,12 @@ export default {
     // Overlays: surface, hairline, radius 12, the float shadow
     popover: {
       slots: {
-        content: 'rounded-card shadow-float ring-default'
+        content: 'raised rounded-card shadow-float ring-default'
       }
     },
     dropdownMenu: {
       slots: {
-        content: 'rounded-card shadow-float min-w-48',
+        content: 'raised rounded-card shadow-float min-w-48',
         group: 'p-1',
         separator: 'my-1',
         item: 'before:rounded-item items-center',
@@ -221,7 +224,7 @@ export default {
     modal: {
       slots: {
         overlay: 'bg-scrim',
-        content: 'rounded-card shadow-float ring ring-default divide-y-0',
+        content: 'raised rounded-card shadow-float ring ring-default divide-y-0',
         header: 'min-h-0 px-5 pt-5 pb-0',
         body: 'p-5',
         footer: 'px-5 pb-5 pt-0 justify-end',
@@ -233,7 +236,7 @@ export default {
     drawer: {
       slots: {
         overlay: 'bg-scrim',
-        content: 'bg-default ring ring-default',
+        content: 'raised bg-default ring ring-default',
         handle: '!w-9 !h-1.25 !bg-ring rounded-full',
         container: 'p-0 gap-0',
         title: 'text-sheet text-highlighted',

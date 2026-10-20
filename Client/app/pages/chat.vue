@@ -3,6 +3,7 @@
 import { computed, nextTick, onMounted, useTemplateRef, watch } from 'vue'
 import { useHead } from '#imports'
 import { useDataStore } from '~/stores/data'
+import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { dayKey, formatDay } from '~/domain/dates'
 import AppScreen from '~/components/shell/AppScreen.vue'
@@ -42,6 +43,14 @@ async function toBottom() {
 }
 onMounted(toBottom)
 watch(() => data.entries.length, toBottom)
+
+// «Отменить» on a receipt puts its text back here
+const ui = useUiStore()
+watch(() => ui.refill, (r) => {
+  if (!r) return
+  composer.value?.setText(r.text, r.aim)
+  ui.refill = null
+})
 </script>
 
 <template>

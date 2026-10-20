@@ -5,6 +5,7 @@ import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from '#imports'
 import type { Id, Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { useFind } from '~/composables/useFind'
@@ -16,8 +17,10 @@ import PageTile from '../common/PageTile.vue'
 import RecordLine from '../record/RecordLine.vue'
 import PageView from '../page/PageView.vue'
 import RecordView from '../record/RecordView.vue'
+import FindScreen from './FindScreen.vue'
 
 const data = useDataStore()
+const ui = useUiStore()
 const now = useNow()
 const { isDesktop } = useScreen()
 const find = useFind()
@@ -25,6 +28,8 @@ const route = useRoute()
 const router = useRouter()
 
 const q = ref('')
+/** The text Поиск opens with on a phone */
+const initial = ref('')
 const titlesOnly = ref(false)
 const sectionId = ref<Id | 'all'>('all')
 const active = ref(0)
@@ -38,7 +43,9 @@ const open = computed({
 })
 watch(open, async (v) => {
   if (!v) return
-  q.value = ''
+  q.value = ui.findQuery
+  initial.value = ui.findQuery
+  ui.findQuery = ''
   active.value = 0
   await nextTick()
   input.value?.focus()
@@ -74,8 +81,9 @@ function go(h: Hit, how: 'peek' | 'full') {
   else void router.replace({ query: { ...query, peek: encodeTarget(t) } })
 }
 
+/** A page opens full (Поиск closes), a record opens the preview on a phone */
 function pick(h: Hit) {
-  go(h, isDesktop.value ? 'full' : 'peek')
+  go(h, isDesktop.value || h.kind === 'page' ? 'full' : 'peek')
 }
 
 function onKey(e: KeyboardEvent) {
@@ -141,7 +149,7 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
             size="md"
             @click="titlesOnly = !titlesOnly"
           >
-            <span class="text-13 font-semibold text-toned">Aa</span>Только названия
+            Только названия
           </UButton>
           <USelect
             v-model="sectionId"
@@ -246,112 +254,10 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
     </template>
   </UModal>
 
-  <UDrawer
-    v-else
-    v-model:open="open"
-    title="Поиск"
-    :ui="{ content: 'h-[94dvh]' }"
-  >
-    <template #content>
-      <div class="flex min-h-0 flex-1 flex-col">
-        <div class="flex shrink-0 items-center gap-1 pt-1 pr-1 pb-2 pl-3">
-          <label class="flex h-11 min-w-0 flex-1 items-center gap-1 rounded-card bg-trk pl-2.5 text-toned">
-            <UIcon
-              name="i-lucide-search"
-              class="size-5 shrink-0"
-            />
-            <input
-              ref="input"
-              v-model="q"
-              type="search"
-              enterkeyhint="search"
-              class="h-10 min-w-0 flex-1 bg-transparent px-0.5 text-input text-highlighted outline-none placeholder:text-dimmed"
-              placeholder="Страницы и записи"
-              aria-label="Найти"
-            >
-            <UButton
-              v-if="q"
-              icon="i-lucide-x"
-              variant="ghost"
-              square
-              aria-label="Очистить"
-              @click="q = ''; input?.focus()"
-            />
-          </label>
-          <UButton
-            variant="ghost"
-            color="primary"
-            size="lg"
-            class="px-2.5 font-normal"
-            @click="open = false"
-          >
-            Отмена
-          </UButton>
-        </div>
-        <div class="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-3 pb-2">
-          <button
-            type="button"
-            class="hit-44 relative inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.75 rounded-chip border px-3 text-sm"
-            :class="titlesOnly ? 'border-accent bg-accent-soft text-accent-ink' : 'border-default bg-default text-default'"
-            :aria-pressed="titlesOnly"
-            @click="titlesOnly = !titlesOnly"
-          >
-            <span class="text-13 font-semibold">Aa</span>Только названия
-          </button>
-          <USelect
-            v-model="sectionId"
-            :items="sections"
-            class="h-9 shrink-0"
-          />
-        </div>
-        <ul
-          class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-[max(env(safe-area-inset-bottom),1rem)]"
-          data-vaul-no-drag
-          aria-label="Найденное"
-        >
-          <template
-            v-for="g in groups"
-            :key="g.label"
-          >
-            <li class="px-3 pt-3 pb-1 text-caption text-toned">
-              {{ g.label }}
-            </li>
-            <li
-              v-for="h in g.hits"
-              :key="h.kind + (h.kind === 'page' ? h.page.id : h.rec.id)"
-            >
-              <button
-                v-if="h.kind === 'page'"
-                type="button"
-                class="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left active:bg-pressed"
-                @click="pick(h)"
-              >
-                <PageTile
-                  :glyph="h.page.glyph"
-                  :color="h.page.color"
-                />
-                <span class="min-w-0 flex-1 truncate text-base text-highlighted">
-                  <template v-if="q">{{ splitMatch(h.page.title, q).pre }}<mark class="rounded-[3px] bg-accent-soft font-semibold text-highlighted">{{ splitMatch(h.page.title, q).mid }}</mark>{{ splitMatch(h.page.title, q).post }}</template>
-                  <template v-else>{{ h.page.title || 'Без названия' }}</template>
-                </span>
-              </button>
-              <RecordLine
-                v-else
-                :rec="h.rec"
-                :query="q"
-                density="list"
-                @open="pick(h)"
-              />
-            </li>
-          </template>
-          <li
-            v-if="!flat.length"
-            class="px-3 py-6 text-meta text-toned"
-          >
-            {{ q ? 'Ничего не нашлось' : 'Здесь появятся открытые страницы и записи' }}
-          </li>
-        </ul>
-      </div>
-    </template>
-  </UDrawer>
+  <FindScreen
+    v-else-if="open"
+    :initial="initial"
+    @close="open = false"
+    @pick="pick"
+  />
 </template>

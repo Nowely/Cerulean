@@ -159,6 +159,8 @@ export interface Settings {
   homeRows: HomeRows
   /** One-time tips and cards that were closed */
   dismissed: string[]
+  /** Folded system sections on Главная: 'favorites', 'recent' (user sections keep their own flag) */
+  folded: string[]
 }
 
 /** The connection to a model stays in this browser: never in an export, kept through an import */

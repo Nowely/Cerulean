@@ -68,7 +68,7 @@ useHead({ title: computed(() => `${rec.value?.text ?? 'Запись'} · Cerulea
               <PageTile
                 :glyph="page!.glyph"
                 :color="page!.color"
-                :size="18"
+                :size="16"
               />{{ page!.title }}
             </NuxtLink>
             <template v-if="parent">

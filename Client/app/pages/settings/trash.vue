@@ -37,28 +37,35 @@ function restore(i: Item) {
   if (i.kind === 'page') {
     data.restorePage(i.page.id)
     const id = i.page.id
-    notify(`Страница «${i.page.title || 'Без названия'}» вернулась`, { label: 'Открыть', run: () => router.push(`/p/${id}`) })
+    notify(`Страница ${i.page.title || 'Без названия'} вернулась`, { label: 'Открыть', run: () => router.push(`/p/${id}`) })
   } else {
     data.restoreRecords([i.rec.id])
     const pageId = i.rec.pageId
-    notify(`Вернул в «${data.pages[pageId]?.title || 'Без названия'}»`, { label: 'Открыть', run: () => router.push(`/p/${pageId}`) })
+    notify(`Запись вернулась в ${data.pages[pageId]?.title || 'Без названия'}`, { label: 'Открыть', run: () => router.push(`/p/${pageId}`) })
   }
 }
 
 function purge(i: Item) {
   ui.confirm({
-    title: 'Удалить навсегда?',
-    text: i.kind === 'page' ? `Страница «${i.page.title || 'Без названия'}» и её записи исчезнут без возможности вернуть.` : `«${i.rec.text}» исчезнет без возможности вернуть.`,
-    action: 'Удалить',
+    title: `Удалить «${i.kind === 'page' ? i.page.title || 'Без названия' : i.rec.text}» навсегда?`,
+    text: i.kind === 'page' ? 'Страница и её записи удалятся. Вернуть будет нельзя.' : 'Вернуть будет нельзя.',
+    action: 'Удалить навсегда',
     run: () => i.kind === 'page' ? data.purgePages([i.page.id]) : data.purgeRecords([i.rec.id])
   })
 }
 
+/** «2 записи и 1 страница» */
+const what = computed(() => {
+  const pages = items.value.filter(i => i.kind === 'page').length
+  const recs = items.value.length - pages
+  return [recs ? count(recs, RECORD_FORMS) : '', pages ? count(pages, ['страница', 'страницы', 'страниц']) : ''].filter(Boolean).join(' и ')
+})
+
 function empty() {
   ui.confirm({
-    title: 'Очистить корзину?',
-    text: `${count(items.value.length, ['объект', 'объекта', 'объектов'])} исчезнут без возможности вернуть.`,
-    action: 'Очистить',
+    title: 'Очистить Корзину?',
+    text: `${what.value} удалятся навсегда. Вернуть их будет нельзя.`,
+    action: 'Удалить навсегда',
     run: () => data.emptyTrash()
   })
 }
