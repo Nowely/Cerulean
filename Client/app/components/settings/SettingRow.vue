@@ -70,7 +70,7 @@ const { isDesktop } = useScreen()
       </span>
       <span
         v-if="value"
-        class="shrink-0 whitespace-nowrap text-15 text-toned"
+        class="max-w-[45%] shrink-0 truncate text-15 text-toned"
       >{{ value }}</span>
       <slot v-if="!opens && !below" />
       <UIcon

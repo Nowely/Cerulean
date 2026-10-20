@@ -39,7 +39,8 @@ const service = computed(() => PROVIDERS[data.settings.provider].name)
 const keyStatus = computed(() => {
   if (!key.value) return { text: 'Без ключа работают только простые правила', tone: undefined, icon: '' }
   if (data.settings.keyState === 'bad') return { text: 'Не работает: проверь ключ и модель', tone: 'warn' as const, icon: 'i-lucide-circle-alert' }
-  if (data.settings.keyState === 'ok') return { text: `Работает · ${modelOf(data.settings)}`, tone: undefined, icon: 'i-lucide-check' }
+  // «openai/gpt-6-luna» reads as «gpt-6-luna»: the service is already on the row
+  if (data.settings.keyState === 'ok') return { text: `Работает · ${modelOf(data.settings).split('/').pop()}`, tone: undefined, icon: 'i-lucide-check' }
   return { text: 'Ещё не проверено · не попадает в экспорт', tone: undefined, icon: '' }
 })
 
@@ -198,7 +199,7 @@ async function persist() {
         Настройки
       </h1>
       <div
-        class="flex items-center gap-2.5 px-5 pt-2 pb-1 text-sm text-default lg:-mt-2 lg:gap-2 lg:px-0 lg:pt-0 lg:text-sm lg:text-toned"
+        class="flex items-center gap-2.5 px-5 pt-2 pb-1 text-sm text-default lg:gap-2 lg:px-0 lg:pt-0 lg:text-sm lg:text-toned"
         role="status"
       >
         <template v-if="data.storageError">
@@ -267,7 +268,7 @@ async function persist() {
           </div>
         </SettingRow>
         <SettingRow
-          v-if="!data.settings.modelId && data.settings.provider !== 'custom'"
+          v-if="key && !data.settings.modelId && data.settings.provider !== 'custom'"
           label="Модель"
           icon="i-lucide-split"
           desk-hint="Точная медленнее, зато лучше с непонятными записями"

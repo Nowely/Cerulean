@@ -6,7 +6,7 @@ import type { Page, Rec, ViewDef } from '~/domain/types'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { filterRecords, sortRecords } from '~/domain/views'
-import { addDays, dayKey, keyToDate } from '~/domain/dates'
+import { addDays, dayKey, isOverdue, keyToDate } from '~/domain/dates'
 import RecordRow from '../../record/RecordRow.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef, records: Rec[], readonly?: boolean }>()
@@ -46,6 +46,8 @@ function step(n: number) {
   d.setMonth(d.getMonth() + n)
   month.value = dayKey(d).slice(0, 7)
 }
+/** One dot a day: warn while something on it is overdue, as «было вчера» says everywhere else */
+const late = (d: string) => (byDay.value.get(d) ?? []).some(r => !r.done && isOverdue(r.due, now.value))
 const pickedRecords = computed(() => byDay.value.get(picked.value) ?? [])
 const pickedLabel = computed(() => keyToDate(picked.value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' }))
 </script>
@@ -114,13 +116,12 @@ const pickedLabel = computed(() => keyToDate(picked.value).toLocaleDateString('r
         </template>
         <span
           v-else
-          class="mx-auto flex h-1.5 gap-0.5"
+          class="mx-auto flex h-1.5"
         >
           <span
-            v-for="r in (byDay.get(d) ?? []).slice(0, 3)"
-            :key="r.id"
+            v-if="byDay.get(d)?.length"
             class="size-1.5 rounded-full"
-            :class="r.done ? 'bg-ring' : 'bg-accent'"
+            :class="late(d) ? 'bg-warn' : 'bg-ring'"
           />
         </span>
       </button>
@@ -143,7 +144,7 @@ const pickedLabel = computed(() => keyToDate(picked.value).toLocaleDateString('r
         v-if="!pickedRecords.length"
         class="px-2 py-2 text-meta text-toned"
       >
-        На этот день ничего
+        На этот день ничего нет.
       </p>
     </template>
     <template v-if="undated.length">

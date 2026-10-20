@@ -70,7 +70,7 @@ const right = computed(() => {
   const out: { key: string, text: string, tone?: 'warn' | 'low', icon?: string }[] = []
   for (const key of shown) {
     if (key === 'due') {
-      if (props.rec.due) out.push({ key, text: formatDue(props.rec.due, now.value), tone: late.value ? 'warn' : undefined })
+      if (props.rec.due) out.push({ key, text: late.value ? `было ${formatDue(props.rec.due, now.value)}` : formatDue(props.rec.due, now.value), tone: late.value ? 'warn' : undefined })
       continue
     }
     if (key === 'note') continue

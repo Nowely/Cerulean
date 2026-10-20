@@ -8,7 +8,7 @@ import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useNotify } from '~/composables/useNotify'
 import { formatMoment } from '~/domain/dates'
-import { count, RECORD_FORMS } from '~/domain/text'
+import { count, plural, RECORD_FORMS } from '~/domain/text'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import DeskHeader from '~/components/shell/DeskHeader.vue'
 import BackHeader from '~/components/shell/BackHeader.vue'
@@ -20,8 +20,9 @@ const ui = useUiStore()
 const now = useNow()
 const notify = useNotify()
 const router = useRouter()
-/** Корзина goes back where it came from: «⋯» of Главная or Настройки */
-const back = (router.options.history.state.back as string | null) === '/'
+/** Корзина goes back where it came from: «⋯» of Главная or Настройки (opened by its address: Настройки) */
+const from = router.options.history.state.back as string | null
+const back = from && !from.startsWith('/settings')
   ? { to: '/', label: 'Главная' }
   : { to: '/settings', label: 'Настройки' }
 
@@ -67,9 +68,11 @@ const what = computed(() => {
 })
 
 function empty() {
+  const one = items.value.length === 1
+  const n = items.value.filter(i => i.kind === items.value[0]?.kind).length === items.value.length ? items.value.length : 2
   ui.confirm({
     title: 'Очистить Корзину?',
-    text: `${what.value} удалятся навсегда. Вернуть их будет нельзя.`,
+    text: `${what.value} ${plural(n, ['удалится', 'удалятся', 'удалятся'])} навсегда. Вернуть ${one ? 'её' : 'их'} будет нельзя.`,
     action: 'Удалить навсегда',
     run: () => data.emptyTrash()
   })
@@ -124,7 +127,10 @@ function empty() {
       <h1 class="px-5 pt-1 text-title text-highlighted lg:px-0 lg:pt-0">
         Корзина
       </h1>
-      <p class="px-5 pt-1.5 pb-3 text-15 text-toned lg:px-0 lg:pt-2 lg:pb-4 lg:text-sm">
+      <p
+        v-if="items.length"
+        class="px-5 pt-1.5 pb-3 text-15 text-toned lg:px-0 lg:pt-2 lg:pb-4 lg:text-sm"
+      >
         Удалённое хранится 30 дней, потом исчезает само
       </p>
 
@@ -162,10 +168,11 @@ function empty() {
             Вернуть
           </UButton>
           <UButton
-            icon="i-lucide-x"
+            icon="i-lucide-trash-2"
             variant="ghost"
             square
             aria-label="Удалить навсегда"
+            :ui="{ leadingIcon: 'text-warn-ink' }"
             class="shrink-0 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
             @click="purge(i)"
           />
