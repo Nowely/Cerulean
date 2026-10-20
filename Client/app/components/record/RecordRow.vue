@@ -306,15 +306,20 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           :items="menu"
           :content="{ align: 'end' }"
         >
-          <UButton
-            icon="i-lucide-ellipsis"
-            variant="ghost"
-            square
-            size="sm"
-            :aria-label="`Действия: ${rec.text}`"
-            class="sr-only focus:not-sr-only lg:not-sr-only lg:opacity-0 lg:group-hover/row:opacity-100 lg:focus:opacity-100 lg:aria-expanded:opacity-100"
-            @click="!later.ready.value && openMenu()"
-          />
+          <component
+            :is="later.ready.value && isDesktop ? LazyUTooltip : Bare"
+            text="Все действия"
+          >
+            <UButton
+              icon="i-lucide-ellipsis"
+              variant="ghost"
+              square
+              size="sm"
+              :aria-label="`Действия: ${rec.text}`"
+              class="sr-only focus:not-sr-only lg:not-sr-only lg:opacity-0 lg:group-hover/row:opacity-100 lg:focus:opacity-100 lg:aria-expanded:opacity-100"
+              @click="!later.ready.value && openMenu()"
+            />
+          </component>
         </component>
       </div>
     </component>

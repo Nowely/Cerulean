@@ -223,17 +223,25 @@ const scenarios = [
   { name: 'Page', device: DESKTOP, run: p => openPage(p, 'Продукты') },
   { name: 'Board', device: DESKTOP, run: async (p) => {
     await openPage(p, 'Цели')
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
-    await p.getByRole('radio', { name: 'Доска' }).click()
-    await p.keyboard.press('Escape')
+    await p.getByRole('tab', { name: 'По статусу' }).click()
     await settle(p, 400)
+    await p.getByRole('button', { name: 'Открыть «Полумарафон к маю»' }).hover()
+    await settle(p, 200)
   } },
   { name: 'MobileBoard', device: MOBILE, run: async (p) => {
     await openPage(p, 'Цели')
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
-    await p.getByRole('radio', { name: 'Доска' }).click()
-    await p.getByRole('button', { name: 'Закрыть' }).click()
+    await p.getByRole('tab', { name: 'По статусу' }).click()
     await settle(p, 600)
+    await p.getByRole('tab', { name: /^В процессе/ }).click()
+    await settle(p, 300)
+  } },
+  { name: 'MobileBoardMove', device: MOBILE, run: async (p) => {
+    await openPage(p, 'Цели')
+    await p.getByRole('tab', { name: 'По статусу' }).click()
+    await settle(p, 600)
+    await p.getByRole('tab', { name: /^В процессе/ }).click()
+    await p.getByRole('button', { name: /^В «/ }).first().click()
+    await settle(p, 500)
   } },
   { name: 'MobileCalendar', device: MOBILE, run: async (p) => {
     await openPage(p, 'Задачи')

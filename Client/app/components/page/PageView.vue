@@ -160,7 +160,7 @@ const emptyText = computed(() => {
     <!-- Title -->
     <div
       class="px-5 pt-1 lg:px-0"
-      :class="!full ? 'lg:px-4' : 'lg:pt-8'"
+      :class="!full ? 'lg:px-4' : 'lg:pt-0.5'"
     >
       <GlyphPicker
         v-if="full && setup && !page.glyph"
@@ -221,6 +221,13 @@ const emptyText = computed(() => {
         >
           {{ page.title || 'Без названия' }}
         </h1>
+        <!-- Desktop: «⋯» ends the title row (a phone has it in the header) -->
+        <span
+          v-if="full && $slots.menu"
+          class="hidden shrink-0 self-start pt-1 lg:block"
+        >
+          <slot name="menu" />
+        </span>
       </div>
       <p
         v-if="subline"

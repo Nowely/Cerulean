@@ -6,7 +6,7 @@ import { useDataStore } from '~/stores/data'
 import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import AppScreen from '~/components/shell/AppScreen.vue'
-import DeskHeader from '~/components/shell/DeskHeader.vue'
+import DeskBack from '~/components/shell/DeskBack.vue'
 import PageView from '~/components/page/PageView.vue'
 import PageMenu from '~/components/page/PageMenu.vue'
 import PageAside from '~/components/page/PageAside.vue'
@@ -55,34 +55,25 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
             @settings="view?.openSettings()"
           />
         </header>
-        <DeskHeader>
-          <NuxtLink
-            to="/"
-            class="flex h-8 items-center gap-0.5 rounded-item pr-2.5 pl-1 text-sm text-toned hover:bg-muted hover:text-highlighted"
-          >
-            <UIcon
-              name="i-lucide-chevron-left"
-              class="size-4.5"
-            />Главная
-          </NuxtLink>
-          <template #actions>
-            <PageMenu
-              :page="page"
-              @settings="view?.openSettings()"
-            />
-          </template>
-        </DeskHeader>
       </template>
 
       <div
         class="mx-auto w-full lg:px-8"
         :class="view?.wide ? 'lg:max-w-none' : 'lg:max-w-170'"
       >
+        <DeskBack :crumbs="[{ to: '/', label: 'Главная' }]" />
         <PageView
           ref="view"
           :page="page"
           @editing="v => editing = v"
-        />
+        >
+          <template #menu>
+            <PageMenu
+              :page="page"
+              @settings="view?.openSettings()"
+            />
+          </template>
+        </PageView>
       </div>
 
       <template #dock>

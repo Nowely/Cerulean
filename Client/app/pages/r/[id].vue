@@ -6,11 +6,10 @@ import { useDataStore } from '~/stores/data'
 import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import AppScreen from '~/components/shell/AppScreen.vue'
-import DeskHeader from '~/components/shell/DeskHeader.vue'
+import DeskBack from '~/components/shell/DeskBack.vue'
 import RecordView from '~/components/record/RecordView.vue'
 import RecordLinks from '~/components/record/RecordLinks.vue'
 import RecordMenu from '~/components/record/RecordMenu.vue'
-import PageTile from '~/components/common/PageTile.vue'
 import AppComposer from '~/components/composer/AppComposer.vue'
 
 const route = useRoute()
@@ -22,6 +21,11 @@ const page = computed(() => rec.value ? data.pages[rec.value.pageId] : undefined
 const parent = computed(() => rec.value?.parentId ? data.records[rec.value.parentId] : undefined)
 const live = computed(() => rec.value && !rec.value.deletedAt && page.value && !page.value.deletedAt)
 const back = computed(() => parent.value ? { to: `/r/${parent.value.id}`, label: parent.value.text } : { to: `/p/${page.value?.id}`, label: page.value?.title || 'Без названия' })
+/** «‹ Цели /», «‹ Цели / Полумарафон к маю /» */
+const crumbs = computed(() => [
+  { to: `/p/${page.value?.id}`, label: page.value?.title || 'Без названия' },
+  ...(parent.value ? [{ to: `/r/${parent.value.id}`, label: parent.value.text }] : [])
+])
 const editing = ref(false)
 // Wide desktop: «Связано» in a column on the right, unless a preview takes that place
 const aside = computed(() => isDesktop.value && !peek.target.value)
@@ -46,53 +50,22 @@ useHead({ title: computed(() => `${rec.value?.text ?? 'Запись'} · Cerulea
           <span class="flex-1" />
           <RecordMenu :rec="rec" />
         </header>
-        <DeskHeader>
-          <NuxtLink
-            :to="back.to"
-            class="flex size-8 items-center justify-center rounded-item text-toned hover:bg-muted hover:text-highlighted"
-            aria-label="Назад"
-          >
-            <UIcon
-              name="i-lucide-chevron-left"
-              class="size-4.5"
-            />
-          </NuxtLink>
-          <nav
-            aria-label="Путь"
-            class="flex min-w-0 items-center gap-1.5"
-          >
-            <NuxtLink
-              :to="`/p/${page!.id}`"
-              class="flex items-center gap-1.5 hover:text-highlighted"
-            >
-              <PageTile
-                :glyph="page!.glyph"
-                :color="page!.color"
-                :size="16"
-              />{{ page!.title }}
-            </NuxtLink>
-            <template v-if="parent">
-              <span class="text-dimmed">/</span>
-              <NuxtLink
-                :to="`/r/${parent.id}`"
-                class="truncate hover:text-highlighted"
-              >{{ parent.text }}</NuxtLink>
-            </template>
-            <span class="text-dimmed">/</span>
-            <b class="truncate font-medium text-highlighted">{{ rec.text }}</b>
-          </nav>
-          <template #actions>
-            <RecordMenu :rec="rec" />
-          </template>
-        </DeskHeader>
       </template>
 
       <div class="mx-auto w-full lg:max-w-170 lg:px-8">
+        <DeskBack
+          :crumbs="crumbs"
+          inside
+        />
         <RecordView
           :rec="rec"
           :aside="aside"
           @editing="v => editing = v"
-        />
+        >
+          <template #menu>
+            <RecordMenu :rec="rec" />
+          </template>
+        </RecordView>
       </div>
 
       <template #dock>

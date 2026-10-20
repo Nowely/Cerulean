@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // Desktop navigation, no tabs (as in Codex): Главная, Найти, Чат; then Входящие and the sections as folding
 // captions (Избранное, Недавнее, the user's sections); Настройки at the bottom. Folding is the same state as
-// on Главная. Next to Главная the rows are bare (Главная carries the statuses); elsewhere overdue is said once,
-// at its highest place.
+// on Главная. While Главная is open the sections are shown once, in the centre: the sidebar keeps only Главная,
+// Найти, Чат, Входящие and Настройки. Elsewhere overdue is said once, at its highest place.
 import { computed, ref } from 'vue'
 import { useRoute } from '#imports'
 import type { Id, Page, Rec, Section } from '~/domain/types'
@@ -126,177 +126,180 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
         />
       </NuxtLink>
 
-      <section
-        v-if="data.favorites.length"
-        aria-label="Избранное"
-      >
-        <div class="side-head">
-          <button
-            type="button"
-            class="side-head-btn"
-            :aria-expanded="!folded('favorites')"
-            @click="data.toggleFolded('favorites')"
-          >
-            Избранное <UIcon
-              name="i-lucide-chevron-down"
-              class="side-chev"
-              :class="{ '-rotate-90': folded('favorites') }"
-            />
-          </button>
-        </div>
-        <template v-if="!folded('favorites')">
-          <template
-            v-for="f in data.favorites"
-            :key="f.kind + (f.kind === 'page' ? f.page.id : f.rec.id)"
-          >
+      <!-- On Главная the sections are in the centre once: the sidebar keeps the way around -->
+      <template v-if="!onHome">
+        <section
+          v-if="data.favorites.length"
+          aria-label="Избранное"
+        >
+          <div class="side-head">
+            <button
+              type="button"
+              class="side-head-btn"
+              :aria-expanded="!folded('favorites')"
+              @click="data.toggleFolded('favorites')"
+            >
+              Избранное <UIcon
+                name="i-lucide-chevron-down"
+                class="side-chev"
+                :class="{ '-rotate-90': folded('favorites') }"
+              />
+            </button>
+          </div>
+          <template v-if="!folded('favorites')">
+            <template
+              v-for="f in data.favorites"
+              :key="f.kind + (f.kind === 'page' ? f.page.id : f.rec.id)"
+            >
+              <NuxtLink
+                v-if="f.kind === 'page'"
+                :to="`/p/${f.page.id}`"
+                class="side-row"
+                :aria-current="isCurrent(`/p/${f.page.id}`) ? 'page' : undefined"
+              >
+                <PageTile
+                  :glyph="f.page.glyph"
+                  :size="16"
+                />
+                <span class="min-w-0 flex-1 truncate">{{ f.page.title || 'Без названия' }}</span>
+                <CountBadge
+                  v-if="badgeOf(f.page)"
+                  :badge="badgeOf(f.page)!"
+                />
+              </NuxtLink>
+              <NuxtLink
+                v-else
+                :to="`/r/${f.rec.id}`"
+                class="side-row"
+                :aria-current="isCurrent(`/r/${f.rec.id}`) ? 'page' : undefined"
+              >
+                <PageTile
+                  :glyph="f.rec.glyph ?? 'doc'"
+                  :size="16"
+                />
+                <span class="min-w-0 flex-1 truncate">{{ f.rec.text }}</span>
+                <CountBadge
+                  v-if="recBadge(f.rec)"
+                  :badge="recBadge(f.rec)!"
+                />
+              </NuxtLink>
+            </template>
+          </template>
+        </section>
+
+        <section
+          v-if="recent.length"
+          aria-label="Недавнее"
+        >
+          <div class="side-head">
+            <button
+              type="button"
+              class="side-head-btn"
+              :aria-expanded="!folded('recent')"
+              @click="data.toggleFolded('recent')"
+            >
+              Недавнее <UIcon
+                name="i-lucide-chevron-down"
+                class="side-chev"
+                :class="{ '-rotate-90': folded('recent') }"
+              />
+            </button>
+          </div>
+          <template v-if="!folded('recent')">
             <NuxtLink
-              v-if="f.kind === 'page'"
-              :to="`/p/${f.page.id}`"
+              v-for="p in recentShown"
+              :key="p.id"
+              :to="`/p/${p.id}`"
               class="side-row"
-              :aria-current="isCurrent(`/p/${f.page.id}`) ? 'page' : undefined"
+              :aria-current="isCurrent(`/p/${p.id}`) ? 'page' : undefined"
             >
               <PageTile
-                :glyph="f.page.glyph"
+                :glyph="p.glyph"
                 :size="16"
               />
-              <span class="min-w-0 flex-1 truncate">{{ f.page.title || 'Без названия' }}</span>
+              <span
+                class="min-w-0 flex-1 truncate"
+                :class="{ 'text-dimmed': !p.title }"
+              >{{ p.title || 'Без названия' }}</span>
               <CountBadge
-                v-if="badgeOf(f.page)"
-                :badge="badgeOf(f.page)!"
+                v-if="badgeOf(p)"
+                :badge="badgeOf(p)!"
               />
             </NuxtLink>
-            <NuxtLink
+            <button
+              v-if="recent.length > RECENT_SHOWN"
+              type="button"
+              class="side-row text-toned"
+              :aria-expanded="recentOpen"
+              @click="recentOpen = !recentOpen"
+            >
+              <span class="w-4" />{{ recentOpen ? 'Свернуть' : `Ещё ${recent.length - RECENT_SHOWN}` }}
+            </button>
+          </template>
+        </section>
+
+        <section
+          v-for="s in data.sectionList"
+          :key="s.id"
+          :aria-label="s.name"
+        >
+          <div class="side-head group/head">
+            <input
+              v-if="renaming === s.id"
+              v-model="draftName"
+              v-focus-on-mount
+              class="side-head-btn cursor-text bg-default text-highlighted ring ring-accent outline-none"
+              aria-label="Название секции"
+              enterkeyhint="done"
+              @keydown.enter.prevent="finishRename(s, true)"
+              @keydown.esc.prevent="finishRename(s, false)"
+              @blur="finishRename(s, true)"
+            >
+            <button
               v-else
-              :to="`/r/${f.rec.id}`"
+              type="button"
+              class="side-head-btn"
+              :aria-expanded="!s.collapsed"
+              @click="data.updateSection(s.id, { collapsed: !s.collapsed })"
+            >
+              <span class="truncate">{{ s.name }}</span>
+              <UIcon
+                name="i-lucide-chevron-down"
+                class="side-chev"
+                :class="{ '-rotate-90': s.collapsed }"
+              />
+            </button>
+            <span class="flex opacity-0 group-hover/head:opacity-100 group-focus-within/head:opacity-100 has-aria-expanded:opacity-100">
+              <SectionMenu
+                :section="s"
+                @rename="startRename(s)"
+              />
+            </span>
+          </div>
+          <template v-if="!s.collapsed">
+            <NuxtLink
+              v-for="p in pagesOf(s)"
+              :key="p.id"
+              :to="`/p/${p.id}`"
               class="side-row"
-              :aria-current="isCurrent(`/r/${f.rec.id}`) ? 'page' : undefined"
+              :aria-current="isCurrent(`/p/${p.id}`) ? 'page' : undefined"
             >
               <PageTile
-                :glyph="f.rec.glyph ?? 'doc'"
+                :glyph="p.glyph"
                 :size="16"
               />
-              <span class="min-w-0 flex-1 truncate">{{ f.rec.text }}</span>
+              <span
+                class="min-w-0 flex-1 truncate"
+                :class="{ 'text-dimmed': !p.title }"
+              >{{ p.title || 'Без названия' }}</span>
               <CountBadge
-                v-if="recBadge(f.rec)"
-                :badge="recBadge(f.rec)!"
+                v-if="badgeOf(p)"
+                :badge="badgeOf(p)!"
               />
             </NuxtLink>
           </template>
-        </template>
-      </section>
-
-      <section
-        v-if="recent.length"
-        aria-label="Недавнее"
-      >
-        <div class="side-head">
-          <button
-            type="button"
-            class="side-head-btn"
-            :aria-expanded="!folded('recent')"
-            @click="data.toggleFolded('recent')"
-          >
-            Недавнее <UIcon
-              name="i-lucide-chevron-down"
-              class="side-chev"
-              :class="{ '-rotate-90': folded('recent') }"
-            />
-          </button>
-        </div>
-        <template v-if="!folded('recent')">
-          <NuxtLink
-            v-for="p in recentShown"
-            :key="p.id"
-            :to="`/p/${p.id}`"
-            class="side-row"
-            :aria-current="isCurrent(`/p/${p.id}`) ? 'page' : undefined"
-          >
-            <PageTile
-              :glyph="p.glyph"
-              :size="16"
-            />
-            <span
-              class="min-w-0 flex-1 truncate"
-              :class="{ 'text-dimmed': !p.title }"
-            >{{ p.title || 'Без названия' }}</span>
-            <CountBadge
-              v-if="badgeOf(p)"
-              :badge="badgeOf(p)!"
-            />
-          </NuxtLink>
-          <button
-            v-if="recent.length > RECENT_SHOWN"
-            type="button"
-            class="side-row text-toned"
-            :aria-expanded="recentOpen"
-            @click="recentOpen = !recentOpen"
-          >
-            <span class="w-4" />{{ recentOpen ? 'Свернуть' : `Ещё ${recent.length - RECENT_SHOWN}` }}
-          </button>
-        </template>
-      </section>
-
-      <section
-        v-for="s in data.sectionList"
-        :key="s.id"
-        :aria-label="s.name"
-      >
-        <div class="side-head group/head">
-          <input
-            v-if="renaming === s.id"
-            v-model="draftName"
-            v-focus-on-mount
-            class="side-head-btn cursor-text bg-default text-highlighted ring ring-accent outline-none"
-            aria-label="Название секции"
-            enterkeyhint="done"
-            @keydown.enter.prevent="finishRename(s, true)"
-            @keydown.esc.prevent="finishRename(s, false)"
-            @blur="finishRename(s, true)"
-          >
-          <button
-            v-else
-            type="button"
-            class="side-head-btn"
-            :aria-expanded="!s.collapsed"
-            @click="data.updateSection(s.id, { collapsed: !s.collapsed })"
-          >
-            <span class="truncate">{{ s.name }}</span>
-            <UIcon
-              name="i-lucide-chevron-down"
-              class="side-chev"
-              :class="{ '-rotate-90': s.collapsed }"
-            />
-          </button>
-          <span class="flex opacity-0 group-hover/head:opacity-100 group-focus-within/head:opacity-100 has-aria-expanded:opacity-100">
-            <SectionMenu
-              :section="s"
-              @rename="startRename(s)"
-            />
-          </span>
-        </div>
-        <template v-if="!s.collapsed">
-          <NuxtLink
-            v-for="p in pagesOf(s)"
-            :key="p.id"
-            :to="`/p/${p.id}`"
-            class="side-row"
-            :aria-current="isCurrent(`/p/${p.id}`) ? 'page' : undefined"
-          >
-            <PageTile
-              :glyph="p.glyph"
-              :size="16"
-            />
-            <span
-              class="min-w-0 flex-1 truncate"
-              :class="{ 'text-dimmed': !p.title }"
-            >{{ p.title || 'Без названия' }}</span>
-            <CountBadge
-              v-if="badgeOf(p)"
-              :badge="badgeOf(p)!"
-            />
-          </NuxtLink>
-        </template>
-      </section>
+        </section>
+      </template>
     </div>
     <div class="shrink-0 px-2.5 pb-2.5">
       <NuxtLink

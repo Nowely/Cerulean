@@ -95,7 +95,7 @@ function openPlace() {
   >
     <div
       class="px-5 pt-1 lg:px-0"
-      :class="container === 'preview' ? 'lg:px-4' : 'lg:pt-8'"
+      :class="container === 'preview' ? 'lg:px-4' : 'lg:pt-0.5'"
     >
       <div class="flex items-center gap-2 lg:gap-3">
         <RecordMark
@@ -122,11 +122,17 @@ function openPlace() {
         >
           {{ rec.text }}
         </h1>
+        <span
+          v-if="full && $slots.menu"
+          class="hidden shrink-0 lg:block"
+        >
+          <slot name="menu" />
+        </span>
       </div>
       <button
         type="button"
         class="mt-1 flex cursor-pointer items-center gap-1.5 text-meta text-toned hover:text-highlighted"
-        :class="full ? 'lg:flex max-lg:hidden' : ''"
+        :class="full ? 'hidden' : ''"
         @click="openPlace"
       >
         в

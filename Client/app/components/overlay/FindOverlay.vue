@@ -30,7 +30,6 @@ const router = useRouter()
 const q = ref('')
 /** The text Поиск opens with on a phone */
 const initial = ref('')
-const titlesOnly = ref(false)
 const sectionId = ref<Id | 'all'>('all')
 const active = ref(0)
 const input = useTemplateRef<HTMLInputElement>('input')
@@ -62,7 +61,7 @@ const groups = computed<{ label: string, hits: Hit[] }[]>(() => {
     const recs = lastAdded(data.liveRecords.filter(r => !inSection || data.pages[r.pageId]?.sectionId === inSection))
     return [{ label: 'Недавние записи', hits: recs.map(rec => ({ kind: 'record' as const, rec })) }]
   }
-  const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: titlesOnly.value, sectionId: sectionId.value === 'all' ? null : sectionId.value })
+  const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: false, sectionId: sectionId.value === 'all' ? null : sectionId.value })
   return [
     { label: 'Страницы', hits: hits.filter(h => h.kind === 'page') },
     { label: 'Записи', hits: hits.filter(h => h.kind === 'record') }
@@ -148,13 +147,6 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
           </label>
         </div>
         <div class="flex shrink-0 gap-2 border-b border-default px-3 pb-3">
-          <UButton
-            :aria-pressed="titlesOnly"
-            size="md"
-            @click="titlesOnly = !titlesOnly"
-          >
-            Только названия
-          </UButton>
           <USelect
             v-model="sectionId"
             :items="sections"
