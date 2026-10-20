@@ -195,9 +195,9 @@ export const useJournalStore = defineStore('journal', () => {
     return page
   }
 
-  /** The same choice made on a record in Входящие (its row chips): resolves the entry that asked about it */
+  /** The same choice made on a record in Входящие (its row chips): resolves the entry that asked about it or waits */
   function chooseForRecord(recId: Id, choice: Choice): Page | undefined {
-    const entry = [...data.entries].reverse().find(e => e.kind === 'ask' && e.recordIds?.includes(recId))
+    const entry = [...data.entries].reverse().find(e => (e.kind === 'ask' || e.kind === 'offline') && e.recordIds?.includes(recId))
     if (entry) return choose(entry.id, choice)
     if ('keep' in choice) {
       data.updateRecord(recId, { tags: [], guesses: undefined })

@@ -7,6 +7,7 @@ import { useRouter } from '#imports'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
+import { useRecordActions } from '~/composables/useRecordActions'
 import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
@@ -16,6 +17,7 @@ import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView } from '~/domain/templates'
 import PageTile from '../common/PageTile.vue'
 import TipCard from '../common/TipCard.vue'
+import TitleField from '../common/TitleField.vue'
 import GlyphPicker from './GlyphPicker.vue'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import ListLayout from './layouts/ListLayout.vue'
@@ -33,6 +35,7 @@ const emit = defineEmits<{ editing: [boolean] }>()
 
 const data = useDataStore()
 const journal = useJournalStore()
+const actions = useRecordActions()
 const ui = useUiStore()
 const now = useNow()
 const router = useRouter()
@@ -66,17 +69,17 @@ watch(() => props.page.id, () => {
   viewId.value = null
 })
 
+/** «Новый вид» in «Настроить вид»: the sheet stays open on the new view */
 function addView() {
   const v = listView(`Вид ${props.page.views.length + 1}`, { filter: props.page.hasDone ? [{ field: 'done', op: 'is', value: false }] : [] })
   data.updatePage(props.page.id, { views: [...props.page.views, v] })
   viewId.value = v.id
-  settingsOpen.value = true
 }
 
 const settingsOpen = ref(false)
 /** Board and table want the whole width of the main column on desktop */
 const wide = computed(() => view.value.layout === 'board' || view.value.layout === 'table')
-defineExpose({ openSettings: () => settingsOpen.value = true, wide })
+defineExpose({ openSettings: () => settingsOpen.value = true, toggleSearch: () => toggleSearch(), wide })
 
 // Search inside the page
 const searching = ref(false)
@@ -94,19 +97,25 @@ const shown = computed(() => query.value.trim() ? records.value.filter(r => matc
 const todayGroups = computed(() => groupByDue(dueToday(data.liveRecords, now.value).filter(r => matchesQuery(r, query.value)), now.value))
 
 // Title: edited in place on the full page; a new page opens with it focused
-const titleInput = useTemplateRef<HTMLInputElement>('titleInput')
-const title = computed({
-  get: () => props.page.title,
-  set: v => data.updatePage(props.page.id, { title: v })
-})
-onMounted(async () => {
-  if (full.value && ui.focusTitle === props.page.id) {
-    ui.focusTitle = null
-    await nextTick()
-    titleInput.value?.focus()
-  }
-})
+const titleInput = useTemplateRef<InstanceType<typeof TitleField>>('titleInput')
+const titleFocused = ref(false)
+function onTitleFocus(v: boolean) {
+  titleFocused.value = v
+  emit('editing', v)
+}
 const glyphOpen = ref(false)
+// «Переименовать» and «Значок и цвет» from a «⋯», here or on Главная
+watch(() => ui.focusTitle, async (id) => {
+  if (!full.value || id !== props.page.id) return
+  ui.focusTitle = null
+  await nextTick()
+  titleInput.value?.focus()
+}, { immediate: true })
+watch(() => ui.openGlyph, (id) => {
+  if (!full.value || id !== props.page.id) return
+  ui.openGlyph = null
+  glyphOpen.value = true
+}, { immediate: true })
 
 function openRecord(rec: Rec) {
   if (full.value) void router.push(`/r/${rec.id}`)
@@ -116,11 +125,11 @@ function openRecord(rec: Rec) {
 /** A choice on a row of Входящие settles the same Уточнение as in Чат */
 function choose(rec: Rec, choice: Id | 'more' | 'new') {
   if (choice === 'more') {
-    ui.pick({ title: 'Куда положить', subtitle: rec.text, current: rec.pageId, guesses: rec.guesses, run: c => journal.chooseForRecord(rec.id, c) })
+    ui.pick({ title: 'Куда положить', subtitle: rec.text, current: rec.pageId, guesses: journal.guessesFor(rec), run: c => actions.place(rec, c) })
     return
   }
   if (choice === 'new') return
-  journal.chooseForRecord(rec.id, { pageId: choice })
+  actions.place(rec, { pageId: choice })
 }
 
 // A page made by an accidental «+» and left untouched goes away on leaving it
@@ -134,9 +143,12 @@ onBeforeUnmount(() => {
 const emptyText = computed(() => {
   if (query.value.trim()) return 'Ничего не нашлось'
   const done = view.value.filter.find(r => r.field === 'done')
-  if (done?.value === true) return 'Отмеченное появится здесь'
+  if (done?.value === true) return 'Пока ничего не отмечено.'
+  if (done?.value === false && records.value.length) return 'Всё сделано.'
   if (props.page.kind === 'inbox') return 'Всё разложено. Сюда попадает то, что не удалось разложить'
-  return full.value ? 'Пиши внизу, и записи появятся здесь' : 'Нет записей'
+  if (!full.value) return 'Нет записей'
+  if (!records.value.length && titleFocused.value) return 'Назови страницу, потом пиши внизу.'
+  return 'Пиши внизу: первая запись появится здесь.'
 })
 </script>
 
@@ -193,21 +205,18 @@ const emptyText = computed(() => {
           :size="36"
           tile
         />
-        <input
+        <TitleField
           v-if="full && page.kind === 'page'"
           ref="titleInput"
-          v-model="title"
-          class="min-w-0 flex-1 bg-transparent text-title text-highlighted caret-accent outline-none placeholder:font-medium placeholder:text-placeholder-lg"
+          :value="page.title"
+          label="Название страницы"
           placeholder="Без названия"
-          aria-label="Название страницы"
-          enterkeyhint="done"
-          @keydown.enter="($event.target as HTMLInputElement).blur()"
-          @focus="emit('editing', true)"
-          @blur="emit('editing', false)"
-        >
+          @save="t => data.updatePage(page.id, { title: t })"
+          @focus="onTitleFocus"
+        />
         <h1
           v-else
-          class="min-w-0 flex-1 truncate text-title text-highlighted"
+          class="min-w-0 flex-1 text-title text-highlighted"
           :class="!full ? 'lg:text-28' : ''"
         >
           {{ page.title || 'Без названия' }}
@@ -229,7 +238,7 @@ const emptyText = computed(() => {
 
     <!-- Views: underlined tabs; search and «Настроить вид» on the right -->
     <div
-      v-if="!glance"
+      v-if="!glance && (!today || searching)"
       class="mt-3 flex items-end border-b border-default pr-0.5 pl-2 lg:mt-5 lg:px-0"
       :class="!full ? 'lg:mx-4' : ''"
     >
@@ -251,15 +260,6 @@ const emptyText = computed(() => {
         >
           {{ v.name }}
         </button>
-        <UButton
-          v-if="full && !today && page.kind === 'page'"
-          icon="i-lucide-plus"
-          variant="ghost"
-          square
-          aria-label="Новый вид"
-          class="self-center"
-          @click="addView"
-        />
       </div>
       <div
         v-else
@@ -289,7 +289,7 @@ const emptyText = computed(() => {
       <AdaptiveOverlay
         v-if="!today"
         v-model:open="settingsOpen"
-        :title="`Вид «${view.name}»`"
+        title="Настроить вид"
       >
         <template #trigger>
           <UButton
@@ -305,6 +305,7 @@ const emptyText = computed(() => {
           :page="page"
           :view="view"
           @removed="viewId = null; settingsOpen = false"
+          @add="addView"
         />
       </AdaptiveOverlay>
     </div>
@@ -330,14 +331,14 @@ const emptyText = computed(() => {
             brief
             density="list"
             class="px-2 lg:px-0"
-            @open="openRecord(r)"
+            @open="peek.peek({ kind: 'record', id: r.id })"
           />
         </section>
         <p
           v-if="!todayGroups.length"
           class="px-5 py-6 text-meta text-toned lg:px-2.5"
         >
-          На сегодня ничего. Всё со сроком «сегодня» и просроченное со всех страниц появится здесь.
+          На сегодня ничего, всё со сроком появится здесь.
         </p>
       </template>
       <template v-else-if="layout === 'list'">

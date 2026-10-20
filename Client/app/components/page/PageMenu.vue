@@ -1,9 +1,11 @@
 <script setup lang="ts">
-// «⋯» of a page: Избранное, Описание для Авто, section, view settings, copy, delete
+// «⋯» of a page: Переименовать, Значок и цвет, Избранное, Описание для Авто, section, view settings, copy, delete.
+// From Главная «Переименовать» and «Значок и цвет» open the page with its title or icon picker ready.
 import { computed, defineAsyncComponent, ref } from 'vue'
 import { useRouter } from '#imports'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { useUiStore } from '~/stores/ui'
 import { useNotify } from '~/composables/useNotify'
 import { toMarkdown } from '~/domain/export'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
@@ -21,6 +23,7 @@ const props = defineProps<{
 const emit = defineEmits<{ settings: [] }>()
 const open = defineModel<boolean>('open', { default: false })
 const data = useDataStore()
+const ui = useUiStore()
 const router = useRouter()
 const notify = useNotify()
 
@@ -46,8 +49,22 @@ function remove() {
   notify('Страница в корзине', { label: 'Отменить', run: () => data.restorePage(id) })
 }
 
+/** The page takes it from here: its title in focus, or its icon picker open */
+function edit(what: 'title' | 'glyph') {
+  if (what === 'title') ui.focusTitle = props.page.id
+  else ui.openGlyph = props.page.id
+  if (props.home) void router.push(`/p/${props.page.id}`)
+}
+
 const items = computed<MenuItem[][]>(() => {
+  const own: MenuItem[] = props.page.kind === 'page'
+    ? [
+        { label: 'Переименовать', icon: 'i-lucide-pencil', onSelect: () => edit('title') },
+        { label: 'Значок и цвет', icon: 'i-lucide-smile', onSelect: () => edit('glyph') }
+      ]
+    : []
   const first: MenuItem[] = [
+    ...own,
     {
       label: props.page.favorite === null ? 'Добавить в избранное' : 'Убрать из избранного',
       icon: 'i-lucide-star',

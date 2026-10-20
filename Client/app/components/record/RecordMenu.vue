@@ -1,21 +1,24 @@
 <script setup lang="ts">
-// «⋯» of a record page
+// «⋯» of a record page: it starts with «Переименовать», which puts the title in focus
 import { computed } from 'vue'
 import { useRouter } from '#imports'
 import type { Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { useUiStore } from '~/stores/ui'
 import { useRecordActions } from '~/composables/useRecordActions'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import { inPlace } from '~/domain/text'
 
 const props = defineProps<{ rec: Rec }>()
 const data = useDataStore()
+const ui = useUiStore()
 const router = useRouter()
 const actions = useRecordActions()
 const place = computed(() => data.placeOf(props.rec).title)
 
 const items = computed<MenuItem[][]>(() => [
   [
+    { label: 'Переименовать', icon: 'i-lucide-pencil', onSelect: () => ui.focusTitle = props.rec.id },
     { label: props.rec.favorite === null ? 'Добавить в избранное' : 'Убрать из избранного', icon: 'i-lucide-star', onSelect: () => actions.favorite(props.rec) },
     ...(props.rec.parentId ? [] : [{ label: 'Переместить', icon: 'i-lucide-arrow-right', value: place.value, onSelect: () => actions.move([props.rec.id]) }]),
     { label: 'Скопировать текст', icon: 'i-lucide-copy', onSelect: () => actions.copy(props.rec) }

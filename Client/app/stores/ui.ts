@@ -39,6 +39,8 @@ export const useUiStore = defineStore('ui', () => {
   const confirming = ref<Confirm | null>(null)
   /** A page created with «+»: its title takes focus as soon as it is on screen */
   const focusTitle = ref<Id | null>(null)
+  /** «Значок и цвет» from a menu: the page opens its icon picker */
+  const openGlyph = ref<Id | null>(null)
   /** Text Поиск opens with («Найти» on the toast after a question was written on a page) */
   const findQuery = ref('')
   /** «Отменить» on a receipt: its text goes back to the composer on screen, aimed for that one send */
@@ -50,6 +52,7 @@ export const useUiStore = defineStore('ui', () => {
     picker,
     confirming,
     focusTitle,
+    openGlyph,
     findQuery,
     refill,
     toastAt,

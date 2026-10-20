@@ -2,15 +2,17 @@
 // Every record is a page: its properties, a note edited in place, Подпункты.
 // Same component full (from navigation) and as a preview (from a link). A preview reads and ticks;
 // the desktop panel (edit) also takes the note and the properties, the title stays for «Открыть».
-import { computed, nextTick, ref, useId, useTemplateRef } from 'vue'
+import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
 import { useRouter } from '#imports'
 import type { PropDef, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { usePeek } from '~/composables/usePeek'
 import { useScreen } from '~/composables/useScreen'
 import { formatAdded } from '~/domain/dates'
 import RecordMark from '../common/RecordMark.vue'
+import TitleField from '../common/TitleField.vue'
 import PageTile from '../common/PageTile.vue'
 import RecordRow from './RecordRow.vue'
 import PropValue from './PropValue.vue'
@@ -41,10 +43,15 @@ const done = computed(() => subs.value.filter(s => s.done).length)
 const links = computed(() => data.linksOf(props.rec.id))
 const linksTitle = useId()
 
-const title = computed({
-  get: () => props.rec.text,
-  set: v => data.updateRecord(props.rec.id, { text: v })
-})
+const ui = useUiStore()
+const titleField = useTemplateRef<InstanceType<typeof TitleField>>('titleField')
+// «Переименовать» in «⋯»
+watch(() => ui.focusTitle, async (id) => {
+  if (!full.value || id !== props.rec.id) return
+  ui.focusTitle = null
+  await nextTick()
+  titleField.value?.focus()
+}, { immediate: true })
 const note = computed({
   get: () => props.rec.note,
   set: v => data.updateRecord(props.rec.id, { note: v })
@@ -98,17 +105,16 @@ function openPlace() {
           class="-ml-2.5"
           @toggle="data.toggleDone(rec.id)"
         />
-        <input
+        <TitleField
           v-if="full"
-          v-model="title"
-          class="min-w-0 flex-1 bg-transparent text-title text-highlighted caret-accent outline-none"
-          :class="{ 'text-dimmed line-through': rec.done }"
-          aria-label="Текст записи"
-          enterkeyhint="done"
-          @keydown.enter="($event.target as HTMLInputElement).blur()"
-          @focus="emit('editing', true)"
-          @blur="emit('editing', false)"
-        >
+          ref="titleField"
+          :value="rec.text"
+          label="Текст записи"
+          required
+          :struck="rec.done"
+          @save="t => data.updateRecord(rec.id, { text: t })"
+          @focus="v => emit('editing', v)"
+        />
         <h1
           v-else
           class="min-w-0 flex-1 text-title text-highlighted"

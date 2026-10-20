@@ -6,12 +6,13 @@ import { computed, ref, useTemplateRef, type FunctionalComponent } from 'vue'
 import { LazyUContextMenu, LazyUDropdownMenu, LazyUTooltip } from '#components'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { useJournalStore } from '~/stores/journal'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useLater } from '~/composables/useLater'
-import { clock, formatAdded, formatDue, isOverdue } from '~/domain/dates'
+import { clock, formatAdded, formatDue, formatMoment, isOverdue } from '~/domain/dates'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
 
@@ -31,6 +32,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'] }>()
 
 const data = useDataStore()
+const journal = useJournalStore()
 const now = useNow()
 const { isDesktop } = useScreen()
 const actions = useRecordActions()
@@ -56,6 +58,11 @@ const freshLabel = computed(() => now.value - props.rec.addedAt < 5 * 60_000 ? '
 const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
 const inbox = computed(() => props.page.kind === 'inbox')
 const asking = computed(() => inbox.value && props.rec.tags.includes('clarify') && !props.rec.done)
+/** Waiting for the network: a state on line 2, not a tag */
+const waiting = computed(() => inbox.value && props.rec.tags.includes('offline'))
+const added = computed(() => waiting.value
+  ? `ждёт сети · ${formatMoment(props.rec.addedAt, now.value)}`
+  : formatAdded(props.rec.via, props.rec.addedAt, now.value))
 
 /** «Справа в строке»: the view's chosen properties, empty ones hidden */
 const right = computed(() => {
@@ -110,7 +117,8 @@ const menu = computed(() => [
   ]
 ])
 
-const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id]).filter((p): p is Page => !!p && !p.deletedAt))
+/** Two pages worked out again from the pages there are now; «Ещё…» has the rest */
+const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id => data.pages[id]!))
 </script>
 
 <template>
@@ -183,7 +191,7 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
           <span
             v-if="inbox"
             class="truncate text-caption font-normal text-toned"
-          >{{ formatAdded(rec.via, rec.addedAt, now) }}</span>
+          >{{ added }}</span>
           <span
             v-else-if="notePreview"
             class="truncate text-caption font-normal text-toned"
@@ -194,10 +202,6 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
           v-if="fresh"
           class="ml-2 shrink-0 text-caption text-accent-ink"
         >{{ freshLabel }}</span>
-        <span
-          v-if="asking"
-          class="ml-2 shrink-0 text-meta text-accent-ink"
-        >уточнить</span>
 
         <span
           v-if="!fresh"
@@ -315,17 +319,16 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
       </div>
     </component>
 
-    <!-- Входящие: the three guessed pages right on the row (a preview only reads) -->
+    <!-- Входящие: two guessed pages right on the row, saying what a tap does (a preview only reads) -->
     <div
-      v-if="asking && !readonly"
-      class="no-scrollbar flex gap-1.5 overflow-x-auto pr-3 pb-3 pl-13 lg:pl-11"
+      v-if="(asking || waiting) && !readonly"
+      class="flex flex-wrap gap-1.5 pr-3 pb-3 pl-13 lg:pl-11"
     >
       <ChipButton
         v-for="g in guesses"
         :key="g.id"
-        :label="g.title"
-        :glyph="g.glyph"
-        :color="g.color"
+        :label="`→ ${g.title || 'Без названия'}`"
+        :aria-label="`Переместить в «${g.title || 'Без названия'}»`"
         @click="emit('choose', g.id)"
       />
       <ChipButton

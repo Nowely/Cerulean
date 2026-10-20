@@ -40,6 +40,16 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
             />Главная
           </NuxtLink>
           <span class="flex-1" />
+          <UButton
+            v-if="page.kind === 'today'"
+            icon="i-lucide-search"
+            variant="ghost"
+            square
+            size="lg"
+            aria-label="Найти на странице"
+            class="text-toned"
+            @click="view?.toggleSearch()"
+          />
           <PageMenu
             :page="page"
             @settings="view?.openSettings()"

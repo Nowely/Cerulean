@@ -10,7 +10,6 @@ import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { useFind } from '~/composables/useFind'
 import { pageBadge, recordBadge, type Badge } from '~/domain/summary'
-import { count } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
 import CountBadge from '../common/CountBadge.vue'
 import SectionMenu from '../home/SectionMenu.vue'
@@ -30,11 +29,6 @@ const pagesOf = (s: Section) => data.livePages.filter(p => p.sectionId === s.id)
 const recentOpen = ref(false)
 const recent = computed(() => data.recentlyMade)
 const recentShown = computed(() => recentOpen.value ? recent.value : recent.value.slice(0, RECENT_SHOWN))
-
-const waiting = computed(() => data.clarify.length)
-const chatLabel = computed(() => waiting.value
-  ? `Чат: ${count(waiting.value, ['запись ждёт', 'записи ждут', 'записей ждут'])} уточнения`
-  : 'Чат')
 
 // ---------- statuses ----------
 
@@ -108,19 +102,11 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
         to="/chat"
         class="side-row"
         :aria-current="isCurrent('/chat') ? 'page' : undefined"
-        :aria-label="chatLabel"
       >
-        <span class="relative flex">
-          <UIcon
-            name="i-lucide-message-square"
-            class="side-ico"
-          />
-          <span
-            v-if="waiting"
-            class="absolute -top-0.5 -right-0.75 size-2 rounded-full bg-accent ring-2 ring-side"
-            aria-hidden="true"
-          />
-        </span>
+        <UIcon
+          name="i-lucide-message-square"
+          class="side-ico"
+        />
         <span class="min-w-0 flex-1 truncate">Чат</span>
       </NuxtLink>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// «Настроить вид»: how this view shows the page. Filter and sort live here, not in the bar.
+// «Настроить вид»: how this view shows the page. Filter and sort live here, not in the bar; so does «Новый вид».
 import { computed, ref } from 'vue'
 import type { FilterRule, GroupBy, Layout, Page, PropType, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -8,7 +8,7 @@ import { uid } from '~/domain/ids'
 import SegmentedControl from '../common/SegmentedControl.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef }>()
-const emit = defineEmits<{ removed: [] }>()
+const emit = defineEmits<{ removed: [], add: [] }>()
 const data = useDataStore()
 
 function patch(p: Partial<ViewDef>) {
@@ -78,9 +78,11 @@ const NEW_TYPES: { value: 'text' | 'number' | 'select' | 'date', label: string }
   { value: 'select', label: 'Выбор' },
   { value: 'date', label: 'Дата' }
 ]
+/** A «Выбор» needs its options before it can be added */
+const canAdd = computed(() => !!propName.value.trim() && (propType.value !== 'select' || propOptions.value.split(',').some(o => o.trim())))
 function addProp() {
   const n = propName.value.trim()
-  if (!n) return
+  if (!canAdd.value) return
   const id = uid('f')
   const options = propType.value === 'select'
     ? propOptions.value.split(',').map(s => s.trim()).filter(Boolean).map(o => ({ id: uid('o'), name: o }))
@@ -104,11 +106,10 @@ function removeView() {
 <template>
   <div class="flex flex-col gap-1 px-2 pb-2">
     <label class="block px-2 pt-1">
-      <span class="sr-only">Название вида</span>
+      <span class="block pb-1.5 text-cap text-toned">Название вида</span>
       <UInput
         v-model="name"
         class="w-full"
-        aria-label="Название вида"
       />
     </label>
 
@@ -205,7 +206,7 @@ function removeView() {
           type="submit"
           color="primary"
           variant="solid"
-          :disabled="!propName.trim()"
+          :disabled="!canAdd"
         >
           Добавить
         </UButton>
@@ -221,6 +222,16 @@ function removeView() {
         name="i-lucide-plus"
         class="size-5 text-toned"
       />Новое свойство
+    </button>
+    <button
+      type="button"
+      class="flex min-h-12.5 cursor-pointer items-center gap-3 rounded-chip px-2 text-left text-base text-default hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
+      @click="emit('add')"
+    >
+      <UIcon
+        name="i-lucide-list-plus"
+        class="size-5 text-toned"
+      />Новый вид
     </button>
     <button
       v-if="page.views.length > 1"

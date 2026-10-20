@@ -295,7 +295,7 @@ function toTop() {
             />
           </button>
           <div
-            v-if="!isDesktop && !data.settings.dismissed.includes('hold-tip')"
+            v-if="!isDesktop && userPages.length > 1 && !data.settings.dismissed.includes('hold-tip')"
             class="mt-1 flex items-center"
           >
             <p class="flex min-w-0 flex-1 items-center gap-3 px-2 py-1.5 text-sm text-toned">
