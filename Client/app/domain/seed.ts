@@ -216,6 +216,22 @@ export function demo(now = Date.now()): Dataset {
   const gift = add(inbox!, 'Подарок маме на др', { ...chat(9, 2), tags: ['clarify'], guesses: [tasks.id, ideas.id, chores.id] })
   const series = add(inbox!, 'Посмотреть тот сериал', { ...chat(22, 15, -1), tags: ['clarify'], guesses: [ideas.id, tasks.id, books.id] })
 
+  // Корзина: a record from Задачи deleted yesterday, a page with its records, a record from Продукты
+  add(tasks, 'Позвонить в банк', { addedAt: at(10, 0, -6), deletedAt: at(18, 0, -1) })
+  add(products, 'Овсянка', { addedAt: at(10, 0, -9), deletedAt: at(12, 0, -7) })
+  const dacha = newPage({
+    title: 'Поездка на дачу',
+    glyph: 'leaf',
+    color: 'green',
+    sectionId: home.id,
+    order: 2,
+    template: 'todo',
+    noun: ['дело', 'дела', 'дел'],
+    views: [listView('Список')],
+    deletedAt: at(19, 0, -5)
+  }, now)
+  for (const text of ['Взять рассаду', 'Закрыть воду', 'Забрать шланг', 'Купить уголь']) add(dacha, text, { addedAt: at(9, 0, -12) })
+
   const entries: Entry[] = [
     newEntry({ at: at(22, 15, -1), text: 'посмотреть тот сериал', kind: 'ask', pageId: inbox!.id, recordIds: [series.id], newName: 'Фильмы' }),
     newEntry({ at: at(8, 40), text: 'молоко, яйца, сыр', kind: 'routed', pageId: products.id, recordIds: [milk.id, eggs.id, cheese.id] }),
@@ -225,7 +241,7 @@ export function demo(now = Date.now()): Dataset {
     newEntry({ at: at(9, 10), text: 'хлеб', kind: 'routed', pageId: products.id, recordIds: [bread.id] })
   ]
 
-  const pages = [inbox!, today!, products, chores, tasks, goals, ideas, books]
+  const pages = [inbox!, today!, products, chores, tasks, goals, ideas, books, dacha]
   return { pages, records, sections: [home, personal], entries }
 }
 

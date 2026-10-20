@@ -13,6 +13,14 @@ import { toMarkdown, parseSnapshot, toJSON } from '~/domain/export'
 // Sunday 19 October 2026, 9:14: the moment of the mockups
 const NOW = new Date(2026, 9, 19, 9, 14).getTime()
 
+/** The demo as the app shows it: what is in Корзина is left out */
+function liveDemo() {
+  const d = demo(NOW)
+  const pages = d.pages.filter(p => !p.deletedAt)
+  const ids = new Set(pages.map(p => p.id))
+  return { ...d, pages, records: d.records.filter(r => !r.deletedAt && ids.has(r.pageId)) }
+}
+
 describe('dates', () => {
   it('writes dates the way the interface does', () => {
     expect(formatDue({ date: '2026-10-19', time: '10:00' }, NOW)).toBe('сегодня, 10:00')
@@ -59,7 +67,7 @@ describe('parse', () => {
 })
 
 describe('demo summaries match the spec', () => {
-  const d = demo(NOW)
+  const d = liveDemo()
   const page = (title: string) => d.pages.find(p => p.title === title)!
   const top = (title: string) => d.records.filter(r => r.pageId === page(title).id && !r.parentId)
   const line = (title: string) => summaryText(pageSummary(page(title), top(title), NOW, d.records))
@@ -121,13 +129,13 @@ describe('words and lists', () => {
   })
 
   it('shows the records added last on an empty Поиск', () => {
-    const d = demo(NOW)
+    const d = liveDemo()
     expect(lastAdded(d.records).map(r => r.text)).toEqual(['Хлеб', 'Подарок маме на др', 'Позвонить стоматологу', 'Молоко', 'Сыр', 'Яйца'])
   })
 })
 
 describe('simple rules', () => {
-  const d = demo(NOW)
+  const d = liveDemo()
   const id = (title: string) => d.pages.find(p => p.title === title)!.id
   it('files clear lines', () => {
     expect(classify('кефир', d.pages).pageId).toBe(id('Продукты'))

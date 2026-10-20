@@ -149,8 +149,7 @@ function empty() {
             class="flex size-6 shrink-0 items-center justify-center"
             aria-hidden="true"
           ><span
-            class="size-1.5 rounded-full"
-            :style="{ background: `var(--c-${data.pages[i.rec.pageId]?.color ?? 'gray'})` }"
+            class="size-1.5 rounded-full bg-ring"
           /></span>
           <span class="min-w-0 flex-1 py-2">
             <span class="block truncate text-record text-highlighted">{{ i.kind === 'page' ? (i.page.title || 'Без названия') : i.rec.text }}</span>

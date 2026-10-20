@@ -40,7 +40,7 @@ const groups = computed<Group[]>(() => {
   }
   const guesses = byId(ui.picker?.guesses ?? []).slice(0, 3)
   const opened = choosable.value
-    .filter(p => p.kind === 'page')
+    .filter(p => p.kind === 'page' && !guesses.includes(p))
     .sort((a, b) => b.openedAt - a.openedAt)
     .slice(0, 3)
   const out: Group[] = []

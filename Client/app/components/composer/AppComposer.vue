@@ -115,14 +115,16 @@ const hint = computed(() => props.placeholder ?? (
         : 'Хлеб, позвонить в 10…'
 ))
 
-// The field grows with the text: a hidden copy in the same grid cell gives the height (up to five lines)
+// The field grows with the text: a hidden copy in the same grid cell gives the height (up to five lines).
+// The placeholder never wraps the field: only typed text counts.
 const multi = ref(false)
 const mirror = useTemplateRef<HTMLElement>('mirror')
 watch(text, () => nextTick(() => {
   const el = mirror.value
   if (!el) return
-  const line = parseFloat(getComputedStyle(el).lineHeight) || 22
-  multi.value = el.scrollHeight > line * 1.5
+  const css = getComputedStyle(el)
+  const line = parseFloat(css.lineHeight) || 22
+  multi.value = el.scrollHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom) > line * 1.5
 }))
 
 const canSend = computed(() => text.value.trim().length > 0)
@@ -223,10 +225,10 @@ defineExpose({
       >
         <span
           ref="mirror"
-          class="invisible col-start-1 row-start-1 max-h-27.5 overflow-hidden whitespace-pre-wrap break-words text-input leading-5.5"
+          class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words text-input leading-5.5"
           :class="slim ? 'py-2.25 pr-1 pl-1' : 'py-2.25 pr-1 pl-2'"
           aria-hidden="true"
-        >{{ text || hint }}&#8203;</span>
+        >{{ text }}&#8203;</span>
         <textarea
           ref="field"
           v-model="text"
@@ -236,7 +238,7 @@ defineExpose({
           autocapitalize="sentences"
           :placeholder="speech.listening.value ? 'Говори…' : hint"
           :aria-label="mode === 'record' ? 'Новый подпункт' : 'Новая запись'"
-          class="no-scrollbar col-start-1 row-start-1 max-h-27.5 min-w-0 resize-none overflow-y-auto bg-transparent text-input leading-5.5 text-highlighted outline-none placeholder:text-dimmed"
+          class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent text-input leading-5.5 text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
           :class="slim ? 'py-2.25 pr-1 pl-1' : 'py-2.25 pr-1 pl-2'"
           @keydown="onKey"
           @focus="emit('focus', true)"

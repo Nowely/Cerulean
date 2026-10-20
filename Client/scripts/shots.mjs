@@ -134,12 +134,24 @@ const scenarios = [
     await p.unroute(OPENAI)
     await p.route(OPENAI, () => {})
     await open(p, '/')
-    await p.getByRole('textbox', { name: 'Новая запись' }).fill('батарейки для пульта')
+    const field = p.getByRole('textbox', { name: 'Новая запись' })
+    await field.fill('батарейки для пульта')
     await p.keyboard.press('Enter')
+    await field.blur()
     await settle(p, 600)
   } },
   { name: 'MobileSettings', device: MOBILE, run: p => open(p, '/settings') },
   { name: 'MobileTrash', device: MOBILE, run: p => open(p, '/settings/trash') },
+  { name: 'MobileTrashClear', device: MOBILE, run: async (p) => {
+    await open(p, '/settings/trash')
+    await p.getByRole('button', { name: 'Очистить' }).click()
+    await settle(p, 600)
+  } },
+  { name: 'MobilePick', device: MOBILE, run: async (p) => {
+    await open(p, '/chat')
+    await p.getByRole('button', { name: 'Ещё…' }).last().click()
+    await settle(p, 600)
+  } },
   { name: 'MobileConnect', device: MOBILE, run: p => openConnection(p, 'OpenRouter') },
 
   { name: 'Home', device: DESKTOP, run: p => openHome(p) },
@@ -210,9 +222,11 @@ async function homeMenu(page, item) {
   await page.getByRole('dialog').getByRole(item === 'Компактные строки' ? 'switch' : 'button', { name: item }).click()
   if (item === 'Компактные строки') {
     await page.keyboard.press('Escape')
-    await page.evaluate(() => document.activeElement?.blur())
   }
-  await settle(page, 500)
+  // The sheet hands focus back to «⋯» once it has closed: drop it so no focus ring shows
+  await settle(page, 1000)
+  await page.evaluate(() => document.activeElement?.blur())
+  await settle(page, 200)
 }
 
 async function fold(page, names) {
