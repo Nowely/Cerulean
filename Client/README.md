@@ -18,6 +18,7 @@ OpenAI-compatible API. The prompt lives in `app/domain/prompt.ts`, the calls in 
 pnpm install
 pnpm dev                 # http://localhost:3000, demo data at /?demo
 pnpm test                # domain and store tests
+EVAL_KEY=sk-… pnpm eval  # Авто on 51 lines against a real model, see eval/README.md
 pnpm typecheck
 pnpm lint
 pnpm generate            # static build in .output/public, deployable to any static host

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { askModel, checkConnection, isConnected, modelOf, type Connection } from '~/domain/model'
-import { readResult } from '~/domain/prompt'
+import { promptInput, readResult } from '~/domain/prompt'
+import { demo } from '~/domain/seed'
 import { challengeFor } from '~/domain/openrouter'
 
 const answer = { kind: 'record', pageId: 'p1', items: [{ text: 'Хлеб', date: null, time: null, qty: null, option: null }], guesses: [], newPageName: null }
@@ -65,6 +66,15 @@ describe('model connection', () => {
     expect(await checkConnection(conn({ provider: 'anthropic' }))).toBe('key')
     serve(() => ({ error: { message: 'The model does not exist', type: 'invalid_request_error', code: 'model_not_found' } }), 404)
     expect(await checkConnection(conn({ modelId: 'gpt-nope' }))).toBe('model')
+  })
+
+  it('tells the model which pages are lists', () => {
+    const now = Date.parse('2026-10-19T12:00:00Z')
+    const input = JSON.parse(promptInput('хлеб', demo(now).pages, now)) as { today: string, pages: { title: string, list: boolean }[], line: string }
+    expect(input.today).toBe('2026-10-19')
+    expect(input.pages.find(p => p.title === 'Продукты')?.list).toBe(true)
+    expect(input.pages.find(p => p.title === 'Задачи')?.list).toBe(false)
+    expect(input.pages.some(p => p.title === 'Входящие')).toBe(false)
   })
 
   it('reads a sloppy answer without failing', () => {

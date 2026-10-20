@@ -2,6 +2,7 @@
 // The same for every provider, so experiments with one model carry over to another.
 import type { Page } from './types'
 import { dayKey } from './dates'
+import { isListPage } from './auto'
 
 export interface ModelItem {
   text: string
@@ -49,17 +50,19 @@ Decide what the line is:
 - "record": it clearly belongs to one page. Set pageId.
 - "unclear": no page fits well or two fit equally. Set pageId to null, put up to three best page ids in guesses, and if no page covers the topic suggest a short plural Russian page name in newPageName (e.g. «Подарки»).
 Each page has a description that says what goes there; it matters more than the title.
-Items: split the line into separate records only for pages that hold lists of things (shopping); keep one record otherwise.
-Write each item's text as the user wrote it, starting with a capital letter, without the date, time or quantity.
-date is YYYY-MM-DD (resolve «завтра», «в пятницу» from today's date), time is HH:MM, qty like «2 л», «300 г», «10 шт».
-option is the name of a choice from the page's select property that fits the item (for shopping, the store department), else null.`
+items: on a page with "list": true (shopping) each thing is its own item; elsewhere the whole line is one item.
+text: the user's words, starting with a capital letter, without the date or time, and without a first word that only repeats the page («купить» on a shopping list, «почитать» or «книга» on a book list, «идея:» on ideas). On a list page also without the quantity, and the thing in the nominative case («2 л молока» → «Молоко»).
+qty: on a list page only, like «2 л», «300 г», «10 шт»; elsewhere numbers stay in the text and qty is null.
+date: YYYY-MM-DD of one specific day, resolved from today («завтра», «в пятницу», «25-го»); null for repeating or vague times («по вторникам», «к лету»). time: HH:MM or null.
+option: the name of a choice from the page's select property that fits the item (for shopping, the store department), else null.`
 
-/** The user message: today, the pages with what goes on them, and the line */
+/** The user message: today, the pages with what goes on them and whether they are lists, and the line */
 export function promptInput(text: string, pages: Page[], now: number): string {
   const context = pages.filter(p => p.kind === 'page').map(p => ({
     id: p.id,
     title: p.title,
     description: p.description,
+    list: isListPage(p),
     selects: p.props.filter(f => f.type === 'select').map(f => ({ name: f.name, options: f.options?.map(o => o.name) ?? [] }))
   }))
   const d = new Date(now)
