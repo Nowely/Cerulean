@@ -23,6 +23,8 @@ pnpm generate            # static build in .output/public, deployable to any sta
 pnpm shots [filter]      # screenshots of the running app into shots/
 ```
 
+CI (`.github/workflows/client.yml`) runs lint, typecheck and tests on every pull request that touches `Client/`.
+
 `pnpm shots` opens every screen the mockups show, in light and dark, on a phone and a desktop
 viewport, with the demo data and the clock at 19 Oct 2026, 9:14. `SHOTS_URL`, `SHOTS_OUT` and
 `SHOTS_CHROMIUM` point it at another address, folder or browser binary.
