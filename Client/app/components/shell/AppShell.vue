@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The frame: on a phone one screen at a time; on desktop the sidebar, the main column and,
 // when something is previewed, the right panel. Overlays shared by every screen live here.
-import { computed, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter, useHead, useColorMode, defineShortcuts } from '#imports'
 import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
@@ -26,8 +26,11 @@ defineShortcuts({
   meta_k: () => (find.isOpen.value ? find.close() : find.open())
 })
 
-// The browser chrome takes the canvas colour of the current theme
-const themeColor = computed(() => colorMode.value === 'dark' ? '#15181B' : '#F6F8FA')
+// The browser chrome takes the canvas colour of the current theme, read from the tokens once it applies
+const themeColor = ref<string>()
+watch(() => colorMode.value, () => nextTick(() => {
+  themeColor.value = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+}), { immediate: true, flush: 'post' })
 useHead({ meta: [{ name: 'theme-color', content: themeColor }] })
 
 // A phone swipes between Главная and Чат
