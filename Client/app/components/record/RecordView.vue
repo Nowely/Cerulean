@@ -8,6 +8,7 @@ import type { PropDef, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { usePeek } from '~/composables/usePeek'
+import { useScreen } from '~/composables/useScreen'
 import { formatAdded } from '~/domain/dates'
 import RecordMark from '../common/RecordMark.vue'
 import PageTile from '../common/PageTile.vue'
@@ -29,6 +30,7 @@ const data = useDataStore()
 const now = useNow()
 const router = useRouter()
 const peek = usePeek()
+const { isDesktop } = useScreen()
 
 const full = computed(() => props.container === 'full')
 const editable = computed(() => full.value || props.edit)
@@ -153,8 +155,9 @@ function openPlace() {
           />
         </dd>
       </div>
+      <!-- On desktop the empty Срок row offers «Добавить срок» -->
       <div
-        v-if="rec.due || showAll"
+        v-if="rec.due || showAll || (isDesktop && editable)"
         class="flex min-h-10 items-center"
       >
         <dt class="w-28 shrink-0 text-toned">

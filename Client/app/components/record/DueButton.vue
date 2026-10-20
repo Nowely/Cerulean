@@ -123,15 +123,15 @@ function time(t: string) {
         />
       </button>
       <div class="mx-3 my-1.5 border-t border-default" />
-      <p class="px-3 pt-1 pb-1.5 text-cap text-toned">
+      <p class="px-3 pt-1 pb-1 text-cap text-toned">
         Время
       </p>
-      <div class="flex flex-wrap gap-1.5 px-3 pb-2">
+      <div class="flex flex-wrap gap-1.5 px-2 pb-2">
         <button
           v-for="t in times"
           :key="t"
           type="button"
-          class="hit-44 relative inline-flex h-9 cursor-pointer items-center rounded-item px-3 text-sm tabular-nums transition-colors"
+          class="hit-44 relative inline-flex h-9 cursor-pointer items-center rounded-item px-3 text-sm tabular-nums transition-colors lg:h-8 lg:px-2.5"
           :class="rec.due?.time === t ? 'bg-accent-soft text-accent-ink ring ring-inset ring-accent' : 'bg-btn text-highlighted hover:bg-btn-pressed active:bg-btn-pressed'"
           :aria-pressed="rec.due?.time === t"
           @click="time(t)"

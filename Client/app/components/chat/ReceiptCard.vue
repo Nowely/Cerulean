@@ -130,7 +130,7 @@ function openHead() {
 }
 
 /** Inside a docked card the pressed state needs the raised fill so it never merges with the chips under it */
-const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item px-2.5 text-13 font-medium text-toned hover:bg-btn hover:text-highlighted active:bg-btn-pressed aria-pressed:bg-btn-pressed aria-pressed:text-highlighted'
+const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-13 font-medium text-toned hover:bg-btn hover:text-highlighted active:bg-btn-pressed aria-pressed:bg-btn-pressed aria-pressed:text-highlighted'
 </script>
 
 <template>
@@ -160,12 +160,13 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item px-2.5
       >
         <button
           type="button"
-          class="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 pr-1 pl-3 text-left text-sm text-toned active:bg-pressed"
+          class="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 pl-3 text-left text-sm text-toned active:bg-pressed"
+          :class="line ? 'pr-0' : 'pr-1'"
           :aria-expanded="line ? false : undefined"
           @click="openHead"
         >
           <PageTile :glyph="page?.glyph" />
-          <span class="min-w-0 truncate">
+          <span class="min-w-0 flex-1 truncate">
             {{ title }} → <b class="font-medium text-highlighted">{{ page?.title || 'Без названия' }}</b>
             <span
               v-if="entry.moved"
@@ -176,12 +177,11 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item px-2.5
             name="i-lucide-chevron-right"
             class="size-4 shrink-0 text-dimmed"
           />
-          <span class="flex-1" />
         </button>
         <button
           v-if="!offline"
           type="button"
-          :class="quiet"
+          :class="[quiet, line ? 'px-1.75' : 'px-2.5']"
           :aria-pressed="wrongOpen"
           @click="wrongOpen = !wrongOpen"
         >
@@ -190,7 +190,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item px-2.5
         <button
           v-if="line && fresh && !offline"
           type="button"
-          :class="quiet"
+          :class="[quiet, 'px-1.75']"
           @click="undo"
         >
           Отменить

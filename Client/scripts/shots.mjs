@@ -99,6 +99,40 @@ const scenarios = [
     await field.fill('яблоки')
     await settle(p, 400)
   } },
+  { name: 'MobileFirstSent', device: MOBILE, run: async (p) => {
+    await open(p, '/', false)
+    await send(p, 'хлеб')
+  } },
+  { name: 'MobileFirstAsk', device: MOBILE, run: async (p) => {
+    await open(p, '/', false)
+    await send(p, 'прочитать Канемана')
+  } },
+  { name: 'MobileDue', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await send(p, 'позвонить стоматологу завтра в 10')
+    await p.getByRole('button', { name: /^Срок: / }).first().click()
+    await settle(p, 600)
+  } },
+  { name: 'MobileUndo', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await send(p, 'молоко', false)
+    await p.getByRole('button', { name: 'Отменить' }).click()
+    await settle(p, 400)
+  } },
+  { name: 'MobilePageSend', device: MOBILE, run: async (p) => {
+    await openPage(p, 'Продукты')
+    await p.getByRole('button', { name: /^Куда:/ }).click()
+    await settle(p, 500)
+    await p.getByRole('dialog').getByRole('button', { name: /^Авто/ }).click()
+    await settle(p, 300)
+    await send(p, 'позвонить маме')
+  } },
+  { name: 'MobileVoice', device: MOBILE, run: async (p) => {
+    await hearing(p)
+    await openHome(p)
+    await p.getByRole('button', { name: 'Надиктовать' }).click()
+    await settle(p, 800)
+  } },
   { name: 'MobileSheet', device: MOBILE, run: async (p) => {
     await open(p, '/chat')
     await p.locator('button', { hasText: 'Продукты' }).last().click()
@@ -172,6 +206,19 @@ const scenarios = [
     await p.getByRole('button', { name: 'Не туда' }).click()
     await p.mouse.move(0, 0)
     await settle(p, 400)
+  } },
+  { name: 'HomeVoice', device: DESKTOP, run: async (p) => {
+    await hearing(p)
+    await openHome(p)
+    await p.getByRole('button', { name: 'Надиктовать' }).click()
+    await settle(p, 800)
+  } },
+  { name: 'MainDue', device: DESKTOP, run: async (p) => {
+    await open(p, '/chat')
+    await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
+    await settle(p, 400)
+    await p.getByRole('button', { name: /^Срок: / }).first().click()
+    await settle(p, 600)
   } },
   { name: 'Page', device: DESKTOP, run: p => openPage(p, 'Продукты') },
   { name: 'Board', device: DESKTOP, run: async (p) => {
@@ -261,6 +308,30 @@ async function recentPages(page) {
     await page.waitForURL(u => new URL(u).pathname === '/')
   }
   await settle(page, 400)
+}
+
+/** Sends a line from the composer on screen; the keyboard goes down unless `keep` */
+async function send(page, text, blur = true) {
+  const field = page.getByRole('textbox', { name: 'Новая запись' })
+  await field.fill(text)
+  await page.keyboard.press('Enter')
+  if (blur) await field.blur()
+  await settle(page, 500)
+}
+
+/** The browser's dictation, replaced by one that hears «молоко и хлеб» and keeps listening */
+async function hearing(page) {
+  await page.addInitScript(() => {
+    window.SpeechRecognition = window.webkitSpeechRecognition = class {
+      start() {
+        setTimeout(() => this.onresult?.({ results: [Object.assign([{ transcript: 'молоко и хлеб' }], { isFinal: false })] }), 300)
+      }
+
+      stop() {
+        this.onend?.()
+      }
+    }
+  })
 }
 
 async function fold(page, names) {
