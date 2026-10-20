@@ -1,0 +1,312 @@
+<script setup lang="ts">
+// A record on its page. Mobile: swipe left for «Переместить» and «Удалить».
+// Desktop: the same actions appear on hover, and a right click opens all of them.
+// Keyboard and screen readers reach every action through «⋯».
+import { computed, useTemplateRef } from 'vue'
+import type { Id, Page, Rec, ViewDef } from '~/domain/types'
+import { useDataStore } from '~/stores/data'
+import { useNow } from '~/composables/useNow'
+import { useScreen } from '~/composables/useScreen'
+import { useSwipe } from '~/composables/useSwipe'
+import { useRecordActions } from '~/composables/useRecordActions'
+import { clock, formatAdded, formatDue, isOverdue } from '~/domain/dates'
+import RecordMark from '../common/RecordMark.vue'
+import ChipButton from '../common/ChipButton.vue'
+
+const props = withDefaults(defineProps<{
+  rec: Rec
+  page: Page
+  view?: ViewDef
+  /** Records added after this moment are new: the row is tinted and says when */
+  freshSince?: number
+  /** Preview keeps reading and ticking only: no swipe, no hover actions */
+  readonly?: boolean
+  selected?: boolean
+}>(), { freshSince: Number.POSITIVE_INFINITY, readonly: false, selected: false })
+
+const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'] }>()
+
+const data = useDataStore()
+const now = useNow()
+const { isDesktop } = useScreen()
+const actions = useRecordActions()
+const el = useTemplateRef<HTMLElement>('el')
+const ACTIONS_WIDTH = 184
+const swipe = useSwipe(el, ACTIONS_WIDTH)
+
+const subs = computed(() => data.subitemsOf(props.rec.id))
+const subsDone = computed(() => subs.value.filter(s => s.done).length)
+const fresh = computed(() => props.rec.addedAt > props.freshSince && !props.rec.done)
+const freshLabel = computed(() => now.value - props.rec.addedAt < 5 * 60_000 ? 'только что' : clock(props.rec.addedAt))
+const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
+const inbox = computed(() => props.page.kind === 'inbox')
+const asking = computed(() => inbox.value && props.rec.tags.includes('clarify') && !props.rec.done)
+
+/** «Справа в строке»: the view's chosen properties, empty ones hidden */
+const right = computed(() => {
+  const shown = props.view?.shown ?? ['due']
+  const out: { key: string, text: string, tone?: 'warn' | 'low', icon?: string }[] = []
+  for (const key of shown) {
+    if (key === 'due') {
+      if (props.rec.due) out.push({ key, text: formatDue(props.rec.due, now.value), tone: late.value ? 'warn' : undefined })
+      continue
+    }
+    if (key === 'note') continue
+    const prop = props.page.props.find(p => p.id === key)
+    const value = props.rec.values[key]
+    if (!prop || value === null || value === undefined || value === '') continue
+    if (prop.type === 'select') {
+      const name = prop.options?.find(o => o.id === value)?.name
+      if (name) out.push({ key, text: name })
+    } else if (prop.type === 'number' && prop.normProp) {
+      continue // shown as a stepper
+    } else {
+      out.push({ key, text: `${value}${prop.unit ? ` ${prop.unit}` : ''}` })
+    }
+  }
+  return out
+})
+
+const stock = computed(() => {
+  const prop = props.page.props.find(p => p.type === 'number' && p.normProp && (props.view?.shown ?? []).includes(p.id))
+  if (!prop) return null
+  const value = props.rec.values[prop.id]
+  if (typeof value !== 'number') return null
+  const norm = props.rec.values[prop.normProp!]
+  return { prop, value, low: typeof norm === 'number' && value < norm }
+})
+
+const notePreview = computed(() => (props.view?.shown ?? []).includes('note') ? props.rec.note.split('\n')[0] : '')
+
+function step(by: number) {
+  if (!stock.value) return
+  data.updateRecord(props.rec.id, { values: { ...props.rec.values, [stock.value.prop.id]: Math.max(0, stock.value.value + by) } })
+}
+
+const menu = computed(() => [
+  [
+    { label: 'Открыть', icon: 'i-lucide-arrow-up-right', onSelect: () => emit('open') },
+    { label: 'Переместить', icon: 'i-lucide-folder-input', onSelect: () => actions.move([props.rec.id]) },
+    { label: props.rec.favorite === null ? 'Добавить в избранное' : 'Убрать из избранного', icon: 'i-lucide-star', onSelect: () => actions.favorite(props.rec) },
+    { label: 'Скопировать текст', icon: 'i-lucide-copy', onSelect: () => actions.copy(props.rec) }
+  ],
+  [
+    { label: 'Удалить', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => actions.remove([props.rec.id]) }
+  ]
+])
+
+const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id]).filter((p): p is Page => !!p && !p.deletedAt))
+</script>
+
+<template>
+  <div class="relative">
+    <!-- Swipe actions sit behind the row -->
+    <div
+      v-if="!readonly && !isDesktop"
+      class="absolute inset-y-0 right-2 flex gap-1"
+      :class="swipe.offset.value === 0 ? 'invisible' : ''"
+      :aria-hidden="swipe.offset.value === 0"
+    >
+      <button
+        type="button"
+        class="flex w-22 cursor-pointer flex-col items-center justify-center gap-0.75 rounded-chip bg-elevated text-xs font-medium text-highlighted active:bg-accented"
+        :tabindex="swipe.offset.value === 0 ? -1 : 0"
+        @click="swipe.close(); actions.move([rec.id])"
+      >
+        <UIcon
+          name="i-lucide-arrow-right"
+          class="size-4.5"
+        />Переместить
+      </button>
+      <button
+        type="button"
+        class="flex w-22 cursor-pointer flex-col items-center justify-center gap-0.75 rounded-chip bg-warn text-xs font-medium text-on-accent active:opacity-90"
+        :tabindex="swipe.offset.value === 0 ? -1 : 0"
+        @click="swipe.close(); actions.remove([rec.id])"
+      >
+        <UIcon
+          name="i-lucide-trash-2"
+          class="size-4.5"
+        />Удалить
+      </button>
+    </div>
+
+    <UContextMenu
+      :items="menu"
+      :disabled="readonly || !isDesktop"
+    >
+      <div
+        ref="el"
+        class="group/row relative mx-2 flex min-h-13 items-center rounded-chip pr-3 lg:mx-0 lg:min-h-10 lg:pr-1.5"
+        :class="[
+          fresh ? 'bg-fresh' : selected ? 'bg-sel' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
+          swipe.dragging.value ? '' : 'transition-transform duration-200 ease-out-soft'
+        ]"
+        :style="swipe.offset.value ? { transform: `translateX(${swipe.offset.value}px)` } : undefined"
+        @pointerdown="!readonly && swipe.onStart($event)"
+        @pointermove="!readonly && swipe.onMove($event)"
+        @pointerup="swipe.onEnd()"
+        @pointercancel="swipe.onEnd()"
+        @click.capture="swipe.swallowClick"
+      >
+        <RecordMark
+          :rec="rec"
+          :page="page"
+          class="lg:size-9"
+          @toggle="data.toggleDone(rec.id)"
+        />
+        <button
+          type="button"
+          class="flex min-h-13 min-w-0 flex-1 cursor-pointer flex-col justify-center gap-px rounded-item py-1 pr-1 pl-0.5 text-left lg:min-h-10"
+          @click="emit('open')"
+        >
+          <span
+            class="truncate text-record"
+            :class="rec.done ? 'text-dimmed line-through' : 'text-highlighted'"
+          >{{ rec.text }}</span>
+          <span
+            v-if="inbox"
+            class="truncate text-caption font-normal text-toned"
+          >{{ formatAdded(rec.via, rec.addedAt, now) }}</span>
+          <span
+            v-else-if="notePreview"
+            class="truncate text-caption font-normal text-toned"
+          >{{ notePreview }}</span>
+        </button>
+
+        <span
+          v-if="fresh"
+          class="ml-2 shrink-0 text-caption text-accent-ink"
+        >{{ freshLabel }}</span>
+        <span
+          v-if="asking"
+          class="ml-2 shrink-0 text-meta text-accent-ink"
+        >уточнить</span>
+
+        <span
+          v-if="!fresh"
+          class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned lg:group-hover/row:hidden lg:group-focus-within/row:hidden"
+          :class="readonly ? 'lg:group-hover/row:flex lg:group-focus-within/row:flex' : ''"
+        >
+          <UIcon
+            v-if="rec.note && !notePreview"
+            name="i-lucide-file-text"
+            class="size-4"
+            aria-label="есть заметка"
+          />
+          <span
+            v-if="subs.length"
+            :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
+          >{{ subsDone }}/{{ subs.length }}</span>
+          <span
+            v-for="r in right"
+            :key="r.key"
+            :class="r.tone === 'warn' ? 'text-warn-ink' : ''"
+          >{{ r.text }}</span>
+        </span>
+
+        <!-- Запасы: the number against its norm, with a stepper -->
+        <span
+          v-if="stock"
+          class="ml-1 flex shrink-0 items-center gap-0.5"
+        >
+          <span
+            v-if="stock.low"
+            class="mr-1 flex items-center gap-1 text-caption font-normal text-toned"
+          >
+            <UIcon
+              name="i-lucide-trending-down"
+              class="size-3.5"
+            />мало
+          </span>
+          <button
+            type="button"
+            class="hit-44 relative flex size-8 cursor-pointer items-center justify-center rounded-chip border border-default bg-default text-highlighted active:bg-pressed"
+            :aria-label="`Меньше: ${rec.text}`"
+            @click="step(-1)"
+          >
+            <UIcon
+              name="i-lucide-minus"
+              class="size-4"
+            />
+          </button>
+          <span
+            class="w-7 text-center text-body text-highlighted"
+            aria-live="polite"
+          >{{ stock.value }}</span>
+          <button
+            type="button"
+            class="hit-44 relative flex size-8 cursor-pointer items-center justify-center rounded-chip border border-default bg-default text-highlighted active:bg-pressed"
+            :aria-label="`Больше: ${rec.text}`"
+            @click="step(1)"
+          >
+            <UIcon
+              name="i-lucide-plus"
+              class="size-4"
+            />
+          </button>
+        </span>
+
+        <!-- Desktop: the actions on hover; on touch they live in the swipe and in «⋯» -->
+        <span
+          v-if="!readonly"
+          class="ml-1 hidden shrink-0 items-center gap-0.5 lg:group-hover/row:flex lg:group-focus-within/row:flex"
+        >
+          <UTooltip text="Переместить">
+            <UButton
+              icon="i-lucide-folder-input"
+              variant="ghost"
+              square
+              size="sm"
+              aria-label="Переместить"
+              @click="actions.move([rec.id])"
+            />
+          </UTooltip>
+          <UTooltip text="Удалить">
+            <UButton
+              icon="i-lucide-trash-2"
+              variant="ghost"
+              square
+              size="sm"
+              aria-label="Удалить"
+              @click="actions.remove([rec.id])"
+            />
+          </UTooltip>
+        </span>
+        <UDropdownMenu
+          v-if="!readonly"
+          :items="menu"
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            icon="i-lucide-ellipsis"
+            variant="ghost"
+            square
+            size="sm"
+            :aria-label="`Действия: ${rec.text}`"
+            class="sr-only focus:not-sr-only lg:not-sr-only lg:opacity-0 lg:group-hover/row:opacity-100 lg:focus:opacity-100 lg:aria-expanded:opacity-100"
+          />
+        </UDropdownMenu>
+      </div>
+    </UContextMenu>
+
+    <!-- Входящие: the three guessed pages right on the row -->
+    <div
+      v-if="asking"
+      class="no-scrollbar flex gap-1.5 overflow-x-auto pr-3 pb-3 pl-13 lg:pl-11"
+    >
+      <ChipButton
+        v-for="g in guesses"
+        :key="g.id"
+        :label="g.title"
+        :glyph="g.glyph"
+        :color="g.color"
+        @click="emit('choose', g.id)"
+      />
+      <ChipButton
+        label="Ещё…"
+        @click="emit('choose', 'more')"
+      />
+    </div>
+  </div>
+</template>

@@ -1,0 +1,58 @@
+// Russian text helpers: plural agreement, case, word stems for matching
+
+/** 1 запись, 2 записи, 5 записей */
+export function plural(n: number, forms: readonly [string, string, string]): string {
+  const a = Math.abs(n) % 10
+  const b = Math.abs(n) % 100
+  if (a === 1 && b !== 11) return forms[0]
+  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return forms[1]
+  return forms[2]
+}
+
+export function count(n: number, forms: readonly [string, string, string]): string {
+  return `${n} ${plural(n, forms)}`
+}
+
+export const RECORD_FORMS = ['запись', 'записи', 'записей'] as const
+
+export function capitalize(s: string): string {
+  const t = s.trim()
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
+/** «Хлеб» → «хлеб» in an enumeration, but keeps abbreviations like «ДР» or «iPhone» */
+export function lowerFirst(s: string): string {
+  if (s.length > 1 && s.charAt(1) === s.charAt(1).toUpperCase() && s.charAt(1) !== s.charAt(1).toLowerCase()) return s
+  return s.charAt(0).toLowerCase() + s.slice(1)
+}
+
+/** Lower case without ё, same length as the input (safe for index math) */
+export function fold(s: string): string {
+  return s.toLowerCase().replace(/ё/g, 'е')
+}
+
+export function normalize(s: string): string {
+  return fold(s).replace(/\s+/g, ' ').trim()
+}
+
+const STOP = new Set([
+  'и', 'в', 'во', 'на', 'с', 'со', 'к', 'ко', 'по', 'за', 'из', 'у', 'о', 'об', 'от', 'до', 'для', 'не', 'ни', 'а', 'но',
+  'это', 'то', 'что', 'как', 'же', 'ли', 'бы', 'мне', 'мой', 'моя', 'мои', 'надо', 'нужно', 'например', 'или', 'все', 'всё'
+])
+
+/** Rough stems: lower case, no ё, first five letters of each meaningful word */
+export function stems(s: string, min = 3): string[] {
+  return normalize(s)
+    .split(/[^a-zа-я0-9]+/)
+    .filter(w => w.length >= min && !STOP.has(w))
+    .map(w => w.slice(0, 5))
+}
+
+/** Where `query` occurs in `text`, for highlighting a search match */
+export function splitMatch(text: string, query: string): { pre: string, mid: string, post: string } {
+  const q = fold(query.trim())
+  if (!q) return { pre: text, mid: '', post: '' }
+  const k = fold(text).indexOf(q)
+  if (k < 0) return { pre: text, mid: '', post: '' }
+  return { pre: text.slice(0, k), mid: text.slice(k, k + q.length), post: text.slice(k + q.length) }
+}

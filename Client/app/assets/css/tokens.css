@@ -1,0 +1,138 @@
+/*
+ * Cerulean design tokens: the only place in the client with colour values.
+ * Light is the default (:root), dark comes from color-mode (`.dark` on <html>).
+ * Names and values follow «Цвета» in the principles doc; main.css maps them onto
+ * Nuxt UI variables and Tailwind utilities, components only use those names.
+ */
+:root {
+  --bg: #F6F8FA;
+  --surface: #FFFFFF;
+  --trk: #E9EDF1;
+  --seg-on: #FFFFFF;
+  --seg-shadow: 0 1px 2px rgb(20 26 33 / 0.14);
+  --hover: #EEF1F4;
+  --pressed: #E1E6EB;
+  --sel: #E7EBEF;
+  --fresh: #E5EFF7;
+  --line: #E2E7EC;
+  --line2: #C6CED6;
+  --ring: #77818D;
+  --ink: #141A21;
+  --text: #27303A;
+  --muted: #434D5A;
+  --faint: #616B78;
+  --placeholder-lg: #808A96;
+  --accent: #1D6FA5;
+  --accent-ink: #165B88;
+  --on-accent: #FFFFFF;
+  --accent-soft: #E5EFF7;
+  --warn: #A84B0B;
+  --warn-ink: #924209;
+  --ok: #2E7D55;
+  --knob: #FFFFFF;
+  --scrim: rgb(20 26 33 / 0.32);
+  --float: 0 6px 24px rgb(20 26 33 / 0.08);
+  --side: #EEF2F5;
+  --side-hover: #E3E8ED;
+  --side-sel: #D9E0E7;
+
+  /* Page colours: glyph (--c-*) on its tile (--b-*). No orange, so nothing reads as warn. */
+  --c-green: #2E7D55;
+  --c-blue: #1D6FA5;
+  --c-brown: #8B6446;
+  --c-yellow: #9A6F0E;
+  --c-pink: #B0457A;
+  --c-purple: #6E55B5;
+  --c-gray: #66707C;
+  --c-teal: #1C7A74;
+  --b-green: #E3F2EA;
+  --b-blue: #E5EFF7;
+  --b-brown: #F1E9E2;
+  --b-yellow: #F7EED3;
+  --b-pink: #F7E6EF;
+  --b-purple: #ECE8F7;
+  --b-gray: #ECEFF2;
+  --b-teal: #DDF0EE;
+}
+
+.dark {
+  --bg: #15181B;
+  --surface: #1E2328;
+  --trk: #24292F;
+  --seg-on: #3A424B;
+  --seg-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+  --hover: #23282D;
+  --pressed: #30373E;
+  --sel: #2A3037;
+  --fresh: #16303F;
+  --line: #2A3037;
+  --line2: #3B444D;
+  --ring: #7A8591;
+  --ink: #EEF2F5;
+  --text: #D8DEE4;
+  --muted: #B0BAC4;
+  --faint: #8F9AA6;
+  --placeholder-lg: #76818D;
+  --accent: #5AB0E0;
+  --accent-ink: #8DCBEE;
+  --on-accent: #0B1620;
+  --accent-soft: #16303F;
+  --warn: #E39A5B;
+  --warn-ink: #F0B07A;
+  --ok: #6FBF8F;
+  --knob: #FFFFFF;
+  --scrim: rgb(0 0 0 / 0.55);
+  --float: 0 6px 24px rgb(0 0 0 / 0.4);
+  --side: #111416;
+  --side-hover: #1C2125;
+  --side-sel: #252B31;
+
+  --c-green: #6FBF8F;
+  --c-blue: #5AB0E0;
+  --c-brown: #C29A7C;
+  --c-yellow: #D9B04E;
+  --c-pink: #E07FAE;
+  --c-purple: #A592E8;
+  --c-gray: #9AA5B1;
+  --c-teal: #5CC1B8;
+  --b-green: #17352A;
+  --b-blue: #16303F;
+  --b-brown: #33281F;
+  --b-yellow: #362D14;
+  --b-pink: #3A1F2D;
+  --b-purple: #2A2440;
+  --b-gray: #252B31;
+  --b-teal: #123230;
+}
+
+/*
+ * Scales for Nuxt UI's colour system (`primary: 'azure'`, `neutral: 'cool'` in app.config).
+ * Nuxt UI's own components read the semantic variables mapped in main.css, not these steps;
+ * the steps exist so every `primary-*` / `neutral-*` utility resolves to something on-brand.
+ * Light accent is azure-700, dark accent azure-300.
+ */
+@theme static {
+  --color-azure-50: #F0F6FB;
+  --color-azure-100: #E5EFF7;
+  --color-azure-200: #8DCBEE;
+  --color-azure-300: #5AB0E0;
+  --color-azure-400: #3E98CF;
+  --color-azure-500: #2D84BD;
+  --color-azure-600: #2479B1;
+  --color-azure-700: #1D6FA5;
+  --color-azure-800: #165B88;
+  --color-azure-900: #12476A;
+  --color-azure-950: #0D2433;
+
+  --color-cool-50: #F6F8FA;
+  --color-cool-100: #EEF1F4;
+  --color-cool-200: #E2E7EC;
+  --color-cool-300: #C6CED6;
+  --color-cool-400: #8F9AA6;
+  --color-cool-500: #616B78;
+  --color-cool-600: #434D5A;
+  --color-cool-700: #27303A;
+  --color-cool-800: #1E2328;
+  --color-cool-900: #15181B;
+  --color-cool-950: #0E1113;
+}

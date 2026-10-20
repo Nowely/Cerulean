@@ -1,8 +1,0 @@
-export * from './task'
-export * from './thread'
-export * from './user'
-export * from './shopping'
-export * from './note'
-export * from './contact'
-export * from './block'
-export type { ThreadKindConfig } from '../lib/thread-registry'
