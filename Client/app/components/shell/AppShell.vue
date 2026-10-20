@@ -1,18 +1,27 @@
 <script setup lang="ts">
 // The frame: on a phone one screen at a time; on desktop the sidebar, the main column and,
 // when something is previewed, the right panel. Overlays shared by every screen live here.
-import { nextTick, ref, watch } from 'vue'
+import { defineAsyncComponent, h, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter, useHead, useColorMode, defineShortcuts } from '#imports'
 import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import { useFind } from '~/composables/useFind'
 import { useViewport } from '~/composables/useViewport'
 import { FOCUS_PROXY_ID } from '~/composables/useCreatePage'
-import AppSidebar from './AppSidebar.vue'
-import PreviewPane from '../overlay/PreviewPane.vue'
-import FindOverlay from '../overlay/FindOverlay.vue'
-import PagePicker from '../overlay/PagePicker.vue'
-import ConfirmDialog from '../overlay/ConfirmDialog.vue'
+import { useLater } from '~/composables/useLater'
+import { useUiStore } from '~/stores/ui'
+
+// Only the screen itself is in the first download. The sidebar (desktop only) keeps its width while it
+// loads; the overlays come with the menus and sheets (useLater), after the first paint.
+const AppSidebar = defineAsyncComponent({
+  loader: () => import('./AppSidebar.vue'),
+  loadingComponent: { render: () => h('aside', { class: 'w-65 shrink-0 bg-side' }) },
+  delay: 0
+})
+const PreviewPane = defineAsyncComponent(() => import('../overlay/PreviewPane.vue'))
+const FindOverlay = defineAsyncComponent(() => import('../overlay/FindOverlay.vue'))
+const PagePicker = defineAsyncComponent(() => import('../overlay/PagePicker.vue'))
+const ConfirmDialog = defineAsyncComponent(() => import('../overlay/ConfirmDialog.vue'))
 
 const { isDesktop } = useScreen()
 const peek = usePeek()
@@ -20,7 +29,14 @@ const find = useFind()
 const route = useRoute()
 const router = useRouter()
 const colorMode = useColorMode()
+const ui = useUiStore()
 useViewport()
+
+const later = useLater()
+onMounted(later.loadWhenIdle)
+watch(() => !!(find.isOpen.value || peek.target.value || ui.picker || ui.confirming), (asked) => {
+  if (asked) void later.load()
+}, { immediate: true })
 
 defineShortcuts({
   meta_k: () => (find.isOpen.value ? find.close() : find.open())
@@ -73,14 +89,16 @@ watch(() => route.path, () => {
       variant="panel"
     />
   </div>
-  <PreviewPane
-    v-if="!isDesktop"
-    :target="peek.target.value"
-    variant="sheet"
-  />
-  <FindOverlay />
-  <PagePicker />
-  <ConfirmDialog />
+  <template v-if="later.ready.value">
+    <PreviewPane
+      v-if="!isDesktop"
+      :target="peek.target.value"
+      variant="sheet"
+    />
+    <FindOverlay />
+    <PagePicker />
+    <ConfirmDialog />
+  </template>
   <input
     :id="FOCUS_PROXY_ID"
     class="pointer-events-none fixed top-0 left-0 size-px text-base opacity-0"

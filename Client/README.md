@@ -38,3 +38,15 @@ The current state of the UI, compared screen by screen with the mockups, is in
 - `app/stores`: `data` (pages, records, sections, settings), `journal` (Чат and Авто), `ui`
 - `app/components`: `shell`, `home`, `chat`, `composer`, `page` (+ list, board, table, calendar layouts), `record`, `overlay`, `settings`, `common`
 - `app/pages`: `/`, `/chat`, `/p/:id`, `/r/:id`, `/settings`, `/settings/descriptions`, `/settings/trash`
+
+## First load
+
+The first download is only what the first screen shows: about 205 KB of JS (gzip) for Главная, against
+304 KB before the split. Everything else loads after the first paint:
+
+- screens are route chunks; the sidebar, previews, search and pickers are async components in `AppShell`
+- menus, sheets, popovers and dialogs (Reka, Floating UI, vaul) come in with `useLater` once the browser is
+  idle; until then their buttons render on their own, and a tap opens the menu as soon as its code is in
+- board, table and calendar views, view settings and the new-page setup load when a page needs them
+- no `<link rel="prefetch">` for lazy chunks (`build:manifest` hook): the service worker caches the rest
+

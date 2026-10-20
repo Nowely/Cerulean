@@ -1,15 +1,23 @@
 <script setup lang="ts">
 // One overlay, two containers: a bottom sheet on a phone; on desktop a popover next to its button,
-// or a dialog when nothing on screen anchors it (opened from a menu)
+// or a dialog when nothing on screen anchors it (opened from a menu). Until the overlay code is in
+// (useLater) the trigger stands on its own; a tap opens the overlay once it is.
 import { useScreen } from '~/composables/useScreen'
+import { useLater } from '~/composables/useLater'
 
 defineProps<{ title: string, width?: string, dialog?: boolean }>()
 const open = defineModel<boolean>('open', { default: false })
 const { isDesktop } = useScreen()
+const later = useLater()
+
+function openNow() {
+  open.value = true
+  void later.load()
+}
 </script>
 
 <template>
-  <UModal
+  <LazyUModal
     v-if="isDesktop && dialog"
     v-model:open="open"
     :title="title"
@@ -34,9 +42,9 @@ const { isDesktop } = useScreen()
         </div>
       </div>
     </template>
-  </UModal>
-  <UPopover
-    v-else-if="isDesktop"
+  </LazyUModal>
+  <LazyUPopover
+    v-else-if="isDesktop && later.ready.value"
     v-model:open="open"
     :content="{ align: 'end', sideOffset: 6, collisionPadding: 12 }"
   >
@@ -64,16 +72,17 @@ const { isDesktop } = useScreen()
         </div>
       </div>
     </template>
-  </UPopover>
+  </LazyUPopover>
   <template v-else>
     <span
       v-if="$slots.trigger"
       class="contents"
-      @click="open = true"
+      @click="openNow"
     >
       <slot name="trigger" />
     </span>
-    <UDrawer
+    <LazyUDrawer
+      v-if="!isDesktop && (later.ready.value || open)"
       v-model:open="open"
       :title="title"
     >
@@ -96,6 +105,6 @@ const { isDesktop } = useScreen()
           </div>
         </div>
       </template>
-    </UDrawer>
+    </LazyUDrawer>
   </template>
 </template>

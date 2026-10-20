@@ -11,7 +11,9 @@ import { useSpeech } from '~/composables/useSpeech'
 import { useNotify } from '~/composables/useNotify'
 import { draftsFor } from '~/domain/auto'
 import { count, RECORD_FORMS } from '~/domain/text'
+import { useLater } from '~/composables/useLater'
 import PageTile from '../common/PageTile.vue'
+import DestChip from './DestChip.vue'
 
 const props = withDefaults(defineProps<{
   /** auto: Главная and Чат · page: a page's own composer · record: adds Подпункты · today: Авто with today's date */
@@ -57,6 +59,13 @@ const untitled = computed(() => props.mode === 'page' && page.value && !page.val
 // The live decision of Авто, a beat behind the typing so the chip does not flicker
 const typed = refDebounced(text, 180)
 const decision = computed(() => dest.value === 'auto' ? journal.previewFor(typed.value) : { kind: 'idle' as const })
+
+const later = useLater()
+const chipOpen = ref(false)
+function openChip() {
+  chipOpen.value = true
+  void later.load()
+}
 
 const chip = computed(() => {
   if (destPage.value) {
@@ -150,56 +159,46 @@ defineExpose({
     :class="{ 'shadow-float': float }"
     @submit.prevent="submit"
   >
-    <UDropdownMenu
-      v-if="mode !== 'record'"
-      :items="menu"
-      :content="{ side: 'top', align: 'start', sideOffset: 8 }"
-      :ui="{ content: 'w-64 max-h-80' }"
-    >
-      <button
-        type="button"
-        class="hit-44 relative flex h-9 max-w-44 shrink-0 cursor-pointer items-center gap-1.5 rounded-chip bg-elevated pr-1.5 pl-2 text-sm font-medium text-default hover:bg-accented aria-expanded:bg-accented lg:h-8"
-        :aria-label="`Куда: ${chip.label}`"
+    <template v-if="mode !== 'record'">
+      <LazyUDropdownMenu
+        v-if="later.ready.value"
+        v-model:open="chipOpen"
+        :items="menu"
+        :content="{ side: 'top', align: 'start', sideOffset: 8 }"
+        :ui="{ content: 'w-64 max-h-80' }"
       >
-        <PageTile
-          v-if="!chip.icon"
-          :glyph="chip.glyph"
-          :color="chip.color"
-          :size="18"
+        <DestChip
+          v-bind="chip"
+          :active="decision.kind !== 'idle'"
         />
-        <UIcon
-          v-else
-          :name="chip.icon"
-          class="size-4.5 shrink-0"
-          :class="decision.kind === 'idle' ? 'text-toned' : 'text-accent'"
-        />
-        <span class="truncate">{{ chip.label }}</span>
-        <UIcon
-          name="i-lucide-chevron-down"
-          class="size-4 shrink-0 text-toned"
-        />
-      </button>
-      <template #item-leading="{ item }">
-        <PageTile
-          v-if="(item as DestItem).tint"
-          :glyph="(item as DestItem).glyph"
-          :color="(item as DestItem).tint"
-          :size="18"
-        />
-        <UIcon
-          v-else-if="item.icon"
-          :name="item.icon"
-          class="size-4.5 text-toned"
-        />
-      </template>
-      <template #item-trailing="{ item }">
-        <UIcon
-          v-if="(item as DestItem).current"
-          name="i-lucide-check"
-          class="size-4 text-accent"
-        />
-      </template>
-    </UDropdownMenu>
+        <template #item-leading="{ item }">
+          <PageTile
+            v-if="(item as DestItem).tint"
+            :glyph="(item as DestItem).glyph"
+            :color="(item as DestItem).tint"
+            :size="18"
+          />
+          <UIcon
+            v-else-if="item.icon"
+            :name="item.icon"
+            class="size-4.5 text-toned"
+          />
+        </template>
+        <template #item-trailing="{ item }">
+          <UIcon
+            v-if="(item as DestItem).current"
+            name="i-lucide-check"
+            class="size-4 text-accent"
+          />
+        </template>
+      </LazyUDropdownMenu>
+      <DestChip
+        v-else
+        v-bind="chip"
+        :active="decision.kind !== 'idle'"
+        @click="openChip"
+      />
+    </template>
 
     <input
       ref="input"

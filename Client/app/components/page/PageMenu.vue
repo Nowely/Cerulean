@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // «⋯» of a page: Избранное, Описание для Авто, section, view settings, copy, delete
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { useRouter } from '#imports'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -9,7 +9,8 @@ import { toMarkdown } from '~/domain/export'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import PageTile from '../common/PageTile.vue'
-import DescriptionDialog from './DescriptionDialog.vue'
+
+const DescriptionDialog = defineAsyncComponent(() => import('./DescriptionDialog.vue'))
 
 const props = defineProps<{ page: Page }>()
 const emit = defineEmits<{ settings: [] }>()

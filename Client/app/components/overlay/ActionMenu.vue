@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // «⋯» menus: a bottom sheet on a phone, a dropdown on desktop. Same items, same order.
+// Until the menu code is in (useLater) the button stands on its own; a tap opens the menu once it is.
 import { useScreen } from '~/composables/useScreen'
+import { useLater } from '~/composables/useLater'
 
 export interface MenuItem {
   label: string
@@ -22,7 +24,13 @@ defineProps<{
 }>()
 
 const { isDesktop } = useScreen()
+const later = useLater()
 const open = defineModel<boolean>('open', { default: false })
+
+function openNow() {
+  open.value = true
+  void later.load()
+}
 
 // The chosen action runs once the menu has closed and focus is back on its button, so an action
 // that moves focus (rename puts it in a field, a dialog takes it) is not undone by the closing menu
@@ -48,8 +56,8 @@ const afterClose = () => setTimeout(() => setTimeout(run))
 </script>
 
 <template>
-  <UDropdownMenu
-    v-if="isDesktop"
+  <LazyUDropdownMenu
+    v-if="isDesktop && later.ready.value"
     v-model:open="open"
     :items="items.map(g => g.map(i => ({ label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value })))"
     :content="{ align: 'end', onCloseAutoFocus: afterClose }"
@@ -68,12 +76,12 @@ const afterClose = () => setTimeout(() => setTimeout(run))
         class="max-w-36 truncate text-meta text-toned"
       >{{ (item as { value?: string }).value }}</span>
     </template>
-  </UDropdownMenu>
+  </LazyUDropdownMenu>
   <template v-else>
     <span
-      v-if="!bare"
+      v-if="isDesktop || !bare"
       class="contents"
-      @click="open = true"
+      @click="openNow"
     >
       <slot :open="open">
         <UButton
@@ -85,7 +93,8 @@ const afterClose = () => setTimeout(() => setTimeout(run))
         />
       </slot>
     </span>
-    <UDrawer
+    <LazyUDrawer
+      v-if="!isDesktop && (later.ready.value || open)"
       v-model:open="open"
       :title="title ?? label"
       :content="{ onCloseAutoFocus: afterClose }"
@@ -137,6 +146,6 @@ const afterClose = () => setTimeout(() => setTimeout(run))
           </div>
         </div>
       </template>
-    </UDrawer>
+    </LazyUDrawer>
   </template>
 </template>

@@ -49,6 +49,14 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-01-15',
 
+  hooks: {
+    // No <link rel="prefetch"> for every lazy chunk: on a phone they compete with the first screen for
+    // the network, and the service worker caches the whole app right after it anyway
+    'build:manifest': (manifest) => {
+      for (const chunk of Object.values(manifest)) chunk.prefetch = false
+    }
+  },
+
   eslint: {
     config: {
       stylistic: {

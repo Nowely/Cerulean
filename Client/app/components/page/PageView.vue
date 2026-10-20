@@ -2,7 +2,7 @@
 // One page, three containers: full (from navigation), preview (from a link: sheet or right panel)
 // and glance (beside search results). Preview reads and ticks only: no composer, no swipe, no editing
 // of the title. Glance is a look before opening: the first view as a plain list, no tabs.
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from '#imports'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -17,14 +17,16 @@ import { listView } from '~/domain/templates'
 import PageTile from '../common/PageTile.vue'
 import TipCard from '../common/TipCard.vue'
 import GlyphPicker from './GlyphPicker.vue'
-import NewPageSetup from './NewPageSetup.vue'
-import ViewSettings from './ViewSettings.vue'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import ListLayout from './layouts/ListLayout.vue'
-import BoardLayout from './layouts/BoardLayout.vue'
-import TableLayout from './layouts/TableLayout.vue'
-import CalendarLayout from './layouts/CalendarLayout.vue'
 import RecordLine from '../record/RecordLine.vue'
+
+// A list is what most pages show; the other views and the settings load when a page needs them
+const BoardLayout = defineAsyncComponent(() => import('./layouts/BoardLayout.vue'))
+const TableLayout = defineAsyncComponent(() => import('./layouts/TableLayout.vue'))
+const CalendarLayout = defineAsyncComponent(() => import('./layouts/CalendarLayout.vue'))
+const ViewSettings = defineAsyncComponent(() => import('./ViewSettings.vue'))
+const NewPageSetup = defineAsyncComponent(() => import('./NewPageSetup.vue'))
 
 const props = withDefaults(defineProps<{ page: Page, container?: 'full' | 'preview' | 'glance' }>(), { container: 'full' })
 const emit = defineEmits<{ editing: [boolean] }>()

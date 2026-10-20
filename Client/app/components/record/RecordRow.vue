@@ -2,13 +2,15 @@
 // A record on its page. Mobile: swipe left for «Переместить» and «Удалить».
 // Desktop: the same actions appear on hover, and a right click opens all of them.
 // Keyboard and screen readers reach every action through «⋯».
-import { computed, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef, type FunctionalComponent } from 'vue'
+import { LazyUContextMenu, LazyUDropdownMenu, LazyUTooltip } from '#components'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
+import { useLater } from '~/composables/useLater'
 import { clock, formatAdded, formatDue, isOverdue } from '~/domain/dates'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
@@ -35,6 +37,17 @@ const actions = useRecordActions()
 const el = useTemplateRef<HTMLElement>('el')
 const ACTIONS_WIDTH = 184
 const swipe = useSwipe(el, ACTIONS_WIDTH)
+
+// Until the menu code is in (useLater) the row, its hover buttons and «⋯» stand without their menus and
+// tooltips; a phone never gets the right-click menu or the tooltips at all
+const later = useLater()
+const Bare: FunctionalComponent = (_, { slots }) => slots.default?.()
+Bare.inheritAttrs = false
+const menuOpen = ref(false)
+function openMenu() {
+  menuOpen.value = true
+  void later.load()
+}
 
 const subs = computed(() => data.subitemsOf(props.rec.id))
 const subsDone = computed(() => subs.value.filter(s => s.done).length)
@@ -133,9 +146,10 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
       </button>
     </div>
 
-    <UContextMenu
+    <component
+      :is="later.ready.value && isDesktop ? LazyUContextMenu : Bare"
       :items="menu"
-      :disabled="readonly || !isDesktop"
+      :disabled="readonly"
     >
       <div
         ref="el"
@@ -254,7 +268,10 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
           v-if="!readonly"
           class="ml-1 hidden shrink-0 items-center gap-0.5 lg:group-hover/row:flex lg:group-focus-within/row:flex"
         >
-          <UTooltip text="Переместить">
+          <component
+            :is="later.ready.value ? LazyUTooltip : Bare"
+            text="Переместить"
+          >
             <UButton
               icon="i-lucide-folder-input"
               variant="ghost"
@@ -263,8 +280,11 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
               aria-label="Переместить"
               @click="actions.move([rec.id])"
             />
-          </UTooltip>
-          <UTooltip text="Удалить">
+          </component>
+          <component
+            :is="later.ready.value ? LazyUTooltip : Bare"
+            text="Удалить"
+          >
             <UButton
               icon="i-lucide-trash-2"
               variant="ghost"
@@ -273,10 +293,12 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
               aria-label="Удалить"
               @click="actions.remove([rec.id])"
             />
-          </UTooltip>
+          </component>
         </span>
-        <UDropdownMenu
+        <component
+          :is="later.ready.value ? LazyUDropdownMenu : Bare"
           v-if="!readonly"
+          v-model:open="menuOpen"
           :items="menu"
           :content="{ align: 'end' }"
         >
@@ -287,10 +309,11 @@ const guesses = computed(() => (props.rec.guesses ?? []).map(id => data.pages[id
             size="sm"
             :aria-label="`Действия: ${rec.text}`"
             class="sr-only focus:not-sr-only lg:not-sr-only lg:opacity-0 lg:group-hover/row:opacity-100 lg:focus:opacity-100 lg:aria-expanded:opacity-100"
+            @click="!later.ready.value && openMenu()"
           />
-        </UDropdownMenu>
+        </component>
       </div>
-    </UContextMenu>
+    </component>
 
     <!-- Входящие: the three guessed pages right on the row (a preview only reads) -->
     <div
