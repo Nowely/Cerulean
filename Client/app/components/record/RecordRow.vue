@@ -395,6 +395,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
               tabindex="-1"
               :aria-label="`Действия: ${rec.text}`"
               class="opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 aria-expanded:opacity-100"
+              :class="{ invisible: lifted }"
               @click="!later.ready.value && openMenu()"
             />
           </component>
