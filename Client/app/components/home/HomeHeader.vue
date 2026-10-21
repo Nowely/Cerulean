@@ -76,7 +76,7 @@ const items = computed<MenuItem[][]>(() => [
       aria-label="Журнал"
     >
       <UIcon
-        name="i-lucide-message-square"
+        name="cer:journal"
         class="size-5"
       />
     </NuxtLink>
