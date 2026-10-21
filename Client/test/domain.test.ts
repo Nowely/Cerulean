@@ -386,10 +386,10 @@ describe('v23 look: option pills, page colours, icons, «Сделано»', () =
     for (const t of TEMPLATES) expect(applyTemplate(d.pages.find(p => p.title === 'Идеи')!, t.key)).not.toHaveProperty('color')
   })
 
-  it('«Значок и цвет» offers 35 icons that Russian words find', () => {
-    expect(GLYPH_WORDS).toHaveLength(35)
+  it('«Значок и цвет» offers 36 icons that Russian words find', () => {
+    expect(GLYPH_WORDS).toHaveLength(36)
     for (const [g] of GLYPH_WORDS) expect(GLYPHS[g]).toBeTruthy()
-    expect(findGlyphs('')).toHaveLength(35)
+    expect(findGlyphs('')).toHaveLength(36)
     expect(findGlyphs('маш').map(x => x.name)).toEqual(['Машина'])
     expect(findGlyphs('  Дом ').map(x => x.glyph)).toEqual(['home'])
     expect(findGlyphs('ремонт').map(x => x.glyph)).toEqual(['home', 'car', 'tool'])

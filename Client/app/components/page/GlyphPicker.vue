@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// «Значок и цвет» (v23, A9, M10): an icon found by a Russian word («маш» → Машина) among 35, six to a row on a phone
+// «Значок и цвет» (v23, A9, M10): an icon found by a Russian word («маш» → Машина) among 36, six to a row on a phone
 // and eight on desktop, then the page's colour: «Без цвета» first (the default, the muted swatch) and seven colours.
 // Each tap applies at once and the sheet stays. A sheet on a phone; on desktop a popover at the page «⋯» when it was
 // opened from there (`anchor`), else at its own trigger. No ×: a tap outside, a swipe down or Esc closes it.

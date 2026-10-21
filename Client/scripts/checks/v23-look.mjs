@@ -84,7 +84,8 @@ export default [
     expect(await shows(sheet), 'no sheet «Значок и цвет»')
     expect(await sheet.getByText('Идеи', { exact: true }).count(), 'the sheet does not name the page')
     const icons = sheet.getByRole('group', { name: 'Значок' }).getByRole('button')
-    expect(await icons.count() === 35, `${await icons.count()} icons, not 35`)
+    // v24 fixes (13) added the week to the calendar: 36
+    expect(await icons.count() === 36, `${await icons.count()} icons, not 36`)
     const sizes = await icons.first().boundingBox()
     expect(sizes.height >= 48, `icon buttons are ${sizes.height} high`)
     const row = await icons.evaluateAll(els => els.slice(0, 7).map(e => Math.round(e.getBoundingClientRect().top)))
