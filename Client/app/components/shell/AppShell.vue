@@ -24,6 +24,7 @@ const PreviewPane = defineAsyncComponent(() => import('../overlay/PreviewPane.vu
 const FindOverlay = defineAsyncComponent(() => import('../overlay/FindOverlay.vue'))
 const PagePicker = defineAsyncComponent(() => import('../overlay/PagePicker.vue'))
 const ConfirmDialog = defineAsyncComponent(() => import('../overlay/ConfirmDialog.vue'))
+const PropSheets = defineAsyncComponent(() => import('../page/PropSheets.vue'))
 
 const { isDesktop } = useScreen()
 const peek = usePeek()
@@ -109,6 +110,7 @@ watch(() => route.path, () => {
     <FindOverlay />
     <PagePicker />
     <ConfirmDialog />
+    <PropSheets />
   </template>
   <input
     :id="FOCUS_PROXY_ID"

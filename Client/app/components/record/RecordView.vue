@@ -1,19 +1,23 @@
 <script setup lang="ts">
 // Every record is a page: its properties, a note edited in place, Подпункты.
-// Same component full (from navigation) and as a preview (from a link). A preview reads and ticks;
-// the desktop panel (edit) also takes the note and the properties, the title stays for «Открыть».
+// Same component full (from navigation) and as a preview (from a link). A preview reads and ticks, and keeps
+// the record's properties, «+ Свойство» and «Связать» (spec, Preview); the desktop panel (edit) also takes the
+// note. The title stays for «Открыть».
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
 import { useRouter } from '#imports'
-import type { PropDef, Rec } from '~/domain/types'
+import type { Id, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { usePeek } from '~/composables/usePeek'
 import { useScreen } from '~/composables/useScreen'
+import { usePropSheets } from '~/composables/usePropSheets'
 import { formatAdded } from '~/domain/dates'
+import { hasValue, isNorm, propList, TYPE_ICONS, TYPE_NAMES } from '~/domain/props'
 import RecordMark from '../common/RecordMark.vue'
 import TitleField from '../common/TitleField.vue'
 import PageTile from '../common/PageTile.vue'
+import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import RecordRow from './RecordRow.vue'
 import PropValue from './PropValue.vue'
 import RecordLinks from './RecordLinks.vue'
@@ -22,7 +26,7 @@ import LinkPicker from './LinkPicker.vue'
 const props = withDefaults(defineProps<{
   rec: Rec
   container?: 'full' | 'preview'
-  /** The desktop panel: the note and the properties can be changed there too */
+  /** The desktop panel: the note can be changed there too */
   edit?: boolean
   /** The screen shows «Связано» in a column of its own on wide screens */
   aside?: boolean
@@ -61,13 +65,51 @@ const note = computed({
   set: v => data.updateRecord(props.rec.id, { note: v })
 })
 
-// Empty properties are hidden; «+ Свойство» shows the empty ones to fill
-const showAll = ref(false)
-const shownProps = computed<PropDef[]>(() => (page.value?.props ?? []).filter((p) => {
-  const v = props.rec.values[p.id]
-  return showAll.value || (v !== null && v !== undefined && v !== '')
+// Properties in the page's order. Empty ones are hidden, except one just picked in «+ Свойство»: it stays
+// while the record is open, even empty (B12: never every empty property at once)
+const added = ref<Id[]>([])
+watch(() => props.rec.id, () => {
+  added.value = []
+})
+const listed = computed(() => page.value ? propList(page.value, { norms: true }) : [])
+const rows = computed(() => listed.value.filter((p) => {
+  if (p.key === 'note') return false
+  // On desktop the empty Срок row offers «Добавить срок»
+  if (p.key === 'due') return !!props.rec.due || added.value.includes('due') || isDesktop.value
+  return hasValue(props.rec.values[p.key]) || added.value.includes(p.key)
 }))
-const hasHidden = computed(() => (page.value?.props ?? []).length > shownProps.value.length || !props.rec.due)
+/** «+ Свойство» lists what the record does not show yet; Заметка has its own row, «Норма» goes with its number */
+const addable = computed(() => listed.value.filter(p => p.key !== 'note' && !rows.value.includes(p) && !(p.prop && isNorm(page.value!, p.prop))))
+
+const values: Record<string, InstanceType<typeof PropValue> | null> = {}
+const keepValue = (key: string, el: unknown) => {
+  values[key] = el as InstanceType<typeof PropValue> | null
+}
+const picking = ref(false)
+const propSheets = usePropSheets()
+let afterPick: (() => void) | null = null
+
+/** A pick adds just that row with its control open: a field, the options, the «Срок» sheet */
+async function reveal(key: Id) {
+  if (!added.value.includes(key)) added.value = [...added.value, key]
+  await nextTick()
+  values[key]?.open()
+}
+function pick(key: Id) {
+  afterPick = () => void reveal(key)
+  picking.value = false
+}
+/** «Новое свойство…»: the editor; what it makes is added to this record with its value open */
+function newProp() {
+  const pageId = props.rec.pageId
+  afterPick = () => propSheets.create(pageId, { from: 'record', onBack: p => p && void reveal(p.id) })
+  picking.value = false
+}
+function picked() {
+  const run = afterPick
+  afterPick = null
+  run?.()
+}
 
 const noteEditing = ref(false)
 const noteBox = useTemplateRef<{ textareaRef?: HTMLTextAreaElement }>('noteBox')
@@ -150,14 +192,14 @@ function openPlace() {
       </button>
     </div>
 
-    <!-- Properties: empty ones are hidden -->
+    <!-- Properties in the page's order: empty ones are hidden -->
     <dl
       class="mt-3 px-5 text-15 lg:mt-5 lg:px-0"
       :class="container === 'preview' ? 'lg:px-4' : ''"
     >
       <div
-        v-for="p in shownProps"
-        :key="p.id"
+        v-for="p in rows"
+        :key="p.key"
         class="flex min-h-10 items-center"
       >
         <dt class="w-28 shrink-0 text-toned">
@@ -165,25 +207,10 @@ function openPlace() {
         </dt>
         <dd class="flex min-w-0 flex-1 items-center">
           <PropValue
+            :ref="el => keepValue(p.key, el)"
             :rec="rec"
-            :prop="p"
-            :readonly="!editable"
-          />
-        </dd>
-      </div>
-      <!-- On desktop the empty Срок row offers «Добавить срок» -->
-      <div
-        v-if="rec.due || showAll || (isDesktop && editable)"
-        class="flex min-h-10 items-center"
-      >
-        <dt class="w-28 shrink-0 text-toned">
-          Срок
-        </dt>
-        <dd class="flex min-w-0 flex-1 items-center">
-          <PropValue
-            :rec="rec"
-            due
-            :readonly="!editable"
+            :prop="p.prop"
+            :due="p.key === 'due'"
           />
         </dd>
       </div>
@@ -228,21 +255,65 @@ function openPlace() {
           {{ formatAdded(rec.via, rec.addedAt, now) }}
         </dd>
       </div>
-      <div
-        v-if="editable"
-        class="-ml-1 flex gap-3"
-      >
-        <button
-          v-if="hasHidden && !showAll"
-          type="button"
-          class="flex h-10 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted"
-          @click="showAll = true"
+      <div class="-ml-1 flex gap-3">
+        <!-- «+ Свойство»: only what the record does not show yet, and «Новое свойство…» (B12) -->
+        <AdaptiveOverlay
+          v-model:open="picking"
+          title="Добавить свойство"
+          :subtitle="rec.text"
+          width="w-72"
+          align="start"
+          @closed="picked"
         >
-          <UIcon
-            name="i-lucide-plus"
-            class="size-4.5"
-          />Свойство
-        </button>
+          <template #trigger>
+            <button
+              type="button"
+              class="flex h-10 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted"
+              :aria-expanded="picking"
+            >
+              <UIcon
+                name="i-lucide-plus"
+                class="size-4.5"
+              />Свойство
+            </button>
+          </template>
+          <div class="flex flex-col pb-1">
+            <button
+              v-for="p in addable"
+              :key="p.key"
+              type="button"
+              class="flex min-h-12.5 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
+              @click="pick(p.key)"
+            >
+              <UIcon
+                :name="TYPE_ICONS[p.type]"
+                class="size-5 shrink-0 text-toned"
+              />
+              <span class="min-w-0 flex-1 truncate text-highlighted">{{ p.name }}</span>
+              <span class="shrink-0 text-sm text-toned">{{ TYPE_NAMES[p.type] }}</span>
+            </button>
+            <p
+              v-if="!addable.length"
+              class="px-3 pt-1 pb-2.5 text-sm text-toned"
+            >
+              Все свойства страницы уже есть у записи.
+            </p>
+            <template v-if="page?.kind === 'page'">
+              <div class="mx-3 my-1.5 border-t border-default" />
+              <button
+                type="button"
+                class="flex min-h-12.5 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base text-highlighted hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
+                aria-haspopup="dialog"
+                @click="newProp"
+              >
+                <UIcon
+                  name="i-lucide-plus"
+                  class="size-5 shrink-0 text-toned"
+                />Новое свойство…
+              </button>
+            </template>
+          </div>
+        </AdaptiveOverlay>
         <LinkPicker :rec="rec">
           <button
             type="button"

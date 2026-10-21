@@ -1,7 +1,7 @@
 // Everything the user has, in memory, written through to IndexedDB on every change
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import type { Entry, Id, Page, Rec, Section, Settings, TemplateKey } from '~/domain/types'
+import type { Entry, Id, Page, PropDef, PropType, Rec, Section, Settings, TemplateKey } from '~/domain/types'
 import type { Learned } from '~/domain/rules'
 import type { Snapshot } from '~/domain/export'
 import type { Hit } from '~/domain/search'
@@ -11,6 +11,8 @@ import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
 import { learn } from '~/domain/rules'
 import { topOrder } from '~/domain/views'
 import { applyTemplate, TEMPLATES } from '~/domain/templates'
+import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
+import { uid } from '~/domain/ids'
 
 const TRASH_DAYS = 30
 
@@ -234,6 +236,130 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  // properties: one ordered list with Срок and Заметка (domain/props.ts). Renaming, colours, order and adding are
+  // light and apply at once; what loses values (an option, a type change, the property) returns an undo that
+  // brings back the property, its options and every value
+
+  /** Every record of a page, in Корзина too, so a value comes back with a record restored later */
+  const allOf = (pageId: Id) => Object.values(records.value).filter(r => r.pageId === pageId)
+
+  /** How many records show a value of a property (or of one of its options) */
+  function propUsage(pageId: Id, propIds: Id[], optionId?: Id): number {
+    return liveRecords.value.filter(r => r.pageId === pageId && propIds.some(id => optionId ? r.values[id] === optionId : hasValue(r.values[id]))).length
+  }
+
+  /** The page's properties and views, and the values of `propIds`, as they are now; the result puts them back */
+  function keepProps(pageId: Id, propIds: Id[]) {
+    const page = pages.value[pageId]!
+    const kept = JSON.parse(JSON.stringify({ props: page.props, views: page.views, propOrder: page.propOrder ?? null })) as Pick<Page, 'props' | 'views'> & { propOrder: Page['propOrder'] | null }
+    const values = allOf(pageId).map(r => [r.id, Object.fromEntries(propIds.filter(id => id in r.values).map(id => [id, r.values[id]!]))] as const)
+    return () => {
+      updatePage(pageId, { props: kept.props, views: kept.views, propOrder: kept.propOrder ?? undefined })
+      for (const [id, was] of values) {
+        const rec = records.value[id]
+        if (!rec) continue
+        const next = { ...rec.values }
+        for (const p of propIds) delete next[p]
+        updateRecord(id, { values: { ...next, ...was } })
+      }
+    }
+  }
+
+  /** Sets (or with null drops) one property's value on many records */
+  function setValues(propId: Id, values: Map<Id, Rec['values'][string]>) {
+    for (const [id, v] of values) {
+      const rec = records.value[id]
+      if (!rec) continue
+      const { [propId]: _old, ...rest } = rec.values
+      updateRecord(id, { values: hasValue(v) ? { ...rest, [propId]: v } : rest })
+    }
+  }
+
+  /** A new property goes after the page's own ones, before Срок and Заметка */
+  function addProp(pageId: Id, init: Omit<PropDef, 'id'>): PropDef | null {
+    const page = pages.value[pageId]
+    if (!page) return null
+    const prop: PropDef = { ...init, id: uid('f') }
+    const next = { ...page, props: [...page.props, prop] }
+    updatePage(pageId, { props: next.props, propOrder: propKeys(next) })
+    return prop
+  }
+
+  /** Light edits: the name, the options (names, colours, order, a new empty one) */
+  function updateProp(pageId: Id, propId: Id, patch: Partial<Omit<PropDef, 'id'>>) {
+    const page = pages.value[pageId]
+    if (!page) return
+    updatePage(pageId, { props: page.props.map(p => p.id === propId ? { ...p, ...patch } : p) })
+  }
+
+  /** Reorders «Свойства», Срок and Заметка included; `to` is the place in the list as it shows (without «Норма») */
+  function moveProp(pageId: Id, key: Id, to: number) {
+    const page = pages.value[pageId]
+    if (!page) return
+    const listed = propList(page).map(p => p.key).filter(k => k !== key)
+    listed.splice(Math.max(0, Math.min(to, listed.length)), 0, key)
+    const order = orderFromListed(page, listed)
+    // The page's own list follows, so groups and Доска columns read the same order
+    const props = [...page.props].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+    updatePage(pageId, { props, propOrder: order })
+  }
+
+  /** Deleting an option: records that had it lose the value */
+  function removeOption(pageId: Id, propId: Id, optionId: Id) {
+    const page = pages.value[pageId]
+    const prop = page?.props.find(p => p.id === propId)
+    if (!page || !prop) return null
+    const undo = keepProps(pageId, [propId])
+    const count = propUsage(pageId, [propId], optionId)
+    updateProp(pageId, propId, { options: (prop.options ?? []).filter(o => o.id !== optionId) })
+    setValues(propId, new Map(allOf(pageId).filter(r => r.values[propId] === optionId).map(r => [r.id, null])))
+    return { count, undo }
+  }
+
+  /** A type change converts what it can; a grouping by a property that is no longer «Выбор» falls back to «Без групп» */
+  function retypeProp(pageId: Id, propId: Id, type: PropType) {
+    const page = pages.value[pageId]
+    const prop = page?.props.find(p => p.id === propId)
+    if (!page || !prop || prop.type === type) return null
+    const undo = keepProps(pageId, [propId])
+    const entries = allOf(pageId).map(r => [r.id, r.values[propId] ?? null] as [Id, Rec['values'][string]])
+    const out = convertValues(prop, type, entries, Date.now(), () => uid('o'))
+    updatePage(pageId, {
+      props: page.props.map(p => p.id === propId ? out.prop : p),
+      // A filter on one value no longer matches anything; «пусто» and «не пусто» still mean the same
+      views: page.views.map(v => ({
+        ...v,
+        filter: v.filter.filter(f => f.field !== propId || f.op !== 'is'),
+        groupBy: v.groupBy === propId && type !== 'select' ? null : v.groupBy
+      }))
+    })
+    setValues(propId, out.values)
+    const live = new Set(liveRecords.value.map(r => r.id))
+    return { dropped: out.dropped.filter(id => live.has(id)).length, undo }
+  }
+
+  /** A property leaves with every value it had (a number takes its «Норма» along) and with its place in the views */
+  function removeProp(pageId: Id, propId: Id) {
+    const page = pages.value[pageId]
+    const prop = page?.props.find(p => p.id === propId)
+    if (!page || !prop) return null
+    const ids = [propId, ...(prop.normProp ? [prop.normProp] : [])]
+    const undo = keepProps(pageId, ids)
+    const count = propUsage(pageId, ids)
+    updatePage(pageId, {
+      props: page.props.filter(p => !ids.includes(p.id)),
+      propOrder: page.propOrder?.filter(k => !ids.includes(k)),
+      views: page.views.map(v => ({
+        ...v,
+        shown: v.shown.filter(k => !ids.includes(k)),
+        filter: v.filter.filter(f => !ids.includes(f.field)),
+        groupBy: v.groupBy === propId ? null : v.groupBy
+      }))
+    })
+    for (const id of ids) setValues(id, new Map(allOf(pageId).filter(r => id in r.values).map(r => [r.id, null])))
+    return { count, undo }
+  }
+
   // records
 
   function addRecord(init: Partial<Rec> & Pick<Rec, 'pageId' | 'text'>): Rec {
@@ -448,6 +574,7 @@ export const useDataStore = defineStore('data', () => {
     recordsOf, subitemsOf, linksOf, placeOf,
     init, setSettings, toggleFolded,
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
+    propUsage, addProp, updateProp, moveProp, removeOption, retypeProp, removeProp,
     addRecord, updateRecord, toggleLink, toggleDone, moveRecords, removeRecords, restoreRecords, purgeRecords, purgePages, emptyTrash,
     createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,

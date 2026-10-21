@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
+import type { PropDef } from '~/domain/types'
 
 vi.mock('~/domain/model', async (orig) => {
   const real = await orig<typeof import('~/domain/model')>()
@@ -232,5 +233,79 @@ describe('Авто with a key', () => {
     const rec = data.records[e.recordIds![0]!]!
     expect(rec.text).toBe('Батарейки')
     expect(data.pages[rec.pageId]!.title).toBe('Покупки')
+  })
+})
+
+describe('properties (v22 item 30)', () => {
+  async function shop() {
+    const { data, dbName } = await fresh({ demo: true })
+    const id = data.livePages.find(p => p.title === 'Покупки')!.id
+    const [qty, dept, left, norm] = data.pages[id]!.props.map(p => JSON.parse(JSON.stringify(p)) as PropDef)
+    const rec = (text: string) => Object.values(data.records).find(r => r.text === text && !r.deletedAt)!
+    return { data, dbName, id, page: () => data.pages[id]!, rec, qty: qty!, dept: dept!, left: left!, norm: norm! }
+  }
+
+  it('adds a property after the own ones and reorders Срок and Заметка with the rest', async () => {
+    const { data, dbName, id, page, qty, dept, left, norm } = await shop()
+    data.moveProp(id, 'due', 0)
+    expect(page().propOrder).toEqual(['due', qty.id, dept.id, left.id, norm.id, 'note'])
+    const shopName = data.addProp(id, { name: 'Магазин', type: 'select', options: [{ id: 'o1', name: 'Лента', color: 'teal' }] })!
+    expect(page().propOrder).toEqual(['due', qty.id, dept.id, left.id, norm.id, shopName.id, 'note'])
+    // The place counts the rows as listed: Осталось second, its «Норма» right after it
+    data.moveProp(id, left.id, 1)
+    expect(page().propOrder).toEqual(['due', left.id, norm.id, qty.id, dept.id, shopName.id, 'note'])
+    expect(page().props.map(p => p.name)).toEqual(['Осталось', 'Норма', 'Количество', 'Отдел', 'Магазин'])
+    await data.flush()
+    const again = await reload(dbName)
+    expect(again.pages[id]!.propOrder).toEqual(page().propOrder)
+    expect(again.pages[id]!.props.at(-1)!.options).toEqual([{ id: 'o1', name: 'Лента', color: 'teal' }])
+  })
+
+  it('deletes an option with its values, and «Отменить» brings both back', async () => {
+    const { data, id, page, rec, dept } = await shop()
+    const chem = dept.options!.find(o => o.name === 'Бытовая химия')!
+    expect(data.propUsage(id, [dept.id], chem.id)).toBe(1)
+    const done = data.removeOption(id, dept.id, chem.id)!
+    expect(done.count).toBe(1)
+    expect(page().props[1]!.options!.map(o => o.name)).not.toContain('Бытовая химия')
+    expect(dept.id in rec('Порошок').values).toBe(false)
+    done.undo()
+    expect(page().props[1]!.options).toEqual(dept.options)
+    expect(rec('Порошок').values[dept.id]).toBe(chem.id)
+  })
+
+  it('changes a type, converting what it can, and undoes all of it', async () => {
+    const { data, id, page, rec, qty, dept } = await shop()
+    const done = data.retypeProp(id, qty.id, 'number')!
+    expect(done.dropped).toBe(4)
+    expect(qty.id in rec('Молоко').values).toBe(false)
+    done.undo()
+    expect(page().props[0]!.type).toBe('text')
+    expect(rec('Молоко').values[qty.id]).toBe('2 л')
+    // «Купить» is grouped by Отдел: as text it loses the groups, as «Выбор» again it finds the same options
+    const t = data.retypeProp(id, dept.id, 'text')!
+    expect(t.dropped).toBe(0)
+    expect(page().views[0]!.groupBy).toBeNull()
+    expect(rec('Молоко').values[dept.id]).toBe('Молочное')
+    data.retypeProp(id, dept.id, 'select')
+    expect(page().props[1]!.options).toEqual(dept.options)
+    expect(rec('Молоко').values[dept.id]).toBe(dept.options!.find(o => o.name === 'Молочное')!.id)
+    t.undo()
+    expect(page().views[0]!.groupBy).toBe(dept.id)
+  })
+
+  it('deletes a property with its «Норма», values and place in the views; «Отменить» restores them', async () => {
+    const { data, id, page, left, norm } = await shop()
+    const before = JSON.parse(JSON.stringify(page()))
+    const n = data.propUsage(id, [left.id, norm.id])
+    expect(n).toBeGreaterThan(0)
+    const done = data.removeProp(id, left.id)!
+    expect(done.count).toBe(n)
+    expect(page().props.map(p => p.name)).toEqual(['Количество', 'Отдел'])
+    expect(page().views.some(v => v.shown.includes(left.id) || v.filter.some(f => f.field === left.id))).toBe(false)
+    expect(Object.values(data.records).some(r => left.id in r.values || norm.id in r.values)).toBe(false)
+    done.undo()
+    expect(JSON.parse(JSON.stringify(page()))).toEqual(before)
+    expect(data.propUsage(id, [left.id, norm.id])).toBe(n)
   })
 })

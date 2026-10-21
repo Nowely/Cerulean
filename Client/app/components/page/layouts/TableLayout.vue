@@ -8,6 +8,7 @@ import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { filterRecords, sortRecords } from '~/domain/views'
 import { formatDue, isOverdue } from '~/domain/dates'
+import { formatValue, propList } from '~/domain/props'
 import RecordMark from '../../common/RecordMark.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef, records: Rec[] }>()
@@ -17,18 +18,15 @@ const now = useNow()
 const { isDesktop } = useScreen()
 
 const rows = computed(() => sortRecords(filterRecords(props.records, props.view), props.view.sort))
-const cols = computed(() => [
-  ...props.page.props.filter(p => props.view.shown.includes(p.id) || !props.view.shown.length).map(p => ({ key: p.id, name: p.name })),
-  ...(props.view.shown.includes('due') ? [{ key: 'due', name: 'Срок' }] : [])
-])
+/** The chosen properties in the order of «Свойства» (a view that chose none shows every own one) */
+const cols = computed(() => propList(props.page, { norms: true })
+  .filter(p => p.key === 'due' ? props.view.shown.includes('due') : !p.builtin && (props.view.shown.includes(p.key) || !props.view.shown.length))
+  .map(p => ({ key: p.key, name: p.name })))
 
 function cell(rec: Rec, key: string): { text: string, warn?: boolean } {
   if (key === 'due') return rec.due ? { text: formatDue(rec.due, now.value), warn: !rec.done && isOverdue(rec.due, now.value) } : { text: '' }
   const prop = props.page.props.find(p => p.id === key)
-  const v = rec.values[key]
-  if (!prop || v === null || v === undefined || v === '') return { text: '' }
-  if (prop.type === 'select') return { text: prop.options?.find(o => o.id === v)?.name ?? '' }
-  return { text: `${v}${prop.unit ? ` ${prop.unit}` : ''}` }
+  return { text: prop ? formatValue(prop, rec.values[key], now.value) : '' }
 }
 </script>
 

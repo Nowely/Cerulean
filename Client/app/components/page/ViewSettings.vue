@@ -1,14 +1,15 @@
 <script setup lang="ts">
 // «Настроить вид»: how this view shows the page. Filter and sort live here, not in the bar; so does «Новый вид».
-import { computed, ref } from 'vue'
-import type { FilterRule, GroupBy, Layout, Page, PropType, ViewDef } from '~/domain/types'
+import { computed } from 'vue'
+import type { FilterRule, GroupBy, Layout, Page, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { groupOptions } from '~/domain/views'
-import { uid } from '~/domain/ids'
+import { propList, TYPE_NAMES } from '~/domain/props'
 import SegmentedControl from '../common/SegmentedControl.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef }>()
-const emit = defineEmits<{ removed: [], add: [] }>()
+// `newProp`: «Новое свойство» opens the property editor; after «Создать» this sheet is back with it switched on
+const emit = defineEmits<{ removed: [], add: [], newProp: [] }>()
 const data = useDataStore()
 
 function patch(p: Partial<ViewDef>) {
@@ -56,44 +57,11 @@ const SORTS = [
 ]
 const sort = computed({ get: () => props.view.sort, set: (v: ViewDef['sort']) => patch({ sort: v }) })
 
-const TYPE_NAMES: Record<PropType, string> = { text: 'текст', number: 'число', select: 'выбор', date: 'дата', relation: 'связь' }
-const shownRows = computed(() => [
-  ...props.page.props.filter(p => !props.page.props.some(x => x.normProp === p.id)).map(p => ({ key: p.id, name: p.name, type: TYPE_NAMES[p.type] })),
-  { key: 'due', name: 'Срок', type: 'дата' },
-  { key: 'note', name: 'Заметка', type: 'текст' }
-])
+// «Справа в строке» follows the order of «Свойства»; a number's «Норма» is not a row of its own
+const shownRows = computed(() => propList(props.page).map(p => ({ key: p.key, name: p.name, type: TYPE_NAMES[p.type] })))
 function toggleShown(key: string, on: boolean) {
   const shown = props.view.shown.filter(k => k !== key)
   patch({ shown: on ? [...shown, key] : shown })
-}
-
-// «Новое свойство»
-const adding = ref(false)
-const propName = ref('')
-const propType = ref<'text' | 'number' | 'select' | 'date'>('text')
-const propOptions = ref('')
-const NEW_TYPES: { value: 'text' | 'number' | 'select' | 'date', label: string }[] = [
-  { value: 'text', label: 'Текст' },
-  { value: 'number', label: 'Число' },
-  { value: 'select', label: 'Выбор' },
-  { value: 'date', label: 'Дата' }
-]
-/** A «Выбор» needs its options before it can be added */
-const canAdd = computed(() => !!propName.value.trim() && (propType.value !== 'select' || propOptions.value.split(',').some(o => o.trim())))
-function addProp() {
-  const n = propName.value.trim()
-  if (!canAdd.value) return
-  const id = uid('f')
-  const options = propType.value === 'select'
-    ? propOptions.value.split(',').map(s => s.trim()).filter(Boolean).map(o => ({ id: uid('o'), name: o }))
-    : undefined
-  data.updatePage(props.page.id, {
-    props: [...props.page.props, { id, name: n, type: propType.value, options }],
-    views: props.page.views.map(v => v.id === props.view.id ? { ...v, shown: [...v.shown, id] } : v)
-  })
-  adding.value = false
-  propName.value = ''
-  propOptions.value = ''
 }
 
 function removeView() {
@@ -176,47 +144,11 @@ function removeView() {
       </label>
     </div>
 
-    <form
-      v-if="adding"
-      class="mt-2 flex flex-col gap-2 rounded-card border border-default p-3"
-      @submit.prevent="addProp"
-    >
-      <UInput
-        v-model="propName"
-        placeholder="Название, например «Статус»"
-        aria-label="Название свойства"
-        autofocus
-      />
-      <SegmentedControl
-        v-model="propType"
-        :options="NEW_TYPES"
-        label="Тип свойства"
-      />
-      <UInput
-        v-if="propType === 'select'"
-        v-model="propOptions"
-        placeholder="Варианты через запятую"
-        aria-label="Варианты"
-      />
-      <div class="flex justify-end gap-2">
-        <UButton @click="adding = false">
-          Отмена
-        </UButton>
-        <UButton
-          type="submit"
-          color="primary"
-          variant="solid"
-          :disabled="!canAdd"
-        >
-          Добавить
-        </UButton>
-      </div>
-    </form>
     <button
-      v-else
       type="button"
       class="flex min-h-12.5 cursor-pointer items-center gap-3 rounded-chip px-2 text-left text-base text-default hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
-      @click="adding = true"
+      aria-haspopup="dialog"
+      @click="emit('newProp')"
     >
       <UIcon
         name="i-lucide-plus"

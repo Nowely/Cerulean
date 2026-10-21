@@ -12,6 +12,7 @@ import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
+import { usePropSheets } from '~/composables/usePropSheets'
 import { pageSubline, dueToday } from '~/domain/summary'
 import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView } from '~/domain/templates'
@@ -77,6 +78,30 @@ function addView() {
 }
 
 const settingsOpen = ref(false)
+
+/** «Новое свойство» in «Настроить вид»: the editor takes the sheet's place, and after «Создать» the sheet is back with it switched on */
+const propSheets = usePropSheets()
+let afterSettings: (() => void) | null = null
+function newProp() {
+  const pageId = props.page.id
+  const viewId = view.value.id
+  afterSettings = () => propSheets.create(pageId, {
+    from: 'view',
+    onCreate: (p) => {
+      const page = data.pages[pageId]
+      if (page) data.updatePage(pageId, { views: page.views.map(v => v.id === viewId ? { ...v, shown: [...v.shown, p.id] } : v) })
+    },
+    onBack: () => {
+      settingsOpen.value = true
+    }
+  })
+  settingsOpen.value = false
+}
+function settingsClosed() {
+  const run = afterSettings
+  afterSettings = null
+  run?.()
+}
 /** Board and table want the whole width of the main column on desktop */
 const wide = computed(() => view.value.layout === 'board' || view.value.layout === 'table')
 defineExpose({ openSettings: () => settingsOpen.value = true, toggleSearch: () => toggleSearch(), wide })
@@ -298,6 +323,7 @@ const emptyText = computed(() => {
         v-if="!today"
         v-model:open="settingsOpen"
         title="Настроить вид"
+        @closed="settingsClosed"
       >
         <template #trigger>
           <UButton
@@ -314,6 +340,7 @@ const emptyText = computed(() => {
           :view="view"
           @removed="viewId = null; settingsOpen = false"
           @add="addView"
+          @new-prop="newProp"
         />
       </AdaptiveOverlay>
     </div>
@@ -374,7 +401,6 @@ const emptyText = computed(() => {
         :records="shown"
         :readonly="!full"
         @open="openRecord"
-        @need-prop="settingsOpen = true"
       />
       <TableLayout
         v-else-if="layout === 'table'"

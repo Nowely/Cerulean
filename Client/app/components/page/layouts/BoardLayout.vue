@@ -10,20 +10,21 @@ import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { useNotify } from '~/composables/useNotify'
 import { usePeek } from '~/composables/usePeek'
-import { filterRecords, sortRecords } from '~/domain/views'
+import { usePropSheets } from '~/composables/usePropSheets'
+import { filterRecords, noValueLabel, sortRecords } from '~/domain/views'
 import { formatDue, isOverdue } from '~/domain/dates'
 import { recordSummary } from '~/domain/summary'
-import { genitive } from '~/domain/text'
 import RecordMark from '../../common/RecordMark.vue'
 import ActionMenu, { type MenuItem } from '../../overlay/ActionMenu.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef, records: Rec[], readonly?: boolean }>()
-const emit = defineEmits<{ open: [rec: Rec], needProp: [] }>()
+const emit = defineEmits<{ open: [rec: Rec] }>()
 const data = useDataStore()
 const now = useNow()
 const { isDesktop } = useScreen()
 const notify = useNotify()
 const peek = usePeek()
+const propSheets = usePropSheets()
 
 const prop = computed<PropDef | undefined>(() => {
   const chosen = props.page.props.find(p => p.id === props.view.groupBy && p.type === 'select')
@@ -35,7 +36,7 @@ const columns = computed(() => {
   const opts = prop.value.options ?? []
   const cols = opts.map(o => ({ id: o.id, name: o.name, records: list.filter(r => r.values[prop.value!.id] === o.id) }))
   const none = list.filter(r => !opts.some(o => o.id === r.values[prop.value!.id]))
-  return none.length ? [{ id: 'none', name: `Без ${genitive(prop.value.name)}`, records: none }, ...cols] : cols
+  return none.length ? [{ id: 'none', name: noValueLabel(prop.value), records: none }, ...cols] : cols
 })
 const stage = ref<string | null>(null)
 // The open column stays put; only when it goes away («Без статуса» emptied) the first one with cards opens
@@ -68,6 +69,19 @@ function moveTo(rec: Rec, colId: string) {
     }
   })
 }
+/** «Добавить свойство» without columns: the editor with «Выбор» chosen; the new property becomes this view's columns */
+function addProp() {
+  const pageId = props.page.id
+  const viewId = props.view.id
+  propSheets.create(pageId, {
+    from: 'board',
+    type: 'select',
+    onCreate: (p) => {
+      const page = data.pages[pageId]
+      if (page) data.updatePage(pageId, { views: page.views.map(v => v.id === viewId ? { ...v, groupBy: p.id } : v) })
+    }
+  })
+}
 const nextOf = (colId: string) => columns.value[columns.value.findIndex(c => c.id === colId) + 1]
 const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
   [{ label: 'Открыть', icon: 'i-lucide-panel-right-open', onSelect: () => peek.peek({ kind: 'record', id: rec.id }) }],
@@ -83,7 +97,8 @@ const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
     Для доски нужно свойство «Выбор»: его варианты станут колонками, например «Надо», «В процессе», «Готово».
     <UButton
       class="mt-3 block"
-      @click="emit('needProp')"
+      aria-haspopup="dialog"
+      @click="addProp"
     >
       Добавить свойство
     </UButton>

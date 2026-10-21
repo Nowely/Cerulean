@@ -105,11 +105,13 @@ export default [
     await p.getByRole('link', { name: /^Идеи/ }).first().click()
     await p.getByRole('button', { name: 'Настроить вид' }).click()
     await p.getByRole('button', { name: 'Новое свойство' }).click()
-    await p.getByRole('textbox', { name: 'Название свойства' }).fill('Статус')
+    // v22: the property editor took the inline form's place, with the same guarantee
+    await p.getByRole('textbox', { name: 'Название', exact: true }).fill('Статус')
     await p.getByRole('radio', { name: 'Выбор' }).click()
-    expect(await p.getByRole('button', { name: 'Добавить' }).isDisabled(), '«Добавить» works with no options')
-    await p.getByRole('textbox', { name: 'Варианты' }).fill('Новая, Готово')
-    expect(await p.getByRole('button', { name: 'Добавить' }).isEnabled(), '«Добавить» stays off with options')
+    expect(await p.getByRole('button', { name: 'Создать' }).isDisabled(), '«Создать» works with no options')
+    await p.getByRole('button', { name: 'Вариант', exact: true }).click()
+    await p.keyboard.type('Новая')
+    expect(await p.getByRole('button', { name: 'Создать' }).isEnabled(), '«Создать» stays off with options')
   } },
   { id: 'B18', device: MOBILE, run: async (p) => {
     await open(p, '/')

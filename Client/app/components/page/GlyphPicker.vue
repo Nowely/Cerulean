@@ -1,14 +1,11 @@
 <script setup lang="ts">
 // «Добавить значок»: an icon and a colour for a page or a record with its own page
-import { GLYPH_LABELS, GLYPHS, PAGE_COLORS, type Glyph, type PageColor } from '~/domain/types'
+import { COLOR_NAMES, GLYPH_LABELS, GLYPHS, PAGE_COLORS, type Glyph, type PageColor } from '~/domain/types'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 
 const props = defineProps<{ glyph: Glyph | null | undefined, color: PageColor | null | undefined, removable?: boolean }>()
 const emit = defineEmits<{ change: [patch: { glyph?: Glyph | null, color?: PageColor }] }>()
 const open = defineModel<boolean>('open', { default: false })
-const COLOR_NAMES: Record<PageColor, string> = {
-  green: 'Зелёный', blue: 'Синий', brown: 'Коричневый', yellow: 'Жёлтый', pink: 'Розовый', purple: 'Фиолетовый', gray: 'Серый', teal: 'Бирюзовый'
-}
 const glyphs = Object.keys(GLYPHS) as Glyph[]
 </script>
 
