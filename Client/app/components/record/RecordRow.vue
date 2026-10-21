@@ -261,7 +261,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         />
         <span
           v-else
-          class="w-3 shrink-0 lg:w-2"
+          class="w-2.5 shrink-0 lg:w-2"
         />
         <button
           type="button"

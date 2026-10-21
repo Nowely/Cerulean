@@ -184,7 +184,7 @@ export default [
     await p.waitForTimeout(800)
     expect(await store(p, data => Object.values(data.records).find(r => r.text === 'Молоко').done), 'the tick did not reach the other tab')
     expect(await field.inputValue() === 'несохранённый текст', 'the unsent text went')
-    await other.getByRole('checkbox', { name: 'Отметить «Молоко»' }).click().catch(async () => {
+    await other.getByRole('checkbox', { name: 'Купить снова «Молоко»' }).click().catch(async () => {
       await store(other, data => data.toggleDone(Object.values(data.records).find(r => r.text === 'Молоко').id))
     })
     await p.waitForTimeout(800)

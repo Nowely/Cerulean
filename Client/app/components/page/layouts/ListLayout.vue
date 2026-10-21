@@ -5,7 +5,7 @@
 // its value, with «Яйца → Овощи и фрукты · Отменить». A long press that lets go without moving opens the row's
 // «⋯». A view of ticked records ends with «Очистить купленное». A long page shows its first 100 rows and «Показать
 // ещё»: 600 rows at once took seconds to open and to write to on a phone
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, useTemplateRef } from 'vue'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
@@ -74,15 +74,26 @@ function place(id: Id, to: string, index: number) {
   else if (done.manual) notify('Порядок: вручную', { label: 'Отменить', run: done.undo }, UNDO_MS)
 }
 
-/** Alt+↑/↓, «Выше»/«Ниже»: one step within the group; past its edge into the next group, at the end nearest to the row */
+/**
+ * Alt+↑/↓, «Выше»/«Ниже»: one step within the group; past its edge into the next group, at the end nearest to the
+ * row. The row keeps the focus when the list draws it in another group
+ */
+const root = useTemplateRef<HTMLElement>('root')
 function shift(rec: Rec, by: -1 | 1) {
   const gi = shown.value.findIndex(g => g.records.some(r => r.id === rec.id))
   const g = shown.value[gi]
   if (!g) return
+  const focused = document.activeElement
   const i = g.records.findIndex(r => r.id === rec.id)
-  if (i + by >= 0 && i + by < g.records.length) return place(rec.id, g.key, i + by)
   const next: Group | undefined = shown.value[gi + by]
-  if (next && groupProp.value) place(rec.id, next.key, by < 0 ? next.records.length : 0)
+  if (i + by >= 0 && i + by < g.records.length) place(rec.id, g.key, i + by)
+  else if (next && groupProp.value) place(rec.id, next.key, by < 0 ? next.records.length : 0)
+  else return
+  if (focused instanceof HTMLElement && focused.matches('[data-row-text]')) {
+    void nextTick(() => {
+      if (!focused.isConnected) root.value?.querySelector<HTMLElement>(`[data-drag-id="${CSS.escape(rec.id)}"] [data-row-text]`)?.focus()
+    })
+  }
 }
 
 // A long press lifts a row on a phone; desktop drags by the ⋮⋮ handle only, so a slow click still opens the row
@@ -112,7 +123,7 @@ function clearDone() {
 </script>
 
 <template>
-  <div>
+  <div ref="root">
     <section
       v-for="g in shown"
       :key="g.key"
