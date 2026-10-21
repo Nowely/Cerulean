@@ -122,11 +122,11 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
       >
         <div
           class="flex shrink-0 items-start gap-2"
-          :class="anchor ? 'pb-2.5 pl-2' : 'pt-1 pr-2 pl-6 lg:pt-3 lg:pl-5'"
+          :class="anchor ? 'pb-2.5 pl-2' : 'pr-2 pl-6 lg:pt-3 lg:pl-5'"
         >
           <div
             class="min-w-0 flex-1"
-            :class="anchor ? '' : 'py-1.5'"
+            :class="anchor ? '' : 'lg:py-1.5'"
           >
             <h2
               class="leading-snug text-highlighted"
@@ -152,7 +152,7 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
         </div>
         <div
           class="shrink-0"
-          :class="anchor ? 'px-1 pb-1' : 'px-3 pt-1 pb-1'"
+          :class="anchor ? 'px-1 pb-1' : 'px-3 pt-2 pb-1 lg:pt-1'"
         >
           <UInput
             ref="field"
@@ -167,7 +167,7 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
         </div>
         <div
           class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
-          :class="anchor ? 'pb-1' : 'px-2 pb-[max(env(safe-area-inset-bottom),0.75rem)]'"
+          :class="anchor ? 'pb-1' : 'px-1 pb-[max(env(safe-area-inset-bottom),0.75rem)] lg:px-2'"
           data-vaul-no-drag
         >
           <ul
@@ -218,7 +218,7 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
           >
             <h3
               class="pb-1 text-cap text-toned"
-              :class="anchor ? 'px-2 pt-2.5' : 'px-3 pt-3'"
+              :class="anchor ? 'px-2 pt-2.5' : 'px-3 pt-4.5 lg:pt-3'"
             >
               {{ g.label }}
             </h3>
