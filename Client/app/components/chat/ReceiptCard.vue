@@ -186,7 +186,7 @@ function undo() {
   const e = props.entry
   const aim = e.pageId && e.pageId !== data.inbox.id && !e.made ? e.pageId : 'auto'
   journal.undo(e.id)
-  ui.refill = { text: e.text, aim }
+  ui.refill = { text: e.text, aim, links: e.links }
   wrongOpen.value = false
   emit('undone', e)
 }
