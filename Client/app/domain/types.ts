@@ -55,6 +55,12 @@ export interface FilterRule {
 
 export type GroupBy = Id | 'due' | null
 
+/** «Откуда записи» of a view (v24): this page's own records, every page's, or the chosen pages' */
+export type ViewSource = 'self' | 'all' | 'pick'
+
+/** A «Срок» chip of a view's «Фильтр» (v24): Просрочено, Сегодня, На неделе (today and the six days after), Без срока */
+export type DueChip = 'late' | 'today' | 'week' | 'none'
+
 export interface ViewDef {
   id: Id
   name: string
@@ -68,6 +74,16 @@ export interface ViewDef {
   folded?: string[]
   /** The name was typed: it no longer follows the type («Список», «Доска 2») */
   named?: boolean
+  /** «Откуда записи» (v24); absent: this page's own records */
+  from?: ViewSource
+  /** «Выбранные»: the pages the view collects from */
+  pages?: Id[]
+  /** «Срок» chips picked in «Фильтр» (v24): a record passes when it matches any; empty or absent is «Любой» */
+  dues?: DueChip[]
+  /** «Ждут уточнения» in «Фильтр» (v24): only records tagged «уточнить» */
+  asking?: boolean
+  /** «Заметка» switched off in «Справа в строке» (v24): rows draw no note glyph; absent is on */
+  noteOff?: boolean
 }
 
 /** A mark in a body: bold, italic (drawn oblique) or a link */
@@ -94,7 +110,8 @@ export interface BodyDoc extends BodyNode {
 
 export type PageKind = 'page' | 'inbox' | 'today'
 
-export type TemplateKey = 'shop' | 'todo' | 'goal' | 'note'
+/** The starters of a page; 'week' (v24) makes a page whose first view collects «На неделе» from every page */
+export type TemplateKey = 'shop' | 'todo' | 'goal' | 'note' | 'week'
 
 export interface Page {
   id: Id

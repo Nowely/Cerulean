@@ -71,7 +71,8 @@ describe('Сегодня (v23, B4, M15)', () => {
   const today = d.pages.find(p => p.kind === 'today')!
 
   it('«На неделе» holds the six days after today, by date', () => {
-    expect(dueThisWeek(d.records, NOW).map(r => r.text)).toEqual(['Поменять фильтр воды', 'Вернуть книгу в библиотеку'])
+    // v24 fixes, 11: one demo world, Вызвать мастера on Friday and Длинная пробежка on Saturday
+    expect(dueThisWeek(d.records, NOW).map(r => r.text)).toEqual(['Поменять фильтр воды', 'Вызвать мастера', 'Длинная пробежка 14 км', 'Вернуть книгу в библиотеку'])
   })
 
   it('names the weekday on the right, tomorrow in a word', () => {

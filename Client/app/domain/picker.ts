@@ -4,6 +4,7 @@
 // recent, so it is marked once. With a query: «Найдено».
 import type { Id, Page, Section } from './types'
 import { fold } from './text'
+import { onlyCollects } from './collect'
 
 export interface PickGroup {
   label: string
@@ -29,8 +30,11 @@ export interface PickerInput {
 const GUESSES = 3
 const RECENT = 3
 
-/** Pages a record can go to: user pages and Входящие (Сегодня has no records of its own) */
-export const choosable = (pages: Page[]) => pages.filter(p => !p.deletedAt && (p.kind === 'page' || p.kind === 'inbox'))
+/**
+ * Pages a record can go to: user pages and Входящие (Сегодня has no records of its own, nor has a page whose every
+ * view collects, v24)
+ */
+export const choosable = (pages: Page[]) => pages.filter(p => !p.deletedAt && (p.kind === 'inbox' || (p.kind === 'page' && !onlyCollects(p))))
 
 export function pickerGroups(o: PickerInput): PickGroup[] {
   const pages = choosable(o.pages)

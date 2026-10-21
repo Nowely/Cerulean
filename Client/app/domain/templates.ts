@@ -118,8 +118,27 @@ export const TEMPLATES: Template[] = [
   }
 ]
 
+/**
+ * «На неделе» (v24 fixes, 5): a page whose first view collects from every page, «Просрочено · На неделе · не сделано»,
+ * so it holds nothing itself. Only a new page offers it; the first-run card keeps the four that make pages of records
+ */
+export const WEEK_STARTER: Template = {
+  key: 'week',
+  name: 'На неделе',
+  // TODO(v24 item 22): the calendar-week glyph once the pages slice adds it
+  glyph: 'cal',
+  description: '',
+  hasDone: true,
+  noun: ['дело', 'дела', 'дел'],
+  props: () => [],
+  views: () => [listView('Список', { from: 'all', dues: ['late', 'week'], filter: [{ field: 'done', op: 'is', value: false }] })]
+}
+
+/** «Начать с шаблона» on a new page: the four starters, then «На неделе» */
+export const STARTERS: Template[] = [...TEMPLATES, WEEK_STARTER]
+
 export function templateByKey(key: TemplateKey): Template {
-  return TEMPLATES.find(t => t.key === key)!
+  return STARTERS.find(t => t.key === key)!
 }
 
 /** Fields a template sets on a page; an empty title takes the template's name */
@@ -130,7 +149,8 @@ export function applyTemplate(page: Page, key: TemplateKey): Partial<Page> {
     template: key,
     title: page.title.trim() ? page.title : t.name,
     glyph: t.glyph,
-    description: page.description.trim() ? page.description : t.description,
+    // A page that only collects has no «Что сюда класть»: nothing is filed there by words
+    description: key === 'week' ? '' : page.description.trim() ? page.description : t.description,
     hasDone: t.hasDone,
     noun: t.noun,
     props,

@@ -30,8 +30,8 @@ describe('the page picker (v22, U8, B31)', () => {
     expect(groups[1]!.label).toBe('Открыто недавно')
     expect(groups[1]!.pages.map(p => p.title)).not.toContain('Идеи')
     expect(groups.at(-1)!.label).toBe('Системные')
-    // Every page a record can go to is there; Сегодня has no records of its own
-    const choosable = data.livePages.filter(p => p.kind === 'page' || p.kind === 'inbox').map(p => p.title)
+    // Every page a record can go to is there; Сегодня has no records of its own, На неделе only collects (v24)
+    const choosable = data.livePages.filter(p => (p.kind === 'page' || p.kind === 'inbox') && p.title !== 'На неделе').map(p => p.title)
     expect([...all].sort()).toEqual([...choosable].sort())
   })
 
