@@ -12,7 +12,8 @@ import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { usePeek } from '~/composables/usePeek'
 import { usePropSheets } from '~/composables/usePropSheets'
-import { pageSubline, dueToday } from '~/domain/summary'
+import { pageSubline, dueToday, dueThisWeek } from '~/domain/summary'
+import { weekday } from '~/domain/dates'
 import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView, nameForLayout } from '~/domain/templates'
 import { pageNamed } from '~/domain/rules'
@@ -151,6 +152,19 @@ async function toggleSearch() {
 }
 const shown = computed(() => query.value.trim() ? records.value.filter(r => matchesQuery(r, query.value)) : records.value)
 const todayGroups = computed(() => groupByDue(dueToday(data.liveRecords, now.value, openedAt.value).filter(r => matchesQuery(r, query.value)), now.value))
+/**
+ * Сегодня (v23, B4, M15): after today the folding «На неделе», the six days after it. It starts folded, or open when
+ * nothing is due today, and then stays as it was left (kept with the other folds in settings)
+ */
+const week = computed(() => today.value ? dueThisWeek(data.liveRecords, now.value, openedAt.value).filter(r => matchesQuery(r, query.value)) : [])
+const WEEK = 'today-week:'
+const weekOpen = computed(() => {
+  const left = data.settings.folded.find(k => k.startsWith(WEEK))
+  return left ? left === `${WEEK}open` : !todayGroups.value.length
+})
+function toggleWeek() {
+  data.setSettings({ folded: [...data.settings.folded.filter(k => !k.startsWith(WEEK)), `${WEEK}${weekOpen.value ? 'folded' : 'open'}`] })
+}
 
 // Title: edited in place on the full page; a new page opens with it focused
 const titleInput = useTemplateRef<InstanceType<typeof TitleField>>('titleInput')
@@ -391,6 +405,12 @@ const emptyText = computed(() => {
       data-rows
     >
       <template v-if="today">
+        <p
+          v-if="!todayGroups.length"
+          class="px-4 pt-5 text-15 leading-5.75 text-toned lg:px-2.5"
+        >
+          На сегодня ничего, всё со сроком появится здесь.
+        </p>
         <section
           v-for="g in todayGroups"
           :key="g.key"
@@ -412,12 +432,41 @@ const emptyText = computed(() => {
             @open="peek.peek({ kind: 'record', id: r.id })"
           />
         </section>
-        <p
-          v-if="!todayGroups.length"
-          class="px-5 py-6 text-meta text-toned lg:px-2.5"
+        <section
+          v-if="week.length"
+          aria-label="На неделе"
         >
-          На сегодня ничего, всё со сроком появится здесь.
-        </p>
+          <h3 class="px-4 pt-3 text-cap leading-6 lg:px-2.5 lg:pt-4 lg:pb-1 lg:leading-5">
+            <button
+              type="button"
+              class="hit-44 flex cursor-pointer items-center gap-1 text-toned hover:text-highlighted"
+              :aria-expanded="weekOpen"
+              @click="toggleWeek"
+            >
+              На неделе
+              <span
+                v-if="!weekOpen"
+                class="font-normal text-dimmed tabular-nums"
+              >· {{ week.length }}</span>
+              <UIcon
+                name="i-lucide-chevron-down"
+                class="size-3 shrink-0 text-dimmed transition-transform duration-150"
+                :class="weekOpen ? '' : '-rotate-90'"
+              />
+            </button>
+          </h3>
+          <template v-if="weekOpen">
+            <RecordLine
+              v-for="r in week"
+              :key="r.id"
+              :rec="r"
+              :end="weekday(r.due!.date, now)"
+              density="list"
+              class="mx-1 lg:mx-0"
+              @open="peek.peek({ kind: 'record', id: r.id })"
+            />
+          </template>
+        </section>
       </template>
       <template v-else-if="layout === 'list'">
         <ListLayout

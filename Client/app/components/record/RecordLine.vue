@@ -19,7 +19,9 @@ const props = withDefaults(defineProps<{
   query?: string
   density?: 'card' | 'list'
   selected?: boolean
-}>(), { place: true, brief: false, query: '', density: 'card', selected: false })
+  /** Right of the text, 14 muted: the weekday under «На неделе» («ср», «завтра»); line 2 then names the place only */
+  end?: string
+}>(), { place: true, brief: false, query: '', density: 'card', selected: false, end: '' })
 
 const emit = defineEmits<{ open: [] }>()
 const data = useDataStore()
@@ -29,7 +31,7 @@ const page = computed(() => data.pages[props.rec.pageId])
 const where = computed(() => data.placeOf(props.rec).title)
 const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
 const when = computed(() => {
-  if (!props.rec.due) return ''
+  if (!props.rec.due || props.end) return ''
   const d = props.brief ? formatDueBrief(props.rec.due, now.value) : formatDue(props.rec.due, now.value)
   return late.value ? `было ${d}` : d
 })
@@ -78,5 +80,16 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
         >{{ tag }}</span>
       </span>
     </button>
+    <span
+      v-if="end"
+      class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned"
+    >
+      <UIcon
+        v-if="rec.note"
+        name="i-lucide-file-text"
+        class="size-4"
+        aria-label="есть заметка"
+      />{{ end }}
+    </span>
   </div>
 </template>
