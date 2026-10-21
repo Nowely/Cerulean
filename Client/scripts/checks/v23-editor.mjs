@@ -620,6 +620,8 @@ export default [
     await p.keyboard.press('Control+z')
     expect(!(await editorOf(p).locator('strong, em, a').count()), 'Ctrl Z did not step back')
     await p.keyboard.press('End')
+    // the caret move reaches the editor with the next selectionchange, not with the key itself
+    await p.waitForTimeout(150)
     await p.keyboard.press('Control+k')
     await p.waitForTimeout(400)
     expect(await shows(p.getByRole('combobox', { name: 'Найти' })), 'Ctrl K with nothing selected did not open «Найти»')
