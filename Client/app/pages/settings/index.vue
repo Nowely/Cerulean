@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Настройки: Авто, Оформление, Данные. Everything here acts at once, nothing to save.
+// Настройки: Авто, Данные, Оформление (v23, B6: a copy is what one comes back for, the theme is set once).
+// Everything here acts at once, nothing to save.
 import { computed, onMounted, ref, shallowRef, useTemplateRef } from 'vue'
 import { useColorMode, useHead, useRoute, useRouter } from '#imports'
 import type { ModelChoice } from '~/domain/types'
@@ -8,8 +9,8 @@ import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
 import { useNotify } from '~/composables/useNotify'
 import { useNow } from '~/composables/useNow'
-import { useCopy } from '~/composables/useCopy'
-import { checkConnection, maskKey, modelOf, ModelError, PROVIDERS } from '~/domain/model'
+import { checkConnection, ModelError, PROVIDERS } from '~/domain/model'
+import { copyDue } from '~/domain/keep'
 import { finishOpenRouter } from '~/domain/openrouter'
 import { measure, parseSnapshot, sizeText, type Snapshot } from '~/domain/export'
 import { formatDate } from '~/domain/dates'
@@ -17,7 +18,7 @@ import AppScreen from '~/components/shell/AppScreen.vue'
 import BackHeader from '~/components/shell/BackHeader.vue'
 import TitleHeader from '~/components/shell/TitleHeader.vue'
 import SegmentedControl from '~/components/common/SegmentedControl.vue'
-import ActionMenu from '~/components/overlay/ActionMenu.vue'
+import CopyMenu from '~/components/settings/CopyMenu.vue'
 import SettingRow from '~/components/settings/SettingRow.vue'
 import ConnectionEditor from '~/components/settings/ConnectionEditor.vue'
 import DescriptionList from '~/components/settings/DescriptionList.vue'
@@ -42,8 +43,8 @@ const service = computed(() => PROVIDERS[data.settings.provider].name)
 const keyStatus = computed(() => {
   if (!key.value) return { text: 'Без ключа работают только простые правила', tone: undefined, dot: undefined }
   if (data.settings.keyState === 'bad') return { text: 'Не работает: проверь ключ и модель', tone: 'warn' as const, dot: 'warn' as const }
-  // «openai/gpt-6-luna» reads as «gpt-6-luna»: the service is already on the row
-  if (data.settings.keyState === 'ok') return { text: `Работает · ${modelOf(data.settings).split('/').pop()}`, tone: undefined, dot: 'ok' as const }
+  // v23 (M11, F16): «OpenAI · подключено»; the key and the model live in the connection's own screen
+  if (data.settings.keyState === 'ok') return { text: `${service.value} · подключено`, tone: undefined, dot: 'ok' as const }
   return { text: 'Ещё не проверено · не попадает в экспорт', tone: undefined, dot: 'faint' as const }
 })
 
@@ -108,14 +109,14 @@ async function persist() {
   if (!await data.persist()) notify('Браузер не разрешил. Сохраняй копию время от времени', undefined, 4000)
 }
 
-const { saveCopy } = useCopy()
 const now = useNow()
-const copyHint = computed(() => `JSON или Markdown · ${data.settings.copiedAt ? `последняя ${formatDate(data.settings.copiedAt, now.value)}` : 'ещё не сохранялась'}`)
+const copiedAt = computed(() => data.settings.copiedAt)
+const copyHint = computed(() => `JSON или Markdown${copiedAt.value ? ` · последняя ${formatDate(copiedAt.value, now.value)}` : ''}`)
+/** The status line carries the copy's state (v23, B6, M11): «копии нет» or «копия 12 сентября» */
+const copyState = computed(() => copiedAt.value ? `копия ${formatDate(copiedAt.value, now.value)}` : 'копии нет')
+/** «Сохранить» in the status line while a copy is due: none yet, or the monthly reminder of Главная is due */
+const copyNeeded = computed(() => !copiedAt.value || copyDue(data.settings, Object.values(data.records), now.value, data.persisted))
 const copying = ref(false)
-const copyItems = [[
-  { label: 'JSON', icon: 'i-lucide-file-json', value: 'можно загрузить обратно', onSelect: () => saveCopy('json') },
-  { label: 'Markdown', icon: 'i-lucide-file-text', value: 'читать и вставлять', onSelect: () => saveCopy('md') }
-]]
 
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const loaded = shallowRef<{ name: string, snap: Snapshot } | null>(null)
@@ -176,16 +177,24 @@ onMounted(() => {
         place="settings"
         class="mx-4 mt-2 lg:mx-0 lg:mt-0"
       />
+      <!-- The data state and its one action; no copy yet is a faint dot, never the ok green (v23, B6, M11) -->
       <div
         v-else
-        class="flex items-center gap-2 px-4 pt-1.5 pb-0.5 text-sm text-toned lg:px-0 lg:pt-0 lg:pb-0"
+        class="flex items-start gap-2 px-4 pt-1.5 pb-0.5 text-sm leading-5 text-toned lg:px-0 lg:pt-0 lg:pb-0"
         role="status"
       >
         <span
-          class="size-2 shrink-0 rounded-full bg-ok"
+          class="mt-1.5 size-2 shrink-0 rounded-full"
+          :class="copiedAt ? 'bg-ok' : 'bg-faint'"
           aria-hidden="true"
         />
-        <span>Работает офлайн, всё хранится в этом браузере</span>
+        <span>Работает офлайн, всё в этом браузере · <span class="whitespace-nowrap">{{ copyState }}<template v-if="copyNeeded"> · <CopyMenu align="start">
+          <button
+            type="button"
+            class="hit-44 cursor-pointer text-accent-ink hover:underline"
+            aria-label="Сохранить копию"
+          >Сохранить</button>
+        </CopyMenu></template></span></span>
       </div>
 
       <!-- Авто -->
@@ -203,16 +212,11 @@ onMounted(() => {
           :hint="keyStatus.text"
           :hint-tone="keyStatus.tone"
           :dot="key ? keyStatus.dot : undefined"
-          :value="key ? `${service} · ${maskKey(key)}` : 'Добавить'"
-          :value-wraps="!!key"
+          :value="key ? undefined : 'Добавить'"
           opens
           @open="keyEditor?.open()"
         >
           <div class="flex items-center gap-3">
-            <span
-              v-if="key"
-              class="text-sm tracking-wide text-default"
-            >{{ service }} · {{ maskKey(key) }}</span>
             <UButton
               :class="{ 'text-accent-ink': !key }"
               @click="keyEditor?.open()"
@@ -278,38 +282,6 @@ onMounted(() => {
         </SettingRow>
       </section>
 
-      <!-- Оформление -->
-      <section aria-labelledby="s-look">
-        <h2
-          id="s-look"
-          class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
-        >
-          Оформление
-        </h2>
-        <SettingRow
-          label="Тема"
-          icon="i-lucide-moon"
-          below
-        >
-          <SegmentedControl
-            v-model="theme"
-            label="Тема"
-            :options="[{ value: 'light', label: 'Светлая' }, { value: 'dark', label: 'Тёмная' }, { value: 'system', label: 'Как в системе' }]"
-            class="lg:w-90"
-          />
-        </SettingRow>
-        <SettingRow
-          label="Компактные строки"
-          icon="i-lucide-rows-3"
-          hint="На Главной только названия страниц"
-        >
-          <USwitch
-            v-model="compactRows"
-            aria-label="Компактные строки"
-          />
-        </SettingRow>
-      </section>
-
       <!-- Данные -->
       <section
         ref="dataSection"
@@ -360,24 +332,20 @@ onMounted(() => {
           :value="data.storageError ? 'Сейчас' : undefined"
           value-tone="accent"
           opens
-          acts
           @open="copying = true"
         >
-          <div class="flex gap-2">
-            <!-- While nothing is kept, saving a copy is the way out: both in accent words, no fill (SettingsNoStore) -->
+          <!-- Desktop: one row too, the same two formats at its right end; while nothing is kept «Сейчас» says it in
+               accent words (SettingsNoStore) -->
+          <CopyMenu align="end">
             <UButton
-              :class="{ 'text-accent-ink': data.storageError }"
-              @click="saveCopy('json')"
+              variant="ghost"
+              trailing-icon="i-lucide-chevron-right"
+              aria-label="Сохранить копию"
+              :class="data.storageError ? 'text-accent-ink' : 'text-dimmed'"
             >
-              JSON
+              {{ data.storageError ? 'Сейчас' : '' }}
             </UButton>
-            <UButton
-              :class="{ 'text-accent-ink': data.storageError }"
-              @click="saveCopy('md')"
-            >
-              Markdown
-            </UButton>
-          </div>
+          </CopyMenu>
         </SettingRow>
         <SettingRow
           label="Загрузить копию"
@@ -426,6 +394,38 @@ onMounted(() => {
           Синхронизации между устройствами нет: данные переносятся экспортом. Ключ хранится здесь же и уходит только в выбранный сервис.
         </p>
       </section>
+
+      <!-- Оформление -->
+      <section aria-labelledby="s-look">
+        <h2
+          id="s-look"
+          class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
+        >
+          Оформление
+        </h2>
+        <SettingRow
+          label="Тема"
+          icon="i-lucide-moon"
+          below
+        >
+          <SegmentedControl
+            v-model="theme"
+            label="Тема"
+            :options="[{ value: 'light', label: 'Светлая' }, { value: 'dark', label: 'Тёмная' }, { value: 'system', label: 'Как в системе' }]"
+            class="lg:w-90"
+          />
+        </SettingRow>
+        <SettingRow
+          label="Компактные строки"
+          icon="i-lucide-rows-3"
+          hint="На Главной только названия страниц"
+        >
+          <USwitch
+            v-model="compactRows"
+            aria-label="Компактные строки"
+          />
+        </SettingRow>
+      </section>
     </div>
 
     <input
@@ -436,12 +436,9 @@ onMounted(() => {
       @change="onFile"
     >
     <ConnectionEditor ref="keyEditor" />
-    <ActionMenu
+    <CopyMenu
       v-if="!isDesktop"
       v-model:open="copying"
-      :items="copyItems"
-      title="Сохранить копию"
-      label="Сохранить копию"
       bare
     />
     <ImportSheet

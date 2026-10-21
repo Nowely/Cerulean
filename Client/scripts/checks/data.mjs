@@ -85,7 +85,7 @@ export default [
     await p.waitForURL(/\/settings/)
     expect(await shows(p.getByText('Изменения не сохраняются')), 'Настройки do not say «Изменения не сохраняются»')
     expect(await p.getByText(/Открой сайт в обычном окне/).count(), 'Настройки do not say what to do')
-    expect(!(await p.getByText('Работает офлайн, всё хранится в этом браузере').count()), 'the green status still shows')
+    expect(!(await p.getByText(/^Работает офлайн/).count()), 'the status line still shows')
     expect(!(await p.getByText('Не удалять при нехватке места').count()), '«Не удалять при нехватке места» shows without storage')
     expect(await p.getByText('Сейчас', { exact: true }).count(), '«Сохранить копию» does not say «Сейчас»')
   } },
@@ -114,10 +114,12 @@ export default [
     const rows = await data.locator(':scope > button, :scope > div').allInnerTexts()
     expect(/^Не удалять при нехватке места/.test(rows[0] ?? ''), `the first row of «Данные» is «${rows[0]?.split('\n')[0]}»`)
     expect(/Включить/.test(rows[0] ?? ''), 'no «Включить»')
-    expect(/Сохранить копию[\s\S]*ещё не сохранялась/.test(rows[1] ?? ''), 'the second row is not «Сохранить копию · ещё не сохранялась»')
+    // v23 (M11): before the first copy line 2 is just «JSON или Markdown»; the status line says «копии нет»
+    expect(/Сохранить копию\s*JSON или Markdown\s*$/.test(rows[1] ?? ''), 'the second row is not «Сохранить копию · JSON или Markdown»')
     expect(/Загрузить копию[\s\S]*Добавить к текущим или заменить всё/.test(rows[2] ?? ''), 'the third row is not «Загрузить копию»')
   } },
-  // 27: the monthly row under the sections; a tap downloads, × is «Не сейчас»; never once storage is persistent
+  // 27: the monthly row under the sections; a tap downloads, × is «Не сейчас»; never once storage is persistent.
+  // v23 (M11): the tap opens the one format choice first, and a pick downloads
   { id: 'v22-27-backup', device: MOBILE, run: async (p) => {
     await keeping(p, false)
     await open(p, '/')
@@ -128,6 +130,7 @@ export default [
     expect(await p.getByText(/Последняя копия \d+ [а-я]+/).count(), 'no «Последняя копия …»')
     const download = p.waitForEvent('download')
     await row.click()
+    await p.getByRole('dialog').getByRole('button', { name: /^JSON/ }).click()
     expect(/^cerulean-.*\.json$/.test((await download).suggestedFilename()), 'the copy is not a JSON file')
     expect(!(await p.getByRole('button', { name: /^Сохранить копию/ }).count()), 'the row stayed after saving')
     expect(!(await p.locator('[data-notice]').count()), 'saving a copy toasted')

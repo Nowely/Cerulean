@@ -2,12 +2,12 @@
 // The browser keeps nothing (a private window, blocked site data). The one tinted warning in the product:
 // on Главная it opens the list and leads to Настройки; there it replaces the status line and says what to do.
 // The same block on desktop (v22 desktop addendum, HomeNoStore).
+// «Сохранить копию» opens the one format choice (v23, M11).
 import { useRouter } from '#imports'
-import { useCopy } from '~/composables/useCopy'
+import CopyMenu from '../settings/CopyMenu.vue'
 
 const props = withDefaults(defineProps<{ place?: 'home' | 'settings' }>(), { place: 'home' })
 const router = useRouter()
-const { saveCopy } = useCopy()
 const home = props.place === 'home'
 </script>
 
@@ -28,15 +28,16 @@ const home = props.place === 'home'
       </template>
     </p>
     <div class="-mx-2.5 flex gap-1">
-      <UButton
-        color="primary"
-        variant="ghost"
-        size="lg"
-        class="px-2.5 font-normal"
-        @click="saveCopy()"
-      >
-        Сохранить копию
-      </UButton>
+      <CopyMenu align="start">
+        <UButton
+          color="primary"
+          variant="ghost"
+          size="lg"
+          class="px-2.5 font-normal"
+        >
+          Сохранить копию
+        </UButton>
+      </CopyMenu>
       <UButton
         v-if="home"
         color="primary"
