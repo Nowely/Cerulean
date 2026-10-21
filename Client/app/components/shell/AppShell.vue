@@ -7,6 +7,7 @@ import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import { useFind } from '~/composables/useFind'
 import { useViewport } from '~/composables/useViewport'
+import { useOpenedTracking } from '~/composables/useOpened'
 import { FOCUS_PROXY_ID } from '~/composables/useCreatePage'
 import { useLater } from '~/composables/useLater'
 import { useNotify } from '~/composables/useNotify'
@@ -36,6 +37,8 @@ const ui = useUiStore()
 const data = useDataStore()
 const notify = useNotify()
 useViewport()
+// «Открыто недавно» in Поиск follows what is opened, from anywhere (v24, item 16)
+useOpenedTracking()
 
 const later = useLater()
 onMounted(later.loadWhenIdle)
