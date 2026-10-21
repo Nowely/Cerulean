@@ -159,7 +159,8 @@ export default [
     const lines = p.locator('li .text-meta')
     for (const l of await lines.all()) expect(await l.evaluate(e => e.scrollWidth <= e.clientWidth + 1), `«${await l.textContent()}» is cut`)
     expect(await shows(p.getByRole('button', { name: 'Вернуть' })), 'no «Вернуть»')
-    expect(await shows(p.getByRole('button', { name: /^Удалить навсегда «/ })), 'no «Удалить»')
+    // v23 (B7, M12): «Удалить навсегда» moved into the row's faint «⋯»
+    expect(await shows(p.getByRole('button', { name: /^Ещё для «/ })), 'no row «⋯»')
     await p.getByRole('button', { name: 'Очистить' }).click()
     expect(await shows(p.getByText(/\d+ страниц[аы]? \(\d+ запис[а-я]*\) и \d+ запис[а-я]* удалятся навсегда/)), 'the confirm does not count the records inside the page')
   } },

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Корзина: deleted pages and records, kept for 30 days
+// Корзина: deleted pages and records, kept for 30 days. A row keeps «Вернуть»; its faint «⋯» has «Вернуть» above
+// «Удалить навсегда», which asks first (v23, B7, M12)
 import { computed } from 'vue'
 import { useHead, useRouter } from '#imports'
 import type { Page, Rec } from '~/domain/types'
@@ -13,6 +14,7 @@ import AppScreen from '~/components/shell/AppScreen.vue'
 import DeskHeader from '~/components/shell/DeskHeader.vue'
 import BackHeader from '~/components/shell/BackHeader.vue'
 import PageTile from '~/components/common/PageTile.vue'
+import ActionMenu, { type MenuItem } from '~/components/overlay/ActionMenu.vue'
 
 useHead({ title: 'Корзина · Cerulean' })
 const data = useDataStore()
@@ -35,10 +37,10 @@ function inside(page: Page): number {
   return Object.values(data.records).filter(r => r.pageId === page.id && !r.parentId && !r.deletedAt).length
 }
 
-/** «Задачи · удалено вчера», «страница · 4 записи · удалено 14 окт»: only the day; it wraps after a «·», never inside a date */
+/** «Задачи · удалено вчера», «4 записи · удалено 14 окт» (a page: its glyph says so): only the day, on one line; it wraps after a «·», never inside a date */
 function detail(i: Item): string {
   const when = `удалено ${formatDayShort(i.at, now.value).replace(/ /g, '\u00a0')}`
-  if (i.kind === 'page') return `страница · ${count(inside(i.page), RECORD_FORMS).replace(' ', '\u00a0')} · ${when}`
+  if (i.kind === 'page') return `${count(inside(i.page), RECORD_FORMS).replace(' ', '\u00a0')} · ${when}`
   const page = data.pages[i.rec.pageId]
   return `${!page || page.deletedAt ? 'страница удалена' : page.title || 'Без названия'} · ${when}`
 }
@@ -57,19 +59,33 @@ function restore(i: Item) {
 
 /** A page says what goes with it: «Страница и 4 записи в ней удалятся навсегда» */
 function purgeText(i: Item): string {
-  if (i.kind !== 'page') return 'Вернуть будет нельзя.'
+  if (i.kind !== 'page') return 'Запись удалится навсегда. Вернуть будет нельзя.'
   const n = inside(i.page)
   return `${n ? `Страница и ${count(n, RECORD_FORMS)} в ней удалятся` : 'Страница удалится'} навсегда. Вернуть будет нельзя.`
 }
 
+const nameOf = (i: Item) => i.kind === 'page' ? i.page.title || 'Без названия' : i.rec.text
+
+/** After the confirm the row goes and one plain line says so: nothing to take back, the confirm said it */
 function purge(i: Item) {
+  const name = nameOf(i)
   ui.confirm({
-    title: `Удалить «${i.kind === 'page' ? i.page.title || 'Без названия' : i.rec.text}» навсегда?`,
+    title: `Удалить «${name}» навсегда?`,
     text: purgeText(i),
     action: 'Удалить навсегда',
-    run: () => i.kind === 'page' ? data.purgePages([i.page.id]) : data.purgeRecords([i.rec.id])
+    run: () => {
+      if (i.kind === 'page') data.purgePages([i.page.id])
+      else data.purgeRecords([i.rec.id])
+      notify(`«${name}» удалено навсегда`, undefined, 4000)
+    }
   })
 }
+
+/** The row's «⋯»: the way back first, in accent ink, then the heavy one in warn */
+const menuOf = (i: Item): MenuItem[][] => [[
+  { label: 'Вернуть', icon: 'i-lucide-undo-2', accent: true, onSelect: () => restore(i) },
+  { label: 'Удалить навсегда', icon: 'i-lucide-trash-2', danger: true, onSelect: () => purge(i) }
+]]
 
 /** «1 страница (4 записи) и 2 записи»: the count says what goes with a page too */
 const what = computed(() => {
@@ -137,12 +153,12 @@ function empty() {
     </template>
 
     <div class="mx-auto w-full pb-8 lg:max-w-180 lg:px-8 lg:pt-7">
-      <h1 class="px-5 pt-1 text-title text-highlighted lg:px-0 lg:pt-0">
+      <h1 class="px-4 pt-1 text-title text-highlighted lg:px-0 lg:pt-0">
         Корзина
       </h1>
       <p
         v-if="items.length"
-        class="px-5 pt-1.5 pb-3 text-15 text-toned lg:px-0 lg:pt-2 lg:pb-4 lg:text-sm"
+        class="px-4 pt-1.5 pb-3 text-15 text-toned lg:px-0 lg:pt-2 lg:pb-4 lg:text-sm"
       >
         Удалённое хранится 30 дней, потом исчезает само
       </p>
@@ -171,10 +187,13 @@ function empty() {
             />
           </span>
           <span class="min-w-0 flex-1 py-2">
-            <span class="block truncate text-record text-highlighted">{{ i.kind === 'page' ? (i.page.title || 'Без названия') : i.rec.text }}</span>
+            <span class="block truncate text-record text-highlighted"><span
+              v-if="i.kind === 'page'"
+              class="sr-only"
+            >Страница </span>{{ nameOf(i) }}</span>
             <span class="block text-meta text-toned">{{ detail(i) }}</span>
           </span>
-          <span class="flex shrink-0 gap-1">
+          <span class="flex shrink-0 items-center gap-1">
             <UButton
               color="primary"
               variant="ghost"
@@ -183,15 +202,12 @@ function empty() {
             >
               Вернуть
             </UButton>
-            <UButton
-              color="error"
-              variant="ghost"
-              :aria-label="`Удалить навсегда «${i.kind === 'page' ? (i.page.title || 'Без названия') : i.rec.text}»`"
-              class="px-1.5 text-15 font-normal"
-              @click="purge(i)"
-            >
-              Удалить
-            </UButton>
+            <ActionMenu
+              :items="menuOf(i)"
+              :title="nameOf(i)"
+              :caption="detail(i)"
+              :label="`Ещё для «${nameOf(i)}»`"
+            />
           </span>
         </li>
       </ul>
