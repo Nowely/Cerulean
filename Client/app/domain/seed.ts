@@ -18,6 +18,7 @@ export function firstRun(now = Date.now()): Dataset {
   return { pages: [inbox!, today!], records: [], sections: [], entries: [] }
 }
 
+/** Only Покупки (green) and Книги (purple) have a colour chosen; every other page is «Без цвета» (v23) */
 export function demo(now = Date.now()): Dataset {
   const day = dayKey(now)
   /** A moment today (or `shift` days away) at h:m */
@@ -69,7 +70,6 @@ export function demo(now = Date.now()): Dataset {
   const tasks = newPage({
     title: 'Задачи',
     glyph: 'check',
-    color: 'blue',
     sectionId: personal.id,
     order: 0,
     template: 'todo',
@@ -93,7 +93,6 @@ export function demo(now = Date.now()): Dataset {
   const goals = newPage({
     title: 'Цели',
     glyph: 'target',
-    color: 'pink',
     sectionId: personal.id,
     order: 1,
     template: 'goal',
@@ -109,7 +108,6 @@ export function demo(now = Date.now()): Dataset {
   const ideas = newPage({
     title: 'Идеи',
     glyph: 'bulb',
-    color: 'yellow',
     sectionId: personal.id,
     order: 2,
     hasDone: false,
@@ -138,7 +136,6 @@ export function demo(now = Date.now()): Dataset {
   const chores = newPage({
     title: 'Дела по дому',
     glyph: 'home',
-    color: 'brown',
     sectionId: home.id,
     order: 1,
     template: 'todo',
@@ -187,7 +184,6 @@ export function demo(now = Date.now()): Dataset {
   const marathon = add(goals, 'Полумарафон к маю', {
     ...chat(9, 30, -7),
     glyph: 'flag',
-    color: 'pink',
     favorite: 1,
     due: { date: '2027-05-18' },
     values: { [status.id]: status.options![0]!.id },
@@ -223,7 +219,6 @@ export function demo(now = Date.now()): Dataset {
   const dacha = newPage({
     title: 'Поездка на дачу',
     glyph: 'leaf',
-    color: 'green',
     sectionId: home.id,
     order: 2,
     template: 'todo',

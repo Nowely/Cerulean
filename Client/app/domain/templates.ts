@@ -8,7 +8,6 @@ export interface Template {
   key: TemplateKey
   name: string
   glyph: Glyph
-  color: PageColor
   description: string
   hasDone: boolean
   noun: Page['noun']
@@ -52,13 +51,12 @@ export function shoppingProps(): PropDef[] {
   ]
 }
 
-/** The four starters, in the same order on first run and on a new page */
+/** The four starters, in the same order on first run and on a new page. A starter sets no colour (v23): a page is «Без цвета» until one is chosen */
 export const TEMPLATES: Template[] = [
   {
     key: 'shop',
     name: 'Покупки',
     glyph: 'basket',
-    color: 'green',
     description: 'что купить: еда, бытовое',
     hasDone: true,
     noun: ['купить', 'купить', 'купить'],
@@ -76,7 +74,6 @@ export const TEMPLATES: Template[] = [
     key: 'todo',
     name: 'Задачи',
     glyph: 'check',
-    color: 'blue',
     description: 'дела и сроки',
     hasDone: true,
     noun: ['дело', 'дела', 'дел'],
@@ -90,7 +87,6 @@ export const TEMPLATES: Template[] = [
     key: 'goal',
     name: 'Цели',
     glyph: 'target',
-    color: 'pink',
     description: 'цели с подпунктами',
     hasDone: true,
     noun: ['цель', 'цели', 'целей'],
@@ -101,7 +97,6 @@ export const TEMPLATES: Template[] = [
     key: 'note',
     name: 'Идеи',
     glyph: 'bulb',
-    color: 'yellow',
     description: 'мысли, ссылки, черновики',
     hasDone: false,
     noun: ['идея', 'идеи', 'идей'],
@@ -122,7 +117,6 @@ export function applyTemplate(page: Page, key: TemplateKey): Partial<Page> {
     template: key,
     title: page.title.trim() ? page.title : t.name,
     glyph: t.glyph,
-    color: t.color,
     description: page.description.trim() ? page.description : t.description,
     hasDone: t.hasDone,
     noun: t.noun,

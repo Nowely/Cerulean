@@ -50,7 +50,6 @@ const description = computed({
         :key="t.key"
         :label="t.name"
         :glyph="t.glyph"
-        :color="t.color"
         :selected="page.template === t.key"
         @click="data.updatePage(page.id, applyTemplate(page, t.key))"
       />

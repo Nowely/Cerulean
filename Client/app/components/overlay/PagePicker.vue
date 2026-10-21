@@ -10,6 +10,7 @@ import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
 import { capitalize, fold } from '~/domain/text'
 import { choosable as pickable, pickerGroups, type PickGroup } from '~/domain/picker'
+import { pageColor } from '~/domain/look'
 import PageTile from '../common/PageTile.vue'
 import { UDrawer, UModal, UPopover } from '#components'
 
@@ -201,7 +202,11 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
                 :class="row"
                 @click="pick(thisPage.id)"
               >
-                <PageTile :glyph="thisPage.glyph" />
+                <PageTile
+                  :glyph="thisPage.glyph"
+                  :color="pageColor(thisPage)"
+                  tint
+                />
                 <span class="min-w-0 flex-1 truncate text-highlighted">Эта страница</span>
                 <UIcon
                   v-if="ui.picker?.chosen === thisPage.id"
@@ -234,7 +239,11 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
                   :aria-current="p.id === ui.picker?.current || undefined"
                   @click="pick(p.id)"
                 >
-                  <PageTile :glyph="p.glyph" />
+                  <PageTile
+                    :glyph="p.glyph"
+                    :color="pageColor(p)"
+                    tint
+                  />
                   <span class="min-w-0 flex-1 truncate">{{ p.title || 'Без названия' }}</span>
                   <UIcon
                     v-if="p.id === ui.picker?.current || p.id === ui.picker?.chosen"

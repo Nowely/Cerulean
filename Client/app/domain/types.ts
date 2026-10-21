@@ -21,7 +21,7 @@ export type PropType = 'text' | 'number' | 'select' | 'date' | 'relation'
 export interface PropOption {
   id: Id
   name: string
-  /** Its dot in the property editor and the value sheet; older data has none and reads one by position */
+  /** Its pill wherever the value shows; older data has none and reads one by position */
   color?: PageColor
 }
 
@@ -79,7 +79,8 @@ export interface Page {
   kind: PageKind
   title: string
   glyph: Glyph | null
-  color: PageColor
+  /** Chosen in «Значок и цвет»; null is «Без цвета» (read through `pageColor`: older data has a grey that means none) */
+  color: PageColor | null
   sectionId: Id | null
   order: number
   /** Pages with «Готово» show checkboxes, the rest show a dot */
@@ -122,6 +123,7 @@ export interface Rec {
   due: Due | null
   /** A record with its own icon shows its tile instead of the checkbox or dot */
   glyph?: Glyph | null
+  /** Not read since v23: a record's own tile is neutral (older demo data has one) */
   color?: PageColor | null
   tags: Tag[]
   /** Pages Авто would offer for a record tagged «уточнить» */
@@ -215,6 +217,10 @@ export type ConnectionField = 'provider' | 'apiKey' | 'baseUrl' | 'modelId' | 'k
 /** How this browser keeps the data: about this browser, not the data, so never in an export either */
 export type KeepingField = 'copiedAt' | 'copyHiddenAt' | 'startedAt' | 'persistAsked'
 
+/**
+ * Page glyphs in Lucide's stroke. The first 35 are what «Значок и цвет» offers (v23, M10); the last ones are
+ * kept so older pages still draw (Входящие's tray, and icons the picker offered before v23)
+ */
 export const GLYPHS = {
   basket: 'i-lucide-shopping-basket',
   check: 'i-lucide-square-check',
@@ -223,24 +229,40 @@ export const GLYPHS = {
   flag: 'i-lucide-flag',
   target: 'i-lucide-target',
   book: 'i-lucide-book',
-  inbox: 'i-lucide-inbox',
   gift: 'i-lucide-gift',
   cal: 'i-lucide-calendar',
   doc: 'i-lucide-file-text',
+  bag: 'i-lucide-shopping-bag',
+  car: 'i-lucide-car',
+  plane: 'i-lucide-plane',
+  phone: 'i-lucide-smartphone',
+  pill: 'i-lucide-pill',
+  paw: 'i-lucide-paw-print',
+  plant: 'i-lucide-sprout',
+  tool: 'i-lucide-wrench',
+  key: 'i-lucide-key-round',
+  cup: 'i-lucide-coffee',
+  money: 'i-lucide-banknote',
+  // Lucide has no pram: the mockup's own, drawn in the same stroke (app/assets/icons)
+  stroller: 'cer:stroller',
+  music: 'i-lucide-music',
+  camera: 'i-lucide-camera',
   heart: 'i-lucide-heart',
+  gym: 'i-lucide-dumbbell',
+  work: 'i-lucide-briefcase',
+  pin: 'i-lucide-map-pin',
+  film: 'i-lucide-film',
+  sun: 'i-lucide-sun',
+  study: 'i-lucide-graduation-cap',
+  globe: 'i-lucide-globe',
+  food: 'i-lucide-utensils',
+  moon: 'i-lucide-moon',
+  hills: 'i-lucide-mountain',
+  inbox: 'i-lucide-inbox',
   star: 'i-lucide-star',
   run: 'i-lucide-footprints',
-  plane: 'i-lucide-plane',
-  car: 'i-lucide-car',
   wallet: 'i-lucide-wallet',
-  pill: 'i-lucide-pill',
-  music: 'i-lucide-music',
-  film: 'i-lucide-clapperboard',
-  work: 'i-lucide-briefcase',
-  study: 'i-lucide-graduation-cap',
   leaf: 'i-lucide-leaf',
-  paw: 'i-lucide-paw-print',
-  tool: 'i-lucide-wrench',
   cook: 'i-lucide-cooking-pot',
   people: 'i-lucide-users',
   pen: 'i-lucide-pen-line'
@@ -248,34 +270,44 @@ export const GLYPHS = {
 
 export type Glyph = keyof typeof GLYPHS
 
-/** Names read by screen readers in the icon picker */
-export const GLYPH_LABELS: Record<Glyph, string> = {
-  basket: 'Корзина покупок',
-  check: 'Галочка',
-  home: 'Дом',
-  bulb: 'Лампочка',
-  flag: 'Флаг',
-  target: 'Мишень',
-  book: 'Книга',
-  inbox: 'Входящие',
-  gift: 'Подарок',
-  cal: 'Календарь',
-  doc: 'Документ',
-  heart: 'Сердце',
-  star: 'Звезда',
-  run: 'Следы',
-  plane: 'Самолёт',
-  car: 'Машина',
-  wallet: 'Кошелёк',
-  pill: 'Таблетка',
-  music: 'Музыка',
-  film: 'Кино',
-  work: 'Портфель',
-  study: 'Учёба',
-  leaf: 'Лист',
-  paw: 'Лапа',
-  tool: 'Ключ',
-  cook: 'Кастрюля',
-  people: 'Люди',
-  pen: 'Ручка'
-}
+/**
+ * «Значок и цвет»: the icons offered, six to a row, each with the Russian words that find it; the first word is its
+ * name for screen readers (v23, A9, M10)
+ */
+export const GLYPH_WORDS: [Glyph, string][] = [
+  ['basket', 'Корзинка покупки магазин еда продукты'],
+  ['check', 'Дела задачи галочка список'],
+  ['home', 'Дом квартира ремонт дача'],
+  ['bulb', 'Идея лампочка мысль'],
+  ['flag', 'Флаг цель забег финиш'],
+  ['target', 'Мишень цель план'],
+  ['book', 'Книга чтение учёба'],
+  ['gift', 'Подарок праздник день рождения'],
+  ['cal', 'Календарь дата встреча'],
+  ['doc', 'Документ заметка текст файл'],
+  ['bag', 'Сумка магазин покупки одежда'],
+  ['car', 'Машина авто дорога ремонт'],
+  ['plane', 'Самолёт поездка отпуск путешествие'],
+  ['phone', 'Телефон звонок связь'],
+  ['pill', 'Таблетка лекарство здоровье врач аптека'],
+  ['paw', 'Лапа питомец кошка собака'],
+  ['plant', 'Растение цветы сад дача'],
+  ['tool', 'Инструмент ремонт мастер'],
+  ['key', 'Ключ квартира замок'],
+  ['cup', 'Чашка кофе чай кафе'],
+  ['money', 'Деньги бюджет финансы счета'],
+  ['stroller', 'Коляска ребёнок дети малыш'],
+  ['music', 'Музыка песни концерт'],
+  ['camera', 'Камера фото снимки'],
+  ['heart', 'Сердце любовь семья'],
+  ['gym', 'Гантели спорт тренировки зал'],
+  ['work', 'Портфель работа офис проект'],
+  ['pin', 'Место адрес карта'],
+  ['film', 'Плёнка кино фильмы сериалы'],
+  ['sun', 'Солнце лето отдых погода'],
+  ['study', 'Учёба школа курсы'],
+  ['globe', 'Глобус мир языки'],
+  ['food', 'Еда рецепты кухня ужин'],
+  ['moon', 'Луна сон ночь'],
+  ['hills', 'Горы поход природа']
+]

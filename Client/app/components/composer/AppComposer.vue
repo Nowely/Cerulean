@@ -6,6 +6,7 @@
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { refDebounced, useOnline } from '@vueuse/core'
 import { GLYPHS, type Entry, type Id } from '~/domain/types'
+import { pageColor } from '~/domain/look'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
@@ -120,7 +121,7 @@ const guessLine = computed(() => {
 
 const chip = computed(() => {
   if (destPage.value) {
-    return { label: untitled.value ? 'Эта страница' : destPage.value.title || 'Без названия', icon: GLYPHS[destPage.value.glyph ?? 'doc'] }
+    return { label: untitled.value ? 'Эта страница' : destPage.value.title || 'Без названия', icon: GLYPHS[destPage.value.glyph ?? 'doc'], page: true, color: pageColor(destPage.value) }
   }
   return { label: 'Авто', icon: 'cer:auto' }
 })

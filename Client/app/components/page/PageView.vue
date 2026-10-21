@@ -16,6 +16,7 @@ import { pageSubline, dueToday } from '~/domain/summary'
 import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView, nameForLayout } from '~/domain/templates'
 import { pageNamed } from '~/domain/rules'
+import { pageColor } from '~/domain/look'
 import PageTile from '../common/PageTile.vue'
 import TitleField from '../common/TitleField.vue'
 import GlyphPicker from './GlyphPicker.vue'
@@ -157,6 +158,8 @@ function onTitleFocus(v: boolean) {
   emit('editing', v)
 }
 const glyphOpen = ref(false)
+/** Desktop: «Значок и цвет» opened from the page «⋯» stands at that «⋯» */
+const glyphAnchor = ref<HTMLElement | null>(null)
 // «Переименовать» and «Значок и цвет» from a «⋯», here or on Главная
 // It waits for the field itself: a page opened in the same tap mounts after its setup has run
 watch([() => ui.focusTitle, titleInput], async ([id, field]) => {
@@ -168,8 +171,13 @@ watch([() => ui.focusTitle, titleInput], async ([id, field]) => {
 watch(() => ui.openGlyph, (id) => {
   if (!full.value || id !== props.page.id) return
   ui.openGlyph = null
+  // The menu has closed and given focus back to its «⋯»
+  glyphAnchor.value = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null
   glyphOpen.value = true
 }, { immediate: true })
+watch(glyphOpen, (v) => {
+  if (!v) glyphAnchor.value = null
+})
 
 function openRecord(rec: Rec) {
   if (full.value) void router.push(`/r/${rec.id}`)
@@ -220,7 +228,9 @@ const emptyText = computed(() => {
         v-if="full && setup && !page.glyph"
         v-model:open="glyphOpen"
         :glyph="page.glyph"
-        :color="page.color"
+        :color="pageColor(page)"
+        :title="page.title || 'Без названия'"
+        :anchor="glyphAnchor"
         @change="p => data.updatePage(page.id, p)"
       >
         <button
@@ -235,8 +245,9 @@ const emptyText = computed(() => {
           v-if="full && (page.glyph || !setup) && page.kind === 'page'"
           v-model:open="glyphOpen"
           :glyph="page.glyph"
-          :color="page.color"
-          removable
+          :color="pageColor(page)"
+          :title="page.title || 'Без названия'"
+          :anchor="glyphAnchor"
           @change="p => data.updatePage(page.id, p)"
         >
           <button
@@ -246,7 +257,7 @@ const emptyText = computed(() => {
           >
             <PageTile
               :glyph="page.glyph"
-              :color="page.color"
+              :color="pageColor(page)"
               size="page"
               tile
             />
@@ -255,7 +266,7 @@ const emptyText = computed(() => {
         <PageTile
           v-else-if="page.glyph"
           :glyph="page.glyph"
-          :color="page.color"
+          :color="pageColor(page)"
           size="page"
           tile
         />

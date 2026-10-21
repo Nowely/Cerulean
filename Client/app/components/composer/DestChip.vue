@@ -1,8 +1,10 @@
 <script setup lang="ts">
 // The composer's «Куда» button: no plate, at most 164px, in accent-ink. The destination's glyph comes first:
-// Авто's fork, or the page's own glyph («Задачи» with its checkbox), so a glance tells where a send goes.
-// «Эта страница ⌄» on a new untitled page.
-defineProps<{ label: string, icon: string }>()
+// Авто's fork in the chip's ink, or the page's own glyph («Задачи» with its checkbox), muted or in the page's chosen
+// colour (v23), so a glance tells where a send goes. «Эта страница ⌄» on a new untitled page.
+import type { PageColor } from '~/domain/types'
+
+defineProps<{ label: string, icon: string, page?: boolean, color?: PageColor | null }>()
 </script>
 
 <template>
@@ -13,6 +15,8 @@ defineProps<{ label: string, icon: string }>()
     <UIcon
       :name="icon"
       class="-ml-0.5 size-4 shrink-0"
+      :class="page && !color ? 'text-toned' : ''"
+      :style="page && color ? { color: `var(--c-${color})` } : undefined"
     />
     <span class="truncate">{{ label }}</span>
     <UIcon

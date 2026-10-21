@@ -11,6 +11,7 @@ import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useFind } from '~/composables/useFind'
 import { pageBadge, recordBadge, type Badge } from '~/domain/summary'
+import { pageColor } from '~/domain/look'
 import PageTile from '../common/PageTile.vue'
 import CountBadge from '../common/CountBadge.vue'
 import SectionMenu from '../home/SectionMenu.vue'
@@ -155,7 +156,9 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
               >
                 <PageTile
                   :glyph="f.page.glyph"
+                  :color="pageColor(f.page)"
                   :size="16"
+                  tint
                 />
                 <span class="min-w-0 flex-1 truncate">{{ f.page.title || 'Без названия' }}</span>
                 <CountBadge
@@ -211,7 +214,9 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
             >
               <PageTile
                 :glyph="p.glyph"
+                :color="pageColor(p)"
                 :size="16"
+                tint
               />
               <span
                 class="min-w-0 flex-1 truncate"
@@ -282,7 +287,9 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
             >
               <PageTile
                 :glyph="p.glyph"
+                :color="pageColor(p)"
                 :size="16"
+                tint
               />
               <span
                 class="min-w-0 flex-1 truncate"

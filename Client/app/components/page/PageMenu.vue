@@ -10,6 +10,7 @@ import { useNotify } from '~/composables/useNotify'
 import { usePropSheets } from '~/composables/usePropSheets'
 import { toMarkdown } from '~/domain/export'
 import { propList } from '~/domain/props'
+import { pageColor } from '~/domain/look'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import SectionSheet from './SectionSheet.vue'
 import PageTile from '../common/PageTile.vue'
@@ -104,7 +105,7 @@ const items = computed<MenuItem[][]>(() => {
     <template #head>
       <PageTile
         :glyph="page.glyph"
-        :color="page.color"
+        :color="pageColor(page)"
         :size="24"
         tile
       />

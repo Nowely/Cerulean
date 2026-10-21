@@ -10,6 +10,7 @@ import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { pageBadge, pageSummary, recordBadge, recordSummary, type Badge, type Summary } from '~/domain/summary'
+import { pageColor } from '~/domain/look'
 import PageTile from '../common/PageTile.vue'
 import CountBadge from '../common/CountBadge.vue'
 import DotsButton from '../common/DotsButton.vue'
@@ -85,7 +86,9 @@ function click(e: MouseEvent) {
       <span class="relative flex size-4.5 shrink-0 items-center justify-center">
         <PageTile
           :glyph="glyph"
+          :color="pageColor(page)"
           :size="compact ? 16 : 18"
+          tint
         />
         <span
           v-if="dot"
