@@ -58,7 +58,7 @@ export interface BodyActions {
   link: () => void
   applyLink: (href: string) => void
   cancelLink: () => void
-  /** «Сделать подпунктом» (records only) */
+  /** The ring: «Сделать подпунктом» on a record, «Сделать записью» on a page note (v24) */
   toSub: () => void
   pickSlash: (item: SlashItem) => void
   /** Back to the text after «Связать» closed */
@@ -70,8 +70,10 @@ export interface BodySession {
   surface: BodySurface
   /** The editor's root element: a tap there keeps editing */
   root: HTMLElement
-  /** «Сделать подпунктом»: a record's body only */
+  /** The ring of the selection face: a record's body or a page's note */
   canSub: boolean
+  /** What the ring does there, its label and tooltip: «Сделать подпунктом» or «Сделать записью» (v24) */
+  subLabel: string
   actions: BodyActions
 }
 
