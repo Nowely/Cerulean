@@ -55,6 +55,7 @@ watch(() => data.entries.length, toBottom)
       <BackHeader
         to="/"
         label="Главная"
+        title="Журнал"
       >
         <UButton
           icon="i-lucide-search"

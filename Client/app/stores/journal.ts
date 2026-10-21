@@ -198,8 +198,9 @@ export const useJournalStore = defineStore('journal', () => {
    * Sends a line from a composer in Авто or to a chosen page.
    * `today`: the composer of «Сегодня», records without a date get today's.
    * `onStart`: the line exists and is being decided, so a screen can show «Разбирается…» before the answer.
+   * `record`: written down even when it reads as a search («Записать «…»» in Поиск, v22 N19).
    */
-  async function send(text: string, dest: 'auto' | Id, opts: { today?: boolean, onStart?: (entry: Entry) => void } = {}): Promise<Entry> {
+  async function send(text: string, dest: 'auto' | Id, opts: { today?: boolean, record?: boolean, onStart?: (entry: Entry) => void } = {}): Promise<Entry> {
     const t = text.trim()
     const entry = data.addEntry(newEntry({ at: Date.now(), text: t, kind: 'pending' }))
     opts.onStart?.(entry)

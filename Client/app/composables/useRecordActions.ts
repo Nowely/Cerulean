@@ -35,7 +35,8 @@ export function useRecordActions() {
           data.moveRecords(ids.filter(id => data.records[id]?.pageId !== target.id), target.id)
           return target
         })
-        if (target) notify(`Перемещено в ${target.title || 'Без названия'}`, { label: 'Отменить', run: undo })
+        // «Молоко → Задачи», «3 записи → Задачи»: the bare place name, no «в» (v22, N12)
+        if (target) notify(`${ids.length === 1 ? first.text : count(ids.length, RECORD_FORMS)} → ${target.title || 'Без названия'}`, { label: 'Отменить', run: undo })
       }
     })
   }

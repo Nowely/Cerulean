@@ -101,6 +101,13 @@ watch(() => ui.notice, (n) => {
   if (n && !n.keepCard) shown.value = false
 })
 
+// «Записать «гараж»» in Поиск: Главная sends the words like any send, and the receipt docks here (v22, N19)
+watch([() => ui.outbox, composer], ([t, c]) => {
+  if (!t || !c || props.mode !== 'auto' || props.pageId) return
+  ui.outbox = null
+  void c.write(t)
+}, { immediate: true })
+
 function onUndone(e: Entry) {
   ids.value = ids.value.filter(id => id !== e.id)
   if (!entries.value.length) shown.value = false

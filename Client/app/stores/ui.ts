@@ -13,7 +13,7 @@ export interface Picker {
   title: string
   /** The record text under the title */
   subtitle?: string
-  /** The page the records are on now: shown as current, not offered */
+  /** The page the records are on now: marked «сейчас здесь» once, in its section; a tap on it only closes */
   current?: Id
   /** «Похоже на»: Авто's guesses, on top */
   guesses?: Id[]
@@ -24,6 +24,8 @@ export interface Picker {
   thisPage?: Id
   /** The page the composer is aimed at now: a check on its row */
   chosen?: Id
+  /** Desktop: the button it opens at, as a popover (without one, a dialog). By default the one that was just pressed */
+  anchor?: HTMLElement | null
   run: (choice: PageChoice) => void
 }
 
@@ -36,6 +38,26 @@ export interface Notice {
   duration: number
   /** Said about the docked card itself («ИИ снова не ответил»): the card stays under it */
   keepCard?: boolean
+}
+
+/** Where the last press landed, so a picker opens at the button that asked for it */
+let pressed: Element | null = null
+if (typeof document !== 'undefined') {
+  document.addEventListener('pointerdown', (e) => {
+    pressed = e.target instanceof Element ? e.target : null
+  }, true)
+}
+
+/**
+ * The button a picker was asked from: the one just pressed while it is still on screen, else the focused one
+ * (a menu item is gone by then, and focus is back on the menu's own button)
+ */
+function anchorNow(): HTMLElement | null {
+  if (typeof document === 'undefined') return null
+  const hit = pressed?.isConnected ? pressed.closest<HTMLElement>('button, a, [role="button"]') : null
+  if (hit) return hit
+  const focused = document.activeElement
+  return focused instanceof HTMLElement && focused !== document.body ? focused : null
 }
 
 export interface Confirm {
@@ -56,6 +78,8 @@ export const useUiStore = defineStore('ui', () => {
   const renameSection = ref<Id | null>(null)
   /** Text Поиск opens with («Найти» on the toast after a question was written on a page) */
   const findQuery = ref('')
+  /** «Записать «гараж»» in Поиск: Главная's composer sends it as typed and docks the receipt there (v22, N19) */
+  const outbox = ref<string | null>(null)
   /** «Отменить» on a receipt: its text goes back to the composer on screen, aimed for that one send */
   const refill = ref<{ text: string, aim: Id | 'auto' } | null>(null)
   /** The notice on screen; a new one replaces it, and a docked card goes when one shows (useNotify) */
@@ -73,10 +97,13 @@ export const useUiStore = defineStore('ui', () => {
     openGlyph,
     renameSection,
     findQuery,
+    outbox,
     refill,
     notice,
     docks,
-    pick: (p: Picker) => { picker.value = p },
+    pick: (p: Picker) => {
+      picker.value = { ...p, anchor: p.anchor === undefined ? anchorNow() : p.anchor }
+    },
     confirm: (c: Confirm) => { confirming.value = c }
   }
 })

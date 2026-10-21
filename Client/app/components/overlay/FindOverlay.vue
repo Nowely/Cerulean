@@ -1,7 +1,9 @@
 <script setup lang="ts">
 // Поиск. A full screen on a phone; on desktop a Ctrl K dialog with the found item previewed on the right.
 // Both use the same rows: without a query the six records added last, with one «Страницы» then «Записи».
-// A result opens as a preview (it is a link, not navigation); «Открыть» or ↵ opens it full.
+// A result opens as a preview (it is a link, not navigation); «Открыть» or ↵ opens it full. Поиск stays in
+// history with its query and section (?find=…&in=…), so back from a result returns to the same results (v22, G11).
+// Nothing found offers «Искать везде» with a section chosen, and «Записать «…»», a send from Главная (v22, N19).
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from '#imports'
 import type { Id } from '~/domain/types'
@@ -28,9 +30,10 @@ const route = useRoute()
 const router = useRouter()
 
 const q = ref('')
-/** The text Поиск opens with on a phone */
-const initial = ref('')
-const sectionId = ref<Id | 'all'>('all')
+/** One section, or every section */
+const sectionId = ref<Id | null>(null)
+/** Back from a result: Поиск shows what it showed, and the phone keeps the keyboard down */
+const restored = ref(false)
 const active = ref(0)
 const input = useTemplateRef<HTMLInputElement>('input')
 
@@ -42,26 +45,37 @@ const open = computed({
 })
 watch(open, async (v) => {
   if (!v) return
-  q.value = ui.findQuery
-  initial.value = ui.findQuery
+  const kept = route.query.find
+  const inSection = route.query.in
+  restored.value = typeof kept === 'string' && !!kept
+  q.value = typeof kept === 'string' && kept ? kept : ui.findQuery
+  sectionId.value = typeof inSection === 'string' && data.sections[inSection] ? inSection : null
   ui.findQuery = ''
   active.value = 0
   await nextTick()
   input.value?.focus()
-})
+}, { immediate: true })
 
 const sections = computed(() => [
   { label: 'Все секции', value: 'all' },
   ...data.sectionList.map(s => ({ label: s.name, value: s.id }))
 ])
+/** The desktop select says 'all' for «Все секции» */
+const sectionValue = computed({
+  get: () => sectionId.value ?? 'all',
+  set: (v: string) => {
+    sectionId.value = v === 'all' ? null : v
+  }
+})
+const section = computed(() => sectionId.value ? data.sections[sectionId.value] : undefined)
 
 const groups = computed<{ label: string, hits: Hit[] }[]>(() => {
-  const inSection = sectionId.value === 'all' ? null : sectionId.value
+  const inSection = sectionId.value
   if (!q.value.trim()) {
     const recs = lastAdded(data.liveRecords.filter(r => !inSection || data.pages[r.pageId]?.sectionId === inSection))
     return [{ label: 'Недавние записи', hits: recs.map(rec => ({ kind: 'record' as const, rec })) }]
   }
-  const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: false, sectionId: sectionId.value === 'all' ? null : sectionId.value })
+  const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: false, sectionId: inSection })
   return [
     { label: 'Страницы', hits: hits.filter(h => h.kind === 'page') },
     { label: 'Записи', hits: hits.filter(h => h.kind === 'record') }
@@ -72,20 +86,40 @@ watch(flat, () => {
   active.value = 0
 })
 const current = computed(() => flat.value[active.value])
+const none = computed(() => !!q.value.trim() && !flat.value.length)
 
 const targetOf = (h: Hit): Target => h.kind === 'page' ? { kind: 'page', id: h.page.id } : { kind: 'record', id: h.rec.id }
 
-/** Leaves Поиск in one history step, so back returns to where it was opened */
-function go(h: Hit, how: 'peek' | 'full') {
-  const { find: _, peek: __, ...query } = route.query
+/**
+ * Opens a result and keeps Поиск one step back with its query and section: a page or record pushes its screen
+ * (which says «‹ Поиск»); on a phone a preview opens over Поиск and closes onto it; on desktop the panel takes
+ * the dialog's place, and closing the panel brings the dialog back
+ */
+async function go(h: Hit, how: 'peek' | 'full') {
   const t = targetOf(h)
-  if (how === 'full') void router.replace(pathOf(t))
-  else void router.replace({ query: { ...query, peek: encodeTarget(t) } })
+  const { find: _f, in: _i, peek: _p, ...rest } = route.query
+  const kept = { ...rest, find: q.value.trim() || null, ...(sectionId.value ? { in: sectionId.value } : {}) }
+  await router.replace({ query: kept })
+  if (how === 'full') await router.push(pathOf(t))
+  else await router.push({ query: { ...(isDesktop.value ? rest : kept), peek: encodeTarget(t) } })
 }
 
 /** A page opens full (Поиск closes), a record opens the preview on a phone */
 function pick(h: Hit) {
-  go(h, isDesktop.value || h.kind === 'page' ? 'full' : 'peek')
+  void go(h, isDesktop.value || h.kind === 'page' ? 'full' : 'peek')
+}
+
+/** Esc on the phone screen closes Поиск, unless a record's sheet is over it: then the sheet closes alone */
+function closeScreen() {
+  if (!route.query.peek) open.value = false
+}
+
+/** «Записать «гараж»»: Поиск closes onto Главная, whose composer sends the words like any send */
+function write() {
+  const t = q.value.trim()
+  if (!t) return
+  ui.outbox = t
+  void router.replace('/')
 }
 
 function onKey(e: KeyboardEvent) {
@@ -97,7 +131,7 @@ function onKey(e: KeyboardEvent) {
     active.value = Math.max(0, active.value - 1)
   } else if (e.key === 'Enter' && current.value) {
     e.preventDefault()
-    go(current.value, e.metaKey || e.ctrlKey ? 'peek' : 'full')
+    void go(current.value, e.metaKey || e.ctrlKey ? 'peek' : 'full')
   }
 }
 
@@ -117,7 +151,7 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
         class="flex h-[min(38rem,80dvh)] flex-col"
         @keydown="onKey"
       >
-        <div class="shrink-0 px-3 pt-3 pb-2">
+        <div class="shrink-0 px-4 pt-3.5 pb-3">
           <label class="flex h-11 items-center gap-2.5 rounded-chip bg-trk pl-3 text-toned">
             <UIcon
               name="i-lucide-search"
@@ -146,18 +180,26 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
             </button>
           </label>
         </div>
-        <div class="flex shrink-0 gap-2 border-b border-default px-3 pb-3">
+        <div class="flex shrink-0 gap-2 border-b border-default px-4 pb-3">
           <USelect
-            v-model="sectionId"
+            v-model="sectionValue"
             :items="sections"
-            class="w-40"
-          />
+            :icon="section ? 'i-lucide-check' : undefined"
+            class="min-w-40"
+            :class="section ? 'bg-accent-soft text-accent-ink ring-accent' : ''"
+            :ui="{ leadingIcon: 'text-accent-ink', trailingIcon: section ? 'text-accent-ink' : '' }"
+          >
+            <template #default>
+              {{ section ? `Секция «${section.name}»` : 'Все секции' }}
+            </template>
+          </USelect>
         </div>
         <div class="flex min-h-0 flex-1">
           <ul
             id="find-list"
             role="listbox"
-            class="min-h-0 w-3/5 shrink-0 overflow-y-auto border-r border-default p-2"
+            class="min-h-0 overflow-y-auto p-2"
+            :class="none ? 'flex-1' : 'w-3/5 shrink-0 border-r border-default'"
             aria-label="Найденное"
           >
             <template
@@ -228,13 +270,46 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
               </li>
             </template>
             <li
-              v-if="!flat.length"
+              v-if="none"
+              class="px-2.5 pt-4"
+              role="presentation"
+            >
+              <p class="text-15 text-highlighted">
+                Ничего не нашлось
+              </p>
+              <p class="mt-1 max-w-105 text-sm text-toned">
+                {{ section ? `Сейчас поиск только в секции «${section.name}». Выбери «Все секции», чтобы искать везде.` : 'Попробуй другое слово или начало слова.' }}
+              </p>
+              <div class="-mx-2.5 mt-2 flex flex-wrap gap-1">
+                <button
+                  v-if="section"
+                  type="button"
+                  class="h-8 cursor-pointer whitespace-nowrap rounded-chip px-2.5 text-sm font-medium text-accent-ink hover:bg-muted"
+                  @click="sectionId = null"
+                >
+                  Искать везде
+                </button>
+                <button
+                  type="button"
+                  class="h-8 min-w-0 cursor-pointer truncate rounded-chip px-2.5 text-sm font-medium text-accent-ink hover:bg-muted"
+                  @click="write"
+                >
+                  Записать «{{ q.trim() }}»
+                </button>
+              </div>
+            </li>
+            <li
+              v-else-if="!flat.length"
               class="px-2.5 py-6 text-meta text-toned"
             >
-              {{ q ? 'Ничего не нашлось' : 'Пока нет записей' }}
+              Пока нет записей
             </li>
           </ul>
-          <div class="min-h-0 flex-1 overflow-y-auto py-4">
+          <!-- Nothing found: no preview pane, the list takes the width -->
+          <div
+            v-if="!none"
+            class="min-h-0 flex-1 overflow-y-auto py-4"
+          >
             <template v-if="current">
               <div class="flex items-center px-4 pb-2">
                 <span class="flex-1 text-cap text-toned">{{ current.kind === 'page' ? 'Страница' : 'Запись' }}</span>
@@ -275,8 +350,12 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
 
   <FindScreen
     v-else-if="open"
-    :initial="initial"
-    @close="open = false"
+    v-model:q="q"
+    v-model:section="sectionId"
+    :groups="groups"
+    :restored="restored"
+    @close="closeScreen"
     @pick="pick"
+    @write="write"
   />
 </template>

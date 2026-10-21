@@ -1,20 +1,23 @@
 <script setup lang="ts">
-// One page picker for «Ещё…», «Переместить», «Не туда» and the composer chip: a sheet on a phone, a dialog
-// on desktop. Without a query: the top row (Авто or «Эта страница»), «Похоже на», «Открыто недавно», every
-// section with its pages, «Системные». With a query: «Найдено». It ends with «Новая страница «…»».
-import { computed, ref, watch } from 'vue'
-import type { Id, Page } from '~/domain/types'
+// One page picker for «Ещё…», «Переместить», «Не туда» and the composer chip: a sheet on a phone; on desktop a
+// popover at the button that opened it (a dialog when nothing anchors it). Without a query: the top row (Авто or
+// «Эта страница»), «Похоже на», «Открыто недавно», every section with its pages, «Системные», each page once
+// (domain/picker.ts). With a query: «Найдено». It ends with «Новая страница «…»» unless that page exists.
+import { computed, ref, useTemplateRef, watch } from 'vue'
+import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
-import { fold } from '~/domain/text'
+import { capitalize, fold } from '~/domain/text'
+import { choosable as pickable, pickerGroups, type PickGroup } from '~/domain/picker'
 import PageTile from '../common/PageTile.vue'
-import { UDrawer, UModal } from '#components'
+import { UDrawer, UModal, UPopover } from '#components'
 
 const data = useDataStore()
 const ui = useUiStore()
 const { isDesktop } = useScreen()
 const q = ref('')
+const field = useTemplateRef<{ inputRef?: HTMLInputElement | null }>('field')
 
 const open = computed({
   get: () => !!ui.picker,
@@ -26,44 +29,71 @@ watch(open, (v) => {
   if (v) q.value = ''
 })
 
-const choosable = computed(() => data.livePages.filter(p => p.kind === 'page' || p.kind === 'inbox'))
-const byId = (ids: Id[]) => ids.map(id => data.pages[id]).filter((p): p is Page => !!p && !p.deletedAt && p.kind !== 'today')
-const sectionName = (p: Page) => p.kind === 'inbox' ? '' : p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Мои страницы'
-
-interface Group { label: string, pages: Page[], where?: boolean }
-
-const groups = computed<Group[]>(() => {
-  const query = fold(q.value.trim())
-  if (query) {
-    const found = choosable.value.filter(p => fold(p.title).includes(query))
-    return found.length ? [{ label: 'Найдено', pages: found, where: true }] : []
+/** Desktop: a popover at its button, as in the mockup; the rest of the screen stays as it is (no scrim) */
+const anchor = computed(() => isDesktop.value && ui.picker?.anchor?.isConnected ? ui.picker.anchor : null)
+/** The button's box; when a re-render swaps the button (a row's lazy tooltips) the popover stays where it was */
+const reference = computed(() => {
+  const el = anchor.value
+  if (!el) return null
+  let last = el.getBoundingClientRect()
+  return { getBoundingClientRect: () => el.isConnected ? (last = el.getBoundingClientRect()) : last }
+})
+const WIDTH = 380
+/** Under the button from its left edge when that fits in the column, else its right edge lines up with the button's (a row action) */
+function alignAt(el: HTMLElement) {
+  const box = (el.closest('main') ?? document.body).getBoundingClientRect()
+  return el.getBoundingClientRect().left + WIDTH <= box.right - 16 ? 'start' as const : 'end' as const
+}
+const container = computed(() => {
+  if (anchor.value && reference.value) {
+    return {
+      is: UPopover,
+      props: {
+        reference: reference.value,
+        content: {
+          'side': 'bottom' as const,
+          'align': alignAt(anchor.value),
+          'sideOffset': 6,
+          'collisionPadding': 16,
+          'aria-label': [ui.picker?.title, ui.picker?.subtitle].filter(Boolean).join(': '),
+          // Typing finds a page at once: focus goes to the search field, not to ×
+          'onOpenAutoFocus': (e: Event) => {
+            e.preventDefault()
+            field.value?.inputRef?.focus()
+          }
+        },
+        ui: { content: 'w-95' }
+      }
+    }
   }
-  const guesses = byId(ui.picker?.guesses ?? []).slice(0, 3)
-  const opened = choosable.value
-    .filter(p => p.kind === 'page' && !guesses.includes(p))
-    .sort((a, b) => b.openedAt - a.openedAt)
-    .slice(0, 3)
-  const out: Group[] = []
-  if (guesses.length) out.push({ label: 'Похоже на', pages: guesses, where: true })
-  out.push({ label: 'Открыто недавно', pages: opened, where: true })
-  if (data.recentlyMade.length) out.push({ label: 'Мои страницы', pages: data.recentlyMade })
-  for (const s of data.sectionList) {
-    const pages = data.livePages.filter(p => p.sectionId === s.id && p.kind === 'page')
-    if (pages.length) out.push({ label: s.name, pages })
-  }
-  out.push({ label: 'Системные', pages: [data.inbox] })
-  return out
+  if (isDesktop.value) return { is: UModal, props: { title: ui.picker?.title ?? 'Выбрать страницу', ui: { content: 'max-w-95' } } }
+  return { is: UDrawer, props: { title: ui.picker?.title ?? 'Выбрать страницу' } }
 })
 
+const choosable = computed(() => pickable(data.livePages))
+const sectionName = (p: Page) => p.kind === 'inbox' ? '' : p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Мои страницы'
+
+/** Every page once: «Эта страница» on top stands for itself, the page the records are on keeps its section */
+const groups = computed<PickGroup[]>(() => pickerGroups({
+  pages: data.livePages,
+  sections: data.sectionList,
+  query: q.value,
+  guesses: ui.picker?.guesses,
+  skip: ui.picker?.thisPage ? [ui.picker.thisPage] : [],
+  current: ui.picker?.current
+}))
+
 const nothing = computed(() => !!q.value.trim() && !groups.value.length)
-const newName = computed(() => q.value.trim() || ui.picker?.newName || '')
-const exists = computed(() => !!newName.value && choosable.value.some(p => fold(p.title) === fold(newName.value)))
+const newName = computed(() => q.value.trim() ? capitalize(q.value) : ui.picker?.newName || '')
+const exists = computed(() => !!newName.value && choosable.value.some(p => fold(p.title.trim()) === fold(newName.value)))
 const thisPage = computed(() => ui.picker?.thisPage ? data.pages[ui.picker.thisPage] : undefined)
 
 function pick(pageId: string) {
   const run = ui.picker?.run
+  const here = pageId === ui.picker?.current
   ui.picker = null
-  run?.({ pageId })
+  // The page the records are on: a tap only closes the picker
+  if (!here) run?.({ pageId })
 }
 function create() {
   const run = ui.picker?.run
@@ -75,20 +105,33 @@ function auto() {
   ui.picker = null
   run?.()
 }
+
+const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base hover:bg-muted active:bg-pressed lg:min-h-11 lg:gap-2.5 lg:px-2 lg:text-15'
 </script>
 
 <template>
   <component
-    :is="isDesktop ? UModal : UDrawer"
+    :is="container.is"
+    v-bind="container.props"
     v-model:open="open"
-    :title="ui.picker?.title ?? 'Выбрать страницу'"
-    :ui="isDesktop ? { content: 'max-w-md' } : undefined"
   >
     <template #content>
-      <div class="flex max-h-[85dvh] flex-col lg:max-h-[70dvh]">
-        <div class="flex shrink-0 items-start gap-2 pt-1 pr-2 pl-6 lg:pt-3 lg:pl-5">
-          <div class="min-w-0 flex-1 py-1.5">
-            <h2 class="text-sheet leading-snug text-highlighted">
+      <div
+        class="flex max-h-[85dvh] flex-col"
+        :class="anchor ? 'max-h-[min(30rem,var(--reka-popover-content-available-height))] px-2 pt-3 pb-2' : 'lg:max-h-[70dvh]'"
+      >
+        <div
+          class="flex shrink-0 items-start gap-2"
+          :class="anchor ? 'pb-2.5 pl-2' : 'pr-2 pl-6 lg:pt-3 lg:pl-5'"
+        >
+          <div
+            class="min-w-0 flex-1"
+            :class="anchor ? '' : 'lg:py-1.5'"
+          >
+            <h2
+              class="leading-snug text-highlighted"
+              :class="anchor ? 'text-15 font-semibold' : 'text-sheet'"
+            >
               {{ ui.picker?.title }}
             </h2>
             <p
@@ -102,12 +145,17 @@ function auto() {
             icon="i-lucide-x"
             variant="ghost"
             square
+            :size="anchor ? 'sm' : undefined"
             aria-label="Закрыть"
             @click="open = false"
           />
         </div>
-        <div class="shrink-0 px-3 pt-1 pb-1">
+        <div
+          class="shrink-0"
+          :class="anchor ? 'px-1 pb-1' : 'px-3 pt-2 pb-1 lg:pt-1'"
+        >
           <UInput
+            ref="field"
             v-model="q"
             icon="i-lucide-search"
             variant="soft"
@@ -118,7 +166,8 @@ function auto() {
           />
         </div>
         <div
-          class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-[max(env(safe-area-inset-bottom),0.75rem)]"
+          class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          :class="anchor ? 'pb-1' : 'px-1 pb-[max(env(safe-area-inset-bottom),0.75rem)] lg:px-2'"
           data-vaul-no-drag
         >
           <ul
@@ -128,7 +177,7 @@ function auto() {
             <li v-if="ui.picker?.auto">
               <button
                 type="button"
-                class="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
+                :class="row"
                 @click="auto"
               >
                 <UIcon
@@ -149,7 +198,7 @@ function auto() {
             <li v-if="thisPage">
               <button
                 type="button"
-                class="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
+                :class="row"
                 @click="pick(thisPage.id)"
               >
                 <PageTile :glyph="thisPage.glyph" />
@@ -167,7 +216,10 @@ function auto() {
             :key="g.label"
             :aria-label="g.label"
           >
-            <h3 class="px-3 pt-3 pb-1 text-cap text-toned">
+            <h3
+              class="pb-1 text-cap text-toned"
+              :class="anchor ? 'px-2 pt-2.5' : 'px-3 pt-4.5 lg:pt-3'"
+            >
               {{ g.label }}
             </h3>
             <ul>
@@ -177,18 +229,15 @@ function auto() {
               >
                 <button
                   type="button"
-                  class="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base text-highlighted hover:bg-muted active:bg-pressed disabled:cursor-default disabled:opacity-60 lg:min-h-10 lg:text-15"
-                  :disabled="p.id === ui.picker?.current"
+                  class="text-highlighted"
+                  :class="row"
+                  :aria-current="p.id === ui.picker?.current || undefined"
                   @click="pick(p.id)"
                 >
                   <PageTile :glyph="p.glyph" />
                   <span class="min-w-0 flex-1 truncate">{{ p.title || 'Без названия' }}</span>
-                  <span
-                    v-if="p.id === ui.picker?.current"
-                    class="shrink-0 text-meta text-toned"
-                  >сейчас здесь</span>
                   <UIcon
-                    v-else-if="ui.picker?.chosen === p.id"
+                    v-if="p.id === ui.picker?.current || p.id === ui.picker?.chosen"
                     name="i-lucide-check"
                     class="size-4.5 text-accent"
                   />
@@ -202,14 +251,16 @@ function auto() {
           </section>
           <p
             v-if="nothing"
-            class="px-3 pt-4 pb-2 text-meta text-toned"
+            class="pt-4 pb-2 text-meta text-toned"
+            :class="anchor ? 'px-2' : 'px-3'"
           >
             Ничего не нашлось
           </p>
           <button
             v-if="!exists"
             type="button"
-            class="mt-1 flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base text-accent-ink hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
+            class="mt-1 text-accent-ink"
+            :class="row"
             @click="create"
           >
             <UIcon
