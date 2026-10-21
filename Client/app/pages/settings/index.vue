@@ -1,17 +1,18 @@
 <script setup lang="ts">
 // Настройки: Авто, Оформление, Данные. Everything here acts at once, nothing to save.
-import { computed, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onMounted, ref, shallowRef, useTemplateRef } from 'vue'
 import { useColorMode, useHead, useRoute, useRouter } from '#imports'
 import type { ModelChoice } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
 import { useNotify } from '~/composables/useNotify'
+import { useNow } from '~/composables/useNow'
+import { useCopy } from '~/composables/useCopy'
 import { checkConnection, maskKey, modelOf, ModelError, PROVIDERS } from '~/domain/model'
 import { finishOpenRouter } from '~/domain/openrouter'
-import { parseSnapshot, toJSON, toMarkdown } from '~/domain/export'
-import { dayKey } from '~/domain/dates'
-import { count, RECORD_FORMS } from '~/domain/text'
+import { measure, parseSnapshot, sizeText, type Snapshot } from '~/domain/export'
+import { formatDate } from '~/domain/dates'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import BackHeader from '~/components/shell/BackHeader.vue'
 import TitleHeader from '~/components/shell/TitleHeader.vue'
@@ -20,6 +21,8 @@ import ActionMenu from '~/components/overlay/ActionMenu.vue'
 import SettingRow from '~/components/settings/SettingRow.vue'
 import ConnectionEditor from '~/components/settings/ConnectionEditor.vue'
 import DescriptionList from '~/components/settings/DescriptionList.vue'
+import ImportSheet from '~/components/settings/ImportSheet.vue'
+import StoreWarning from '~/components/home/StoreWarning.vue'
 
 useHead({ title: 'Настройки · Cerulean' })
 
@@ -99,60 +102,32 @@ const compactRows = computed({
 
 // Данные
 
-const stamp = () => dayKey(Date.now())
-
-/** A phone gets the share sheet (Files, Telegram, mail); otherwise the file is downloaded */
-async function save(name: string, text: string, type: string) {
-  const file = new File([text], name, { type })
-  if (!isDesktop.value && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file] })
-      return
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return
-    }
-  }
-  const url = URL.createObjectURL(file)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = name
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+// The browser may clear site data when the disk runs short, unless asked to keep it (null: it cannot say)
+async function persist() {
+  if (data.persisted) return
+  if (!await data.persist()) notify('Браузер не разрешил. Сохраняй копию время от времени', undefined, 4000)
 }
 
-function exportJson() {
-  void save(`cerulean-${stamp()}.json`, toJSON(data.snapshot()), 'application/json')
-}
-function exportMarkdown() {
-  const live = data.livePages.filter(p => p.kind === 'page' || p.kind === 'inbox')
-  void save(`cerulean-${stamp()}.md`, toMarkdown(live, data.liveRecords, data.sectionList), 'text/markdown')
-}
-const exporting = ref(false)
-const exportItems = [[
-  { label: 'JSON', icon: 'i-lucide-file-json', value: 'для переноса и копии', onSelect: exportJson },
-  { label: 'Markdown', icon: 'i-lucide-file-text', value: 'читать и вставлять', onSelect: exportMarkdown }
+const { saveCopy } = useCopy()
+const now = useNow()
+const copyHint = computed(() => `JSON или Markdown · ${data.settings.copiedAt ? `последняя ${formatDate(data.settings.copiedAt, now.value)}` : 'ещё не сохранялась'}`)
+const copying = ref(false)
+const copyItems = [[
+  { label: 'JSON', icon: 'i-lucide-file-json', value: 'можно загрузить обратно', onSelect: () => saveCopy('json') },
+  { label: 'Markdown', icon: 'i-lucide-file-text', value: 'читать и вставлять', onSelect: () => saveCopy('md') }
 ]]
 
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
+const loaded = shallowRef<{ name: string, snap: Snapshot } | null>(null)
+const importing = ref(false)
 async function onFile(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
   try {
-    const snap = parseSnapshot(await file.text())
-    const pages = snap.pages.filter(p => !p.deletedAt && p.kind === 'page').length
-    const records = snap.records.filter(r => !r.deletedAt).length
-    ui.confirm({
-      title: 'Заменить всё данными из файла?',
-      text: `В файле ${count(pages, ['страница', 'страницы', 'страниц'])} и ${count(records, RECORD_FORMS)}. Всё, что сейчас в этом браузере, заменится. Ключ останется.`,
-      action: 'Заменить',
-      run: async () => {
-        await data.importSnapshot(snap)
-        void router.push('/')
-        notify('Данные из файла загружены', undefined, 3000)
-      }
-    })
+    loaded.value = { name: file.name, snap: parseSnapshot(await file.text()) }
+    importing.value = true
   } catch (err) {
     notify(err instanceof Error ? err.message : 'Не удалось прочитать файл', undefined, 5000)
   }
@@ -161,9 +136,10 @@ async function onFile(e: Event) {
 const trashCount = computed(() => data.trash.length)
 
 function wipe() {
+  const size = sizeText(measure({ pages: Object.values(data.pages), records: Object.values(data.records) }))
   ui.confirm({
     title: 'Удалить всё?',
-    text: 'Страницы, записи и ключ удалятся из этого браузера без возможности вернуть. Сначала можно сделать экспорт.',
+    text: `Удалятся ${size}${key.value ? ' и ключ' : ''}, вернуть их будет нельзя. Сначала можно сохранить копию.`,
     action: 'Удалить всё',
     run: async () => {
       await data.wipe()
@@ -173,15 +149,11 @@ function wipe() {
   })
 }
 
-// The browser may clear site data when the disk is full, unless asked to keep it (null: no such API)
-const persisted = ref<boolean | null>(null)
-onMounted(async () => {
-  persisted.value = 'storage' in navigator && 'persist' in navigator.storage ? await navigator.storage.persisted() : null
+// «Освободить место ›» after a failed save comes here: /settings#data
+const dataSection = useTemplateRef<HTMLElement>('dataSection')
+onMounted(() => {
+  if (route.hash === '#data') dataSection.value?.scrollIntoView({ block: 'start' })
 })
-async function persist() {
-  persisted.value = await navigator.storage.persist()
-  if (!persisted.value) notify('Браузер не разрешил. Делай экспорт время от времени', undefined, 4000)
-}
 </script>
 
 <template>
@@ -198,28 +170,25 @@ async function persist() {
       <h1 class="px-5 pb-1 text-28 font-semibold tracking-[-.015em] text-highlighted lg:hidden">
         Настройки
       </h1>
+      <StoreWarning
+        v-if="data.storageError"
+        place="settings"
+        class="mx-4 mt-2 lg:mx-0 lg:mt-0"
+      />
       <div
+        v-else
         class="flex items-center gap-2.5 px-5 pt-2 pb-1 text-sm text-default lg:gap-2 lg:px-0 lg:pt-0 lg:text-sm lg:text-toned"
         role="status"
       >
-        <template v-if="data.storageError">
-          <UIcon
-            name="i-lucide-circle-alert"
-            class="size-4 shrink-0 text-warn"
-          />
-          <span class="text-warn-ink">Хранилище браузера недоступно: изменения пропадут, когда закроешь вкладку</span>
-        </template>
-        <template v-else>
-          <span
-            class="size-2 shrink-0 rounded-full bg-ok lg:hidden"
-            aria-hidden="true"
-          />
-          <UIcon
-            name="i-lucide-check"
-            class="hidden size-4 shrink-0 text-ok lg:block"
-          />
-          <span>Работает офлайн, всё хранится в этом браузере</span>
-        </template>
+        <span
+          class="size-2 shrink-0 rounded-full bg-ok lg:hidden"
+          aria-hidden="true"
+        />
+        <UIcon
+          name="i-lucide-check"
+          class="hidden size-4 shrink-0 text-ok lg:block"
+        />
+        <span>Работает офлайн, всё хранится в этом браузере</span>
       </div>
 
       <!-- Авто -->
@@ -358,7 +327,11 @@ async function persist() {
       </section>
 
       <!-- Данные -->
-      <section aria-labelledby="s-data">
+      <section
+        ref="dataSection"
+        aria-labelledby="s-data"
+        class="scroll-mt-4"
+      >
         <h2
           id="s-data"
           class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
@@ -366,26 +339,62 @@ async function persist() {
           Данные
         </h2>
         <SettingRow
-          label="Экспорт"
+          v-if="data.persisted !== null && !data.storageError"
+          label="Не удалять при нехватке места"
+          icon="i-lucide-shield"
+          :hint="data.persisted ? 'Браузер не удалит записи сам' : 'Без этого браузер может очистить данные сам'"
+          :value="data.persisted ? 'Включено' : 'Включить'"
+          :value-tone="data.persisted ? undefined : 'accent'"
+          :opens="!data.persisted"
+          acts
+          @open="persist"
+        >
+          <!-- A phone says it in the value -->
+          <template v-if="isDesktop">
+            <p
+              v-if="data.persisted"
+              class="flex items-center gap-2 text-sm text-default"
+            >
+              <span
+                class="size-2 rounded-full bg-ok"
+                aria-hidden="true"
+              />Включено
+            </p>
+            <UButton
+              v-else
+              @click="persist"
+            >
+              Включить
+            </UButton>
+          </template>
+        </SettingRow>
+        <SettingRow
+          label="Сохранить копию"
           icon="i-lucide-download"
-          desk-hint="JSON для переноса, Markdown чтобы читать"
-          value="JSON или Markdown"
+          :hint="copyHint"
+          :value="data.storageError ? 'Сейчас' : undefined"
+          value-tone="accent"
           opens
-          @open="exporting = true"
+          acts
+          @open="copying = true"
         >
           <div class="flex gap-2">
-            <UButton @click="exportJson">
+            <UButton
+              :color="data.storageError ? 'primary' : 'neutral'"
+              :variant="data.storageError ? 'solid' : 'outline'"
+              @click="saveCopy('json')"
+            >
               JSON
             </UButton>
-            <UButton @click="exportMarkdown">
+            <UButton @click="saveCopy('md')">
               Markdown
             </UButton>
           </div>
         </SettingRow>
         <SettingRow
-          label="Импорт"
+          label="Загрузить копию"
           icon="i-lucide-upload"
-          hint="Из файла экспорта JSON"
+          hint="Добавить к текущим или заменить всё"
           opens
           @open="fileInput?.click()"
         >
@@ -397,7 +406,7 @@ async function persist() {
           label="Корзина"
           icon="i-lucide-trash-2"
           hint="Удалённое хранится 30 дней"
-          :value="trashCount ? `${trashCount}` : 'пусто'"
+          :value="trashCount ? `${trashCount}` : undefined"
           opens
           @open="router.push('/settings/trash')"
         >
@@ -406,31 +415,6 @@ async function persist() {
               v-if="trashCount"
               class="inline-flex h-5 min-w-5 items-center justify-center rounded-badge bg-trk px-1.5 text-xs text-toned"
             >{{ trashCount }}</span>
-          </UButton>
-        </SettingRow>
-        <SettingRow
-          v-if="persisted !== null && !data.storageError"
-          label="Не удалять при нехватке места"
-          icon="i-lucide-shield-check"
-          :hint="persisted ? 'Браузер не удалит данные сам' : 'Без этого браузер может очистить данные сам'"
-          :value="persisted ? undefined : 'Включить'"
-          :opens="!persisted"
-          @open="persist"
-        >
-          <p
-            v-if="persisted"
-            class="flex items-center gap-1.5 text-13 text-ok"
-          >
-            <UIcon
-              name="i-lucide-check"
-              class="size-3.5"
-            />Включено
-          </p>
-          <UButton
-            v-else
-            @click="persist"
-          >
-            Включить
           </UButton>
         </SettingRow>
         <SettingRow
@@ -466,11 +450,15 @@ async function persist() {
     <ConnectionEditor ref="keyEditor" />
     <ActionMenu
       v-if="!isDesktop"
-      v-model:open="exporting"
-      :items="exportItems"
-      title="Экспорт"
-      label="Экспорт"
+      v-model:open="copying"
+      :items="copyItems"
+      title="Сохранить копию"
+      label="Сохранить копию"
       bare
+    />
+    <ImportSheet
+      v-model:open="importing"
+      :file="loaded"
     />
   </AppScreen>
 </template>

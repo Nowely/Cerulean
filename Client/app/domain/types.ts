@@ -165,10 +165,20 @@ export interface Settings {
   dismissed: string[]
   /** Folded system sections on Главная: 'favorites', 'recent' (user sections keep their own flag) */
   folded: string[]
+  /** Keeping data: when a copy was last saved and when «Не сейчас» hid the reminder (0: never) */
+  copiedAt: number
+  copyHiddenAt: number
+  /** Records count towards the first reminder from here (the first run); 0 for a database older than the reminder */
+  startedAt: number
+  /** `navigator.storage.persist()` is asked once by itself, at the first record; then only by «Включить» */
+  persistAsked: boolean
 }
 
 /** The connection to a model stays in this browser: never in an export, kept through an import */
 export type ConnectionField = 'provider' | 'apiKey' | 'baseUrl' | 'modelId' | 'keyState'
+
+/** How this browser keeps the data: about this browser, not the data, so never in an export either */
+export type KeepingField = 'copiedAt' | 'copyHiddenAt' | 'startedAt' | 'persistAsked'
 
 export const GLYPHS = {
   basket: 'i-lucide-shopping-basket',

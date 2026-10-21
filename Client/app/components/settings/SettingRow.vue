@@ -13,12 +13,16 @@ withDefaults(defineProps<{
   hintTone?: 'warn'
   /** Phone: the value at the right end of the line */
   value?: string
+  /** Phone: an accent value is what a tap does («Включить», «Сейчас») */
+  valueTone?: 'accent'
   /** Phone: the whole line is a button */
   opens?: boolean
+  /** Phone: a line that acts at once has no chevron */
+  acts?: boolean
   /** Phone: the control goes under the name at full width (segmented choices) */
   below?: boolean
   tone?: 'warn'
-}>(), { hint: undefined, deskHint: undefined, hintTone: undefined, value: undefined, tone: undefined })
+}>(), { hint: undefined, deskHint: undefined, hintTone: undefined, value: undefined, valueTone: undefined, tone: undefined })
 defineEmits<{ open: [] }>()
 const { isDesktop } = useScreen()
 </script>
@@ -70,11 +74,12 @@ const { isDesktop } = useScreen()
       </span>
       <span
         v-if="value"
-        class="max-w-[45%] shrink-0 truncate text-15 text-toned"
+        class="max-w-[45%] shrink-0 truncate text-15"
+        :class="valueTone === 'accent' ? 'text-accent-ink' : 'text-toned'"
       >{{ value }}</span>
       <slot v-if="!opens && !below" />
       <UIcon
-        v-if="opens && tone !== 'warn'"
+        v-if="opens && !acts && tone !== 'warn'"
         name="i-lucide-chevron-right"
         class="size-4 shrink-0 text-dimmed"
       />

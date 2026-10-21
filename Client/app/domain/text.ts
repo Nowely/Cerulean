@@ -14,6 +14,7 @@ export function count(n: number, forms: readonly [string, string, string]): stri
 }
 
 export const RECORD_FORMS = ['запись', 'записи', 'записей'] as const
+export const PAGE_FORMS = ['страница', 'страницы', 'страниц'] as const
 
 export function capitalize(s: string): string {
   const t = s.trim()

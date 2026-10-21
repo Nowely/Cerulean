@@ -3,9 +3,10 @@ import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import type { Entry, Id, Page, Rec, Section, Settings, TemplateKey } from '~/domain/types'
 import type { Learned } from '~/domain/rules'
-import type { Snapshot } from '~/domain/export'
 import type { Hit } from '~/domain/search'
-import { Storage, type Kind } from '~/db/idb'
+import { KINDS, plain, Storage, type Kind, type Touched } from '~/db/idb'
+import { TabSync, type Change } from '~/db/sync'
+import { mergeSnapshot, type Snapshot } from '~/domain/export'
 import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/factory'
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
 import { learn } from '~/domain/rules'
@@ -13,6 +14,53 @@ import { topOrder } from '~/domain/views'
 import { applyTemplate, TEMPLATES } from '~/domain/templates'
 
 const TRASH_DAYS = 30
+
+/** A write the browser refused; see `writeFailed` */
+export interface WriteFailure {
+  at: number
+  /** 'quota': the browser is out of space (QuotaExceededError); 'error': any other refused write */
+  reason: 'quota' | 'error'
+  /** What the refused writes were about, gathered until `clearWriteFailed()` */
+  kinds: (Kind | 'meta')[]
+  ids: Id[]
+}
+
+/** «Добавить к текущим»: what was added and what it changed, so that «Отменить» takes exactly that back */
+export interface Added {
+  pages: Id[]
+  records: Id[]
+  sections: Id[]
+  /** Pages here as they were before they took properties from the file */
+  before: Page[]
+  learned: Learned
+}
+
+/** Fields that can change in another tab without anything to show on the record's page */
+const QUIET_FIELDS = new Set(['openedAt', 'order'])
+
+/** Same plain data, whatever the key order (a stored copy and Object.assign order keys differently) */
+function same(a: unknown, b: unknown, top = false): boolean {
+  if (a === b) return true
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false
+  const x = a as Record<string, unknown>
+  const y = b as Record<string, unknown>
+  const keys = (o: Record<string, unknown>) => Object.keys(o).filter(k => o[k] !== undefined && !(top && QUIET_FIELDS.has(k)))
+  const kx = keys(x)
+  return kx.length === keys(y).length && kx.every(k => same(x[k], y[k]))
+}
+
+/** Another tab's version goes into the object already on screen, so whatever holds that object keeps it */
+function refill<T extends object>(here: T, value: T) {
+  for (const k of Object.keys(here)) if (!(k in value)) delete (here as Record<string, unknown>)[k]
+  Object.assign(here, value)
+}
+
+function into<T extends { id: Id }>(map: Record<Id, T>, id: Id, value: T | undefined) {
+  const here = map[id]
+  if (!value) delete map[id]
+  else if (here) refill(here, value)
+  else map[id] = value
+}
 
 export const useDataStore = defineStore('data', () => {
   const pages = ref<Record<Id, Page>>({})
@@ -22,8 +70,23 @@ export const useDataStore = defineStore('data', () => {
   const settings = ref<Settings>({ ...DEFAULT_SETTINGS })
   const learned = ref<Learned>({})
   const ready = ref(false)
-  /** Set when the browser refused storage (private mode, full disk): the app keeps working in memory */
+  /** Set when the browser gives no storage at all (a private window, blocked site data): the app works in memory */
   const storageError = ref<string | null>(null)
+  /**
+   * Set when the browser refused a write (storage full, or any put that fails). Nothing is undone: memory and
+   * the screen keep the change, and nothing is retried. The writing loop watches it: when `ids` holds a record
+   * it has just written, the send did not keep, so it docks «Не сохранилось…», puts the text back in the composer
+   * and calls `clearWriteFailed()` once that card goes. «Освободить место ›» opens `/settings#data`.
+   * To try it in a browser, make `IDBObjectStore.prototype.put` throw a QuotaExceededError
+   * (`scripts/checks/data.mjs`, `fillStorage`).
+   */
+  const writeFailed = ref<WriteFailure | null>(null)
+  /** Whether the browser keeps the data when the disk runs short (`navigator.storage.persisted()`); null: it cannot say */
+  const persisted = ref<boolean | null>(null)
+  /** The record open on its own page here: a change to its fields from another tab waits for «Обновить» */
+  const holding = ref<Id | null>(null)
+  /** Another tab's version of the held record, until «Обновить» or until this tab writes the record itself */
+  const waiting = ref<Record<Id, Rec>>({})
   const storage = shallowRef<Storage | null>(null)
 
   // ---------- reading ----------
@@ -124,11 +187,140 @@ export const useDataStore = defineStore('data', () => {
   // ---------- writing ----------
 
   function save(kind: Kind, value: Page | Rec | Section | Entry) {
+    if (kind === 'records') delete waiting.value[value.id] // this tab's write is the last one now
     void storage.value?.put(kind, value)
+    tell(kind, [value.id])
+  }
+
+  function saveMany(kind: Kind, values: (Page | Rec | Section | Entry)[]) {
+    if (!values.length) return
+    void storage.value?.putMany(kind, values)
+    tell(kind, values.map(v => v.id))
+  }
+
+  function drop(kind: Kind, ids: Id[]) {
+    void storage.value?.delete(kind, ids)
+    tell(kind, ids)
   }
 
   function saveMeta(key: string, value: unknown) {
     void storage.value?.setMeta(key, value)
+    tell('meta', [key])
+  }
+
+  function failed(e: unknown, what: Touched) {
+    console.error(e)
+    const was = writeFailed.value
+    const quota = /quota/i.test((e as { name?: string } | null)?.name ?? '')
+    writeFailed.value = {
+      at: Date.now(),
+      reason: quota || was?.reason === 'quota' ? 'quota' : 'error',
+      kinds: [...new Set([...(was?.kinds ?? []), ...what.kinds])],
+      ids: [...new Set([...(was?.ids ?? []), ...what.ids])]
+    }
+  }
+
+  function clearWriteFailed() {
+    writeFailed.value = null
+  }
+
+  // ---------- other tabs ----------
+  // Every write is announced once it is in IndexedDB; another tab reads the items back and puts them in place,
+  // without writing them again. Last write wins per item, as within one tab.
+
+  let sync: TabSync | null = null
+  let outgoing: Change | null = null
+  /** Counts this tab's writes; a read for another tab that started before a write here yields to it */
+  let seq = 0
+  const touched = new Map<string, number>()
+
+  function tell(kind: Kind | 'meta', ids: Id[]) {
+    seq++
+    for (const id of ids) touched.set(`${kind}:${id}`, seq)
+    if (!sync) return
+    if (!outgoing) {
+      const change: Change = outgoing = {}
+      // One message per task, sent when the writes made in it are stored
+      queueMicrotask(() => {
+        outgoing = null
+        void storage.value?.flush().then(() => sync?.post(change))
+      })
+    }
+    outgoing[kind] = [...(outgoing[kind] ?? []), ...ids]
+  }
+
+  async function receive(change: Change) {
+    const db = storage.value
+    if (!db) return
+    if (change.all) {
+      const loaded = await db.load()
+      apply(loaded)
+      readMeta(loaded.meta)
+      waiting.value = {}
+      return
+    }
+    const start = seq
+    const mine = (kind: Kind | 'meta', id: Id) => (touched.get(`${kind}:${id}`) ?? 0) > start
+    for (const kind of KINDS) {
+      const ids = change[kind]
+      if (!ids?.length) continue
+      const values = await db.getMany(kind, ids)
+      ids.forEach((id, i) => {
+        if (!mine(kind, id)) take(kind, id, values[i])
+      })
+    }
+    const keys = change.meta?.filter(k => !mine('meta', k))
+    if (keys?.length) {
+      const values = await db.getMeta(keys)
+      readMeta(new Map(keys.map((k, i) => [k, values[i]])))
+    }
+  }
+
+  function take(kind: Kind, id: Id, value: Page | Rec | Section | Entry | undefined) {
+    if (kind === 'pages') into(pages.value, id, value as Page | undefined)
+    else if (kind === 'sections') into(sections.value, id, value as Section | undefined)
+    else if (kind === 'records') {
+      const rec = value as Rec | undefined
+      const here = records.value[id]
+      // The record open here waits; a version with no change to its fields goes in quietly
+      if (id === holding.value && here && !(rec && same(here, rec, true))) {
+        waiting.value[id] = rec ?? { ...here, deletedAt: Date.now() }
+      } else {
+        delete waiting.value[id]
+        into(records.value, id, rec)
+      }
+    } else {
+      const entry = value as Entry | undefined
+      const here = entries.value.find(e => e.id === id)
+      if (here && entry) refill(here, entry)
+      else if (here) entries.value = entries.value.filter(e => e !== here)
+      else if (entry) entries.value = [...entries.value, entry].sort((a, b) => a.at - b.at)
+    }
+  }
+
+  function readMeta(meta: Map<string, unknown>) {
+    if (meta.has('settings')) settings.value = { ...DEFAULT_SETTINGS, ...(meta.get('settings') as Partial<Settings> | undefined) }
+    if (meta.has('learned')) learned.value = (meta.get('learned') as Learned | undefined) ?? {}
+  }
+
+  /** The record page holds its record while it is open; letting go takes in what waited */
+  function hold(id: Id | null) {
+    const was = holding.value
+    holding.value = id
+    if (was && was !== id) takeWaiting(was)
+  }
+
+  /** A record page that goes lets go of its record, unless the next page already holds another one */
+  function release(id: Id) {
+    if (holding.value === id) hold(null)
+  }
+
+  /** «Обновить»: the version from the other tab replaces the one on screen */
+  function takeWaiting(id: Id) {
+    const rec = waiting.value[id]
+    if (!rec) return
+    delete waiting.value[id]
+    into(records.value, id, rec)
   }
 
   function apply(data: Dataset) {
@@ -139,10 +331,9 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function init(opts: { demo?: boolean, dbName?: string } = {}) {
+    const name = opts.dbName ?? 'cerulean'
     try {
-      storage.value = await Storage.open(opts.dbName, (e) => {
-        storageError.value = e instanceof Error ? e.message : String(e)
-      })
+      storage.value = await Storage.open(name, failed)
       const loaded = await storage.value.load()
       settings.value = { ...DEFAULT_SETTINGS, ...(loaded.meta.get('settings') as Partial<Settings> | undefined) }
       learned.value = (loaded.meta.get('learned') as Learned | undefined) ?? {}
@@ -152,13 +343,37 @@ export const useDataStore = defineStore('data', () => {
       } else {
         const data = opts.demo ? demo() : firstRun()
         apply(data)
+        // The copy reminder counts records from here
+        settings.value = { ...settings.value, startedAt: Date.now() }
         await storage.value.replaceAll(data, new Map<string, unknown>([['settings', settings.value]]))
       }
+      sync = new TabSync(name, change => void receive(change))
+      void readPersisted()
     } catch (e) {
       storageError.value = e instanceof Error ? e.message : String(e)
       apply(opts.demo ? demo() : firstRun())
     }
     ready.value = true
+  }
+
+  // ---------- keeping data ----------
+
+  async function readPersisted() {
+    try {
+      persisted.value = await navigator.storage.persisted()
+    } catch {
+      persisted.value = null // no StorageManager here (an old browser, a plain-http origin, tests)
+    }
+  }
+
+  /** Asks the browser to keep the data when the disk runs short; most decide without asking the user */
+  async function persist(): Promise<boolean | null> {
+    try {
+      persisted.value = await navigator.storage.persist()
+    } catch {
+      persisted.value = null
+    }
+    return persisted.value
   }
 
   function toggleFolded(key: string) {
@@ -243,6 +458,11 @@ export const useDataStore = defineStore('data', () => {
     const rec = newRecord({ order, ...init })
     records.value[rec.id] = rec
     save('records', rec)
+    // The first record is worth keeping: the browser is asked once, with no screen of ours around it
+    if (!settings.value.persistAsked && storage.value) {
+      setSettings({ persistAsked: true })
+      void persist()
+    }
     return records.value[rec.id]!
   }
 
@@ -325,13 +545,13 @@ export const useDataStore = defineStore('data', () => {
     const all = new Set(ids)
     for (const r of Object.values(records.value)) if (r.parentId && all.has(r.parentId)) all.add(r.id)
     for (const id of all) delete records.value[id]
-    void storage.value?.delete('records', [...all])
+    drop('records', [...all])
   }
 
   function purgePages(ids: Id[]) {
     const recs = Object.values(records.value).filter(r => ids.includes(r.pageId)).map(r => r.id)
     for (const id of ids) delete pages.value[id]
-    void storage.value?.delete('pages', ids)
+    drop('pages', ids)
     purgeRecords(recs)
   }
 
@@ -390,7 +610,7 @@ export const useDataStore = defineStore('data', () => {
   function removeSection(id: Id) {
     for (const p of livePages.value.filter(p => p.sectionId === id)) updatePage(p.id, { sectionId: null })
     delete sections.value[id]
-    void storage.value?.delete('sections', [id])
+    drop('sections', [id])
   }
 
   // journal
@@ -411,7 +631,10 @@ export const useDataStore = defineStore('data', () => {
   // whole database
 
   function snapshot(): Omit<Snapshot, 'app' | 'version' | 'exportedAt'> {
-    const { provider: _p, apiKey: _key, baseUrl: _url, modelId: _model, keyState: _state, ...rest } = settings.value
+    const {
+      provider: _p, apiKey: _key, baseUrl: _url, modelId: _model, keyState: _state,
+      copiedAt: _c, copyHiddenAt: _h, startedAt: _s, persistAsked: _a, ...rest
+    } = settings.value
     return {
       pages: Object.values(pages.value),
       records: Object.values(records.value),
@@ -422,36 +645,80 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  async function replaceAll(data: Dataset, keep: Partial<Settings> = {}) {
-    apply(data)
-    learned.value = {}
-    settings.value = { ...DEFAULT_SETTINGS, ...keep }
-    await storage.value?.replaceAll(data, new Map<string, unknown>([['settings', settings.value]]))
+  /** How this browser keeps the data: it goes through an import and «Удалить всё» */
+  function keeping(): Partial<Settings> {
+    const { copiedAt, copyHiddenAt, startedAt, persistAsked } = settings.value
+    return { copiedAt, copyHiddenAt, startedAt, persistAsked }
   }
 
-  /** Import replaces everything; the connection to the model stays, it is never in a file */
+  async function replaceAll(data: Dataset, keep: Partial<Settings> = {}, words: Learned = {}) {
+    apply(data)
+    learned.value = words
+    settings.value = { ...DEFAULT_SETTINGS, ...keep }
+    waiting.value = {}
+    await storage.value?.replaceAll(data, new Map<string, unknown>([['settings', settings.value], ['learned', words]]))
+    sync?.post({ all: true })
+  }
+
+  /** «Заменить всё»: the file replaces everything; the connection to the model stays, it is never in a file */
   async function importSnapshot(s: Snapshot) {
     const { provider, apiKey, baseUrl, modelId, keyState } = settings.value
-    await replaceAll(s, { ...s.settings, provider, apiKey, baseUrl, modelId, keyState })
-    learned.value = s.learned
-    saveMeta('learned', learned.value)
+    await replaceAll(s, { ...s.settings, provider, apiKey, baseUrl, modelId, keyState, ...keeping() }, s.learned)
+  }
+
+  /** «Добавить к текущим»: see `mergeSnapshot`; returns what «Отменить» needs */
+  function addSnapshot(s: Snapshot): Added {
+    const m = mergeSnapshot({
+      pages: Object.values(pages.value),
+      records: Object.values(records.value),
+      sections: Object.values(sections.value),
+      learned: learned.value
+    }, s)
+    const before = m.changed.map(p => plain(pages.value[p.id]!))
+    for (const x of m.sections) sections.value[x.id] = x
+    for (const p of m.pages) pages.value[p.id] = p
+    for (const p of m.changed) into(pages.value, p.id, p)
+    for (const r of m.records) records.value[r.id] = r
+    saveMany('sections', m.sections)
+    saveMany('pages', [...m.pages, ...m.changed].map(p => pages.value[p.id]!))
+    saveMany('records', m.records)
+    const words = learned.value
+    if (Object.keys(m.learned).length) {
+      learned.value = { ...m.learned, ...words }
+      saveMeta('learned', learned.value)
+    }
+    return { pages: m.pages.map(p => p.id), records: m.records.map(r => r.id), sections: m.sections.map(x => x.id), before, learned: words }
+  }
+
+  /** «Отменить» after «Добавить к текущим»: exactly what was added goes, the pages it changed are as they were */
+  function takeBack(a: Added) {
+    purgeRecords(a.records)
+    purgePages(a.pages)
+    for (const id of a.sections) delete sections.value[id]
+    if (a.sections.length) drop('sections', a.sections)
+    for (const p of a.before) into(pages.value, p.id, p)
+    saveMany('pages', a.before.map(p => pages.value[p.id]!))
+    if (learned.value !== a.learned) {
+      learned.value = a.learned
+      saveMeta('learned', learned.value)
+    }
   }
 
   /** «Удалить всё»: back to the first run, the key goes too */
   async function wipe() {
-    await replaceAll(firstRun())
+    await replaceAll(firstRun(), { ...keeping(), startedAt: Date.now() })
   }
 
   return {
-    pages, records, sections, entries, settings, learned, ready, storageError,
+    pages, records, sections, entries, settings, learned, ready, storageError, writeFailed, persisted, waiting,
     livePages, liveRecords, inbox, clarify, sectionList, recentlyMade, favorites, trash, recent,
     recordsOf, subitemsOf, linksOf, placeOf,
-    init, setSettings, toggleFolded,
+    init, setSettings, toggleFolded, clearWriteFailed, persist, hold, release, takeWaiting,
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     addRecord, updateRecord, toggleLink, toggleDone, moveRecords, removeRecords, restoreRecords, purgeRecords, purgePages, emptyTrash,
     createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,
-    snapshot, importSnapshot, wipe,
+    snapshot, importSnapshot, addSnapshot, takeBack, wipe,
     flush: () => storage.value?.flush() ?? Promise.resolve()
   }
 })

@@ -165,6 +165,7 @@
   --color-warn: var(--warn);
   --color-warn-ink: var(--warn-ink);
   --color-warn-fill: var(--warn-fill);
+  --color-warn-soft: var(--warn-soft);
   --color-on-warn: var(--on-warn);
   --color-ok: var(--ok);
   --color-knob: var(--knob);
