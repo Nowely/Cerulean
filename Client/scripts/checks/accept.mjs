@@ -68,6 +68,31 @@ export default [
     const status = p.getByText(/^Работает · /)
     expect(await status.first().evaluate(e => e.getClientRects().length === 1 && e.getBoundingClientRect().height < 24), 'the status wraps')
   } },
+  // 5. B1: a finger swipe opens «Переместить» and «Удалить»; the mark and the name stay where they were
+  // (touch events through the DevTools protocol, as on a phone; a real phone is still the last word)
+  { id: 'acc-5-swipe', device: MOBILE, run: async (p) => {
+    await open(p, '/')
+    await shop(p)
+    const row = p.locator('main li').filter({ hasText: 'Сыр' }).first()
+    const name = row.getByText('Сыр', { exact: true })
+    const box = await row.boundingBox()
+    const before = (await name.boundingBox()).x
+    const cdp = await p.context().newCDPSession(p)
+    const y = box.y + box.height / 2
+    const at = x => ({ touchPoints: [{ x, y }] })
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', ...at(box.x + box.width - 30) })
+    for (let i = 1; i <= 12; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', ...at(box.x + box.width - 30 - i * 16) })
+      await p.waitForTimeout(16)
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await p.waitForTimeout(400)
+    expect(await row.getByRole('button', { name: 'Переместить', exact: true }).isVisible(), 'no «Переместить» after the swipe')
+    expect(await row.getByRole('button', { name: 'Удалить', exact: true }).isVisible(), 'no «Удалить» after the swipe')
+    const after = await name.boundingBox()
+    expect(Math.abs(after.x - before) <= 1, `the name moved by ${Math.round(after.x - before)} px`)
+    expect(await row.getByRole('checkbox').first().isVisible(), 'the mark left the screen')
+  } },
   // 6. Day one: the guess line names the page the template makes
   { id: 'acc-6-day-one-guess', device: MOBILE, run: async (p) => {
     await open(p, '/', false)
