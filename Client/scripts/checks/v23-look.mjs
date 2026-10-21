@@ -341,7 +341,8 @@ export default [
     await p.getByRole('dialog').getByRole('button', { name: 'Новая страница' }).click()
     await p.waitForURL(/\/p\//)
     expect(await shows(p.getByText('Что сюда класть?')), 'no «Что сюда класть?» on a new page')
-    expect(await p.getByText('По этим словам сюда попадут подходящие записи.').count(), 'no helper line on a new page')
+    // v24 fixes (4) reworded the helper line
+    expect(await p.getByText('Записи с этими словами Авто положит сюда.').count(), 'no helper line on a new page')
     await noDescription(p, 'a new page')
     // The picker of the composer: Авто «разложится по страницам» with nothing typed
     await open(p, '/')
