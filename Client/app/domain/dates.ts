@@ -119,6 +119,15 @@ export function formatDay(t: number, now: number): string {
   return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`
 }
 
+/** A day in running text: «сегодня», «вчера», «12 сентября», «12 сентября 2025» («последняя 12 сентября») */
+export function formatDate(t: number, now: number): string {
+  const word = dayWord(daysBetween(dayKey(now), dayKey(t)))
+  if (word) return word
+  const d = new Date(t)
+  const dm = `${d.getDate()} ${MONTHS[d.getMonth()]}`
+  return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`
+}
+
 /** A moment relative to now: «сегодня, 8:40», «вчера, 22:15», «16 окт», «16 окт 2025» */
 export function formatMoment(t: number, now: number): string {
   const diff = daysBetween(dayKey(now), dayKey(t))

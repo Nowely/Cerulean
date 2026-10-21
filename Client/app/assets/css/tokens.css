@@ -45,7 +45,7 @@
   --faint: #67676B;
   --placeholder-lg: #7E7E82;
 
-  /* Accent, warn, ok */
+  /* Accent, warn, ok; warn-soft tints the one warning block in the product (storage unavailable) */
   --accent: #1F5F8B;
   --accent-ink: #1A4F75;
   --on-accent: #FFFFFF;
@@ -53,6 +53,7 @@
   --warn: #A4401C;
   --warn-ink: #8E3613;
   --warn-fill: #A4401C;
+  --warn-soft: #F6EAE4;
   --on-warn: #FFFFFF;
   --ok: #3B6F4B;
 
@@ -121,6 +122,7 @@
   --warn: #EF9F67;
   --warn-ink: #F4B88D;
   --warn-fill: #A84A26;
+  --warn-soft: #33241D;
   --on-warn: #FFFFFF;
   --ok: #8EC899;
 

@@ -63,7 +63,11 @@ export const DEFAULT_SETTINGS: Settings = {
   rulesFirst: true,
   homeRows: 'summary',
   dismissed: [],
-  folded: []
+  folded: [],
+  copiedAt: 0,
+  copyHiddenAt: 0,
+  startedAt: 0,
+  persistAsked: false
 }
 
 /** The system pages every database has: Входящие (pinned) and Сегодня (all pages, due today) */

@@ -16,6 +16,8 @@ import HomeHeader from '~/components/home/HomeHeader.vue'
 import HomeRow from '~/components/home/HomeRow.vue'
 import HomeCaption from '~/components/home/HomeCaption.vue'
 import ComposerDock from '~/components/composer/ComposerDock.vue'
+import StoreWarning from '~/components/home/StoreWarning.vue'
+import CopyRow from '~/components/home/CopyRow.vue'
 
 useHead({ title: 'Главная · Cerulean' })
 
@@ -99,6 +101,10 @@ function toTop() {
       @touchstart.passive="touchStart"
       @touchend.passive="touchEnd"
     >
+      <StoreWarning
+        v-if="data.storageError"
+        class="mx-3 mt-1 mb-1 lg:m-0"
+      />
       <div role="list">
         <HomeRow
           :page="data.inbox"
@@ -323,6 +329,11 @@ function toTop() {
           </div>
         </div>
       </section>
+
+      <CopyRow
+        v-if="!docked"
+        :compact="compact"
+      />
     </div>
 
     <template #dock>
