@@ -89,6 +89,8 @@ export default [
     await move.click()
     const picker = p.getByRole('dialog', { name: /Переместить/ })
     expect(await shows(picker), 'no picker after «Переместить»')
+    // Measured once it has finished scaling open: under load the first frames are a few px narrow
+    await picker.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)))
     expect(at(await box(picker), await box(move)), 'the picker is not at the button')
     expect(Math.abs((await box(picker)).width - 380) <= 2, `the popover is ${(await box(picker)).width}px wide`)
     const names = await pickerNames(picker)

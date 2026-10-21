@@ -156,9 +156,13 @@ export default [
     await openPage(p, 'Покупки')
     expect(await chipGlyph(p) === await resolve(p, 'var(--c-green)'), 'the chip on Покупки is not green')
     // A Поиск hit keeps the muted glyph
+    // Back on Главная before the tap: under load the first tap could land on Покупки's header on its way out
     await p.goBack()
+    await p.waitForURL(u => new URL(u).pathname === '/')
+    const box = p.getByRole('searchbox', { name: 'Найти' })
     await p.getByRole('button', { name: 'Найти' }).first().click()
-    await p.getByRole('searchbox', { name: 'Найти' }).fill('Покупки')
+    if (!await shows(box)) await p.getByRole('button', { name: 'Найти' }).first().click()
+    await box.fill('Покупки')
     await p.waitForTimeout(500)
     const hit = p.getByRole('dialog').getByRole('button', { name: /^Покупки/ }).first()
     expect(await shows(hit), 'no Поиск hit for «Покупки»')
