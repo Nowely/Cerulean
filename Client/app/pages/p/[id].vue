@@ -13,6 +13,8 @@ import PageMenu from '~/components/page/PageMenu.vue'
 import PageAside from '~/components/page/PageAside.vue'
 import PageTile from '~/components/common/PageTile.vue'
 import ComposerDock from '~/components/composer/ComposerDock.vue'
+import EditingBar from '~/components/body/EditingBar.vue'
+import { useBodyEditing } from '~/composables/useBodyEditing'
 
 const route = useRoute()
 const data = useDataStore()
@@ -20,7 +22,11 @@ const { isDesktop } = useScreen()
 const peek = usePeek()
 const page = computed(() => data.pages[route.params.id as string])
 const live = computed(() => page.value && !page.value.deletedAt)
+/** A new page's setup has focus: its fields stand in for the composer */
 const editing = ref(false)
+/** The page note has focus: the editing bar takes the composer's slot (v23) */
+const body = useBodyEditing()
+const noting = computed(() => body.on('main'))
 const view = useTemplateRef<InstanceType<typeof PageView>>('view')
 
 useHead({ title: computed(() => `${page.value?.title || 'Без названия'} · Cerulean`) })
@@ -81,11 +87,12 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
 
       <template #dock>
         <ComposerDock
-          v-show="!editing"
+          v-show="!editing && !noting"
           :key="page.id"
           :mode="page.kind === 'today' ? 'today' : 'page'"
           :page-id="page.kind === 'today' ? undefined : page.id"
         />
+        <EditingBar v-if="noting" />
       </template>
     </AppScreen>
     <div

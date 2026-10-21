@@ -19,7 +19,9 @@ const props = withDefaults(defineProps<{
   query?: string
   density?: 'card' | 'list'
   selected?: boolean
-}>(), { place: true, brief: false, query: '', density: 'card', selected: false })
+  /** Why it is in «Связано» (v23), after the place in place of the date: «в тексте», ««Сначала дочитать …»» */
+  reason?: string
+}>(), { place: true, brief: false, query: '', density: 'card', selected: false, reason: '' })
 
 const emit = defineEmits<{ open: [] }>()
 const data = useDataStore()
@@ -35,7 +37,7 @@ const when = computed(() => {
 })
 const parts = computed(() => splitMatch(props.rec.text, props.query))
 const tag = computed(() => props.rec.tags.includes('offline') ? 'ждёт сети' : props.rec.tags.includes('clarify') ? 'уточнить' : '')
-const hasLine2 = computed(() => (props.place && where.value) || when.value || tag.value)
+const hasLine2 = computed(() => (props.place && where.value) || when.value || tag.value || props.reason)
 </script>
 
 <template>
@@ -66,16 +68,19 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
       <span
         v-if="hasLine2"
         class="max-w-full truncate text-caption font-normal"
-        :class="late && !brief ? 'text-warn-ink' : 'text-toned'"
+        :class="late && !brief && !reason ? 'text-warn-ink' : 'text-toned'"
       >
-        <template v-if="place && where">{{ where }}</template>
-        <template v-if="place && where && (when || tag)"> · </template>
-        <template v-if="when">{{ when }}</template>
-        <template v-if="when && tag"> · </template>
-        <span
-          v-if="tag"
-          :class="tag === 'уточнить' ? 'text-accent-ink' : ''"
-        >{{ tag }}</span>
+        <template v-if="reason">{{ place && where ? `${where} · ${reason}` : reason }}</template>
+        <template v-else>
+          <template v-if="place && where">{{ where }}</template>
+          <template v-if="place && where && (when || tag)"> · </template>
+          <template v-if="when">{{ when }}</template>
+          <template v-if="when && tag"> · </template>
+          <span
+            v-if="tag"
+            :class="tag === 'уточнить' ? 'text-accent-ink' : ''"
+          >{{ tag }}</span>
+        </template>
       </span>
     </button>
   </div>

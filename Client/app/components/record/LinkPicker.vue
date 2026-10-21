@@ -1,8 +1,11 @@
 <script setup lang="ts">
 // «Связать»: find a record or a page and tick it to link it; tick again to undo.
 // Nothing typed: what is linked now, then what was opened lately.
+// A mention in a body is a link too (v23, Q3): its ✓ row says «Книги · упомянуто в тексте», and unticking it turns the
+// chip into plain words (the row stays until the sheet closes; a second tap makes a hand link). «Ещё…» in the editing
+// bar opens it to mention (`mention`): a row puts the chip at the caret and the sheet closes back to the text.
 import { computed, ref, watch } from 'vue'
-import type { Rec } from '~/domain/types'
+import type { Id, Rec } from '~/domain/types'
 import type { Hit } from '~/domain/search'
 import { recent, search } from '~/domain/search'
 import { useDataStore } from '~/stores/data'
@@ -11,26 +14,48 @@ import { useScreen } from '~/composables/useScreen'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import PageTile from '../common/PageTile.vue'
 
-const props = defineProps<{ rec: Rec }>()
+const props = defineProps<{
+  /** The record whose links these are; a page's note mentions without one */
+  rec?: Rec
+  /** To mention: a row picks instead of ticking */
+  mention?: boolean
+  /** What the field starts with (the words typed after «@») */
+  query?: string
+  /** The body's owner, left out of the rows */
+  ownerId?: Id
+}>()
+const emit = defineEmits<{ pick: [Hit], closed: [] }>()
 const data = useDataStore()
 const now = useNow()
 // On a phone the keyboard would cover the lists the sheet opens to show (MobileLink); desktop types at once
 const { isDesktop } = useScreen()
-const open = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 const q = ref('')
 const idOf = (h: Hit) => h.kind === 'page' ? h.page.id : h.rec.id
-const linked = computed(() => new Set(data.linksOf(props.rec.id).map(idOf)))
+const selfId = computed(() => props.rec?.id ?? props.ownerId)
+const linked = computed(() => new Set(props.rec && !props.mention ? data.linksOf(props.rec.id).map(idOf) : []))
+/** A ✓ row a mention made */
+const byText = (h: Hit) => !!props.rec && linked.value.has(idOf(h)) && data.mentioned(props.rec.id, idOf(h))
 
 // The lists hold still while open: an unticked link stays in place to be ticked back
 const before = ref<Hit[]>([])
 watch(open, (v) => {
   if (!v) return
-  q.value = ''
-  before.value = data.linksOf(props.rec.id)
+  q.value = props.query ?? ''
+  before.value = props.rec ? data.linksOf(props.rec.id) : []
 })
 
+function choose(h: Hit) {
+  if (props.mention) {
+    emit('pick', h)
+    open.value = false
+  } else if (props.rec) {
+    data.toggleLink(props.rec.id, idOf(h))
+  }
+}
+
 const groups = computed(() => {
-  const own = (h: Hit) => idOf(h) !== props.rec.id
+  const own = (h: Hit) => idOf(h) !== selfId.value
   if (q.value.trim()) {
     const hits = search(q.value, data.livePages, data.liveRecords, { titlesOnly: true, sectionId: null }).filter(own).slice(0, 30)
     return hits.length ? [{ label: '', hits }] : []
@@ -38,7 +63,7 @@ const groups = computed(() => {
   // A few of the user's own pages, not Входящие or Сегодня, nor the page this record is on (MobileLink)
   const was = new Set(before.value.map(idOf))
   const lately = recent(data.livePages, data.liveRecords, now.value, 16).flatMap(g => g.hits)
-    .filter(h => own(h) && !was.has(idOf(h)) && !(h.kind === 'page' && (h.page.kind !== 'page' || h.page.id === props.rec.pageId)))
+    .filter(h => own(h) && !was.has(idOf(h)) && !(h.kind === 'page' && (h.page.kind !== 'page' || h.page.id === props.rec?.pageId)))
     .slice(0, 4)
   return [
     { label: 'Связано', hits: before.value },
@@ -50,8 +75,9 @@ const groups = computed(() => {
 <template>
   <AdaptiveOverlay
     v-model:open="open"
-    title="Связать"
-    align="start"
+    :title="mention ? 'Упомянуть' : 'Связать'"
+    :align="mention ? 'end' : 'start'"
+    @closed="emit('closed')"
   >
     <template #trigger>
       <slot />
@@ -63,9 +89,9 @@ const groups = computed(() => {
         variant="soft"
         size="lg"
         placeholder="Страницы и записи"
-        aria-label="Найти, что связать"
+        :aria-label="mention ? 'Найти, что упомянуть' : 'Найти, что связать'"
         class="w-full"
-        :autofocus="isDesktop"
+        :autofocus="isDesktop || mention"
       />
     </div>
     <ul
@@ -90,8 +116,9 @@ const groups = computed(() => {
           <button
             type="button"
             class="flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-chip px-3 text-left hover:bg-muted active:bg-pressed"
-            :aria-pressed="linked.has(idOf(h))"
-            @click="data.toggleLink(rec.id, idOf(h))"
+            :aria-pressed="mention ? undefined : linked.has(idOf(h))"
+            :aria-label="mention ? `Упомянуть «${h.kind === 'page' ? h.page.title || 'Без названия' : h.rec.text}»` : undefined"
+            @click="choose(h)"
           >
             <PageTile
               v-if="h.kind === 'page' || h.rec.glyph"
@@ -108,9 +135,9 @@ const groups = computed(() => {
             <span class="flex min-w-0 flex-1 flex-col py-1">
               <span class="truncate text-15 text-highlighted">{{ h.kind === 'page' ? h.page.title || 'Без названия' : h.rec.text }}</span>
               <span
-                v-if="h.kind === 'record'"
+                v-if="h.kind === 'record' || byText(h)"
                 class="truncate text-caption text-toned"
-              >{{ data.placeOf(h.rec).title }}</span>
+              >{{ [h.kind === 'record' ? data.placeOf(h.rec).title : '', byText(h) ? 'упомянуто в тексте' : ''].filter(Boolean).join(' · ') }}</span>
             </span>
             <UIcon
               v-if="linked.has(idOf(h))"
