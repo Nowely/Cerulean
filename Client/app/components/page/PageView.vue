@@ -420,6 +420,7 @@ const emptyText = computed(() => {
           :records="shown"
           :since="openedAt"
           :readonly="!full"
+          :clearable="!query.trim()"
           :class="glance ? 'pt-3' : bar ? '' : 'lg:pt-1'"
           @open="openRecord"
           @choose="choose"

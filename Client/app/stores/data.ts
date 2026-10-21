@@ -10,7 +10,7 @@ import { mergeSnapshot, type Snapshot } from '~/domain/export'
 import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/factory'
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
 import { learn } from '~/domain/rules'
-import { topOrder } from '~/domain/views'
+import { doneIn, dropPlace, topOrder, type Group } from '~/domain/views'
 import { applyTemplate, TEMPLATES } from '~/domain/templates'
 import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
 import { uid } from '~/domain/ids'
@@ -667,6 +667,48 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  /**
+   * Drag and Alt+↑/↓ (v22, Josh #3): puts a record at `index` of a group as `groups` show it. A view sorted by a
+   * property turns «Вручную» first, the rows keeping the order they had on screen; a drop into another group of
+   * a «Выбор» property sets that value. Returns the group it joined (null within its own), whether the sort
+   * changed, and how to take it all back; null when it cannot go there
+   */
+  function placeRecord(pageId: Id, viewId: Id, groups: Group[], recId: Id, to: string, index: number) {
+    const page = pages.value[pageId]
+    const view = page?.views.find(v => v.id === viewId)
+    const rec = records.value[recId]
+    if (!page || !view || !rec) return null
+    const prop = page.props.find(p => p.id === view.groupBy && p.type === 'select')
+    const sort = view.sort
+    const onScreen = new Map(groups.flatMap(g => g.records).map((r, i) => [r.id, i]))
+    const orders = sort === 'manual' ? (r: Rec) => r.order : (r: Rec) => onScreen.get(r.id) ?? r.order
+    const place = dropPlace(groups, prop, rec, to, index, orders)
+    if (!place) return null
+    const before = recordsOf(pageId).map(r => ({ id: r.id, order: r.order, values: r.values }))
+    if (sort !== 'manual') {
+      for (const [id, i] of onScreen) if (records.value[id]?.order !== i) updateRecord(id, { order: i })
+      updatePage(pageId, { views: page.views.map(v => v.id === viewId ? { ...v, sort: 'manual' } : v) })
+    }
+    updateRecord(recId, { order: place.order, values: place.values })
+    const undo = () => {
+      for (const b of before) {
+        const r = records.value[b.id]
+        if (r && (r.order !== b.order || r.values !== b.values)) updateRecord(b.id, { order: b.order, values: b.values })
+      }
+      const p = pages.value[pageId]
+      if (p && sort !== 'manual') updatePage(pageId, { views: p.views.map(v => v.id === viewId ? { ...v, sort } : v) })
+    }
+    return { into: place.into, manual: sort !== 'manual', undo }
+  }
+
+  /** «Очистить купленное» (v22, N9): the ticked records a view shows go to Корзина at once, and «Отменить» brings them back */
+  function clearDone(pageId: Id, viewId: Id): { count: number, undo: () => void } {
+    const view = pages.value[pageId]?.views.find(v => v.id === viewId)
+    const ids = view ? doneIn(recordsOf(pageId), view).map(r => r.id) : []
+    if (ids.length) removeRecords(ids)
+    return { count: ids.length, undo: () => restoreRecords(ids) }
+  }
+
   /** Gone for good: used by «Отменить» in a receipt and by emptying the trash */
   function purgeRecords(ids: Id[]) {
     const all = new Set(ids)
@@ -864,7 +906,7 @@ export const useDataStore = defineStore('data', () => {
     init, setSettings, toggleFolded, clearWriteFailed, persist, hold, release, takeWaiting,
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     propUsage, addProp, updateProp, moveProp, removeOption, retypeProp, removeProp,
-    addRecord, updateRecord, toggleLink, toggleDone, moveRecords, removeRecords, restoreRecords, purgeRecords, purgePages, emptyTrash,
+    addRecord, updateRecord, toggleLink, toggleDone, moveRecords, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
     createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,
     snapshot, importSnapshot, addSnapshot, takeBack, wipe,

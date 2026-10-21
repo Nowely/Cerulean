@@ -56,6 +56,15 @@ export function formatDue(due: Due, now: number): string {
   return due.time ? `${base}, ${due.time}` : base
 }
 
+/** The day a calendar composer writes on: «сегодня», «завтра», «вс, 25 окт» (v22, G6: «Запись на вс, 25 окт») */
+export function dayAim(key: string, now: number): string {
+  const diff = daysBetween(dayKey(now), key)
+  if (diff === 0 || diff === 1) return dayWord(diff)!
+  const d = keyToDate(key)
+  const base = `${WEEKDAYS[d.getDay()]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
+  return d.getFullYear() !== new Date(now).getFullYear() ? `${base} ${d.getFullYear()}` : base
+}
+
 /** Only the time when the day goes without saying (in «Сегодня»): «10:00», otherwise the short form */
 export function formatDueBrief(due: Due, now: number): string {
   if (due.time && daysBetween(dayKey(now), due.date) === 0) return due.time

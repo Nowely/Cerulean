@@ -157,12 +157,13 @@ export default {
       }
     },
 
-    // Switch: 40×24 track, 20px knob; off track is the ring token so it stays visible (3:1)
+    // Switch: 40×24 track, 20px knob. Off is quieter than its label: the `trk` track with a 1px `line2` edge, so it
+    // reads in dark too, and the knob keeps a `ring` border (3:1, v22 N24); on is the accent fill alone
     switch: {
       slots: {
         // The 44px touch target belongs to the button itself, so a tap anywhere on it toggles
-        base: 'hit-44 data-[state=unchecked]:bg-ring',
-        thumb: 'bg-knob shadow-seg'
+        base: 'hit-44 border p-px data-[state=unchecked]:border-line2 data-[state=unchecked]:bg-trk',
+        thumb: 'bg-knob shadow-seg data-[state=unchecked]:shadow-none data-[state=unchecked]:ring-[1.5px] data-[state=unchecked]:ring-ring data-[state=unchecked]:ring-inset'
       },
       variants: {
         size: {

@@ -12,6 +12,10 @@ import { useUiStore } from '~/stores/ui'
 import { useSpeech } from '~/composables/useSpeech'
 import { useNotify } from '~/composables/useNotify'
 import { draftsFor } from '~/domain/auto'
+import { onDay } from '~/domain/views'
+import { dayAim } from '~/domain/dates'
+import { useCalendarDay } from '~/composables/useCalendarDay'
+import { useNow } from '~/composables/useNow'
 import { capitalize, count, RECORD_FORMS } from '~/domain/text'
 import { useLater } from '~/composables/useLater'
 import DestChip from './DestChip.vue'
@@ -147,14 +151,24 @@ function choose(d: 'auto' | Id) {
   void nextTick(() => field.value?.focus())
 }
 
+/** The day this page's calendar has selected, while the composer writes into the page itself (v22, G6) */
+const calendar = useCalendarDay()
+const now = useNow()
+const onCalendar = computed(() => {
+  const day = calendar.value
+  return props.mode === 'page' && day && day.pageId === props.pageId && dest.value === props.pageId ? day.date : null
+})
+
 const hint = computed(() => props.placeholder ?? (
   props.mode === 'record'
     ? 'Подпункт'
     : props.mode === 'today'
       ? 'Запись на сегодня'
-      : props.mode === 'page'
-        ? (untitled.value && !data.recordsOf(props.pageId!).length ? 'Первая запись' : 'Новая запись')
-        : 'Хлеб, позвонить в 10…'
+      : onCalendar.value
+        ? `Запись на ${dayAim(onCalendar.value, now.value)}`
+        : props.mode === 'page'
+          ? (untitled.value && !data.recordsOf(props.pageId!).length ? 'Первая запись' : 'Новая запись')
+          : 'Хлеб, позвонить в 10…'
 ))
 
 // The field grows with the text: a hidden copy in the same grid cell gives the height (up to five lines).
@@ -215,7 +229,7 @@ async function submit(opts: { record?: boolean } = {}) {
   const target = aimed === 'auto' ? undefined : data.pages[aimed]
   if (props.mode === 'page' && target && target.id === props.pageId) {
     const p = target
-    const drafts = p.kind === 'inbox' ? [{ text: capitalize(t), due: null, values: {} }] : draftsFor(t, p, Date.now())
+    const drafts = p.kind === 'inbox' ? [{ text: capitalize(t), due: null, values: {} }] : onDay(draftsFor(t, p, Date.now()), onCalendar.value)
     const ids = [...drafts].reverse().map(d => data.addRecord({ pageId: p.id, text: d.text, due: d.due, values: d.values, via: 'manual' }).id)
     lastSend = { text: t, aim: aimed, ids: () => ids }
     emit('sent', null)

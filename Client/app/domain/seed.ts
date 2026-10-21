@@ -77,6 +77,7 @@ export function demo(now = Date.now()): Dataset {
     noun: ['дело', 'дела', 'дел'],
     views: [
       listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
+      listView('Календарь', { layout: 'calendar', filter: [{ field: 'done', op: 'is', value: false }] }),
       listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
     ],
     openedAt: at(8, 55),

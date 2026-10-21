@@ -30,16 +30,19 @@ const prop = computed<PropDef | undefined>(() => {
   const chosen = props.page.props.find(p => p.id === props.view.groupBy && p.type === 'select')
   return chosen ?? props.page.props.find(p => p.type === 'select')
 })
+/** The column a phone shows */
+const stage = ref<string | null>(null)
 const columns = computed(() => {
   if (!prop.value) return []
   const list = sortRecords(filterRecords(props.records, props.view), props.view.sort)
   const opts = prop.value.options ?? []
   const cols = opts.map(o => ({ id: o.id, name: o.name, records: list.filter(r => r.values[prop.value!.id] === o.id) }))
   const none = list.filter(r => !opts.some(o => o.id === r.values[prop.value!.id]))
-  return none.length ? [{ id: 'none', name: noValueLabel(prop.value), records: none }, ...cols] : cols
+  // «Без статуса» shows while something has no value, and on a phone while it is the open column, even emptied
+  return none.length || (stage.value === 'none' && !isDesktop.value) ? [{ id: 'none', name: noValueLabel(prop.value), records: none }, ...cols] : cols
 })
-const stage = ref<string | null>(null)
-// The open column stays put; only when it goes away («Без статуса» emptied) the first one with cards opens
+// The open column stays put after a move, even when it is left empty (G7); only a column that goes away
+// (a deleted option) gives its place to the first one with cards
 watch(columns, (c) => {
   if (!c.some(x => x.id === stage.value)) stage.value = (c.find(x => x.records.length) ?? c[0])?.id ?? null
 }, { immediate: true })
@@ -67,7 +70,7 @@ function moveTo(rec: Rec, colId: string) {
       const cur = data.records[rec.id]
       if (cur) data.updateRecord(rec.id, { values: { ...cur.values, [p.id]: before } })
     }
-  })
+  }, 8000)
 }
 /** «Добавить свойство» without columns: the editor with «Выбор» chosen; the new property becomes this view's columns */
 function addProp() {

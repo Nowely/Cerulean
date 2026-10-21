@@ -3,6 +3,7 @@
 // a 6px ring dot (pages without «Готово»), or the record's own glyph (its coloured tile only on its own page)
 import { computed } from 'vue'
 import type { Page, Rec } from '~/domain/types'
+import { isListPage } from '~/domain/auto'
 import PageTile from './PageTile.vue'
 
 const props = withDefaults(defineProps<{
@@ -23,6 +24,8 @@ const kind = computed(() => {
   if (props.rec.parentId || props.page?.hasDone) return 'check'
   return 'dot'
 })
+/** On a shopping list a ticked thing is bought, and a tap puts it back on the list (v22, N9) */
+const label = computed(() => `${props.rec.done && props.page && isListPage(props.page) ? 'Купить снова' : 'Отметить'} «${props.rec.text}»`)
 const circle = computed(() => ({ sm: 'size-4.5', md: 'size-5', lg: 'size-6' }[props.size]))
 const tick = computed(() => ({ sm: 'size-2.5', md: 'size-3', lg: 'size-3.5' }[props.size]))
 const box = computed(() => props.area === 'row' ? 'size-11' : 'size-10 lg:size-9')
@@ -34,7 +37,7 @@ const box = computed(() => props.area === 'row' ? 'size-11' : 'size-10 lg:size-9
     type="button"
     role="checkbox"
     :aria-checked="rec.done"
-    :aria-label="`Отметить «${rec.text}»`"
+    :aria-label="label"
     :tabindex="tabbable ? undefined : -1"
     class="group/mark relative flex shrink-0 cursor-pointer items-center justify-center rounded-full"
     :class="box"

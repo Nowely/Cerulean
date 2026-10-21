@@ -1,5 +1,5 @@
 // Drag to reorder (spec «Drag», v22). A long press (about 400 ms, a light haptic tick) lifts an item: the `elev`
-// fill, the float shadow with a 1px hairline (a `ring` edge in dark), scale 1.02. The others make room live in
+// fill, the float shadow with a 1px `ring` edge (so it reads in dark too, N24), scale 1.02. The others make room live in
 // 150 ms, the list scrolls near its edges, and letting go drops it there. Letting go without moving is a press
 // (the item's menu). A vertical scroll before the long press cancels it, Escape puts the item back, and under
 // `prefers-reduced-motion` nothing animates. Pointer events only.
@@ -18,7 +18,8 @@
 // - `handle(id)`: an element that lifts its item at once on a pointer drag, no long press (the desktop ⋮⋮).
 // - `onDrop(id, group, index)`: where it landed; `index` counts the items of that group without the dropped one.
 // - `move(id, -1 | 1)`: one step for «Выше» / «Ниже» (screen readers) and Alt+↑/↓; past a group's end it goes
-//   into the next group. `lifted` is the id being carried, `LIFTED` the classes of its look.
+//   into the next group. `lifted` is the id being carried, `joining` the other group it is over (its caption turns
+//   `accent-ink`), `LIFTED` the classes of its look.
 import { nextTick, onBeforeUnmount, ref } from 'vue'
 
 export type DragId = string
@@ -36,7 +37,7 @@ export interface DragSortOptions {
 }
 
 /** The lifted look; the composable sets `data-lifted` on the item */
-export const LIFTED = 'data-lifted:relative data-lifted:z-10 data-lifted:bg-elev data-lifted:shadow-float data-lifted:ring data-lifted:ring-line2 dark:data-lifted:ring-ring'
+export const LIFTED = 'data-lifted:relative data-lifted:z-10 data-lifted:bg-elev data-lifted:shadow-float data-lifted:ring data-lifted:ring-ring'
 
 const MOVE_SLOP = 8
 const EDGE = 56
@@ -50,6 +51,7 @@ let scopes = 0
 export function useDragSort(opts: DragSortOptions) {
   const scope = `d${++scopes}`
   const lifted = ref<DragId | null>(null)
+  const joining = ref<string | null>(null)
   const delay = opts.delay ?? 400
   const axis = opts.axis ?? 'y'
 
@@ -229,6 +231,7 @@ export function useDragSort(opts: DragSortOptions) {
     const cy = slot.top + slot.height / 2 + dy
     const cx = slot.left + slot.width / 2 + dx
     to = target(cx, cy)
+    joining.value = to.box !== from.box ? boxes[to.box]!.key : null
     const shifts = layout()
     const own = shifts.boxes.get(from.box) ?? 0
     press.el.style.transform = `translate3d(${dx}px, ${dy - own}px, 0) scale(1.02)`
@@ -238,20 +241,28 @@ export function useDragSort(opts: DragSortOptions) {
   function target(cx: number, cy: number) {
     const key = boxes[from.box]!.key
     const open = boxes.map((b, i) => i === from.box || !opts.accepts || opts.accepts(press!.id, key, b.key))
+    // Stacked groups: a group below the one the row left rises by the row's room once it is the target, and a group
+    // above it grows by that room, so each is judged where it will be drawn
+    const src = boxes[from.box]!
+    const room = src.items[from.index]!.height + src.gap
+    const rise = (i: number) => axis === 'y' && i > from.box ? room : 0
+    const grow = (i: number) => axis === 'y' && i < from.box ? room : 0
     let best = from.box
     let bestDist = Number.POSITIVE_INFINITY
     boxes.forEach((b, i) => {
       if (!open[i]) return
+      const top = b.top - rise(i)
+      const bottom = b.bottom + grow(i)
       const d = axis === 'xy'
-        ? (cx < b.left ? b.left - cx : cx > b.right ? cx - b.right : 0) * 4 + (cy < b.top ? b.top - cy : cy > b.bottom ? cy - b.bottom : 0)
-        : cy < b.top ? b.top - cy : cy > b.bottom ? cy - b.bottom : 0
+        ? (cx < b.left ? b.left - cx : cx > b.right ? cx - b.right : 0) * 4 + (cy < top ? top - cy : cy > bottom ? cy - bottom : 0)
+        : cy < top ? top - cy : cy > bottom ? cy - bottom : 0
       if (d < bestDist) {
         best = i
         bestDist = d
       }
     })
     const items = boxes[best]!.items.filter(s => s.id !== press!.id)
-    const index = items.filter(s => s.top + s.height / 2 < cy).length
+    const index = items.filter(s => s.top - rise(best) + s.height / 2 < cy).length
     return { box: best, index }
   }
 
@@ -384,6 +395,7 @@ export function useDragSort(opts: DragSortOptions) {
     }
     press = null
     lifted.value = null
+    joining.value = null
     cancelAnimationFrame(frame)
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onUp)
@@ -440,7 +452,7 @@ export function useDragSort(opts: DragSortOptions) {
 
   onBeforeUnmount(cancel)
 
-  return { group, item, handle, move, cancel, lifted }
+  return { group, item, handle, move, cancel, lifted, joining }
 }
 
 /** The element that scrolls the lists: the nearest scrolling ancestor, or the page */
