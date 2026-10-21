@@ -15,7 +15,7 @@ Read this first. The product is the client in `Client/`, a Notion-like browser a
 Each mockup iteration goes through the same steps:
 
 1. The mockups thread publishes a new canvas version and a delta in which every item has a check line.
-2. The client thread builds the delta on one branch and one PR. For every item it ticks the check in the PR body, and it records decisions in `docs/decisions.md`.
+2. The client thread builds the delta on one branch and one PR. For every item it ticks the check in the PR body, and it records decisions in `docs/decisions.md`. If the previous iteration's PR is still open, the new delta joins that PR (Josh, 21 Oct: v22 and v23 in PR #15).
 3. It regenerates the report: run `pnpm dev`, then `pnpm shots` (`SHOTS_CHROMIUM=/opt/pw-browsers/chromium` in a cloud container). The table lists the item, its check and the result (pass, fail or partly) with a screenshot or a sentence.
 4. Acceptance: the mockups thread walks the check lines on a local build of the PR branch at 390 px and 1440 px. It writes what did not land into the PR, and the fixes go into the same PR until it passes.
 5. Josh merges the PR himself («Ready for review», then «Squash and merge»). Agents never mark a PR ready or merge it.
