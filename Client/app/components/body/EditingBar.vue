@@ -5,20 +5,18 @@
 // «Ещё…», which opens «Связать» to mention) and the address field of «Ссылка». Its buttons never take the focus from
 // the text. Desktop: 36px round tools, 18px glyphs, tooltips that name the keys.
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
-import { LazyUTooltip } from '#components'
 import type { Hit } from '~/domain/search'
 import type { MentionTarget } from '~/domain/body'
 import { GLYPHS } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useScreen } from '~/composables/useScreen'
-import { useLater } from '~/composables/useLater'
 import { useBodyEditing, type BodyKind } from '~/composables/useBodyEditing'
 import LinkPicker from '../record/LinkPicker.vue'
+import BarTip from './BarTip'
 
 const data = useDataStore()
 const body = useBodyEditing()
 const { isDesktop } = useScreen()
-const later = useLater()
 const bar = useTemplateRef<HTMLElement>('bar')
 const url = useTemplateRef<HTMLInputElement>('url')
 watch(bar, (el) => {
@@ -36,10 +34,6 @@ const KINDS: { kind: BodyKind, label: string, icon: string, keys: string }[] = [
   { kind: 'ordered', label: 'Нумерованный список', icon: 'i-cer-body-numbered', keys: '1. пробел' },
   { kind: 'quote', label: 'Цитата', icon: 'i-cer-body-quote', keys: '> пробел' }
 ]
-
-/** A tooltip on desktop only, once the overlay code is in */
-const Tip = computed(() => isDesktop.value && later.ready.value ? LazyUTooltip : 'span')
-const tipProps = (text: string) => isDesktop.value && later.ready.value ? { text, delayDuration: 300, content: { side: 'top' as const } } : { class: 'contents' }
 
 /** The bar's buttons never take the focus from the text; the address field does */
 function keep(e: MouseEvent) {
@@ -102,7 +96,7 @@ function more(h: Hit) {
         >
           <UIcon
             :name="glyphOf(t)"
-            class="size-3.5 shrink-0 text-toned"
+            class="size-3 shrink-0 text-toned"
           />
           <span class="min-w-0 truncate">{{ t.name }}</span>
         </button>
@@ -143,9 +137,9 @@ function more(h: Hit) {
     </template>
 
     <template v-else>
-      <component
-        :is="Tip"
-        v-bind="tipProps('Отменить · Ctrl Z')"
+      <BarTip
+        label="Отменить"
+        keys="Ctrl Z"
       >
         <button
           type="button"
@@ -160,15 +154,15 @@ function more(h: Hit) {
             class="ebg"
           />
         </button>
-      </component>
+      </BarTip>
 
       <!-- The caret: the kind of its line is pressed, a second tap makes it a paragraph again -->
       <template v-if="face === 'caret'">
-        <component
-          :is="Tip"
+        <BarTip
           v-for="k in KINDS"
           :key="k.kind"
-          v-bind="tipProps(`${k.label} · ${k.keys}`)"
+          :label="k.label"
+          :keys="k.keys"
         >
           <button
             type="button"
@@ -183,14 +177,14 @@ function more(h: Hit) {
               class="ebg"
             />
           </button>
-        </component>
+        </BarTip>
       </template>
 
       <!-- A selection: bold, italic, a link -->
       <template v-else>
-        <component
-          :is="Tip"
-          v-bind="tipProps('Жирный · Ctrl B')"
+        <BarTip
+          label="Жирный"
+          keys="Ctrl B"
         >
           <button
             type="button"
@@ -202,10 +196,10 @@ function more(h: Hit) {
           >
             <span aria-hidden="true">Ж</span>
           </button>
-        </component>
-        <component
-          :is="Tip"
-          v-bind="tipProps('Курсив · Ctrl I')"
+        </BarTip>
+        <BarTip
+          label="Курсив"
+          keys="Ctrl I"
         >
           <button
             type="button"
@@ -220,10 +214,10 @@ function more(h: Hit) {
               class="[font-style:oblique]"
             >К</span>
           </button>
-        </component>
-        <component
-          :is="Tip"
-          v-bind="tipProps('Ссылка · Ctrl K')"
+        </BarTip>
+        <BarTip
+          label="Ссылка"
+          keys="Ctrl K"
         >
           <button
             type="button"
@@ -236,12 +230,12 @@ function more(h: Hit) {
               class="ebg"
             />
           </button>
-        </component>
+        </BarTip>
       </template>
 
-      <component
-        :is="Tip"
-        v-bind="tipProps('Упомянуть · @')"
+      <BarTip
+        label="Упомянуть"
+        keys="@"
       >
         <button
           type="button"
@@ -254,13 +248,12 @@ function more(h: Hit) {
             class="ebg"
           />
         </button>
-      </component>
+      </BarTip>
 
       <!-- «Сделать подпунктом»: the product's empty checkbox ring, on a record only -->
-      <component
-        :is="Tip"
+      <BarTip
         v-if="face === 'select' && s?.canSub"
-        v-bind="tipProps('Сделать подпунктом')"
+        label="Сделать подпунктом"
       >
         <button
           type="button"
@@ -273,14 +266,13 @@ function more(h: Hit) {
             aria-hidden="true"
           />
         </button>
-      </component>
+      </BarTip>
     </template>
 
     <template v-if="face !== 'mention'">
       <span class="flex-1" />
-      <component
-        :is="Tip"
-        v-bind="tipProps('Esc')"
+      <BarTip
+        label="Esc"
       >
         <button
           type="button"
@@ -289,7 +281,7 @@ function more(h: Hit) {
         >
           Готово
         </button>
-      </component>
+      </BarTip>
     </template>
   </div>
 </template>

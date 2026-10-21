@@ -173,11 +173,10 @@ const editor = useEditor({
     onModK: () => {
       const ed = editor.value
       if (!ed) return false
+      // Nothing selected: «Найти», whose field takes the focus and so ends the editing. The text keeps the focus until
+      // then, which keeps the shell's own Ctrl K (a toggle) out of this key press
       if (!ed.state.selection.empty) link()
-      else {
-        done()
-        find.open()
-      }
+      else find.open()
       return true
     }
   }),
@@ -361,6 +360,8 @@ function toSub() {
   pending = true
   flush()
   const sub = data.addRecord({ pageId: rec.pageId, parentId: rec.id, text })
+  // The new row scrolls into view as it mounts; the edges settle after that
+  void nextTick(settleSoon)
   const owner = { ...props.owner }
   notify('Строка стала подпунктом', {
     label: 'Отменить',
@@ -403,6 +404,7 @@ function onFocus() {
     body.begin(session)
     document.addEventListener('pointerdown', outside, true)
     window.visualViewport?.addEventListener('resize', settleSoon)
+    watchScroller()
   }
   emit('focus', true)
   refresh()
@@ -431,6 +433,8 @@ function finish() {
   linkRange = null
   document.removeEventListener('pointerdown', outside, true)
   window.visualViewport?.removeEventListener('resize', settleSoon)
+  sized?.disconnect()
+  sized = null
   if (mine()) body.end(session)
   emit('focus', false)
 }
@@ -459,6 +463,14 @@ function onTransaction() {
 
 /** Phone, keyboard up: the caret's line and one above it in view, and neither edge cuts a line or a row */
 let settleTimer: ReturnType<typeof setTimeout> | undefined
+/** The text's scroll area changes height with the keyboard, the bar's faces and a toast over the bar: settle again */
+let sized: ResizeObserver | null = null
+function watchScroller() {
+  const scroller = editor.value?.view.dom.closest('.overflow-y-auto')
+  if (isDesktop.value || !scroller || sized) return
+  sized = new ResizeObserver(() => settleSoon())
+  sized.observe(scroller)
+}
 function settleSoon() {
   if (isDesktop.value) return
   clearTimeout(settleTimer)

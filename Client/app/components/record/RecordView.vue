@@ -359,7 +359,7 @@ function openPlace() {
 
     <!-- Подпункты always have «Готово» -->
     <section
-      v-if="subs.length || editable"
+      v-if="subs.length || full"
       class="lg:mt-2"
       aria-labelledby="subs-title"
     >
@@ -401,7 +401,7 @@ function openPlace() {
       </button>
       <p
         v-else-if="!subs.length"
-        class="px-4 py-1 text-meta text-toned lg:px-0"
+        class="px-4 pt-1 text-15 leading-[1.5] text-toned lg:mt-0.5 lg:px-0 lg:pt-0 lg:leading-9 lg:text-dimmed"
       >
         {{ full && !bodyFocused ? 'Подпунктов пока нет. Пиши внизу, и они появятся здесь.' : 'Подпунктов пока нет.' }}
       </p>

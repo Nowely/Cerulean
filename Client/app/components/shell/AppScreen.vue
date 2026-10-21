@@ -29,6 +29,12 @@ defineExpose({ scroller })
       :data-fade-bottom="($slots.dock && fadeBottom) || undefined"
     >
       <slot />
+      <!-- Room under the last row while a body has focus, so the edges can settle on whole lines at the end too -->
+      <div
+        v-if="hard"
+        class="h-10 lg:hidden"
+        aria-hidden="true"
+      />
     </div>
     <div
       v-if="$slots.dock"
