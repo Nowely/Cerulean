@@ -34,6 +34,8 @@ const days = computed(() => {
   }
   return out
 })
+/** Days before today: their receipts are one line (v23, B5) */
+const today = computed(() => dayKey(now.value))
 
 const EXAMPLES = ['хлеб и молоко', 'позвонить маме в 7', 'идея: подарить маме книгу']
 
@@ -125,6 +127,7 @@ watch(() => data.entries.length, toBottom)
           v-for="e in d.entries"
           :key="e.id"
           :entry="e"
+          :past="d.key < today"
         />
       </section>
     </div>
