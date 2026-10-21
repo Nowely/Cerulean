@@ -3,7 +3,7 @@
 // seeded through the store, as the delta says; the demo seed itself has no Встреча.
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { DESKTOP, MOBILE, expect, open, shows, store } from './lib.mjs'
+import { DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
 
 const NOW = new Date('2026-10-19T09:14:00+03:00')
 const plain = s => (s ?? '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim()
@@ -373,6 +373,13 @@ export default [
     await dots(p, 'Действия с записью')
     const rows = (await menuRows(p)).map(plain)
     expect(rows.some(r => /^Переместить на другую страницу\s?·?\s?Покупки$/.test(r)), `Яйца «⋯» reads ${JSON.stringify(rows)}`)
+    await p.keyboard.press('Escape')
+    // The receipt's «Не туда» chips are the group «Переместить на другую страницу»
+    await go(p, '/')
+    await send(p, 'купить батарейки')
+    await p.getByRole('button', { name: 'Не туда' }).first().click()
+    await p.waitForTimeout(400)
+    expect(await shows(p.getByRole('group', { name: 'Переместить на другую страницу' })), 'the «Не туда» chips have no group «Переместить на другую страницу»')
     const app = new URL('../../app/', import.meta.url).pathname
     const walk = dir => readdirSync(dir).flatMap(f => statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)])
     const hits = walk(app).filter(f => /\.(vue|ts)$/.test(f) && readFileSync(f, 'utf8').includes('в другую страницу'))
@@ -423,5 +430,28 @@ export default [
     await p.locator('main').getByText('Шаблон для новых записей').click()
     await p.waitForTimeout(200)
     expect((await templatesOf(p, 'Задачи'))[0].subs[2] === 'Отправить итоги к пятнице', 'leaving the field does not keep the edit')
+    // The composer writes into the template: a subitem, then a paragraph «В заметку»
+    await field(p).fill('обсудить бюджет')
+    await p.keyboard.press('Enter')
+    await p.waitForTimeout(400)
+    expect((await templatesOf(p, 'Задачи'))[0].subs.at(-1) === 'Обсудить бюджет', 'the composer does not add a subitem to the template')
+    await p.locator('form button[aria-label^="Куда"]').first().click()
+    await p.waitForTimeout(500)
+    await p.getByRole('dialog', { name: 'Куда записать' }).getByRole('button', { name: /^В заметку/ }).click()
+    await p.waitForTimeout(500)
+    await field(p).fill('пригласить Лизу')
+    await p.keyboard.press('Enter')
+    await p.waitForTimeout(600)
+    const blocks = await bodyBlocks(p)
+    expect(blocks.at(-1) === 'Пригласить Лизу', `the template's body ends «${blocks.at(-1)}»`)
+    const body = await store(p, data => JSON.stringify(data.livePages.find(x => x.title === 'Задачи').templates[0].body))
+    expect(body.includes('Пригласить Лизу'), 'the paragraph is not in the template')
+    // Its body is edited as on a record
+    await p.locator('main .ProseMirror').first().getByText('Итоги').click()
+    await p.keyboard.press('End')
+    await p.keyboard.type(' недели')
+    await p.waitForTimeout(800)
+    const edited = await store(p, data => JSON.stringify(data.livePages.find(x => x.title === 'Задачи').templates[0].body))
+    expect(edited.includes('Итоги недели'), 'an edit of the body does not reach the template')
   } }
 ]

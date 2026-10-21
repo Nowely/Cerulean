@@ -475,8 +475,11 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
           </NuxtLink>
         </div>
       </template>
+      <!-- v24 fixes (20): the group says where the chips move the records -->
       <PlaceChips
         v-if="wrongOpen && !offline"
+        role="group"
+        aria-label="Переместить на другую страницу"
         :entry="entry"
         :subject="sends.map(e => e.text).join(', ')"
         class="px-3 pt-1 pb-3"
