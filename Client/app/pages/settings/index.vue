@@ -167,7 +167,7 @@ onMounted(() => {
     </template>
 
     <div class="mx-auto w-full pb-8 lg:max-w-196 lg:px-8 lg:pb-16">
-      <h1 class="px-5 pb-1 text-28 font-semibold tracking-[-.015em] text-highlighted lg:hidden">
+      <h1 class="px-5 pb-1 text-title text-highlighted lg:hidden">
         Настройки
       </h1>
       <StoreWarning

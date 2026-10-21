@@ -193,7 +193,8 @@ watch(() => data.writeFailed, (f) => {
   emit('failed', f.reason)
 })
 
-async function submit() {
+/** `record`: write it down even when it reads as a search («Записать «…»» in Поиск) */
+async function submit(opts: { record?: boolean } = {}) {
   const t = text.value.trim()
   if (!t) return
   data.clearWriteFailed()
@@ -223,6 +224,7 @@ async function submit() {
   // Anywhere else: the screen docks the receipt, Уточнение or found card above this composer
   await journal.send(t, aimed, {
     today: props.mode === 'today' && aimed === 'auto',
+    record: opts.record,
     onStart: (e) => {
       lastSend = { text: t, aim: aimed, entryId: e.id, ids: () => data.entries.find(x => x.id === e.id)?.recordIds ?? [] }
       emit('sent', e)
@@ -251,7 +253,12 @@ defineExpose({
   focus: () => field.value?.focus(),
   blur: () => field.value?.blur(),
   setText,
-  submit
+  submit: () => submit(),
+  /** Sends words from elsewhere as typed, like a send from here, without raising the keyboard */
+  write: (t: string) => {
+    text.value = t
+    return submit({ record: true })
+  }
 })
 </script>
 
@@ -267,7 +274,7 @@ defineExpose({
     <form
       class="relative flex items-end gap-1 border border-default bg-default p-0.75 transition-[border-color] focus-within:border-line2 dark:border-line2"
       :class="multi ? 'rounded-pill-grown' : 'rounded-pill'"
-      @submit.prevent="submit"
+      @submit.prevent="submit()"
     >
       <DestChip
         v-if="mode !== 'record'"

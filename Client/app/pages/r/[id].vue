@@ -7,6 +7,7 @@ import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import DeskBack from '~/components/shell/DeskBack.vue'
+import BackLink from '~/components/shell/BackLink.vue'
 import RecordView from '~/components/record/RecordView.vue'
 import RecordLinks from '~/components/record/RecordLinks.vue'
 import RecordMenu from '~/components/record/RecordMenu.vue'
@@ -48,15 +49,17 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
     <AppScreen v-if="live && rec">
       <template #header>
         <header class="flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
-          <NuxtLink
+          <BackLink
+            v-slot="{ label }"
             :to="back.to"
+            :label="back.label"
             class="flex h-11 min-w-0 max-w-60 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"
           >
             <UIcon
               name="i-lucide-chevron-left"
               class="size-6 shrink-0"
-            /><span class="truncate">{{ back.label }}</span>
-          </NuxtLink>
+            /><span class="truncate">{{ label }}</span>
+          </BackLink>
           <span class="flex-1" />
           <RecordMenu :rec="rec" />
         </header>

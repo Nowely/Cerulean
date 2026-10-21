@@ -1,43 +1,38 @@
 <script setup lang="ts">
 // Поиск on a phone: a full screen opened focused with the keyboard up. Finding is recessed (a trk field),
 // writing is the raised pill. Without a query the six records added last; with one «Страницы» and «Записи».
+// The query, the section and the results live in FindOverlay (one logic with the desktop dialog); nothing found
+// offers «Записать «…»» and, with a section chosen, «Искать везде» (v22, N19).
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import type { Id } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useFindRows } from '~/composables/useFindRows'
-import { lastAdded, search, type Hit } from '~/domain/search'
+import type { Hit } from '~/domain/search'
 import { count, splitMatch } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
 import RecordMark from '../common/RecordMark.vue'
 import AdaptiveOverlay from './AdaptiveOverlay.vue'
 
-const props = defineProps<{ initial?: string }>()
-const emit = defineEmits<{ close: [], pick: [hit: Hit] }>()
+const props = defineProps<{
+  groups: { label: string, hits: Hit[] }[]
+  /** Back from a result: the results are on screen as they were, so the keyboard stays down */
+  restored?: boolean
+}>()
+const emit = defineEmits<{ close: [], pick: [hit: Hit], write: [] }>()
+const q = defineModel<string>('q', { required: true })
+const sectionId = defineModel<Id | null>('section', { required: true })
 const data = useDataStore()
-const q = ref(props.initial ?? '')
-const sectionId = ref<Id | null>(null)
 const where = ref(false)
 const input = useTemplateRef<HTMLInputElement>('input')
 
 onMounted(async () => {
   await nextTick()
-  input.value?.focus()
+  if (!props.restored) input.value?.focus()
 })
 
 const query = computed(() => q.value.trim())
-const groups = computed<{ label: string, hits: Hit[] }[]>(() => {
-  if (!query.value) {
-    const recs = lastAdded(data.liveRecords.filter(r => !sectionId.value || data.pages[r.pageId]?.sectionId === sectionId.value))
-    return [{ label: 'Недавние записи', hits: recs.map(rec => ({ kind: 'record' as const, rec })) }]
-  }
-  const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: false, sectionId: sectionId.value })
-  return [
-    { label: 'Страницы', hits: hits.filter(h => h.kind === 'page') },
-    { label: 'Записи', hits: hits.filter(h => h.kind === 'record') }
-  ].filter(g => g.hits.length)
-})
-const total = computed(() => groups.value.reduce((n, g) => n + g.hits.length, 0))
-const sectionLabel = computed(() => sectionId.value ? data.sections[sectionId.value]?.name ?? 'Все секции' : 'Все секции')
+const total = computed(() => props.groups.reduce((n, g) => n + g.hits.length, 0))
+const section = computed(() => sectionId.value ? data.sections[sectionId.value] : undefined)
 
 const { pageLine, recLine } = useFindRows()
 const parts = (text: string) => splitMatch(text, query.value)
@@ -100,13 +95,16 @@ function choose(id: Id | null) {
         <template #trigger>
           <button
             type="button"
-            class="hit-44 relative inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-item bg-chip pr-2.5 pl-3 text-sm text-highlighted ring ring-inset ring-default active:bg-chip-pressed dark:bg-chip-elev dark:ring-0"
+            class="hit-44 relative inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-item pr-2.5 pl-3 text-sm ring ring-inset"
+            :class="section ? 'bg-accent-soft text-accent-ink ring-accent' : 'bg-chip text-highlighted ring-default active:bg-chip-pressed dark:bg-chip-elev dark:ring-0'"
+            aria-haspopup="dialog"
             :aria-expanded="where"
           >
-            {{ sectionLabel }}
+            {{ section ? `Секция «${section.name}»` : 'Все секции' }}
             <UIcon
               name="i-lucide-chevron-down"
-              class="size-4 text-dimmed"
+              class="size-4"
+              :class="section ? '' : 'text-dimmed'"
             />
           </button>
         </template>
@@ -210,14 +208,31 @@ function choose(id: Id | null) {
       </section>
       <div
         v-if="query && !total"
-        class="px-2 pt-4"
+        class="px-2 pt-4.5"
       >
-        <p class="text-base text-highlighted">
+        <p class="text-15 text-highlighted">
           Ничего не нашлось
         </p>
-        <p class="mt-1 text-sm text-toned">
-          Попробуй другое слово или начало слова.
+        <p class="mt-1.5 text-sm text-toned">
+          {{ section ? `Поиск идёт только в секции «${section.name}». Выбери «Все секции», чтобы искать везде.` : 'Попробуй другое слово или начало слова.' }}
         </p>
+        <div class="-mx-2.5 mt-1.5 flex flex-wrap gap-x-1">
+          <button
+            v-if="section"
+            type="button"
+            class="h-11 cursor-pointer whitespace-nowrap rounded-chip px-2.5 text-base text-accent-ink active:bg-pressed"
+            @click="sectionId = null"
+          >
+            Искать везде
+          </button>
+          <button
+            type="button"
+            class="h-11 min-w-0 cursor-pointer truncate rounded-chip px-2.5 text-base text-accent-ink active:bg-pressed"
+            @click="emit('write')"
+          >
+            Записать «{{ query }}»
+          </button>
+        </div>
       </div>
     </div>
   </div>

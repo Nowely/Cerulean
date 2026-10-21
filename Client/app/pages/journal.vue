@@ -55,6 +55,7 @@ watch(() => data.entries.length, toBottom)
       <BackHeader
         to="/"
         label="Главная"
+        title="Журнал"
       >
         <UButton
           icon="i-lucide-search"
@@ -84,7 +85,7 @@ watch(() => data.entries.length, toBottom)
     </template>
 
     <div class="mx-auto flex min-h-full w-full flex-col px-4 pt-1 pb-3 lg:max-w-160 lg:px-0">
-      <h1 class="px-1 pb-1 text-28 font-semibold tracking-[-.015em] text-highlighted lg:hidden">
+      <h1 class="px-1 pb-1 text-title text-highlighted lg:hidden">
         Журнал
       </h1>
       <span class="flex-1" />

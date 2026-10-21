@@ -1,0 +1,31 @@
+<!-- Cold start (v22, G18): until the data is read, a skeleton of Главная on the page fill, never a blank screen.
+     Nuxt puts it in index.html before the app starts; app.vue shows the same markup until the data is in. -->
+<div class="flex h-dvh w-full overflow-hidden bg-canvas" aria-busy="true" aria-label="Загрузка">
+  <div class="hidden w-65 shrink-0 bg-side lg:block"></div>
+  <div class="flex min-w-0 flex-1 flex-col">
+    <div class="flex h-13 shrink-0 items-center gap-5 pr-4 pl-4 lg:mx-auto lg:h-18 lg:w-full lg:max-w-196 lg:px-8">
+      <span class="flex-1 text-title text-highlighted lg:text-30">Главная</span>
+      <span class="size-5 rounded-full bg-card lg:hidden"></span>
+      <span class="size-5 rounded-full bg-card lg:hidden"></span>
+      <span class="size-5 rounded-full bg-card"></span>
+    </div>
+    <div class="min-h-0 flex-1 overflow-hidden px-4 lg:mx-auto lg:w-full lg:max-w-196 lg:px-10">
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-24 rounded-full bg-card"></span><span class="h-3 w-3/5 rounded-full bg-card"></span></span></div>
+      <div class="mt-4 flex h-6 items-center"><span class="h-2.5 w-20 rounded-full bg-card"></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-28 rounded-full bg-card"></span><span class="h-3 w-1/2 rounded-full bg-card"></span></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-36 rounded-full bg-card"></span><span class="h-3 w-2/3 rounded-full bg-card"></span></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-20 rounded-full bg-card"></span><span class="h-3 w-2/5 rounded-full bg-card"></span></span></div>
+      <div class="mt-4 flex h-6 items-center"><span class="h-2.5 w-12 rounded-full bg-card"></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-24 rounded-full bg-card"></span><span class="h-3 w-3/5 rounded-full bg-card"></span></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-32 rounded-full bg-card"></span><span class="h-3 w-1/2 rounded-full bg-card"></span></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-20 rounded-full bg-card"></span><span class="h-3 w-2/3 rounded-full bg-card"></span></span></div>
+      <div class="mt-4 flex h-6 items-center"><span class="h-2.5 w-16 rounded-full bg-card"></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-28 rounded-full bg-card"></span><span class="h-3 w-1/2 rounded-full bg-card"></span></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-16 rounded-full bg-card"></span><span class="h-3 w-3/5 rounded-full bg-card"></span></span></div>
+      <div class="flex h-12 items-center gap-3"><span class="size-4.5 shrink-0 rounded-badge bg-card"></span><span class="flex flex-1 flex-col gap-2"><span class="h-3.5 w-24 rounded-full bg-card"></span><span class="h-3 w-2/5 rounded-full bg-card"></span></span></div>
+    </div>
+    <div class="shrink-0 px-3 pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] lg:px-8 lg:pb-5">
+      <div class="h-11 rounded-full bg-default ring ring-inset ring-default lg:mx-auto lg:max-w-180"></div>
+    </div>
+  </div>
+</div>

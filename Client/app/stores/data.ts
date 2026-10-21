@@ -733,11 +733,32 @@ export const useDataStore = defineStore('data', () => {
     save('sections', s)
   }
 
-  /** Deleting a section keeps its pages: they move to «Мои страницы» (pages without a section) */
-  function removeSection(id: Id) {
-    for (const p of livePages.value.filter(p => p.sectionId === id)) updatePage(p.id, { sectionId: null })
+  /**
+   * Deleting a section keeps its pages: they move to «Мои страницы» (pages without a section). Returns the pages
+   * moved and «Отменить», which brings the section back in its place with those pages, in their order (v22, G12)
+   */
+  function removeSection(id: Id): { pages: Id[], undo: () => void } {
+    const section = sections.value[id]
+    const moved = livePages.value.filter(p => p.sectionId === id).map(p => p.id)
+    if (!section) return { pages: [], undo: () => {} }
+    const kept = { ...section }
+    const at = sectionList.value.findIndex(x => x.id === id)
+    for (const pageId of moved) updatePage(pageId, { sectionId: null })
     delete sections.value[id]
     drop('sections', [id])
+    return {
+      pages: moved,
+      undo: () => {
+        if (sections.value[id]) return
+        sections.value[id] = kept
+        const back = sections.value[id]!
+        const list = sectionList.value.filter(x => x.id !== id)
+        renumber([...list.slice(0, at), back, ...list.slice(at)])
+        save('sections', back)
+        // A page moved elsewhere meanwhile stays where it was put
+        for (const pageId of moved) if (pages.value[pageId] && !pages.value[pageId].sectionId) updatePage(pageId, { sectionId: id })
+      }
+    }
   }
 
   // journal

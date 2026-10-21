@@ -9,6 +9,7 @@ import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useFind } from '~/composables/useFind'
 import { useCreatePage } from '~/composables/useCreatePage'
+import { useScreen } from '~/composables/useScreen'
 import { pageBadge, type Badge } from '~/domain/summary'
 import { TEMPLATES } from '~/domain/templates'
 import AppScreen from '~/components/shell/AppScreen.vue'
@@ -28,13 +29,15 @@ const now = useNow()
 const router = useRouter()
 const find = useFind()
 const { create } = useCreatePage()
+const { isDesktop } = useScreen()
 const screen = useTemplateRef<InstanceType<typeof AppScreen>>('screen')
 
 const compact = computed(() => data.settings.homeRows === 'compact')
 const folded = (key: string) => data.settings.folded.includes(key)
 const userPages = computed(() => data.livePages.filter(p => p.kind === 'page'))
 const pagesOf = (sectionId: Id) => data.livePages.filter(p => p.sectionId === sectionId)
-const showKey = computed(() => !data.settings.apiKey && !data.settings.dismissed.includes('key-card'))
+/** «Подключить ИИ»: a phone row under the sections; desktop Главная has no key row (spec, Desktop v22) */
+const showKey = computed(() => !isDesktop.value && !data.settings.apiKey && !data.settings.dismissed.includes('key-card'))
 const showStart = computed(() => !userPages.value.length && !data.settings.dismissed.includes('start-card'))
 const dismiss = (id: string) => data.setSettings({ dismissed: [...data.settings.dismissed, id] })
 
@@ -204,44 +207,6 @@ function toTop() {
         </div>
       </section>
 
-      <div
-        v-if="showKey && !docked"
-        class="mt-3 flex items-center rounded-card hover:bg-muted lg:rounded-chip"
-      >
-        <button
-          type="button"
-          class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-card px-2 text-left active:bg-pressed lg:rounded-chip"
-          :class="compact ? 'min-h-8' : 'min-h-12 py-0.75'"
-          @click="router.push('/settings?key')"
-        >
-          <UIcon
-            name="i-lucide-key-round"
-            class="size-4.5 shrink-0 text-toned"
-          />
-          <span class="flex min-w-0 flex-1 flex-col gap-px">
-            <span
-              class="truncate"
-              :class="compact ? 'text-15 text-toned' : 'text-base text-default lg:text-sm'"
-            >Добавить ключ</span>
-            <span
-              v-if="!compact"
-              class="truncate text-sm text-toned lg:text-13"
-            >Пока работают простые правила</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          class="hit-44 relative mr-1.5 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed hover:text-highlighted"
-          aria-label="Скрыть строку про ключ"
-          @click="dismiss('key-card')"
-        >
-          <UIcon
-            name="i-lucide-x"
-            class="size-4.5"
-          />
-        </button>
-      </div>
-
       <!-- Мои страницы: pages without a section, newest first, five rows and «Ещё N» -->
       <section
         v-if="recent.length"
@@ -329,6 +294,45 @@ function toTop() {
           </div>
         </div>
       </section>
+
+      <!-- The key row sits under the last section, 12px below it, never between pages (v22, D4, V11) -->
+      <div
+        v-if="showKey && !docked"
+        class="mt-3 flex items-center rounded-card hover:bg-muted lg:rounded-chip"
+      >
+        <button
+          type="button"
+          class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-card px-2 text-left active:bg-pressed lg:rounded-chip"
+          :class="compact ? 'min-h-8' : 'min-h-12 py-0.75'"
+          @click="router.push('/settings?key')"
+        >
+          <UIcon
+            name="i-lucide-key-round"
+            class="size-4.5 shrink-0 text-toned"
+          />
+          <span class="flex min-w-0 flex-1 flex-col gap-px">
+            <span
+              class="truncate"
+              :class="compact ? 'text-15 text-toned' : 'text-base text-default lg:text-sm'"
+            >Подключить ИИ</span>
+            <span
+              v-if="!compact"
+              class="truncate text-sm text-toned lg:text-13"
+            >Пока Авто работает по правилам</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          class="hit-44 relative mr-1.5 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed hover:text-highlighted"
+          aria-label="Скрыть строку про ключ"
+          @click="dismiss('key-card')"
+        >
+          <UIcon
+            name="i-lucide-x"
+            class="size-4.5"
+          />
+        </button>
+      </div>
 
       <CopyRow
         v-if="!docked"
