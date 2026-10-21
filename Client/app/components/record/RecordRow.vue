@@ -13,6 +13,7 @@ import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
+import { useTemplates } from '~/composables/useTemplates'
 import { useLater } from '~/composables/useLater'
 import { formatDue, isOverdue } from '~/domain/dates'
 import { nb } from '~/domain/text'
@@ -49,6 +50,7 @@ const journal = useJournalStore()
 const now = useNow()
 const { isDesktop } = useScreen()
 const actions = useRecordActions()
+const templates = useTemplates()
 const el = useTemplateRef<HTMLElement>('el')
 const ACTIONS_WIDTH = 184
 const swipe = useSwipe(el, ACTIONS_WIDTH, useTemplateRef<HTMLElement>('box'))
@@ -133,7 +135,9 @@ function step(by: number) {
 const menu = computed(() => [
   [
     { label: 'Открыть', icon: 'i-lucide-arrow-up-right', onSelect: () => emit('open') },
-    { label: 'Переместить', icon: 'i-lucide-folder-input', onSelect: () => actions.move([props.rec.id]) },
+    // v24 fixes (20): «на другую страницу»; a record of a page can be made a template right after it (v24, И9)
+    { label: 'Переместить на другую страницу', icon: 'i-lucide-folder-input', onSelect: () => actions.move([props.rec.id]) },
+    ...(props.rec.parentId ? [] : [{ label: 'Сделать шаблоном', icon: 'cer:stamp', onSelect: () => templates.make(props.rec) }]),
     { label: props.rec.favorite === null ? 'Добавить в избранное' : 'Убрать из избранного', icon: 'i-lucide-star', onSelect: () => actions.favorite(props.rec) },
     { label: 'Скопировать текст', icon: 'i-lucide-copy', onSelect: () => actions.copy(props.rec) }
   ],
