@@ -16,6 +16,7 @@ import { pageSubline, dueToday } from '~/domain/summary'
 import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView, nameForLayout } from '~/domain/templates'
 import { pageNamed } from '~/domain/rules'
+import { nb } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
 import TitleField from '../common/TitleField.vue'
 import GlyphPicker from './GlyphPicker.vue'
@@ -130,7 +131,9 @@ function settingsClosed() {
 }
 /** Board and table want the whole width of the main column on desktop */
 const wide = computed(() => view.value.layout === 'board' || view.value.layout === 'table')
-defineExpose({ openSettings: () => settingsOpen.value = true, toggleSearch: () => toggleSearch(), wide })
+/** What the header names once the title block has scrolled under it (v23, B2, F14): the open tab too, as the tabs went with it */
+const heading = computed(() => nb(`${props.page.title || 'Без названия'}${!today.value && !setup.value && views.value.length > 1 ? ` · ${view.value.name}` : ''}`))
+defineExpose({ openSettings: () => settingsOpen.value = true, toggleSearch: () => toggleSearch(), wide, heading })
 
 // Search inside the page
 const searching = ref(false)
@@ -382,8 +385,11 @@ const emptyText = computed(() => {
       </AdaptiveOverlay>
     </div>
 
-    <!-- Records -->
-    <div :class="!full ? 'lg:px-2' : ''">
+    <!-- Records: the title block ends where they start (data-rows, the large-title collapse) -->
+    <div
+      :class="!full ? 'lg:px-2' : ''"
+      data-rows
+    >
       <template v-if="today">
         <section
           v-for="g in todayGroups"

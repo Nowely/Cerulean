@@ -1,10 +1,12 @@
 <script setup lang="ts">
 // A record opened from navigation: full, with the composer for Подпункты
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useHead, useRoute } from '#imports'
 import { useDataStore } from '~/stores/data'
 import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
+import { useTitleCollapse } from '~/composables/useTitleCollapse'
+import { nb } from '~/domain/text'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import DeskBack from '~/components/shell/DeskBack.vue'
 import BackLink from '~/components/shell/BackLink.vue'
@@ -28,6 +30,9 @@ const crumbs = computed(() => [
   ...(parent.value ? [{ to: `/r/${parent.value.id}`, label: parent.value.text }] : [])
 ])
 const editing = ref(false)
+const screen = useTemplateRef<InstanceType<typeof AppScreen>>('screen')
+// Once the title is under the header the header names the record, as pages do (v23, B2, M6)
+const { collapsed } = useTitleCollapse(computed(() => screen.value?.scroller), '[data-title-block]', 'bottom', () => route.params.id)
 // Wide desktop: «Связано» in a column on the right, unless a preview takes that place
 const aside = computed(() => isDesktop.value && !peek.target.value)
 
@@ -46,14 +51,18 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
 
 <template>
   <div class="flex min-h-0 flex-1">
-    <AppScreen v-if="live && rec">
+    <AppScreen
+      v-if="live && rec"
+      ref="screen"
+    >
       <template #header>
-        <header class="flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
+        <header class="relative flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
           <BackLink
             v-slot="{ label }"
             :to="back.to"
             :label="back.label"
-            class="flex h-11 min-w-0 max-w-60 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"
+            class="flex h-11 min-w-0 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"
+            :class="collapsed ? 'max-w-[118px]' : 'max-w-60'"
           >
             <UIcon
               name="i-lucide-chevron-left"
@@ -61,7 +70,38 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
             /><span class="truncate">{{ label }}</span>
           </BackLink>
           <span class="flex-1" />
+          <span
+            class="pointer-events-none absolute left-1/2 max-w-40 -translate-x-1/2 truncate text-base font-semibold text-highlighted"
+            :class="{ invisible: !collapsed }"
+            aria-hidden="true"
+          >{{ nb(rec.text) }}</span>
           <RecordMenu :rec="rec" />
+        </header>
+        <!-- Desktop: the slim header past the title, the way back, the record's name and «⋯» -->
+        <header
+          v-if="collapsed"
+          class="hidden h-11 shrink-0 lg:block lg:px-8"
+          data-slim
+        >
+          <div class="relative mx-auto flex h-full w-full max-w-170 items-center">
+            <BackLink
+              v-slot="{ label }"
+              :to="back.to"
+              :label="back.label"
+              class="flex h-8 min-w-0 max-w-60 items-center gap-1 rounded-badge text-13 text-toned hover:text-highlighted"
+            >
+              <UIcon
+                name="i-lucide-chevron-left"
+                class="size-3.5 shrink-0"
+              /><span class="truncate">{{ label }}</span>
+            </BackLink>
+            <span
+              class="pointer-events-none absolute left-1/2 max-w-90 -translate-x-1/2 truncate text-base font-semibold text-highlighted"
+              aria-hidden="true"
+            >{{ nb(rec.text) }}</span>
+            <span class="flex-1" />
+            <RecordMenu :rec="rec" />
+          </div>
         </header>
       </template>
 

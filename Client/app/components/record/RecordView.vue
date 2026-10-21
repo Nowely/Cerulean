@@ -146,6 +146,7 @@ function openPlace() {
     <div
       class="px-4 pt-1 lg:px-0"
       :class="container === 'preview' ? 'lg:px-4' : 'lg:pt-0.5'"
+      data-title-block
     >
       <div
         class="flex items-center lg:gap-3"
