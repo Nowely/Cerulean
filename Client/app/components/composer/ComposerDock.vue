@@ -44,11 +44,11 @@ const series = computed<Entry[]>(() => {
   const list = entries.value
   const l = last.value
   if (!l) return []
-  if (l.kind !== 'routed') return [l]
+  if (l.kind !== 'routed' || l.split || l.note) return [l]
   const out = [l]
   for (let i = list.length - 2; i >= 0; i--) {
     const e = list[i]!
-    if (e.kind !== 'routed' || e.pageId !== l.pageId || !!e.moved !== !!l.moved || out[0]!.at - e.at > SERIES_MS) break
+    if (e.kind !== 'routed' || e.split || e.note || e.pageId !== l.pageId || !!e.moved !== !!l.moved || out[0]!.at - e.at > SERIES_MS) break
     out.unshift(e)
   }
   return out
@@ -97,9 +97,9 @@ function onUndone(e: Entry) {
         role="status"
       >
         <UIcon
-          name="cer:auto"
-          class="size-4.5 shrink-0"
-        />Разбирается…
+          name="i-lucide-loader-circle"
+          class="size-4.5 shrink-0 motion-safe:animate-spin"
+        /><span class="min-w-0 flex-1 truncate">Разбирается… <span class="text-highlighted">{{ last.text }}</span></span>
       </div>
       <ReceiptCard
         v-else-if="receipt"

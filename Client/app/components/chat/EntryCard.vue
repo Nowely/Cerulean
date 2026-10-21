@@ -12,6 +12,7 @@ defineProps<{ entry: Entry, float?: boolean }>()
 <template>
   <PendingCard
     v-if="entry.kind === 'pending'"
+    :text="entry.text"
     :float="float"
   />
   <QuestionCard

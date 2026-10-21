@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatDue, formatDueLong, formatDay, formatAdded } from '~/domain/dates'
-import { isQuestion, parseDue, parseQty, splitItems } from '~/domain/parse'
+import { cleanRecordText, dropPrefix, isQuestion, isSearch, parseDue, parseQty, splitItems, splitParts } from '~/domain/parse'
 import { plural, lowerFirst, genitive } from '~/domain/text'
 import { demo } from '~/domain/seed'
 import { pageBadge, pageSubline, pageSummary, recordSummary, summaryText } from '~/domain/summary'
@@ -52,10 +52,22 @@ describe('parse', () => {
     expect(splitItems('купить молоко и хлеб')).toEqual(['Молоко', 'Хлеб'])
     expect(splitItems('надо взять сыр')).toEqual(['Сыр'])
   })
-  it('knows a question', () => {
+  it('knows a search and a question written down (v22, U10)', () => {
+    expect(isSearch('где ключи')).toBe(true)
+    expect(isSearch('найти паспорт')).toBe(true)
+    expect(isSearch('когда менять фильтр воды?')).toBe(false)
     expect(isQuestion('когда менять фильтр воды?')).toBe(true)
-    expect(isQuestion('где ключи')).toBe(true)
     expect(isQuestion('хлеб')).toBe(false)
+  })
+  it('splits a send on commas, semicolons and new lines, but not «2,5 л» (v22, U3)', () => {
+    expect(splitParts('сыр, позвонить бабушке')).toEqual(['сыр', 'позвонить бабушке'])
+    expect(splitParts('молоко 2,5 л; хлеб\nсыр')).toEqual(['молоко 2,5 л', 'хлеб', 'сыр'])
+    expect(splitItems('молоко 2,5 л, яйца')).toEqual(['Молоко 2,5 л', 'Яйца'])
+  })
+  it('keeps the text as typed, drops only a routing prefix (v22, U11)', () => {
+    expect(cleanRecordText('где паспорт?')).toBe('Где паспорт?')
+    expect(cleanRecordText('позвонить в ЖЭК!,')).toBe('Позвонить в ЖЭК!')
+    expect(dropPrefix('идея: сервис для обмена книгами')).toBe('сервис для обмена книгами')
   })
   it('agrees numbers and keeps abbreviations', () => {
     expect(plural(1, ['дело', 'дела', 'дел'])).toBe('дело')

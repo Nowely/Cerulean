@@ -149,6 +149,15 @@ export interface Entry {
   made?: boolean
   /** Filed when the network came back: the receipt says «разобрано, когда появилась сеть» */
   resumed?: boolean
+  /** Its parts went to different pages (v22, U3): one receipt, a «→» on every row, no «Не туда» in the header */
+  split?: boolean
+  /**
+   * Why Авто filed it the plain way: `slow` the model did not answer in 10 s (the record waits in Входящие),
+   * `key` the key was refused (filed by the simple rules)
+   */
+  note?: 'slow' | 'key'
+  /** A question written down: up to three records like it, «Похожее в записях» under the receipt */
+  similar?: Id[]
 }
 
 export type ModelChoice = 'fast' | 'exact'

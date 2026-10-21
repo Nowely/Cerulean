@@ -55,16 +55,17 @@ export function modelOf(c: Connection): string {
 }
 
 /**
- * Why a call failed, in the app's terms: no network (park the line and retry), a key the service refused,
- * a model it does not have, or anything else
+ * Why a call failed, in the app's terms: no network (park the line and retry), no answer in time, a key the
+ * service refused, a model it does not have, or anything else
  */
 export class ModelError extends Error {
-  constructor(readonly reason: 'offline' | 'key' | 'model' | 'other', cause?: unknown) {
+  constructor(readonly reason: 'offline' | 'timeout' | 'key' | 'model' | 'other', cause?: unknown) {
     super(cause instanceof Error ? cause.message : reason, { cause })
   }
 }
 
-const TIMEOUT = 20_000
+/** Авто waits this long, then the line waits in Входящие with «ИИ не ответил» (v22, B7) */
+const TIMEOUT = 10_000
 
 /** OpenAI, OpenRouter and «Другой» go through the OpenAI SDK, loaded only when Авто actually calls a model */
 async function viaOpenAI<T>(c: Connection, run: (client: OpenAI) => Promise<T>): Promise<T> {
@@ -76,8 +77,9 @@ async function viaOpenAI<T>(c: Connection, run: (client: OpenAI) => Promise<T>):
   }
   const baseURL = c.provider === 'custom' ? c.baseUrl.trim() : PROVIDERS[c.provider].baseURL
   try {
-    return await run(new SDK({ apiKey: c.apiKey, baseURL, dangerouslyAllowBrowser: true, maxRetries: 1, timeout: TIMEOUT }))
+    return await run(new SDK({ apiKey: c.apiKey, baseURL, dangerouslyAllowBrowser: true, maxRetries: 0, timeout: TIMEOUT }))
   } catch (e) {
+    if (e instanceof SDK.APIConnectionTimeoutError) throw new ModelError('timeout', e)
     if (e instanceof SDK.APIConnectionError) throw new ModelError('offline', e)
     if (e instanceof SDK.AuthenticationError || e instanceof SDK.PermissionDeniedError) throw new ModelError('key', e)
     if (e instanceof SDK.NotFoundError) throw new ModelError('model', e)
@@ -101,7 +103,7 @@ async function viaAnthropic(c: Connection, body: object): Promise<{ content?: { 
       signal: AbortSignal.timeout(TIMEOUT)
     })
   } catch (e) {
-    throw new ModelError('offline', e)
+    throw new ModelError(e instanceof DOMException && e.name === 'TimeoutError' ? 'timeout' : 'offline', e)
   }
   if (res.status === 401 || res.status === 403) throw new ModelError('key')
   if (res.status === 404) throw new ModelError('model')
@@ -159,7 +161,7 @@ export async function checkConnection(c: Connection): Promise<'ok' | 'key' | 'mo
   } catch (e) {
     if (!(e instanceof ModelError)) return 'other'
     if (e.reason === 'offline') throw e
-    return e.reason
+    return e.reason === 'timeout' ? 'other' : e.reason
   }
 }
 

@@ -129,14 +129,46 @@ describe('Авто without a key', () => {
     expect((await reload(dbName)).learned).toMatchObject({ подар: page.id })
   })
 
-  it('answers a question first and records it on «Записать»', async () => {
+  it('writes a question down with «?» and shows records like it (v22, U10)', async () => {
     const { data, journal } = await fresh({ demo: true })
-    const q = await journal.send('когда менять фильтр воды?', 'auto')
+    const q = await journal.send('когда менять фильтр?', 'auto')
+    expect(q.kind).toBe('routed')
+    expect(data.pages[q.pageId!]!.title).toBe('Дела по дому')
+    expect(data.records[q.recordIds![0]!]!.text).toBe('Когда менять фильтр?')
+    expect(q.similar!.map(id => data.records[id]!.text)).toEqual(['Поменять фильтр воды'])
+  })
+
+  it('gives the found card only for an explicit search, and records it on «Записать»', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const q = await journal.send('где фильтр воды', 'auto')
     expect(q.kind).toBe('found')
     expect(q.hits!.map(id => data.records[id]!.text)).toEqual(['Поменять фильтр воды'])
     const r = await journal.record(q.id)
     expect(r!.kind).toBe('routed')
-    expect(data.pages[r!.pageId!]!.title).toBe('Дела по дому')
+  })
+
+  it('sends each part of a list to its own page under one receipt (v22, U3)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const e = await journal.send('сыр, позвонить бабушке', 'auto')
+    expect(e).toMatchObject({ kind: 'routed', split: true })
+    const recs = e.recordIds!.map(id => data.records[id]!)
+    expect(recs.map(r => [r.text, data.pages[r.pageId]!.title])).toEqual([['Сыр', 'Покупки'], ['Позвонить бабушке', 'Задачи']])
+    // One row moves on its own
+    const ideas = data.livePages.find(p => p.title === 'Идеи')!
+    journal.chooseOne(e.id, recs[1]!.id, { pageId: ideas.id })
+    expect(data.records[recs[1]!.id]!.pageId).toBe(ideas.id)
+    expect(data.records[recs[0]!.id]!.pageId).not.toBe(ideas.id)
+    // «Отменить» takes back every part
+    journal.undo(e.id)
+    expect(recs.every(r => !data.records[r.id])).toBe(true)
+  })
+
+  it('keeps a list with an unknown thing on one page', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const e = await journal.send('молоко, вафли', 'auto')
+    expect(e.split).toBeFalsy()
+    expect(data.pages[e.pageId!]!.title).toBe('Покупки')
+    expect(e.recordIds).toHaveLength(2)
   })
 
   it('«Отменить» removes the records, «Не туда» moves them', async () => {
@@ -232,5 +264,30 @@ describe('Авто with a key', () => {
     const rec = data.records[e.recordIds![0]!]!
     expect(rec.text).toBe('Батарейки')
     expect(data.pages[rec.pageId]!.title).toBe('Покупки')
+  })
+
+  it('puts the line in Входящие when the model does not answer, and «Повторить» runs it again (v22, B7)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    data.setSettings({ apiKey: 'sk-test', keyState: 'ok', rulesFirst: false })
+    const { askModel, ModelError } = await import('~/domain/model')
+    vi.mocked(askModel).mockRejectedValueOnce(new ModelError('timeout'))
+    const e = await journal.send('батарейки для пульта', 'auto')
+    expect(e).toMatchObject({ kind: 'routed', pageId: data.inbox.id, note: 'slow' })
+    const waiting = e.recordIds![0]!
+    await journal.retry(e.id)
+    expect(data.records[waiting]).toBeUndefined()
+    expect(e.note).toBeUndefined()
+    expect(data.pages[e.pageId!]!.title).toBe('Покупки')
+  })
+
+  it('says the rules filed it when the key was refused (v22, B6)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    data.setSettings({ apiKey: 'sk-test', keyState: 'ok', rulesFirst: false })
+    const { askModel, ModelError } = await import('~/domain/model')
+    vi.mocked(askModel).mockRejectedValueOnce(new ModelError('key'))
+    const e = await journal.send('батарейки', 'auto')
+    expect(e).toMatchObject({ kind: 'routed', note: 'key' })
+    expect(data.pages[e.pageId!]!.title).toBe('Покупки')
+    expect(data.settings.keyState).toBe('bad')
   })
 })

@@ -5,6 +5,10 @@
 // open). After that only «Отменить» goes: the receipt and its «Не туда» stay.
 // Docked above a composer a series of sends to one page reads as one receipt: «Отменить «Яблоки»» takes back the
 // latest send (its rows tinted fresh), «Не туда» moves them all. With the keyboard up it is one 44px line.
+// v22: rows have no checkbox (nobody ticks what they just wrote): a dot, or the grey page glyph when the rows went
+// to different pages («2 записи → Покупки, Задачи», each row names its page and has its own «→», no «Не туда»).
+// A series gives each row its «→» too. Notes say why Авто filed it the plain way, with the one action that helps
+// («Повторить», «Проверить ключ»); a question written down lists «Похожее в записях».
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from '#imports'
 import type { Entry, Page, Rec } from '~/domain/types'
@@ -15,7 +19,6 @@ import { usePeek } from '~/composables/usePeek'
 import { useScreen } from '~/composables/useScreen'
 import { count, RECORD_FORMS } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
-import RecordMark from '../common/RecordMark.vue'
 import DueButton from '../record/DueButton.vue'
 import PlaceChips from './PlaceChips.vue'
 
@@ -57,15 +60,39 @@ const undoLabel = computed(() => {
   return last.length === 1 ? `Отменить «${last[0]!.text}»` : `Отменить последние ${last.length}`
 })
 const title = computed(() => count(records.value.length || (props.entry.recordIds?.length ?? 0), RECORD_FORMS))
+/** The pages the rows are on, in row order: more than one makes the receipt a list for several pages */
+const places = computed(() => [...new Set(records.value.map(r => r.pageId))].map(id => data.pages[id]).filter((p): p is Page => !!p))
+const several = computed(() => places.value.length > 1)
+/** A split send or a series: every row has its own «→» */
+const rowMoves = computed(() => sends.value.some(e => e.split) || joined.value)
+const wrongShown = computed(() => !offline.value && !several.value && !sends.value.some(e => e.split))
+const similar = computed(() => (props.entry.similar ?? []).map(id => data.records[id]).filter((r): r is Rec => !!r && !r.deletedAt))
+const NOTES = {
+  slow: { icon: 'i-lucide-clock', text: 'ИИ не ответил, запись ждёт во Входящих.', action: 'Повторить' },
+  key: { icon: 'cer:auto', text: 'Разложено по простым правилам: ключ не принят.', action: 'Проверить ключ' }
+} as const
+const note = computed(() => props.entry.note && !props.entry.moved ? NOTES[props.entry.note] : null)
+function onNote() {
+  if (props.entry.note === 'slow') void journal.retry(props.entry.id)
+  else void router.push('/settings?key')
+}
 const made = computed(() => sends.value.some(e => e.made) && !props.entry.moved)
 const resumed = computed(() => !!props.entry.resumed && !props.entry.moved)
 
-/** Line 2 of a record row: a state, or nothing (a recognised date is its own button) */
+/** Line 2 of a record row: its page when the rows went to several pages, a state, or nothing (a date is its own button) */
 function subOf(r: Rec, i: number): string {
   if (offline.value) return 'ждёт сети'
+  if (several.value) return [data.pages[r.pageId]?.title || 'Без названия', r.tags.includes('clarify') ? 'уточнить' : ''].filter(Boolean).join(' · ')
   if (made.value && i === 0) return 'новая страница из шаблона'
   if (resumed.value) return 'разобрано, когда появилась сеть'
   return ''
+}
+
+/** «→» on a row: the page picker for that record alone; the row changes in place, no toast */
+function moveRow(r: Rec) {
+  const e = sends.value.find(x => x.recordIds?.includes(r.id))
+  if (!e) return
+  ui.pick({ title: 'Переместить', subtitle: r.text, current: r.pageId, run: c => journal.chooseOne(e.id, r.id, c) })
 }
 
 // ---------- the undo window runs on its own clock so pausing is exact; the line only shows it ----------
@@ -128,7 +155,7 @@ function choose(c: Choice) {
 
 function openHead() {
   if (props.line) return emit('open')
-  if (page.value) peek({ kind: 'page', id: page.value.id })
+  if (!several.value && page.value) peek({ kind: 'page', id: page.value.id })
 }
 
 /** Inside a docked card the pressed state needs the raised fill so it never merges with the chips under it */
@@ -167,21 +194,30 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           :aria-expanded="line ? false : undefined"
           @click="openHead"
         >
-          <PageTile :glyph="page?.glyph" />
+          <UIcon
+            v-if="several"
+            name="cer:auto"
+            class="size-4.5 shrink-0 text-toned"
+          />
+          <PageTile
+            v-else
+            :glyph="page?.glyph"
+          />
           <span class="min-w-0 flex-1 truncate">
-            {{ title }} → <b class="font-medium text-highlighted">{{ page?.title || 'Без названия' }}</b>
+            {{ title }} → <b class="font-medium text-highlighted">{{ several ? places.map(p => p.title || 'Без названия').join(', ') : page?.title || 'Без названия' }}</b>
             <span
               v-if="entry.moved"
               class="text-dimmed"
             > · перемещено</span>
           </span>
           <UIcon
+            v-if="line || !several"
             name="i-lucide-chevron-right"
             class="size-4 shrink-0 text-dimmed"
           />
         </button>
         <button
-          v-if="!offline"
+          v-if="wrongShown"
           type="button"
           :class="[quiet, line ? 'px-1.75' : 'px-2.5']"
           :aria-pressed="wrongOpen"
@@ -203,17 +239,22 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           <li
             v-for="(r, i) in records"
             :key="r.id"
-            class="flex min-h-9 items-center pr-1.5"
+            class="flex min-h-11 items-center gap-3 pr-1.5 pl-3"
             :class="{ 'bg-fresh': joined && fresh && lastIds.has(r.id) }"
           >
-            <RecordMark
-              :rec="r"
-              :page="page"
-              size="sm"
-              area="tight"
-              class="-mr-0.5 ml-0.5"
-              @toggle="data.toggleDone(r.id)"
-            />
+            <span
+              class="flex w-4.5 shrink-0 justify-center"
+              aria-hidden="true"
+            >
+              <PageTile
+                v-if="several"
+                :glyph="data.pages[r.pageId]?.glyph"
+              />
+              <span
+                v-else
+                class="size-1.5 rounded-full bg-toned"
+              />
+            </span>
             <div class="flex min-w-0 flex-1 flex-col py-1.5">
               <button
                 type="button"
@@ -247,8 +288,64 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
                 variant="row"
               />
             </span>
+            <button
+              v-if="rowMoves && !offline"
+              type="button"
+              class="hit-44 relative flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-item text-toned hover:bg-btn hover:text-highlighted active:bg-btn-pressed"
+              :aria-label="`Переместить «${r.text}»`"
+              @click="moveRow(r)"
+            >
+              <UIcon
+                name="i-lucide-arrow-right"
+                class="size-4.5"
+              />
+            </button>
           </li>
         </ul>
+        <div
+          v-if="note"
+          class="flex items-center gap-3 pr-1.5 pl-3"
+        >
+          <UIcon
+            :name="note.icon"
+            class="size-4.5 shrink-0 text-toned"
+          />
+          <span class="min-w-0 flex-1 py-2 text-meta text-toned">{{ note.text }}</span>
+          <button
+            type="button"
+            class="flex h-11 shrink-0 cursor-pointer items-center rounded-item px-2 text-sm font-medium text-accent-ink hover:bg-btn active:bg-btn-pressed"
+            @click="onNote"
+          >
+            {{ note.action }}
+          </button>
+        </div>
+        <section
+          v-if="similar.length"
+          :aria-labelledby="`similar-${entry.id}`"
+          class="pb-1"
+        >
+          <h3
+            :id="`similar-${entry.id}`"
+            class="px-3 pt-2 text-cap leading-6 text-toned"
+          >
+            Похожее в записях
+          </h3>
+          <button
+            v-for="s in similar"
+            :key="s.id"
+            type="button"
+            class="flex min-h-9 w-full cursor-pointer items-center gap-3 pr-3 pl-3 text-left active:bg-pressed"
+            @click="peek({ kind: 'record', id: s.id })"
+          >
+            <PageTile
+              :glyph="data.pages[s.pageId]?.glyph"
+              :size="14"
+              class="mx-0.5"
+            />
+            <span class="min-w-0 flex-1 truncate text-15 text-highlighted">{{ s.text }}</span>
+            <span class="shrink-0 text-13 text-toned">{{ data.pages[s.pageId]?.title }}</span>
+          </button>
+        </section>
         <div
           v-if="offline"
           class="flex items-start gap-3 px-3 pt-1 pb-2.5 text-meta text-toned"

@@ -1,17 +1,17 @@
 // Авто: where a line goes and what records it becomes. The stores run it; this file only decides.
 import type { Due, Id, Page, Rec } from './types'
-import type { Learned } from './rules'
 import type { ModelResult } from './model'
-import { classify, guessOption } from './rules'
-import { cleanRecordText, isQuestion, parseDue, parseQty, splitItems } from './parse'
+import { classify, guessOption, textTopics, type Learned, type RuleResult } from './rules'
+import { cleanRecordText, dropPrefix, isSearch, parseDue, parseQty, splitItems, splitParts } from './parse'
 import { capitalize, fold } from './text'
 
-/** What the destination chip shows while typing in Авто */
+/** What the guess line says while typing in Авто: where the send goes and how many records it makes there */
 export type Preview
   = | { kind: 'idle' }
     | { kind: 'search' }
-    | { kind: 'page', pageId: Id }
-    | { kind: 'inbox' }
+    | { kind: 'page', pageId: Id, count: number }
+    | { kind: 'inbox', count: number }
+    | { kind: 'split', parts: { to: Id | 'inbox', count: number }[] }
 
 export interface AutoContext {
   pages: Page[]
@@ -24,11 +24,52 @@ export interface AutoContext {
 export function preview(text: string, ctx: AutoContext): Preview {
   const t = text.trim()
   if (t.length < 2) return { kind: 'idle' }
-  if (isQuestion(t)) return { kind: 'search' }
+  if (isSearch(t)) return { kind: 'search' }
+  const now = Date.now()
+  const split = splitRoute(t, ctx.pages, ctx.learned, ctx.recent)
+  if (split) {
+    const parts: { to: Id | 'inbox', count: number }[] = []
+    for (const part of split) {
+      const to = part.pageId ?? 'inbox'
+      const page = ctx.pages.find(p => p.id === part.pageId)
+      const n = page ? draftsFor(part.text, page, now).length : 1
+      const had = parts.find(x => x.to === to)
+      if (had) had.count += n
+      else parts.push({ to, count: n })
+    }
+    return { kind: 'split', parts }
+  }
   const r = classify(t, ctx.pages, ctx.learned, ctx.recent)
-  if (r.pageId) return { kind: 'page', pageId: r.pageId }
+  const page = ctx.pages.find(p => p.id === r.pageId)
+  if (page) return { kind: 'page', pageId: page.id, count: draftsFor(t, page, now).length }
   // With a model the decision waits for send; the chip stays «Авто» instead of promising Входящие
-  return ctx.model ? { kind: 'idle' } : { kind: 'inbox' }
+  return ctx.model ? { kind: 'idle' } : { kind: 'inbox', count: 1 }
+}
+
+/** A part of a send and where the rules put it; no page: Входящие with «уточнить» (or the model, when there is one) */
+export interface Part extends RuleResult {
+  text: string
+}
+
+/**
+ * A send whose parts belong to different pages (v22, U3): «сыр, позвонить бабушке» → Покупки and Задачи.
+ * Commas, semicolons and new lines make the parts. A part with no clue of its own («вафли» after «молоко»)
+ * stays with the list it is in; a part about something no page holds («подарок Лене») goes to Входящие.
+ * Null when the send goes to one place as a whole.
+ */
+export function splitRoute(text: string, pages: Page[], learned: Learned, recent: Id[]): Part[] | null {
+  const texts = splitParts(text)
+  if (texts.length < 2) return null
+  const parts: Part[] = texts.map(t => ({ text: t, ...classify(t, pages, learned, recent) }))
+  const clue = (p: Part) => p.pageId ?? (textTopics(p.text).length ? 'inbox' : null)
+  const targets = new Set(parts.map(clue).filter(Boolean))
+  if (targets.size < 2) return null
+  // Clueless parts join the nearest placed part before them, else after them
+  return parts.map((p, i) => {
+    if (clue(p)) return p
+    const near = [...parts.slice(0, i)].reverse().find(clue) ?? parts.slice(i + 1).find(clue)
+    return near?.pageId ? { ...p, pageId: near.pageId } : p
+  })
 }
 
 /** Pages that hold lists of things split «молоко, яйца и сыр» into three records */
@@ -46,7 +87,7 @@ export interface Draft {
 export function draftsFor(text: string, page: Page, now: number): Draft[] {
   const qtyProp = page.props.find(p => p.name === 'Количество')
   const select = page.props.find(p => p.type === 'select' && isListPage(page))
-  const lines = isListPage(page) ? splitItems(text) : text.split(/\n|;/).map(s => s.trim()).filter(Boolean)
+  const lines = isListPage(page) ? splitItems(text) : splitParts(dropPrefix(text))
   return lines.map((line) => {
     const { due, rest } = parseDue(line, now)
     const values: Rec['values'] = {}

@@ -12,7 +12,7 @@ import { useUiStore } from '~/stores/ui'
 import { useSpeech } from '~/composables/useSpeech'
 import { useNotify } from '~/composables/useNotify'
 import { draftsFor } from '~/domain/auto'
-import { capitalize } from '~/domain/text'
+import { capitalize, count, RECORD_FORMS } from '~/domain/text'
 import { useLater } from '~/composables/useLater'
 import DestChip from './DestChip.vue'
 
@@ -91,13 +91,18 @@ const untitled = computed(() => props.mode === 'page' && page.value && !page.val
 // The live decision of Авто, a beat behind the typing so nothing flickers
 const typed = refDebounced(text, 180)
 const decision = computed(() => dest.value === 'auto' ? journal.previewFor(typed.value) : { kind: 'idle' as const })
-/** Where the text would go: «Покупки», «Входящие», «Поиск», or nothing yet */
+/**
+ * Where the text would go, counted before the send (v22): «Покупки», «Покупки · 2 записи», «Покупки 2, Задачи 1»,
+ * «Входящие», «Поиск», or nothing yet
+ */
 const guess = computed(() => {
   if (once.value) return `${destPage.value?.title || 'Без названия'}, только эта запись`
   const d = decision.value
+  const name = (id: Id | 'inbox') => id === 'inbox' ? 'Входящие' : data.pages[id]?.title || 'Без названия'
   if (d.kind === 'search') return 'Поиск'
   if (d.kind === 'inbox') return 'Входящие'
-  if (d.kind === 'page') return data.pages[d.pageId]?.title || 'Без названия'
+  if (d.kind === 'page') return d.count > 1 ? `${name(d.pageId)} · ${count(d.count, RECORD_FORMS)}` : name(d.pageId)
+  if (d.kind === 'split') return d.parts.map(p => `${name(p.to)} ${p.count}`).join(', ')
   return ''
 })
 /** The line on the pill: the guess while there is text, the day-one hint before the first record */

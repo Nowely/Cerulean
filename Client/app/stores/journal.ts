@@ -1,12 +1,12 @@
 // Журнал and Авто: what was written, where it went, and the one-tap fixes («Не туда», «Отменить», Уточнение)
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Entry, Id, Page, Rec, TemplateKey } from '~/domain/types'
+import type { Entry, Id, Page, Rec, Tag, TemplateKey } from '~/domain/types'
 import { useDataStore } from './data'
 import { askModel, isConnected, ModelError, type ModelResult } from '~/domain/model'
 import { classify, rank, templateFor } from '~/domain/rules'
-import { draftsFor, draftsFromModel, preview, type Draft, type Preview } from '~/domain/auto'
-import { cleanRecordText, isQuestion, parseDue } from '~/domain/parse'
+import { draftsFor, draftsFromModel, preview, splitRoute, type Draft, type Part, type Preview } from '~/domain/auto'
+import { cleanRecordText, dropPrefix, isQuestion, isSearch, parseDue } from '~/domain/parse'
 import { answer } from '~/domain/search'
 import { newEntry } from '~/domain/factory'
 import { dayKey } from '~/domain/dates'
@@ -26,24 +26,67 @@ export const useJournalStore = defineStore('journal', () => {
   const busy = new Set<Id>()
 
   const hasModel = () => isConnected(data.settings) && data.settings.keyState !== 'bad'
+  /** A key is set and the service refused it: Авто files by the simple rules and the receipt says so */
+  const keyRefused = () => isConnected(data.settings) && data.settings.keyState === 'bad'
 
   /** The chip while typing in Авто: a clear rule shows its page; with a reachable model an unclear line stays «Авто» */
   function previewFor(text: string): Preview {
     return preview(text, { pages: data.livePages, learned: data.learned, recent: data.recent, model: hasModel() && isOnline() })
   }
 
-  function place(entry: Entry, page: Page, drafts: Draft[], opts: { today?: boolean, via?: Rec['via'] } = {}, made = false): Entry {
+  /** Records on a page in the order they were written (each goes on top, so they are added last first) */
+  function addDrafts(page: Page, drafts: Draft[], opts: { today?: boolean, via?: Rec['via'] } = {}): Id[] {
     const today = dayKey(Date.now())
     const now = Date.now()
-    const recs = [...drafts].reverse().map(d => data.addRecord({
+    return [...drafts].reverse().map(d => data.addRecord({
       pageId: page.id,
       text: d.text,
       due: d.due ?? (opts.today ? { date: today } : null),
       values: d.values,
       via: opts.via ?? 'chat',
       addedAt: now
-    })).reverse()
-    data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, recordIds: recs.map(r => r.id), hits: undefined, made })
+    }).id).reverse()
+  }
+
+  /** A record waiting in Входящие: «уточнить» offers its guesses (or `tags`: «ждёт сети») */
+  function addToInbox(text: string, opts: { today?: boolean, guesses?: Id[], tags?: Tag[] } = {}): Id {
+    const { due, rest } = parseDue(text, Date.now())
+    return data.addRecord({
+      pageId: data.inbox.id,
+      text: cleanRecordText(dropPrefix(rest || text)),
+      due: due ?? (opts.today ? { date: dayKey(Date.now()) } : null),
+      via: 'chat',
+      tags: opts.tags ?? ['clarify'],
+      guesses: opts.guesses
+    }).id
+  }
+
+  function place(entry: Entry, page: Page, drafts: Draft[], opts: { today?: boolean, via?: Rec['via'] } = {}, made = false): Entry {
+    data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, recordIds: addDrafts(page, drafts, opts), hits: undefined, made })
+    fresh.value.add(entry.id)
+    return entry
+  }
+
+  /**
+   * A send whose parts belong to different pages: each part goes to its own page under one receipt; a part no
+   * rule places asks the model when there is one, else waits in Входящие with «уточнить» (v22, U3)
+   */
+  async function placeParts(entry: Entry, parts: Part[], opts: { today?: boolean } = {}): Promise<Entry> {
+    const now = Date.now()
+    const decided = await Promise.all(parts.map(async (part): Promise<{ page?: Page, drafts: Draft[], part: Part }> => {
+      const page = validPage(part.pageId)
+      if (page) return { page, drafts: draftsFor(part.text, page, now), part }
+      if (!hasModel() || !isOnline()) return { drafts: [], part }
+      try {
+        const r = await askModel(data.settings, part.text, data.livePages, now)
+        const p = r.kind === 'record' ? validPage(r.pageId) : undefined
+        return p ? { page: p, drafts: draftsFromModel(r, p, now, part.text), part } : { drafts: [], part }
+      } catch {
+        return { drafts: [], part }
+      }
+    }))
+    const ids = decided.flatMap(d => d.page ? addDrafts(d.page, d.drafts, opts) : [addToInbox(d.part.text, { today: opts.today, guesses: d.part.guesses })])
+    data.updateEntry(entry.id, { kind: 'routed', pageId: data.records[ids[0]!]?.pageId, recordIds: ids, split: true, hits: undefined })
     fresh.value.add(entry.id)
     return entry
   }
@@ -68,30 +111,23 @@ export const useJournalStore = defineStore('journal', () => {
 
   /** Not placed: one record in Входящие with «уточнить», and the Уточнение asks about that same record */
   function ask(entry: Entry, text: string, guesses: Id[], newName: string | null, today = false): Entry {
-    const { due, rest } = parseDue(text, Date.now())
-    const rec = data.addRecord({
-      pageId: data.inbox.id,
-      text: cleanRecordText(rest || text),
-      due: due ?? (today ? { date: dayKey(Date.now()) } : null),
-      via: 'chat',
-      tags: ['clarify'],
-      guesses
-    })
-    data.updateEntry(entry.id, { kind: 'ask', pageId: data.inbox.id, recordIds: [rec.id], newName, hits: undefined })
+    const id = addToInbox(text, { today, guesses })
+    data.updateEntry(entry.id, { kind: 'ask', pageId: data.inbox.id, recordIds: [id], newName, hits: undefined })
     return entry
   }
 
   /** Key set but no network: the record waits in Входящие and is filed when the network is back */
   function park(entry: Entry, text: string, today = false): Entry {
-    const { due, rest } = parseDue(text, Date.now())
-    const rec = data.addRecord({
-      pageId: data.inbox.id,
-      text: cleanRecordText(rest || text),
-      due: due ?? (today ? { date: dayKey(Date.now()) } : null),
-      via: 'chat',
-      tags: ['offline']
-    })
-    data.updateEntry(entry.id, { kind: 'offline', pageId: data.inbox.id, recordIds: [rec.id] })
+    const id = addToInbox(text, { today, tags: ['offline'] })
+    data.updateEntry(entry.id, { kind: 'offline', pageId: data.inbox.id, recordIds: [id] })
+    return entry
+  }
+
+  /** The model did not answer in time: the record waits in Входящие, the receipt says so with «Повторить» */
+  function wait(entry: Entry, text: string, guesses: Id[], today = false): Entry {
+    const id = addToInbox(text, { today, guesses })
+    data.updateEntry(entry.id, { kind: 'routed', pageId: data.inbox.id, recordIds: [id], note: 'slow', hits: undefined })
+    fresh.value.add(entry.id)
     return entry
   }
 
@@ -105,9 +141,27 @@ export const useJournalStore = defineStore('journal', () => {
     return p && !p.deletedAt && p.kind === 'page' ? p : undefined
   }
 
+  /**
+   * Where a line goes, then what its receipt adds: the key note when the rules filed it because the key was
+   * refused, and for a question written down the records like it («Похожее в записях»)
+   */
   async function decide(entry: Entry, text: string, opts: { today?: boolean, record?: boolean } = {}): Promise<Entry> {
+    await route(entry, text, opts)
+    if (entry.kind !== 'routed' && entry.kind !== 'ask') return entry
+    if (keyRefused() && !entry.note) data.updateEntry(entry.id, { note: 'key' })
+    if (isQuestion(text)) {
+      const own = new Set(entry.recordIds)
+      const similar = answer(text, data.liveRecords.filter(r => !own.has(r.id)), 3).map(r => r.id)
+      if (similar.length) data.updateEntry(entry.id, { similar })
+    }
+    return entry
+  }
+
+  async function route(entry: Entry, text: string, opts: { today?: boolean, record?: boolean } = {}): Promise<Entry> {
     const now = Date.now()
-    if (!opts.record && isQuestion(text)) return found(entry, text)
+    if (!opts.record && isSearch(text)) return found(entry, text)
+    const split = splitRoute(text, data.livePages, data.learned, data.recent)
+    if (split) return placeParts(entry, split, opts)
     const rules = classify(text, data.livePages, data.learned, data.recent)
     const rulePage = validPage(rules.pageId)
     if (rulePage && (!hasModel() || data.settings.rulesFirst)) return place(entry, rulePage, draftsFor(text, rulePage, now), opts)
@@ -122,13 +176,17 @@ export const useJournalStore = defineStore('journal', () => {
       result = await askModel(data.settings, text, data.livePages, now)
       if (data.settings.keyState !== 'ok') data.setSettings({ keyState: 'ok' })
     } catch (e) {
-      if (e instanceof ModelError && (e.reason === 'key' || e.reason === 'model')) data.setSettings({ keyState: 'bad' })
-      if (e instanceof ModelError && e.reason === 'offline') return park(entry, text, opts.today)
+      const reason = e instanceof ModelError ? e.reason : 'other'
+      if (reason === 'key' || reason === 'model') data.setSettings({ keyState: 'bad' })
+      if (reason === 'offline' && !isOnline()) return park(entry, text, opts.today)
+      // «Нет сети» only without a network: a service that never answers is a slow model
+      if (reason === 'timeout' || reason === 'offline') return wait(entry, text, rules.guesses, opts.today)
       return rulePage ? place(entry, rulePage, draftsFor(text, rulePage, now), opts) : unclear(rules.guesses, rules.newName)
     } finally {
       busy.delete(entry.id)
     }
-    if (result.kind === 'question' && !opts.record) return found(entry, text)
+    // Only an explicit search gives the found card: a question the model saw is written down like any line
+    if (result.kind === 'question') return rulePage ? place(entry, rulePage, draftsFor(text, rulePage, now), opts) : unclear(rules.guesses, rules.newName)
     const page = validPage(result.pageId)
     if (result.kind === 'record' && page) return place(entry, page, draftsFromModel(result, page, now, text), opts)
     const guesses = [...result.guesses.filter(id => validPage(id)), ...rules.guesses].filter((id, i, a) => a.indexOf(id) === i).slice(0, 3)
@@ -147,9 +205,7 @@ export const useJournalStore = defineStore('journal', () => {
     const page = dest === 'auto' ? undefined : data.pages[dest]
     if (page) {
       if (page.kind === 'inbox') {
-        const { due, rest } = parseDue(t, Date.now())
-        const rec = data.addRecord({ pageId: page.id, text: cleanRecordText(rest || t), due, via: 'chat' })
-        data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, recordIds: [rec.id] })
+        data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, recordIds: [addToInbox(t, { tags: [] })] })
         fresh.value.add(entry.id)
         return entry
       }
@@ -184,6 +240,36 @@ export const useJournalStore = defineStore('journal', () => {
     data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, moved: !wasAsk, made: false })
     if (made !== page.id) dropIfEmpty(made)
     return page
+  }
+
+  /**
+   * The «→» of one receipt row (a split send or a series): only that record moves, no toast; the receipt changes
+   * in place and lists each row's page once they differ
+   */
+  function chooseOne(entryId: Id, recId: Id, choice: Choice): Page | undefined {
+    const entry = data.entries.find(e => e.id === entryId)
+    if (!entry || !data.records[recId]) return
+    let page: Page | undefined
+    if ('keep' in choice) {
+      data.updateRecord(recId, { tags: [], guesses: undefined })
+      page = data.inbox
+    } else {
+      page = targetOf(choice)
+      if (!page) return
+      data.moveRecords([recId], page.id)
+    }
+    // The line keeps where it was sent (a series stays one receipt); the receipt reads each row's page
+    data.updateEntry(entry.id, { kind: 'routed', note: undefined })
+    return page
+  }
+
+  /** «Повторить» after the model did not answer: the line goes through Авто again */
+  async function retry(entryId: Id): Promise<void> {
+    const entry = data.entries.find(e => e.id === entryId)
+    if (!entry) return
+    data.purgeRecords(entry.recordIds ?? [])
+    data.updateEntry(entry.id, { kind: 'pending', recordIds: [], note: undefined, similar: undefined, split: undefined })
+    await decide(entry, entry.text)
   }
 
   /** «Не туда» on a series: every line goes to the one page the choice makes or names */
@@ -277,5 +363,5 @@ export const useJournalStore = defineStore('journal', () => {
     }
   }
 
-  return { fresh, hasModel, previewFor, send, record, choose, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume }
+  return { fresh, hasModel, previewFor, send, record, retry, choose, chooseOne, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume }
 })
