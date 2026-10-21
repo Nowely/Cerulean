@@ -181,8 +181,9 @@ function onUndone(e: Entry) {
           :entry="last"
           float
         />
+        <!-- An Уточнение has «Оставить там» for that (MobileAskDocked); a found card can be put away -->
         <UButton
-          v-if="last.kind !== 'pending'"
+          v-if="last.kind === 'found'"
           icon="i-lucide-x"
           variant="ghost"
           square
