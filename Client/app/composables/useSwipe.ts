@@ -3,7 +3,7 @@ import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
 
 const open = ref<symbol | null>(null)
 
-export function useSwipe(el: Ref<HTMLElement | null>, width: number) {
+export function useSwipe(el: Ref<HTMLElement | null>, width: number, area: Ref<HTMLElement | null> = el) {
   const id = Symbol('row')
   const offset = ref(0)
   const dragging = ref(false)
@@ -67,7 +67,18 @@ export function useSwipe(el: Ref<HTMLElement | null>, width: number) {
   watch(open, (v) => {
     if (v !== id && !dragging.value) offset.value = 0
   })
+
+  // A tap anywhere outside the row and its actions (a «⋯», the composer) closes it, so no row stays open under a
+  // sheet (v23, F18)
+  function outside(e: PointerEvent) {
+    if (!area.value?.contains(e.target as Node)) close()
+  }
+  watch(() => offset.value !== 0 && !dragging.value, (on) => {
+    if (on) document.addEventListener('pointerdown', outside, true)
+    else document.removeEventListener('pointerdown', outside, true)
+  })
   onBeforeUnmount(() => {
+    document.removeEventListener('pointerdown', outside, true)
     if (isOpen()) open.value = null
   })
 

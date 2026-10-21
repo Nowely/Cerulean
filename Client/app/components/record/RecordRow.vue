@@ -48,7 +48,7 @@ const { isDesktop } = useScreen()
 const actions = useRecordActions()
 const el = useTemplateRef<HTMLElement>('el')
 const ACTIONS_WIDTH = 184
-const swipe = useSwipe(el, ACTIONS_WIDTH)
+const swipe = useSwipe(el, ACTIONS_WIDTH, useTemplateRef<HTMLElement>('box'))
 
 // Until the menu code is in (useLater) the row, its hover buttons and «⋯» stand without their menus and
 // tooltips; a phone never gets the right-click menu or the tooltips at all
@@ -180,7 +180,10 @@ const inboxMenu = computed<MenuItem[][]>(() => [
 </script>
 
 <template>
-  <div class="relative">
+  <div
+    ref="box"
+    class="relative"
+  >
     <!-- Swipe actions grow from the right edge over the row's values; the mark and the text stay in place (B1) -->
     <div
       v-if="!readonly && !isDesktop"

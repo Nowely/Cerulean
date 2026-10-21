@@ -394,7 +394,8 @@ const scenarios = [
     await openPage(p, 'Задачи')
     await p.getByRole('button', { name: 'Настроить вид' }).click()
     await p.getByRole('radio', { name: 'Календарь' }).click()
-    await p.getByRole('button', { name: 'Закрыть' }).click()
+    // v23 (F18): sheets have no ×, Esc closes them
+    await p.keyboard.press('Escape')
     await settle(p, 600)
   } },
   { name: 'Item', device: DESKTOP, run: p => openPage(p, 'Полумарафон к маю') },
