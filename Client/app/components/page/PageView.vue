@@ -26,6 +26,7 @@ import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import ListLayout from './layouts/ListLayout.vue'
 import ViewTabs from './ViewTabs.vue'
 import RecordLine from '../record/RecordLine.vue'
+import PageNote from '../body/PageNote.vue'
 
 // A list is what most pages show; the other views and the settings load when a page needs them
 const BoardLayout = defineAsyncComponent(() => import('./layouts/BoardLayout.vue'))
@@ -172,7 +173,8 @@ const titleInput = useTemplateRef<InstanceType<typeof TitleField>>('titleInput')
 const titleFocused = ref(false)
 function onTitleFocus(v: boolean) {
   titleFocused.value = v
-  emit('editing', v)
+  // A focused title keeps the composer under it (v23, Q1); a new page's setup stands in for it
+  if (setup.value || !v) emit('editing', v)
 }
 const glyphOpen = ref(false)
 /** Desktop: «Значок и цвет» opened from the page «⋯» stands at that «⋯» */
@@ -333,6 +335,13 @@ const emptyText = computed(() => {
         {{ subline }}
       </p>
     </div>
+
+    <!-- «Заметка к странице» (v23): between the title block and the tabs, drawn once it has text -->
+    <PageNote
+      v-if="page.kind === 'page'"
+      :page="page"
+      :editable="full"
+    />
 
     <NewPageSetup
       v-if="setup"

@@ -75,7 +75,7 @@ const groups = computed<{ label: string, hits: Hit[] }[]>(() => {
     const recs = lastAdded(data.liveRecords.filter(r => !inSection || data.pages[r.pageId]?.sectionId === inSection))
     return [{ label: 'Недавние записи', hits: recs.map(rec => ({ kind: 'record' as const, rec })) }]
   }
-  const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: false, sectionId: inSection })
+  const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: false, sectionId: inSection, nameOf: data.nameOf })
   return [
     { label: 'Страницы', hits: hits.filter(h => h.kind === 'page') },
     { label: 'Записи', hits: hits.filter(h => h.kind === 'record') }
@@ -227,17 +227,19 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
                     <PageTile :glyph="h.page.glyph" />
                   </span>
                   <span class="flex min-w-0 flex-1 flex-col py-1">
-                    <span
-                      class="truncate text-sm font-medium"
-                      :class="q.trim() ? 'text-toned' : 'text-highlighted'"
-                    >
-                      <template v-if="q.trim()">{{ parts(h.page.title).pre }}<b class="font-medium text-highlighted">{{ parts(h.page.title).mid }}</b>{{ parts(h.page.title).post }}</template>
+                    <!-- A found name stays whole at full ink, the match set 600 (v23, F15) -->
+                    <span class="truncate text-sm font-medium text-highlighted">
+                      <template v-if="q.trim() && parts(h.page.title).mid">{{ parts(h.page.title).pre }}<b class="font-semibold">{{ parts(h.page.title).mid }}</b>{{ parts(h.page.title).post }}</template>
                       <template v-else>{{ h.page.title || 'Без названия' }}</template>
                     </span>
                     <span
                       v-if="pageLine(h.page)"
                       class="truncate text-13 text-toned"
                     >{{ pageLine(h.page) }}</span>
+                    <span
+                      v-if="h.snippet"
+                      class="truncate text-13 text-toned"
+                    >{{ h.snippet.pre }}<b class="font-semibold text-highlighted">{{ h.snippet.mid }}</b>{{ h.snippet.post }}</span>
                   </span>
                 </template>
                 <template v-else>
@@ -252,15 +254,20 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
                   <span class="flex min-w-0 flex-1 flex-col py-1">
                     <span
                       class="truncate text-sm"
-                      :class="h.rec.done ? 'text-dimmed line-through' : q.trim() ? 'text-toned' : 'text-highlighted'"
+                      :class="h.rec.done ? 'text-dimmed line-through' : 'text-highlighted'"
                     >
-                      <template v-if="q.trim() && parts(h.rec.text).mid">{{ parts(h.rec.text).pre }}<b class="font-medium text-highlighted">{{ parts(h.rec.text).mid }}</b>{{ parts(h.rec.text).post }}</template>
+                      <template v-if="q.trim() && parts(h.rec.text).mid">{{ parts(h.rec.text).pre }}<b class="font-semibold">{{ parts(h.rec.text).mid }}</b>{{ parts(h.rec.text).post }}</template>
                       <template v-else>{{ h.rec.text }}</template>
                     </span>
                     <span
                       v-if="recLine(h.rec)"
                       class="truncate text-13 text-toned"
                     >{{ recLine(h.rec) }}</span>
+                    <!-- Found in the body: a snippet with the match in ink 600 (v23, A7) -->
+                    <span
+                      v-if="h.snippet"
+                      class="truncate text-13 text-toned"
+                    >{{ h.snippet.pre }}<b class="font-semibold text-highlighted">{{ h.snippet.mid }}</b>{{ h.snippet.post }}</span>
                   </span>
                 </template>
                 <UKbd

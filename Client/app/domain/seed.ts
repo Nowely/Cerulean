@@ -1,9 +1,22 @@
 // Demo data from the spec, relative to now: open the app with ?demo on an empty database to see it
-import type { Entry, Id, Page, PropDef, Rec, Section } from './types'
+import type { BodyDoc, BodyNode, Entry, Id, Page, PropDef, Rec, Section } from './types'
 import { addDays, dayKey, keyToDate } from './dates'
 import { newEntry, newPage, newRecord, newSection, systemPages } from './factory'
 import { listView, shoppingProps } from './templates'
 import { uid } from './ids'
+import { mentionIds } from './body'
+
+// Bodies as the editor writes them (v23)
+const tx = (text: string): BodyNode => ({ type: 'text', text })
+const men = (x: Rec | Page): BodyNode => ({ type: 'mention', attrs: { id: x.id, label: 'text' in x ? x.text : x.title, mentionSuggestionChar: '@' } })
+const para = (...content: (BodyNode | string)[]): BodyNode => ({ type: 'paragraph', content: content.map(c => typeof c === 'string' ? tx(c) : c) })
+const heading = (text: string): BodyNode => ({ type: 'heading', attrs: { level: 2 }, content: [tx(text)] })
+const bullets = (...items: (BodyNode | string)[][]): BodyNode => ({ type: 'bulletList', content: items.map(c => ({ type: 'listItem', content: [para(...c)] })) })
+/** A body and the mentions read out of it, as `setBody` stores them */
+const withBody = (...content: BodyNode[]): { body: BodyDoc, mentions: Id[] } => {
+  const body: BodyDoc = { type: 'doc', content }
+  return { body, mentions: mentionIds(body) }
+}
 
 export interface Dataset {
   pages: Page[]
@@ -141,6 +154,13 @@ export function demo(now = Date.now()): Dataset {
     template: 'todo',
     description: 'ремонт, уборка, мастера',
     noun: ['дело', 'дела', 'дел'],
+    // «Заметка к странице» (v23): longer than four lines, so it folds
+    ...withBody(
+      para('Ключи от щитка в верхнем ящике у двери. Показания счётчиков отправлять до 25-го.'),
+      heading('Мастера'),
+      bullets(['сантехник Сергей, звонить после 18:00'], ['электрик через управляющую компанию']),
+      para('Картриджи для фильтра на балконе, хватит до весны.')
+    ),
     views: [
       listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
       listView('Сделано', { filter: [{ field: 'done', op: 'is', value: true }] })
@@ -164,7 +184,11 @@ export function demo(now = Date.now()): Dataset {
   const eggs = add(products, 'Яйца', {
     ...chat(8, 40),
     values: { [qty.id]: '10 шт', [dept.id]: opt('Молочное') },
-    note: 'Брать С0, десяток в картонной упаковке. Если нет, подойдут С1.'
+    ...withBody(
+      para('Брать С0, десяток в картонной упаковке. Если нет, подойдут С1. Проверить, что ни одно не треснуло.'),
+      heading('На неделю'),
+      bullets(['омлет на завтрак, к нему ', men(milk)], ['шакшука в субботу'])
+    )
   })
   add(products, 'Взять два десятка, если будет скидка', { parentId: eggs.id, addedAt: at(8, 41) })
   // Written yesterday at 19:20 in one line, the first receipt in Журнал (v23, B5)
@@ -189,7 +213,8 @@ export function demo(now = Date.now()): Dataset {
     favorite: 1,
     due: { date: '2027-05-18' },
     values: { [status.id]: status.options![0]!.id },
-    note: 'Зачем: вернуть форму и полгода держать регулярность. Три пробежки в неделю, длинная по выходным.\n\nКолено ноет после 8 км, спросить про стельки. Пульс на длинных ниже 150.',
+    // A «Заметка» from before v23: read as a one-paragraph body
+    note: 'Зачем: вернуть форму и полгода держать регулярность. Три пробежки в неделю, длинная по выходным.',
     openedAt: at(7, 30)
   })
   for (const [text, done, due] of [
@@ -202,11 +227,15 @@ export function demo(now = Date.now()): Dataset {
   ] as const) {
     add(goals, text, { parentId: marathon.id, done, due: due ? { ...due } : null, addedAt: at(9, 31, -7) })
   }
-  add(goals, '24 книги за год', { addedAt: at(9, 40, -7) })
+  const yearOfBooks = add(goals, '24 книги за год', { addedAt: at(9, 40, -7) })
 
   add(ideas, 'Семейный бюджет в приложении', { addedAt: at(21, 0, -4) })
   const habits = add(books, 'Атомные привычки', { addedAt: at(22, 0, -9) })
-  library.links = [habits.id]
+  Object.assign(library, withBody(
+    para('Сдать до воскресенья, продлить уже нельзя.'),
+    para('Сначала дочитать ', men(habits), ', осталось две главы.')
+  ))
+  library.links = [yearOfBooks.id]
   marathon.links = [habits.id]
   const filter = add(chores, 'Поменять фильтр воды', { due: { date: date(2) }, addedAt: at(18, 0, -2) })
   const master = add(chores, 'Вызвать мастера', { ...chat(20, 40, -1) })

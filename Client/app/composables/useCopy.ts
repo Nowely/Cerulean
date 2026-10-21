@@ -24,7 +24,7 @@ export function useCopy() {
       download(`cerulean-${stamp}.json`, toJSON(data.snapshot()), 'application/json')
     } else {
       const live = data.livePages.filter(p => p.kind === 'page' || p.kind === 'inbox')
-      download(`cerulean-${stamp}.md`, toMarkdown(live, data.liveRecords, data.sectionList), 'text/markdown')
+      download(`cerulean-${stamp}.md`, toMarkdown(live, data.liveRecords, data.sectionList, Date.now(), data.nameOf), 'text/markdown')
     }
     data.setSettings({ copiedAt: Date.now() })
   }

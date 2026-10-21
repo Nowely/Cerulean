@@ -5,6 +5,7 @@ import { formatDue } from './dates'
 import { count, normalize, PAGE_FORMS, RECORD_FORMS } from './text'
 import { uid } from './ids'
 import { readPage } from './templates'
+import { bodyMarkdown, bodyOf, remapMentions, type NameOf } from './body'
 
 export interface Snapshot {
   app: 'cerulean'
@@ -23,10 +24,11 @@ export function toJSON(data: Omit<Snapshot, 'app' | 'version' | 'exportedAt'>, n
   return JSON.stringify(snapshot, null, 2)
 }
 
-/** Readable copy: one heading per page, records as a checklist with subitems and notes */
-export function toMarkdown(pages: Page[], records: Rec[], sections: Section[], now = Date.now()): string {
+/** Readable copy: one heading per page, records as a checklist with subitems and bodies (a mention as [[Name]]) */
+export function toMarkdown(pages: Page[], records: Rec[], sections: Section[], now = Date.now(), nameOf?: NameOf): string {
   const out: string[] = ['# Cerulean', '']
   const live = records.filter(r => !r.deletedAt)
+  const name: NameOf = nameOf ?? ((id, label) => live.find(r => r.id === id)?.text ?? pages.find(p => p.id === id)?.title ?? label ?? '')
   const groups: { name: string, pages: Page[] }[] = [
     { name: '', pages: pages.filter(p => !p.sectionId) },
     ...sections.map(s => ({ name: s.name, pages: pages.filter(p => p.sectionId === s.id) }))
@@ -48,7 +50,9 @@ export function toMarkdown(pages: Page[], records: Rec[], sections: Section[], n
       .filter(Boolean)
     if (links.length) values.push(`Связано: ${links.join(', ')}`)
     out.push(`${pad}${mark}${r.text}${due}${values.length ? ` · ${values.join(', ')}` : ''}`)
-    if (r.note) for (const l of r.note.split('\n').filter(Boolean)) out.push(`${pad}  > ${l}`)
+    // The body under its record, indented into the list item (v23: a mention as [[Name]])
+    const body = bodyMarkdown(bodyOf(r), name)
+    if (body) out.push('', ...body.split('\n').map(l => l ? `${pad}  ${l}` : ''), '')
     for (const s of live.filter(x => x.parentId === r.id).sort((a, b) => a.order - b.order)) line(s, page, depth + 1)
   }
   for (const g of groups) {
@@ -57,6 +61,8 @@ export function toMarkdown(pages: Page[], records: Rec[], sections: Section[], n
     for (const page of [...g.pages].sort((a, b) => a.order - b.order)) {
       out.push(`### ${page.title || 'Без названия'}`, '')
       if (page.description) out.push(`_${page.description}_`, '')
+      const note = bodyMarkdown(bodyOf(page), name)
+      if (note) out.push(note, '')
       const own = live.filter(r => r.pageId === page.id && !r.parentId).sort((a, b) => Number(a.done) - Number(b.done) || a.order - b.order)
       for (const r of own) line(r, page, 0)
       out.push('')
@@ -225,9 +231,15 @@ export function mergeSnapshot(here: Pick<Snapshot, 'pages' | 'records' | 'sectio
       recordOf.set(r.id, made.id)
     }
   }
-  // Links and guesses point at what they became here
+  // Links, mentions and guesses point at what they became here
+  const to = (id: Id) => recordOf.get(id) ?? pageOf.get(id)
+  const remap = (ids: Id[]) => ids.map(to).filter((id): id is Id => !!id)
+  for (const x of [...records, ...pages]) {
+    if (x.body) x.body = remapMentions(x.body, to)
+    if (x.mentions) x.mentions = remap(x.mentions)
+  }
   for (const r of records) {
-    if (r.links) r.links = r.links.map(id => recordOf.get(id) ?? pageOf.get(id)).filter((id): id is Id => !!id)
+    if (r.links) r.links = remap(r.links)
     if (r.guesses) r.guesses = r.guesses.map(id => pageOf.get(id)).filter((id): id is Id => !!id)
   }
 

@@ -7,6 +7,7 @@ import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { formatDue, formatDueBrief, isOverdue } from '~/domain/dates'
 import { nb, splitMatch } from '~/domain/text'
+import { bodyOf, isEmptyDoc } from '~/domain/body'
 import RecordMark from '../common/RecordMark.vue'
 
 const props = withDefaults(defineProps<{
@@ -21,7 +22,9 @@ const props = withDefaults(defineProps<{
   selected?: boolean
   /** Right of the text, 14 muted: the weekday under «На неделе» («ср», «завтра»); line 2 then names the place only */
   end?: string
-}>(), { place: true, brief: false, query: '', density: 'card', selected: false, end: '' })
+  /** Why it is in «Связано» (v23), after the place in place of the date: «в тексте», ««Сначала дочитать …»» */
+  reason?: string
+}>(), { place: true, brief: false, query: '', density: 'card', selected: false, end: '', reason: '' })
 
 const emit = defineEmits<{ open: [] }>()
 const data = useDataStore()
@@ -37,7 +40,8 @@ const when = computed(() => {
 })
 const parts = computed(() => splitMatch(props.rec.text, props.query))
 const tag = computed(() => props.rec.tags.includes('offline') ? 'ждёт сети' : props.rec.tags.includes('clarify') ? 'уточнить' : '')
-const hasLine2 = computed(() => (props.place && where.value) || when.value || tag.value)
+const hasLine2 = computed(() => (props.place && where.value) || when.value || tag.value || props.reason)
+const hasNote = computed(() => !isEmptyDoc(bodyOf(props.rec)))
 </script>
 
 <template>
@@ -68,16 +72,19 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
       <span
         v-if="hasLine2"
         class="max-w-full truncate text-caption font-normal"
-        :class="late && !brief ? 'text-warn-ink' : 'text-toned'"
+        :class="late && !brief && !reason ? 'text-warn-ink' : 'text-toned'"
       >
-        <template v-if="place && where">{{ where }}</template>
-        <template v-if="place && where && (when || tag)"> · </template>
-        <template v-if="when">{{ when }}</template>
-        <template v-if="when && tag"> · </template>
-        <span
-          v-if="tag"
-          :class="tag === 'уточнить' ? 'text-accent-ink' : ''"
-        >{{ tag }}</span>
+        <template v-if="reason">{{ place && where ? `${where} · ${reason}` : reason }}</template>
+        <template v-else>
+          <template v-if="place && where">{{ where }}</template>
+          <template v-if="place && where && (when || tag)"> · </template>
+          <template v-if="when">{{ when }}</template>
+          <template v-if="when && tag"> · </template>
+          <span
+            v-if="tag"
+            :class="tag === 'уточнить' ? 'text-accent-ink' : ''"
+          >{{ tag }}</span>
+        </template>
       </span>
     </button>
     <span
@@ -85,7 +92,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
       class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned"
     >
       <UIcon
-        v-if="rec.note"
+        v-if="hasNote"
         name="i-lucide-file-text"
         class="size-4"
         aria-label="есть заметка"

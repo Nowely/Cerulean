@@ -2,6 +2,7 @@
 @import "@nuxt/ui";
 @import "@fontsource-variable/onest/wght.css";
 @import "./tokens.css";
+@import "./body.css";
 
 /*
  * The theme in one place: tokens.css holds the colours, this file turns them into
@@ -169,6 +170,7 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-text-sel: var(--text-sel);
   --color-on-accent: var(--on-accent);
   --color-warn: var(--warn);
   --color-warn-ink: var(--warn-ink);
@@ -260,7 +262,7 @@
   }
 
   ::selection {
-    background: var(--accent-soft);
+    background: var(--text-sel);
     color: var(--ink);
   }
 

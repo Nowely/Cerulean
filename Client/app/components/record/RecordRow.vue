@@ -17,6 +17,7 @@ import { useLater } from '~/composables/useLater'
 import { formatDue, isOverdue } from '~/domain/dates'
 import { nb } from '~/domain/text'
 import { formatValue, optionOf } from '~/domain/props'
+import { bodyOf, docText } from '~/domain/body'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
 import OptionPill from '../common/OptionPill.vue'
@@ -120,7 +121,9 @@ const stock = computed(() => {
   return { prop, value, norm: typeof norm === 'number' ? norm : null, low: typeof norm === 'number' && value < norm }
 })
 
-const notePreview = computed(() => (props.view?.shown ?? []).includes('note') ? props.rec.note.split('\n')[0] : '')
+/** The body's first line on the right when «Заметка» is shown, else a glyph saying there is one */
+const noteText = computed(() => docText(bodyOf(props.rec), data.nameOf))
+const notePreview = computed(() => (props.view?.shown ?? []).includes('note') ? noteText.value.split('\n')[0] : '')
 
 function step(by: number) {
   if (!stock.value) return
@@ -326,7 +329,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
         </button>
 
         <span
-          v-if="waiting || subs.length || (rec.note && !notePreview) || right.length"
+          v-if="waiting || subs.length || (noteText && !notePreview) || right.length"
           class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums"
         >
           <span v-if="waiting">ждёт сети</span>
@@ -335,7 +338,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
             :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
           >{{ subsDone }}/{{ subs.length }}</span>
           <UIcon
-            v-if="rec.note && !notePreview"
+            v-if="noteText && !notePreview"
             name="i-lucide-file-text"
             class="size-4"
             aria-label="есть заметка"

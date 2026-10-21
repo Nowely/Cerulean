@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// A record opened from navigation: full, with the composer for Подпункты
-import { computed, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+// A record opened from navigation: full, with the composer for Подпункты. While its body has focus the editing bar
+// takes the composer's slot (v23); a focused title keeps the composer (Q1)
+import { computed, onUnmounted, useTemplateRef, watch } from 'vue'
 import { useHead, useRoute } from '#imports'
 import { useDataStore } from '~/stores/data'
 import { useScreen } from '~/composables/useScreen'
@@ -14,6 +15,8 @@ import RecordView from '~/components/record/RecordView.vue'
 import RecordLinks from '~/components/record/RecordLinks.vue'
 import RecordMenu from '~/components/record/RecordMenu.vue'
 import AppComposer from '~/components/composer/AppComposer.vue'
+import EditingBar from '~/components/body/EditingBar.vue'
+import { useBodyEditing } from '~/composables/useBodyEditing'
 
 const route = useRoute()
 const data = useDataStore()
@@ -29,7 +32,8 @@ const crumbs = computed(() => [
   { to: `/p/${page.value?.id}`, label: page.value?.title || 'Без названия' },
   ...(parent.value ? [{ to: `/r/${parent.value.id}`, label: parent.value.text }] : [])
 ])
-const editing = ref(false)
+const body = useBodyEditing()
+const editing = computed(() => body.on('main'))
 const screen = useTemplateRef<InstanceType<typeof AppScreen>>('screen')
 // Once the title is under the header the header names the record, as pages do (v23, B2, M6)
 const { collapsed } = useTitleCollapse(computed(() => screen.value?.scroller), '[data-title-block]', 'bottom', () => route.params.id)
@@ -113,7 +117,6 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
         <RecordView
           :rec="rec"
           :aside="aside"
-          @editing="v => editing = v"
         >
           <template #menu>
             <RecordMenu :rec="rec" />
@@ -145,6 +148,7 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
           mode="record"
           :record-id="rec.id"
         />
+        <EditingBar v-if="editing" />
       </template>
     </AppScreen>
     <div

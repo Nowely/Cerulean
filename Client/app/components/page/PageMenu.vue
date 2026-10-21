@@ -9,6 +9,8 @@ import { useUiStore } from '~/stores/ui'
 import { useNotify } from '~/composables/useNotify'
 import { usePropSheets } from '~/composables/usePropSheets'
 import { toMarkdown } from '~/domain/export'
+import { bodyOf, docText, firstWords } from '~/domain/body'
+import { FOCUS_PROXY_ID } from '~/composables/useCreatePage'
 import { propList } from '~/domain/props'
 import { pageColor } from '~/domain/look'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
@@ -37,7 +39,7 @@ const describing = ref(false)
 const moving = ref(false)
 
 async function copy() {
-  const text = toMarkdown([props.page], data.liveRecords.filter(r => r.pageId === props.page.id), [], Date.now())
+  const text = toMarkdown([props.page], data.liveRecords.filter(r => r.pageId === props.page.id), [], Date.now(), data.nameOf)
   try {
     await navigator.clipboard.writeText(text.replace(/^# Cerulean\n\n/, ''))
     notify('Страница скопирована как текст', undefined, 3000)
@@ -52,6 +54,19 @@ function remove() {
   if (!props.home) void router.replace('/')
   notify('Страница в корзине', { label: 'Отменить', run: () => data.restorePage(id) })
 }
+
+/** «Заметка к странице» (v23): the page draws its note with the caret at the end; the keyboard comes up in this tap */
+function note() {
+  document.getElementById(FOCUS_PROXY_ID)?.focus()
+  ui.focusNote = props.page.id
+  if (props.home) void router.push(`/p/${props.page.id}`)
+}
+/** The first words of the note, in muted on the right of its row */
+const noteWords = computed(() => {
+  const text = docText(bodyOf(props.page), data.nameOf).replace(/\s+/g, ' ').trim()
+  const words = firstWords(text)
+  return words.length < text.length ? `${words}…` : words
+})
 
 /** The page takes it from here: its title in focus, or its icon picker open */
 function edit(what: 'title' | 'glyph') {
@@ -73,6 +88,7 @@ const items = computed<MenuItem[][]>(() => {
   if (own) {
     // The words Авто files by (v23: never «описание»), in muted on the right
     first.push({ label: 'Что сюда класть', icon: 'i-lucide-lightbulb', value: props.page.description || 'не задано', onSelect: () => describing.value = true })
+    first.push({ label: 'Заметка к странице', icon: 'i-cer-note', value: noteWords.value || undefined, onSelect: note })
     first.push({ label: 'Значок и цвет', icon: 'i-lucide-palette', onSelect: () => edit('glyph') })
     first.push({ label: 'Переместить в секцию', icon: 'i-lucide-arrow-right', value: section.value?.name ?? 'Мои страницы', onSelect: () => moving.value = true })
   }

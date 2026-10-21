@@ -1,8 +1,8 @@
 <script setup lang="ts">
-// Every record is a page: its properties, a note edited in place, Подпункты.
+// Every record is a page: its properties, its body edited in place (v23), «Связано», Подпункты.
 // Same component full (from navigation) and as a preview (from a link). A preview reads and ticks, and keeps
-// the record's properties, «+ Свойство» and «Связать» (spec, Preview); the desktop panel (edit) also takes the
-// note. The title stays for «Открыть».
+// the record's properties, «+ Свойство» and «Связать» (spec, Preview); the phone's sheet and the desktop panel (edit)
+// also take the body. The title stays for «Открыть».
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
 import { useRouter } from '#imports'
 import type { Id, Rec } from '~/domain/types'
@@ -23,16 +23,17 @@ import RecordRow from './RecordRow.vue'
 import PropValue from './PropValue.vue'
 import RecordLinks from './RecordLinks.vue'
 import LinkPicker from './LinkPicker.vue'
+import BodyField from '../body/BodyField.vue'
+import { bodyOf } from '~/domain/body'
 
 const props = withDefaults(defineProps<{
   rec: Rec
   container?: 'full' | 'preview'
-  /** The desktop panel: the note can be changed there too */
+  /** The phone's sheet and the desktop panel: the body can be changed there too */
   edit?: boolean
   /** The screen shows «Связано» in a column of its own on wide screens */
   aside?: boolean
 }>(), { container: 'full', edit: false, aside: false })
-const emit = defineEmits<{ editing: [boolean] }>()
 const data = useDataStore()
 const now = useNow()
 const router = useRouter()
@@ -65,10 +66,8 @@ watch([() => ui.focusTitle, titleField], async ([id, field]) => {
   await nextTick()
   field.focus()
 }, { immediate: true })
-const note = computed({
-  get: () => props.rec.note,
-  set: v => data.updateRecord(props.rec.id, { note: v })
-})
+/** The body has the caret: an empty «Подпункты» stops pointing at the composer the bar replaced (M8) */
+const bodyFocused = ref(false)
 
 // Properties in the page's order. Empty ones are hidden, except one just picked in «+ Свойство»: it stays
 // while the record is open, even empty (B12: never every empty property at once)
@@ -116,19 +115,6 @@ function picked() {
   run?.()
 }
 
-const noteEditing = ref(false)
-const noteBox = useTemplateRef<{ textareaRef?: HTMLTextAreaElement }>('noteBox')
-async function editNote() {
-  noteEditing.value = true
-  emit('editing', true)
-  await nextTick()
-  noteBox.value?.textareaRef?.focus()
-}
-function noteDone() {
-  noteEditing.value = false
-  emit('editing', false)
-}
-
 function openSub(r: Rec) {
   if (full.value) void router.push(`/r/${r.id}`)
   else peek.peek({ kind: 'record', id: r.id })
@@ -173,7 +159,6 @@ function openPlace() {
           required
           :struck="rec.done"
           @save="t => data.updateRecord(rec.id, { text: t })"
-          @focus="v => emit('editing', v)"
         />
         <h1
           v-else
@@ -345,43 +330,21 @@ function openPlace() {
       </div>
     </dl>
 
-    <!-- Note: edited where it is -->
+    <!-- The body (v23): after «+ Свойство · Связать», never folded; empty, the faint «Заметка» -->
     <div
-      class="mt-3.5 mb-1 lg:mt-4"
-      :class="container === 'preview' ? 'px-4 lg:mx-4 lg:px-0' : 'mx-4 lg:mx-0'"
+      class="mt-3 mb-1.5 lg:mt-3.5"
+      :class="[container === 'preview' ? 'px-4 lg:mx-4 lg:px-0' : 'mx-4 lg:mx-0', { 'body-target': editable }]"
     >
-      <UTextarea
-        v-if="editable && (noteEditing || rec.note)"
-        ref="noteBox"
-        v-model="note"
-        autoresize
-        :rows="1"
-        variant="none"
+      <BodyField
+        :key="rec.id"
+        :owner="{ kind: 'record', id: rec.id }"
+        :doc="bodyOf(rec)"
         placeholder="Заметка"
-        aria-label="Заметка"
-        class="w-full"
-        :ui="{ base: 'p-0 text-body leading-normal text-default lg:leading-relaxed' }"
-        @focus="noteEditing = true; emit('editing', true)"
-        @blur="noteDone"
+        label="Заметка"
+        :context="rec.text"
+        :editable="editable"
+        @focus="v => bodyFocused = v"
       />
-      <p
-        v-else-if="rec.note"
-        class="whitespace-pre-line text-body leading-normal text-default lg:leading-relaxed"
-      >
-        {{ rec.note }}
-      </p>
-      <button
-        v-else-if="editable"
-        type="button"
-        class="-ml-1 flex h-10 cursor-pointer items-center gap-2.5 rounded-item px-1 text-15 text-toned hover:text-highlighted"
-        @click="editNote"
-      >
-        <!-- Desktop draws the line as plain words (PagePeek) -->
-        <UIcon
-          name="i-lucide-pencil"
-          class="size-4.5 shrink-0 lg:hidden"
-        />Добавить заметку
-      </button>
     </div>
 
     <!-- Связано: both ways; on a wide screen the record page shows it in a column instead -->
@@ -401,7 +364,7 @@ function openPlace() {
       <RecordLinks
         :rec="rec"
         class="px-2 lg:px-0"
-        :class="container === 'preview' ? 'lg:px-2' : '-ml-2.5'"
+        :class="container === 'preview' ? 'lg:px-2' : '-ml-1 lg:-ml-2.5'"
       />
     </section>
 
@@ -429,6 +392,7 @@ function openPlace() {
             :view="undefined"
             :readonly="!full"
             wrap
+            reveal
             @open="openSub(s)"
           />
         </li>
@@ -448,9 +412,9 @@ function openPlace() {
       </button>
       <p
         v-else-if="!subs.length"
-        class="px-4 py-1 text-meta text-toned lg:px-0"
+        class="px-4 pt-1 text-15 leading-[1.5] text-toned lg:mt-0.5 lg:px-0 lg:pt-0 lg:leading-9 lg:text-dimmed"
       >
-        Подпунктов пока нет. Пиши внизу, и они появятся здесь.
+        {{ full && !bodyFocused ? 'Подпунктов пока нет. Пиши внизу, и они появятся здесь.' : 'Подпунктов пока нет.' }}
       </p>
     </section>
   </div>

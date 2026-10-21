@@ -1,16 +1,20 @@
 <script setup lang="ts">
 // A screen: header, one scrolling area with soft fades (16px under the header, 20px above the composer), the dock.
 // The notice slot is right above the dock's cards and composer, or the screen's foot when it has no dock.
+// While a body on it has focus the edges are hard (v23, F6): no fade, the header and the bar's dock opaque.
 import { computed, useTemplateRef } from 'vue'
 import { useScroll } from '@vueuse/core'
 import NoticeSlot from './NoticeSlot.vue'
+import { useBodyEditing } from '~/composables/useBodyEditing'
 
 /** The dock's column: Главная 720, Журнал 640, pages 680 */
 const props = withDefaults(defineProps<{ wide?: boolean, chat?: boolean }>(), { wide: false, chat: false })
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const { arrivedState } = useScroll(scroller)
-const fadeTop = computed(() => !arrivedState.top)
-const fadeBottom = computed(() => !arrivedState.bottom)
+const body = useBodyEditing()
+const hard = computed(() => body.on('main'))
+const fadeTop = computed(() => !arrivedState.top && !hard.value)
+const fadeBottom = computed(() => !arrivedState.bottom && !hard.value)
 const column = computed(() => props.wide ? 'lg:max-w-180' : props.chat ? 'lg:max-w-160' : 'lg:max-w-170')
 defineExpose({ scroller })
 </script>
@@ -25,6 +29,12 @@ defineExpose({ scroller })
       :data-fade-bottom="($slots.dock && fadeBottom) || undefined"
     >
       <slot />
+      <!-- Room under the last row while a body has focus, so the edges can settle on whole lines at the end too -->
+      <div
+        v-if="hard"
+        class="h-10 lg:hidden"
+        aria-hidden="true"
+      />
     </div>
     <div
       v-if="$slots.dock"

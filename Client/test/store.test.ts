@@ -5,6 +5,7 @@ import { useJournalStore } from '~/stores/journal'
 import type { PropDef } from '~/domain/types'
 import { placeOptions } from '~/domain/rules'
 import { applyView } from '~/domain/views'
+import { bodyOf, docText } from '~/domain/body'
 
 vi.mock('~/domain/model', async (orig) => {
   const real = await orig<typeof import('~/domain/model')>()
@@ -78,8 +79,11 @@ describe('data store', () => {
     const library = find('Вернуть книгу в библиотеку')
     const book = find('Атомные привычки')
     const titles = (id: string) => data.linksOf(id).map(h => h.kind === 'page' ? h.page.title : h.rec.text)
-    expect(titles(library.id)).toEqual(['Атомные привычки'])
+    // The library record is linked to «24 книги за год» by hand and mentions the book in its body: its own links first
+    expect(titles(library.id)).toEqual(['24 книги за год', 'Атомные привычки'])
     expect(titles(book.id)).toEqual(['Вернуть книгу в библиотеку', 'Полумарафон к маю'])
+    expect(data.relatedOf(library.id).map(x => x.why)).toEqual(['hand', 'text'])
+    expect(data.relatedOf(book.id)[0]).toMatchObject({ why: 'quote', quote: 'Сначала дочитать Атомные привычки, осталось две главы.' })
 
     const marathon = find('Полумарафон к маю')
     data.toggleLink(book.id, marathon.id)
@@ -87,7 +91,10 @@ describe('data store', () => {
     data.toggleLink(book.id, goals.id)
     data.toggleLink(book.id, library.id)
     expect(titles(book.id)).toEqual(['Цели'])
-    expect(titles(library.id)).toEqual([])
+    // Unlinking a mention turns the chip into words; the hand link stays
+    expect(titles(library.id)).toEqual(['24 книги за год'])
+    expect(docText(bodyOf(data.records[library.id]))).toContain('Сначала дочитать Атомные привычки, осталось')
+    expect(data.records[library.id]!.mentions).toEqual([])
     expect(titles(marathon.id)).toEqual([])
 
     data.removePage(goals.id)
@@ -95,6 +102,39 @@ describe('data store', () => {
     data.restorePage(goals.id)
     await data.flush()
     expect((await reload(dbName)).linksOf(book.id).map(h => h.kind)).toEqual(['page'])
+  })
+})
+
+describe('bodies', () => {
+  it('saves a body, reads its mentions out for «Связано» on both sides, and keeps a hand link when the chip goes', async () => {
+    const { data, dbName } = await fresh({ demo: true })
+    const find = (text: string) => data.liveRecords.find(r => r.text === text)!
+    const dentist = find('Позвонить стоматологу')
+    const milk = find('Молоко')
+    const doc = (...content: object[]) => ({ type: 'doc' as const, content: [{ type: 'paragraph', content }] })
+    data.setBody({ kind: 'record', id: dentist.id }, doc({ type: 'text', text: 'Спросить про ' }, { type: 'mention', attrs: { id: milk.id, label: 'Молоко' } }, { type: 'text', text: '.' }))
+    expect(data.records[dentist.id]!.mentions).toEqual([milk.id])
+    expect(data.relatedOf(dentist.id)).toMatchObject([{ why: 'text' }])
+    expect(data.relatedOf(milk.id).find(x => x.hit.kind === 'record' && x.hit.rec.id === dentist.id)).toMatchObject({ why: 'quote', quote: 'Спросить про Молоко.' })
+    data.toggleLink(dentist.id, milk.id) // unticking in «Связать» turns the chip into words
+    expect(data.linksOf(dentist.id)).toEqual([])
+    data.toggleLink(dentist.id, milk.id) // a second tap makes a hand link
+    data.setBody({ kind: 'record', id: dentist.id }, doc({ type: 'mention', attrs: { id: milk.id, label: 'Молоко' } }))
+    data.setBody({ kind: 'record', id: dentist.id }, doc({ type: 'text', text: 'без молока' }))
+    expect(data.relatedOf(dentist.id)).toMatchObject([{ why: 'hand' }])
+    // An emptied body is stored as none; an old note is left behind once the body is written
+    const marathon = find('Полумарафон к маю')
+    expect(docText(bodyOf(marathon))).toContain('Три пробежки в неделю')
+    data.setBody({ kind: 'record', id: marathon.id }, { type: 'doc', content: [{ type: 'paragraph' }] })
+    expect(data.records[marathon.id]).toMatchObject({ body: null, note: '' })
+    // A page note mentions too
+    const chores = data.livePages.find(p => p.title === 'Дела по дому')!
+    data.setBody({ kind: 'page', id: chores.id }, doc({ type: 'mention', attrs: { id: milk.id, label: 'Молоко' } }))
+    expect(data.linksOf(milk.id).some(h => h.kind === 'page' && h.page.id === chores.id)).toBe(true)
+    await data.flush()
+    const again = await reload(dbName)
+    expect(again.records[dentist.id]!.body).toEqual(doc({ type: 'text', text: 'без молока' }))
+    expect(again.pages[chores.id]!.mentions).toEqual([milk.id])
   })
 })
 

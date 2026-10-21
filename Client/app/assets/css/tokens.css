@@ -50,6 +50,8 @@
   --accent-ink: #1A4F75;
   --on-accent: #FFFFFF;
   --accent-soft: #E5EDF3;
+  /* The tint of selected text (v23): at least 1.5:1 on bg and elev, so a selection in a body reads at a glance */
+  --text-sel: #B9D2E6;
   --warn: #A4401C;
   --warn-ink: #8E3613;
   --warn-fill: #A4401C;
@@ -129,6 +131,7 @@
   --accent-ink: #ADD3F3;
   --on-accent: #0A1723;
   --accent-soft: #153045;
+  --text-sel: #27496A;
   --warn: #EF9F67;
   --warn-ink: #F4B88D;
   --warn-fill: #A84A26;
