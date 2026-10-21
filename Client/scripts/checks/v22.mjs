@@ -41,6 +41,39 @@ export default [
     const row = await p.locator('main li').filter({ has: p.getByRole('checkbox') }).first().boundingBox()
     expect(Math.round(row.height) === 44, `a row is ${row.height} px`)
   } },
+  // 2: «Покупки: tap «Купить» twice → «Удалить вид» → the tab goes with «Отменить»; «Отменить» → three tabs, «Купить» selected»
+  { id: 'v22-2-delete-view', device: MOBILE, run: async (p) => {
+    await p.clock.install({ time: NOW })
+    await open(p, '/')
+    await openPage(p, 'Покупки')
+    // «Купить» is already the current tab, so one tap opens its menu
+    const buy = p.getByRole('tab', { name: 'Купить' })
+    await buy.click()
+    await p.waitForTimeout(500)
+    // The dev tools pill can sit over the sheet's last item, so the click is dispatched
+    await p.getByRole('menuitem', { name: /Удалить вид/ }).or(p.getByRole('button', { name: /Удалить вид/ })).first().dispatchEvent('click')
+    await p.waitForTimeout(500)
+    // The tab leaves with a short fade
+    const tabs = p.locator('main [role="tab"]:visible')
+    for (let i = 0; i < 10 && await tabs.count() !== 2; i++) await p.waitForTimeout(200)
+    expect(await tabs.count() === 2, `${await tabs.count()} tabs after «Удалить вид»`)
+    const undo = p.locator('[data-notice]', { hasText: 'Вид «Купить» удалён' }).getByRole('button', { name: 'Отменить' })
+    expect(await shows(undo), 'no «Вид «Купить» удалён · Отменить»')
+    await undo.click()
+    for (let i = 0; i < 10 && await tabs.count() !== 3; i++) await p.waitForTimeout(200)
+    expect(await tabs.count() === 3, `${await tabs.count()} tabs after «Отменить»`)
+    expect(await buy.getAttribute('aria-selected') === 'true', '«Купить» is not selected after «Отменить»')
+  } },
+  // 2 on desktop: a right-click on a tab opens the same menu
+  { id: 'v22-2-desk-menu', device: DESKTOP, run: async (p) => {
+    await p.clock.install({ time: NOW })
+    await open(p, '/')
+    await openPage(p, 'Покупки')
+    await p.getByRole('tab', { name: 'Запасы' }).click({ button: 'right' })
+    await p.waitForTimeout(500)
+    expect(await shows(p.getByRole('menuitem', { name: /Удалить вид/ })), 'a right-click on «Запасы» opened no view menu')
+    expect(await shows(p.getByRole('menuitem', { name: /Новый вид/ })), 'the view menu has no «Новый вид»')
+  } },
   // 4: «open five pages with «Готово» and Главная with two pages: no tip appears»
   { id: 'v22-4-no-tips', device: MOBILE, run: async (p) => {
     const tip = /смахни|смахнуть|удерживай|подержи|наведи|подсказка|совет:/i
@@ -80,7 +113,8 @@ export default [
   { id: 'v22-6-tick-stays', device: MOBILE, run: async (p) => {
     await open(p, '/')
     await openPage(p, 'Покупки')
-    const mark = p.getByRole('checkbox', { name: 'Отметить «Молоко»' })
+    // Once ticked, the mark reads «Купить снова «Молоко»» (v22 item 40), so the row is found by its text
+    const mark = p.locator('main li', { hasText: 'Молоко' }).first().getByRole('checkbox')
     await mark.click()
     await p.waitForTimeout(600)
     expect(await mark.isVisible(), 'Молоко left the list after the tick')

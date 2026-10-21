@@ -283,6 +283,19 @@ const scenarios = [
     await p.getByRole('checkbox', { name: 'Отметить «Молоко»' }).click()
     await settle(p, 600)
   } },
+  // A finger holds «Яйца» lifted: the shot is taken mid-drag
+  { name: 'MobileDrag', device: MOBILE, run: async (p) => {
+    await openPage(p, 'Покупки')
+    const box = await p.locator('main li', { hasText: 'Яйца' }).first().boundingBox()
+    const cdp = await p.context().newCDPSession(p)
+    const at = dy => [{ x: box.x + 120, y: box.y + box.height / 2 + dy }]
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(0) })
+    await p.waitForTimeout(600)
+    for (const dy of [2, 4, 6]) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(dy) })
+    await settle(p, 400)
+  } },
+  { name: 'MobileStock', device: MOBILE, run: p => pageTab(p, 'Запасы') },
+  { name: 'MobileBought', device: MOBILE, run: p => pageTab(p, 'Куплено') },
   { name: 'MobileLinked', device: MOBILE, run: p => openRecord(p, 'Вернуть книгу в библиотеку') },
   { name: 'MobileLink', device: MOBILE, run: async (p) => {
     await openRecord(p, 'Вернуть книгу в библиотеку')
@@ -428,6 +441,18 @@ const scenarios = [
     await settle(p, 500)
   } },
   { name: 'ListLong', device: DESKTOP, run: p => longList(p) },
+  // The mouse holds «Яйца» by its ⋮⋮: the shot is taken mid-drag
+  { name: 'ListDrag', device: DESKTOP, run: async (p) => {
+    await openPage(p, 'Покупки')
+    const eggs = p.locator('main li', { hasText: 'Яйца' }).first()
+    await eggs.hover()
+    const grip = await eggs.locator('[style*="grab"]').boundingBox()
+    await p.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2)
+    await p.mouse.down()
+    for (const dy of [3, 6, 9]) await p.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2 + dy)
+    await settle(p, 400)
+  } },
+  { name: 'ListBought', device: DESKTOP, run: p => pageTab(p, 'Куплено') },
   { name: 'PageLink', device: DESKTOP, run: async (p) => {
     await openRecord(p, 'Вернуть книгу в библиотеку')
     await p.getByRole('button', { name: /^Связать/ }).first().click()
@@ -640,6 +665,13 @@ async function openPage(page, title, exact = true) {
   await page.getByRole('link', { name: new RegExp(exact ? `^${title}` : title) }).first().click()
   await page.waitForURL(/\/(p|r)\//)
   await settle(page, 400)
+}
+
+/** Покупки on one of its views */
+async function pageTab(page, tab) {
+  await openPage(page, 'Покупки')
+  await page.getByRole('tab', { name: tab }).click()
+  await settle(page, 500)
 }
 
 const DAY = 86400000

@@ -12,8 +12,8 @@ async function openPage(p, title, device = 'phone') {
   await p.waitForTimeout(device === 'phone' ? 700 : 500)
 }
 
-/** The toast is found by its text (a sheet can hide it from the accessibility tree) */
-const toast = (p, text) => p.locator('ol li', { hasText: text }).first()
+/** The notice above the composer, found by its text (a sheet can hide it from the accessibility tree) */
+const toast = (p, text) => p.locator('[data-notice], ol li', { hasText: text }).first()
 
 /** The Отдел of a Покупки record, by name */
 const dept = (p, text) => store(p, (data, t) => {
