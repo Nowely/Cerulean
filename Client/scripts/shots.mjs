@@ -149,6 +149,7 @@ const scenarios = [
   { name: 'MobileSheet', device: MOBILE, run: async (p) => {
     await open(p, '/journal')
     await p.locator('button', { hasText: 'Покупки' }).last().click()
+    await p.getByRole('dialog').waitFor()
     await settle(p, 600)
   } },
   { name: 'MobileBlank', device: MOBILE, run: async (p) => {

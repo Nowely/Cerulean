@@ -88,7 +88,7 @@ function openFull() {
   <UDrawer
     v-else
     v-model:open="open"
-    :ui="{ content: 'h-[88dvh]' }"
+    :ui="{ content: 'h-[calc(100dvh-48px)]' }"
     title="Превью"
   >
     <template #content>
@@ -96,7 +96,7 @@ function openFull() {
         <div class="flex shrink-0 items-center gap-1 px-3 pt-1 pb-1">
           <UButton
             v-if="!gone"
-            icon="i-lucide-square-arrow-out-up-right"
+            icon="i-lucide-maximize-2"
             @click="openFull"
           >
             Открыть

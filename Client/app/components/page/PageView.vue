@@ -355,8 +355,9 @@ const emptyText = computed(() => {
         class="self-center"
         @click="toggleSearch"
       />
+      <!-- A preview is for reading and ticking (MobileSheet): views are set on the page itself -->
       <AdaptiveOverlay
-        v-if="!today"
+        v-if="!today && full"
         v-model:open="settingsOpen"
         title="Настроить вид"
         @closed="settingsClosed"
