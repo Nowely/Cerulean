@@ -4,7 +4,7 @@
 // desktop) or to any column from its «⋯», which starts with «Открыть» (the preview). Every move leaves
 // «Полумарафон к маю → Достигнута · Отменить», and the open column stays where it was.
 import { computed, ref, watch } from 'vue'
-import type { Page, PropDef, Rec, ViewDef } from '~/domain/types'
+import type { Page, PageColor, PropDef, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
@@ -14,7 +14,9 @@ import { usePropSheets } from '~/composables/usePropSheets'
 import { filterRecords, noValueLabel, sortRecords } from '~/domain/views'
 import { formatDue, isOverdue } from '~/domain/dates'
 import { recordSummary } from '~/domain/summary'
+import { formatValue, optionColor, optionOf } from '~/domain/props'
 import RecordMark from '../../common/RecordMark.vue'
+import OptionPill from '../../common/OptionPill.vue'
 import ActionMenu, { type MenuItem } from '../../overlay/ActionMenu.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef, records: Rec[], readonly?: boolean }>()
@@ -36,10 +38,11 @@ const columns = computed(() => {
   if (!prop.value) return []
   const list = sortRecords(filterRecords(props.records, props.view), props.view.sort)
   const opts = prop.value.options ?? []
-  const cols = opts.map(o => ({ id: o.id, name: o.name, records: list.filter(r => r.values[prop.value!.id] === o.id) }))
+  // A column of an option is named by its pill (v23); «Без статуса» stays plain text
+  const cols = opts.map(o => ({ id: o.id, name: o.name, color: optionColor(opts, o) as PageColor | null, records: list.filter(r => r.values[prop.value!.id] === o.id) }))
   const none = list.filter(r => !opts.some(o => o.id === r.values[prop.value!.id]))
   // «Без статуса» shows while something has no value, and on a phone while it is the open column, even emptied
-  return none.length || (stage.value === 'none' && !isDesktop.value) ? [{ id: 'none', name: noValueLabel(prop.value), records: none }, ...cols] : cols
+  return none.length || (stage.value === 'none' && !isDesktop.value) ? [{ id: 'none', name: noValueLabel(prop.value), color: null, records: none }, ...cols] : cols
 })
 // The open column stays put after a move, even when it is left empty (G7); only a column that goes away
 // (a deleted option) gives its place to the first one with cards
@@ -47,6 +50,19 @@ watch(columns, (c) => {
   if (!c.some(x => x.id === stage.value)) stage.value = (c.find(x => x.records.length) ?? c[0])?.id ?? null
 }, { immediate: true })
 const shown = computed(() => isDesktop.value ? columns.value : columns.value.filter(c => c.id === stage.value))
+
+/** A card's values from «Справа в строке» beside its date, as a row draws them; the column says its own property */
+function valuesOf(r: Rec) {
+  const out: { key: string, text: string, color?: PageColor }[] = []
+  for (const key of props.view.shown) {
+    const p = props.page.props.find(x => x.id === key)
+    if (!p || p.id === prop.value?.id || (p.type === 'number' && p.normProp)) continue
+    const pill = optionOf(p, r.values[key])
+    const text = pill?.name ?? formatValue(p, r.values[key], now.value)
+    if (text) out.push({ key, text, color: pill?.color })
+  }
+  return out
+}
 
 /** «3 из 6 · дальше пробежка 6 км, 19:00» for a record with Подпункты, else its date */
 function subOf(r: Rec) {
@@ -88,7 +104,7 @@ function addProp() {
 const nextOf = (colId: string) => columns.value[columns.value.findIndex(c => c.id === colId) + 1]
 const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
   [{ label: 'Открыть', icon: 'i-lucide-panel-right-open', onSelect: () => peek.peek({ kind: 'record', id: rec.id }) }],
-  columns.value.filter(c => c.id !== colId).map(c => ({ label: `В «${c.name}»`, icon: 'i-lucide-arrow-right', onSelect: () => moveTo(rec, c.id) }))
+  columns.value.filter(c => c.id !== colId).map(c => ({ label: `В «${c.name}»`, icon: 'i-lucide-arrow-right', pill: c.color ? { name: c.name, color: c.color } : undefined, onSelect: () => moveTo(rec, c.id) }))
 ]
 </script>
 
@@ -120,11 +136,20 @@ const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
         type="button"
         role="tab"
         :aria-selected="stage === c.id"
-        class="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-item px-3 text-sm"
-        :class="stage === c.id ? 'bg-accent-soft text-accent-ink ring ring-accent ring-inset' : 'bg-trk text-default active:bg-pressed'"
+        class="inline-flex h-9 max-w-full min-w-0 shrink-0 cursor-pointer items-center gap-2 rounded-chip text-sm"
+        :class="[stage === c.id ? 'bg-seg-on text-highlighted shadow-seg' : 'bg-trk text-default active:bg-pressed', c.color ? 'pr-3 pl-1.75' : 'px-3']"
         @click="stage = c.id"
       >
-        {{ c.name }}<span class="text-toned tabular-nums">{{ c.records.length }}</span>
+        <!-- The selected column is raised like a segment: an accent fill would swallow the blue option's own pill -->
+        <OptionPill
+          v-if="c.color"
+          :name="c.name"
+          :color="c.color"
+        />
+        <template v-else>
+          {{ c.name }}
+        </template>
+        <span class="text-toned tabular-nums">{{ c.records.length }}</span>
       </button>
     </div>
     <div class="flex flex-col gap-2 px-4 pt-1.5 lg:flex-row lg:items-start lg:gap-3 lg:overflow-x-auto lg:px-0 lg:pt-3.5 lg:pb-2">
@@ -135,7 +160,15 @@ const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
         :aria-label="`${c.name}, ${c.records.length}`"
       >
         <h3 class="hidden min-h-6 items-center gap-2 px-1.5 pb-0.5 text-xs font-medium tracking-wide text-toned lg:flex">
-          {{ c.name }}<span class="font-normal text-dimmed tabular-nums">{{ c.records.length }}</span>
+          <OptionPill
+            v-if="c.color"
+            :name="c.name"
+            :color="c.color"
+          />
+          <template v-else>
+            {{ c.name }}
+          </template>
+          <span class="font-normal text-dimmed tabular-nums">{{ c.records.length }}</span>
         </h3>
         <article
           v-for="r in c.records"
@@ -164,6 +197,22 @@ const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
               class="text-13"
               :class="subOf(r)!.late ? 'text-warn-ink' : 'text-toned'"
             >{{ subOf(r)!.text }}</span>
+            <span
+              v-if="valuesOf(r).length"
+              class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pt-0.5 text-13 text-toned"
+            >
+              <template
+                v-for="v in valuesOf(r)"
+                :key="v.key"
+              >
+                <OptionPill
+                  v-if="v.color"
+                  :name="v.text"
+                  :color="v.color"
+                />
+                <span v-else>{{ v.text }}</span>
+              </template>
+            </span>
           </button>
           <span
             v-if="!readonly"

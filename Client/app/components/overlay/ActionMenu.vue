@@ -2,9 +2,11 @@
 // «⋯» menus: a bottom sheet on a phone, a dropdown on desktop. Same items, same order.
 // Until the menu code is in (useLater) the button stands on its own; a tap opens the menu once it is.
 import { ref, watch } from 'vue'
+import type { PageColor } from '~/domain/types'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
 import DotsButton from '../common/DotsButton.vue'
+import OptionPill from '../common/OptionPill.vue'
 
 export interface MenuItem {
   label: string
@@ -18,6 +20,8 @@ export interface MenuItem {
   hint?: string
   /** Shown but not offered; the hint says why («Это единственный вид страницы») */
   disabled?: boolean
+  /** An option drawn as its pill («Переместить в колонку», v23); `label` stays what a screen reader says */
+  pill?: { name: string, color: PageColor }
   onSelect: () => void
 }
 
@@ -83,7 +87,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
       // The head belongs to the first group: no line between it and the first items (ListTabMenu)
       ...(labelled && !gi ? [{ type: 'label' as const, label: title ?? label, slot: 'head' as const }] : []),
       ...g.map(i => i.checked === undefined
-        ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled }
+        ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled, pill: i.pill, slot: i.pill ? 'pill' as const : undefined }
         : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) })
     ])"
     :content="{ align: align ?? 'end', onCloseAutoFocus: afterClose }"
@@ -99,6 +103,13 @@ const afterClose = () => setTimeout(() => setTimeout(run))
         v-if="caption"
         class="text-toned"
       > · {{ caption }}</span>
+    </template>
+    <template #pill-label="{ item }">
+      <span class="sr-only">{{ item.label }}</span>
+      <OptionPill
+        v-bind="(item as { pill: { name: string, color: PageColor } }).pill"
+        aria-hidden="true"
+      />
     </template>
     <template #item-trailing="{ item }">
       <span
@@ -168,6 +179,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                 ]"
                 :role="item.checked === undefined ? undefined : 'switch'"
                 :aria-checked="item.checked"
+                :aria-label="item.pill ? item.label : undefined"
                 :aria-disabled="item.disabled || undefined"
                 @click="item.disabled ? undefined : item.checked === undefined ? select(item) : item.onSelect()"
               >
@@ -177,7 +189,13 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                   :class="item.danger || item.disabled ? '' : 'text-toned'"
                 />
                 <span
-                  v-if="item.hint"
+                  v-if="item.pill"
+                  class="flex min-w-0 flex-1"
+                >
+                  <OptionPill v-bind="item.pill" />
+                </span>
+                <span
+                  v-else-if="item.hint"
                   class="flex min-w-0 flex-1 flex-col py-1.5"
                 >
                   <span class="truncate">{{ item.label }}</span>

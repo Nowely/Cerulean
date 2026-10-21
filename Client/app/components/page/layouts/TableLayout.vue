@@ -2,14 +2,15 @@
 // Таблица. Desktop: columns of the chosen properties. A phone has no room for columns,
 // so each record becomes a small card with its properties as lines; no horizontal scroll.
 import { computed } from 'vue'
-import type { Page, Rec, ViewDef } from '~/domain/types'
+import type { Page, PageColor, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { filterRecords, sortRecords } from '~/domain/views'
 import { formatDue, isOverdue } from '~/domain/dates'
-import { formatValue, propList } from '~/domain/props'
+import { formatValue, optionOf, propList } from '~/domain/props'
 import RecordMark from '../../common/RecordMark.vue'
+import OptionPill from '../../common/OptionPill.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef, records: Rec[] }>()
 const emit = defineEmits<{ open: [rec: Rec] }>()
@@ -23,9 +24,12 @@ const cols = computed(() => propList(props.page, { norms: true })
   .filter(p => p.key === 'due' ? props.view.shown.includes('due') : !p.builtin && (props.view.shown.includes(p.key) || !props.view.shown.length))
   .map(p => ({ key: p.key, name: p.name })))
 
-function cell(rec: Rec, key: string): { text: string, warn?: boolean } {
+/** A cell's text; a «Выбор» value is its pill (v23) */
+function cell(rec: Rec, key: string): { text: string, warn?: boolean, color?: PageColor } {
   if (key === 'due') return rec.due ? { text: formatDue(rec.due, now.value), warn: !rec.done && isOverdue(rec.due, now.value) } : { text: '' }
   const prop = props.page.props.find(p => p.id === key)
+  const pill = optionOf(prop, rec.values[key])
+  if (pill) return { text: pill.name, color: pill.color }
   return { text: prop ? formatValue(prop, rec.values[key], now.value) : '' }
 }
 </script>
@@ -80,7 +84,14 @@ function cell(rec: Rec, key: string): { text: string, warn?: boolean } {
           class="py-1.5 pr-3 text-meta"
           :class="cell(r, c.key).warn ? 'text-warn-ink' : 'text-toned'"
         >
-          {{ cell(r, c.key).text }}
+          <OptionPill
+            v-if="cell(r, c.key).color"
+            :name="cell(r, c.key).text"
+            :color="cell(r, c.key).color!"
+          />
+          <template v-else>
+            {{ cell(r, c.key).text }}
+          </template>
         </td>
       </tr>
     </tbody>
@@ -128,7 +139,14 @@ function cell(rec: Rec, key: string): { text: string, warn?: boolean } {
               class="min-w-0 truncate"
               :class="cell(r, c.key).warn ? 'text-warn-ink' : 'text-highlighted'"
             >
-              {{ cell(r, c.key).text }}
+              <OptionPill
+                v-if="cell(r, c.key).color"
+                :name="cell(r, c.key).text"
+                :color="cell(r, c.key).color!"
+              />
+              <template v-else>
+                {{ cell(r, c.key).text }}
+              </template>
             </dd>
           </div>
         </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // One property of a record, edited in place: text and an empty number in a field, a number with a value on a
-// stepper, «Выбор» and Дата in a small sheet (a popover on desktop) — the options with their colour dots, or the
+// stepper, «Выбор» and Дата in a small sheet (a popover on desktop) — the options as their pills (v23), or the
 // days — and «Срок» with the same button and sheet as in a receipt. `open()` opens the control at once
 // (a property just picked in «+ Свойство»).
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
@@ -8,9 +8,10 @@ import type { PropDef, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { dueChoices } from '~/domain/dates'
-import { formatValue, hasValue, optionColor, readNumber } from '~/domain/props'
+import { formatValue, hasValue, optionColor, optionOf, readNumber } from '~/domain/props'
 import DueButton from './DueButton.vue'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
+import OptionPill from '../common/OptionPill.vue'
 
 const props = defineProps<{ rec: Rec, prop?: PropDef, due?: boolean, readonly?: boolean }>()
 const data = useDataStore()
@@ -23,6 +24,8 @@ const choosing = ref(false)
 
 const value = computed(() => props.prop ? props.rec.values[props.prop.id] ?? null : null)
 const text = computed(() => props.prop ? formatValue(props.prop, value.value, now.value) : '')
+/** A «Выбор» value reads as its pill, here as on the row */
+const pill = computed(() => optionOf(props.prop, value.value))
 
 function setValue(v: string | number | null) {
   const { [props.prop!.id]: _old, ...rest } = props.rec.values
@@ -90,7 +93,14 @@ defineExpose({
         :class="text ? 'text-highlighted' : 'text-toned'"
         :aria-expanded="choosing"
       >
-        <span class="truncate">{{ text || (prop!.type === 'select' ? 'Выбрать' : 'Добавить') }}</span>
+        <OptionPill
+          v-if="pill"
+          v-bind="pill"
+        />
+        <span
+          v-else
+          class="truncate"
+        >{{ text || (prop!.type === 'select' ? 'Выбрать' : 'Добавить') }}</span>
       </button>
     </template>
     <div class="flex flex-col pb-1">
@@ -103,12 +113,12 @@ defineExpose({
           :aria-pressed="o.id === value"
           @click="choose(o.id)"
         >
-          <span
-            class="mx-1 size-3 shrink-0 rounded-full"
-            :style="{ background: `var(--c-${o.dot})` }"
-            aria-hidden="true"
-          />
-          <span class="min-w-0 flex-1 truncate">{{ o.name }}</span>
+          <span class="flex min-w-0 flex-1">
+            <OptionPill
+              :name="o.name"
+              :color="o.dot"
+            />
+          </span>
           <UIcon
             v-if="o.id === value"
             name="i-lucide-check"
@@ -143,6 +153,10 @@ defineExpose({
       </button>
     </div>
   </AdaptiveOverlay>
+  <OptionPill
+    v-else-if="pill"
+    v-bind="pill"
+  />
   <span
     v-else-if="sheeted"
     class="text-highlighted"

@@ -78,9 +78,12 @@
   --text-caption--font-weight: 500;
   --text-input: 16px;
   --text-input--line-height: 1.4;
+  /* An option pill typed into (the property editor): the input minimum on touch, 28 high; the reading pill on desktop */
+  --text-opt: 16px;
+  --text-opt--line-height: 28px;
 
   /* Radii: 12 composer, cards, buttons · 10 chips, segments, rows, 36px tiles · 8 menu items ·
-     7 badges and 24px tiles · 5 for 18px tiles · 20 sheet tops. Circles only for checkbox and dot. */
+     7 badges and 24px tiles · 6 option pills · 5 for 18px tiles · 20 sheet tops. Circles only for checkbox and dot. */
   --radius-card: 12px;
   --radius-chip: 10px;
   --radius-item: 8px;
@@ -89,6 +92,7 @@
   --radius-tile-sm: 5px;
   --radius-tile-md: 9px;
   --radius-tile-lg: 10px;
+  --radius-opt: 6px;
   --radius-sheet: 20px;
   --radius-pill: 22px;
   --radius-pill-grown: 20px;
@@ -131,6 +135,8 @@
 @media (width >= 64rem) and (pointer: fine) {
   :root {
     --text-input: 14px;
+    --text-opt: 13px;
+    --text-opt--line-height: 22px;
   }
 }
 

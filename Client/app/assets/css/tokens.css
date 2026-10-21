@@ -79,6 +79,16 @@
   --b-purple: #ECE8F7;
   --b-gray: #ECEFF2;
   --b-teal: #DDF0EE;
+
+  /* Option pills: the text on an option's --b-* fill (at least 4.5:1; --c-* on its fill fell short in light) */
+  --c-green-ink: #176B44;
+  --c-blue-ink: #1F5F8B;
+  --c-brown-ink: #795335;
+  --c-yellow-ink: #7F5500;
+  --c-pink-ink: #9D3369;
+  --c-purple-ink: #644AA9;
+  --c-gray-ink: #565F6B;
+  --c-teal-ink: #006863;
 }
 
 .dark {
@@ -146,6 +156,15 @@
   --b-purple: #2A2440;
   --b-gray: #252B31;
   --b-teal: #123230;
+
+  --c-green-ink: #72C291;
+  --c-blue-ink: #7CB6E3;
+  --c-brown-ink: #CBA384;
+  --c-yellow-ink: #D9B04E;
+  --c-pink-ink: #EB89B8;
+  --c-purple-ink: #AF9CF3;
+  --c-gray-ink: #A1ACB8;
+  --c-teal-ink: #5CC1B8;
 }
 
 /*
