@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import type { PropDef } from '~/domain/types'
+import { placeOptions } from '~/domain/rules'
 
 vi.mock('~/domain/model', async (orig) => {
   const real = await orig<typeof import('~/domain/model')>()
@@ -290,6 +291,86 @@ describe('Авто with a key', () => {
     expect(e).toMatchObject({ kind: 'routed', note: 'key' })
     expect(data.pages[e.pageId!]!.title).toBe('Покупки')
     expect(data.settings.keyState).toBe('bad')
+  })
+})
+
+describe('duplicates, «Запомнить», existing pages (v22)', () => {
+  it('writes a duplicate as typed and merges it, adding the quantities; «Отменить» leaves the merged record (G3)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const shop = data.livePages.find(p => p.title === 'Покупки')!
+    const qty = shop.props.find(p => p.name === 'Количество')!.id
+    const milk = data.liveRecords.find(r => r.text === 'Молоко')!
+    const e = await journal.send('молоко 1 л', 'auto')
+    const typed = e.recordIds![0]!
+    expect(data.records[typed]).toMatchObject({ text: 'Молоко', pageId: shop.id, values: { [qty]: '1 л' } })
+    expect(journal.duplicateFor(e.id, typed)?.id).toBe(milk.id)
+    expect(journal.merge(e.id, typed)?.id).toBe(milk.id)
+    expect(data.records[typed]).toBeUndefined()
+    expect(data.records[milk.id]!.values[qty]).toBe('3 л')
+    expect(data.recordsOf(shop.id).filter(r => r.text === 'Молоко')).toHaveLength(1)
+    expect(e.merged).toEqual({ [typed]: milk.id })
+    journal.undo(e.id)
+    expect(data.records[milk.id]).toMatchObject({ deletedAt: null, values: { [qty]: '3 л' } })
+  })
+
+  it('offers no merge for a ticked record or one of the same send', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const both = await journal.send('кефир, кефир', 'auto')
+    expect(both.recordIds!.map(id => journal.duplicateFor(both.id, id))).toEqual([undefined, undefined])
+    const bread = data.liveRecords.find(r => r.text === 'Хлеб')!
+    data.toggleDone(bread.id)
+    const e = await journal.send('хлеб', 'auto')
+    expect(journal.duplicateFor(e.id, e.recordIds![0]!)).toBeUndefined()
+  })
+
+  it('«Запомнить» after a page chosen by hand writes an example into its description; «Отменить» takes it out (U5)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const tasks = data.livePages.find(p => p.title === 'Задачи')!
+    const before = tasks.description
+    const ask = await journal.send('подарок Лене на новоселье', 'auto')
+    expect(ask.kind).toBe('ask')
+    expect(ask.learn).toBeFalsy()
+    journal.choose(ask.id, { pageId: tasks.id })
+    expect(ask).toMatchObject({ kind: 'routed', pageId: tasks.id, learn: true, learned: false })
+    journal.remember(ask.id)
+    expect(ask.learned).toBe(true)
+    expect(data.pages[tasks.id]!.description).toBe(`${before}\nНапример: «подарок Лене на новоселье»`)
+    journal.remember(ask.id)
+    expect(data.pages[tasks.id]!.description.match(/Например/g)).toHaveLength(1)
+    journal.forget(ask.id)
+    expect(ask.learned).toBe(false)
+    expect(data.pages[tasks.id]!.description).toBe(before)
+    // Remembered, then moved on: the example leaves the first page with it
+    journal.remember(ask.id)
+    const ideas = data.livePages.find(p => p.title === 'Идеи')!
+    journal.choose(ask.id, { pageId: ideas.id })
+    expect(data.pages[tasks.id]!.description).toBe(before)
+    expect(ask).toMatchObject({ pageId: ideas.id, learn: true, learned: false })
+  })
+
+  it('offers nothing to remember when Авто filed it by itself or the record stays in Входящие', async () => {
+    const { journal } = await fresh({ demo: true })
+    const e = await journal.send('позвонить маме', 'auto')
+    expect(e.learn).toBeFalsy()
+    journal.remember(e.id)
+    expect(e.learned).toBeFalsy()
+    const ask = await journal.send('подарок Лене на новоселье', 'auto')
+    journal.choose(ask.id, { keep: true })
+    expect(ask.learn).toBeFalsy()
+  })
+
+  it('a new page named like one there is becomes that page in the Уточнение (N23)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const gifts = data.createPage({ title: 'Подарки' })
+    data.setSettings({ apiKey: 'sk-test', keyState: 'ok', rulesFirst: false })
+    const { askModel } = await import('~/domain/model')
+    vi.mocked(askModel).mockResolvedValueOnce({ kind: 'unclear', pageId: null, items: [], guesses: [], newPageName: 'подарки' })
+    const e = await journal.send('что-нибудь для Лены', 'auto')
+    expect(e.kind).toBe('ask')
+    const rec = data.records[e.recordIds![0]!]!
+    const offer = placeOptions(journal.guessesFor(rec), e.newName, data.livePages)
+    expect(offer.pageIds).toContain(gifts.id)
+    expect(offer.newName).toBeNull()
   })
 })
 

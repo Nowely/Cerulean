@@ -1,14 +1,17 @@
 <script setup lang="ts">
-// A screen: header, one scrolling area with soft fades (16px under the header, 20px above the composer), the dock
+// A screen: header, one scrolling area with soft fades (16px under the header, 20px above the composer), the dock.
+// The notice slot is right above the dock's cards and composer, or the screen's foot when it has no dock.
 import { computed, useTemplateRef } from 'vue'
 import { useScroll } from '@vueuse/core'
+import NoticeSlot from './NoticeSlot.vue'
 
 /** The dock's column: Главная 720, Журнал 640, pages 680 */
-withDefaults(defineProps<{ wide?: boolean, chat?: boolean }>(), { wide: false, chat: false })
+const props = withDefaults(defineProps<{ wide?: boolean, chat?: boolean }>(), { wide: false, chat: false })
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const { arrivedState } = useScroll(scroller)
 const fadeTop = computed(() => !arrivedState.top)
 const fadeBottom = computed(() => !arrivedState.bottom)
+const column = computed(() => props.wide ? 'lg:max-w-180' : props.chat ? 'lg:max-w-160' : 'lg:max-w-170')
 defineExpose({ scroller })
 </script>
 
@@ -25,14 +28,27 @@ defineExpose({ scroller })
     </div>
     <div
       v-if="$slots.dock"
-      class="relative shrink-0 px-3 pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] lg:px-8 lg:pb-5"
+      class="relative shrink-0 px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] lg:px-8 lg:pb-5"
     >
       <div
-        class="mx-auto flex w-full flex-col gap-2"
-        :class="wide ? 'lg:max-w-180' : chat ? 'lg:max-w-160' : 'lg:max-w-170'"
+        class="mx-auto w-full"
+        :class="column"
       >
-        <slot name="dock" />
+        <NoticeSlot />
+        <div class="flex flex-col gap-2">
+          <slot name="dock" />
+        </div>
       </div>
+    </div>
+    <div
+      v-else
+      class="shrink-0 px-4 lg:px-8"
+    >
+      <NoticeSlot
+        place="bare"
+        class="mx-auto w-full"
+        :class="column"
+      />
     </div>
   </div>
 </template>

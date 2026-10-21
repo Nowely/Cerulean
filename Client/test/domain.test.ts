@@ -4,7 +4,8 @@ import { cleanRecordText, dropPrefix, isQuestion, isSearch, parseDue, parseQty, 
 import { plural, lowerFirst, genitive } from '~/domain/text'
 import { demo } from '~/domain/seed'
 import { pageBadge, pageSubline, pageSummary, recordSummary, summaryText } from '~/domain/summary'
-import { classify, guessOption } from '~/domain/rules'
+import { classify, guessOption, pageNamed, placeOptions } from '~/domain/rules'
+import { addQty, duplicateOf, duplicateWords } from '~/domain/merge'
 import { answer, lastAdded, recent } from '~/domain/search'
 import { applyView, noValueLabel } from '~/domain/views'
 import { canCreate, convertValues, formatValue, nextColor, optionColor, orderFromListed, propKeys, propList, readDate, readNumber } from '~/domain/props'
@@ -187,6 +188,59 @@ describe('simple rules', () => {
     expect(drafts.map(x => x.text)).toEqual(['Кефир', 'Батон', 'Сметана'])
     expect(drafts[0]!.values[p.props[0]!.id]).toBe('1 л')
     expect(dept.options!.find(o => o.id === guessOption('батон', dept))!.name).toBe('Хлеб и выпечка')
+  })
+})
+
+describe('duplicates (v22, G3)', () => {
+  const d = liveDemo()
+  const shop = d.pages.find(p => p.title === 'Покупки')!
+  const milk = d.records.find(r => r.text === 'Молоко')!
+  const typed = { ...milk, id: 'new', values: { [shop.props[0]!.id]: '1 л' } }
+  it('finds the open record on the same page that says the same thing', () => {
+    expect(duplicateOf({ ...typed, text: 'молоко' }, d.records)?.id).toBe(milk.id)
+    // Not itself, not a record of the same send, not a ticked one, not on another page
+    expect(duplicateOf(milk, d.records)).toBeUndefined()
+    expect(duplicateOf(typed, d.records, new Set([milk.id]))).toBeUndefined()
+    expect(duplicateOf(typed, d.records.map(r => r.id === milk.id ? { ...r, done: true } : r))).toBeUndefined()
+    expect(duplicateOf({ ...typed, pageId: 'elsewhere' }, d.records)).toBeUndefined()
+    expect(duplicateOf({ ...typed, text: 'Молоко овсяное' }, d.records)).toBeUndefined()
+  })
+  it('names the duplicate with its quantity', () => {
+    expect(duplicateWords(milk, shop)).toEqual({ sub: 'уже есть в списке, 2 л', label: 'Объединить с «Молоко, 2 л»' })
+    const call = d.records.find(r => r.text === 'Позвонить стоматологу')!
+    expect(duplicateWords(call, d.pages.find(p => p.id === call.pageId))).toEqual({ sub: 'уже есть в списке', label: 'Объединить с «Позвонить стоматологу»' })
+  })
+  it('adds quantities in the same unit and keeps the first otherwise', () => {
+    expect(addQty('2 л', '1 л')).toBe('3 л')
+    expect(addQty('2,5 кг', '1 кг')).toBe('3,5 кг')
+    expect(addQty('0,1 кг', '0,2 кг')).toBe('0,3 кг')
+    expect(addQty('10 шт', '6 шт')).toBe('16 шт')
+    expect(addQty('2', '3')).toBe('5')
+    expect(addQty('2 л', '500 мл')).toBe('2 л')
+    expect(addQty(null, '1 л')).toBe('1 л')
+    expect(addQty('2 л', null)).toBe('2 л')
+    expect(addQty(undefined, '')).toBeNull()
+  })
+})
+
+describe('Уточнение offers an existing page, not «Новая страница» (v22, N23)', () => {
+  const d = liveDemo()
+  const id = (title: string) => d.pages.find(p => p.title === title)!.id
+  const gifts = { ...d.pages.find(p => p.title === 'Идеи')!, id: 'gifts', title: 'Подарки' }
+  const pages = [...d.pages, gifts]
+  it('finds a page by its name in any case', () => {
+    expect(pageNamed(' подарки ', pages)?.id).toBe('gifts')
+    expect(pageNamed('Подарки', d.pages)).toBeUndefined()
+    expect(pageNamed('Входящие', d.pages)).toBeUndefined()
+  })
+  it('offers that page after the guesses and drops the new-page name', () => {
+    expect(placeOptions([id('Задачи')], 'Подарки', pages)).toEqual({ pageIds: [id('Задачи'), 'gifts'], newName: null })
+    expect(placeOptions(['gifts', id('Задачи')], 'подарки', pages)).toEqual({ pageIds: ['gifts', id('Задачи')], newName: null })
+    expect(placeOptions([id('Задачи')], 'Подарки', d.pages)).toEqual({ pageIds: [id('Задачи')], newName: 'Подарки' })
+  })
+  it('the rules name no new page that exists', () => {
+    expect(classify('подарок маме на др', d.pages).newName).toBe('Подарки')
+    expect(classify('подарок маме на др', [...d.pages, { ...gifts, id: 'gifts2', title: 'Подарки на НГ' }, gifts]).newName).toBeNull()
   })
 })
 

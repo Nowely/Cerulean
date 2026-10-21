@@ -5,7 +5,6 @@
 // line. Sends to the same page within 30 s join one receipt. A question or an unclear record closes the keyboard,
 // because its card needs a tap. A toast and a docked card never show together: the latest replaces the other.
 import { computed, ref, useTemplateRef, watch } from 'vue'
-import { useToast } from '#imports'
 import type { Entry, Id } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
@@ -26,7 +25,6 @@ const emit = defineEmits<{ docked: [boolean] }>()
 
 const data = useDataStore()
 const ui = useUiStore()
-const toast = useToast()
 const { isDesktop } = useScreen()
 const composer = useTemplateRef<InstanceType<typeof AppComposer>>('composer')
 
@@ -79,12 +77,12 @@ function onSent(e: Entry | null) {
   ids.value = [...ids.value, e.id]
   shown.value = true
   opened.value = false
-  toast.clear()
+  ui.notice = null
 }
 
 function onFailed(reason: 'quota' | 'error') {
   failure.value = reason
-  toast.clear()
+  ui.notice = null
 }
 function retry() {
   failure.value = null
@@ -98,9 +96,9 @@ watch(() => last.value?.kind, (kind) => {
 watch(typing, (v) => {
   if (!v) opened.value = false
 })
-// A toast takes the place of the card
-watch(() => ui.toastAt, () => {
-  shown.value = false
+// A notice takes the place of the card, unless it is about the card itself («ИИ снова не ответил»)
+watch(() => ui.notice, (n) => {
+  if (n && !n.keepCard) shown.value = false
 })
 
 function onUndone(e: Entry) {

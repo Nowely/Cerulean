@@ -1,6 +1,6 @@
 // Overlays any screen can ask for: choosing a page, confirming a deletion
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 import type { Id } from '~/domain/types'
 
 export type PageChoice = { pageId: Id } | { newPage: string }
@@ -27,6 +27,17 @@ export interface Picker {
   run: (choice: PageChoice) => void
 }
 
+/** The one notice: an inverted line with at most one action (useNotify) */
+export interface Notice {
+  id: number
+  title: string
+  action?: { label: string, run: () => void }
+  /** How long it stays while nothing holds it: 8 s with «Отменить» (deletions and moves), else 5 s */
+  duration: number
+  /** Said about the docked card itself («ИИ снова не ответил»): the card stays under it */
+  keepCard?: boolean
+}
+
 export interface Confirm {
   title: string
   text: string
@@ -47,8 +58,8 @@ export const useUiStore = defineStore('ui', () => {
   const findQuery = ref('')
   /** «Отменить» on a receipt: its text goes back to the composer on screen, aimed for that one send */
   const refill = ref<{ text: string, aim: Id | 'auto' } | null>(null)
-  /** When the last toast showed: a toast and a docked card never show together */
-  const toastAt = ref(0)
+  /** The notice on screen; a new one replaces it, and a docked card goes when one shows (useNotify) */
+  const notice = shallowRef<Notice | null>(null)
   /**
    * What each composer's dock holds (Главная, a page, Сегодня), by screen: a receipt stays when its screen is left
    * and comes back with it, until it is replaced or dismissed (B9)
@@ -63,7 +74,7 @@ export const useUiStore = defineStore('ui', () => {
     renameSection,
     findQuery,
     refill,
-    toastAt,
+    notice,
     docks,
     pick: (p: Picker) => { picker.value = p },
     confirm: (c: Confirm) => { confirming.value = c }

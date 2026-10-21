@@ -15,6 +15,7 @@ import { usePropSheets } from '~/composables/usePropSheets'
 import { pageSubline, dueToday } from '~/domain/summary'
 import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView, nameForLayout } from '~/domain/templates'
+import { pageNamed } from '~/domain/rules'
 import PageTile from '../common/PageTile.vue'
 import TitleField from '../common/TitleField.vue'
 import GlyphPicker from './GlyphPicker.vue'
@@ -46,6 +47,26 @@ const records = computed(() => data.recordsOf(props.page.id))
 const today = computed(() => props.page.kind === 'today')
 const setup = computed(() => full.value && props.page.kind === 'page' && !records.value.length && !data.liveRecords.some(r => r.pageId === props.page.id))
 const subline = computed(() => pageSubline(props.page, records.value, now.value, data.liveRecords))
+
+// A new page named like one there is says so under its title (v22, G3): «Открыть» goes to that page, and this one,
+// still empty, goes away
+const titleDraft = ref(props.page.title)
+watch(() => props.page.title, (t) => {
+  titleDraft.value = t
+})
+const taken = computed(() => setup.value ? pageNamed(titleDraft.value, data.livePages.filter(p => p.id !== props.page.id)) : undefined)
+const takenText = computed(() => {
+  const p = taken.value
+  const section = p?.sectionId ? data.sections[p.sectionId]?.name : undefined
+  return p ? `Страница «${p.title.trim()}» уже есть${section ? ` в секции ${section}` : ''}.` : ''
+})
+async function openTaken() {
+  const p = taken.value
+  if (!p) return
+  const self = props.page.id
+  await router.replace(`/p/${p.id}`)
+  if (data.pages[self] && !data.liveRecords.some(r => r.pageId === self)) data.purgePages([self])
+}
 
 // Opening a page sets what counts as «новых» on Главная from now on. A row ticked after this moment stays in
 // place, struck through, until the page is opened again
@@ -246,6 +267,7 @@ const emptyText = computed(() => {
           placeholder="Без названия"
           @save="t => data.updatePage(page.id, { title: t })"
           @focus="onTitleFocus"
+          @draft="t => titleDraft = t"
         />
         <h1
           v-else
@@ -263,7 +285,21 @@ const emptyText = computed(() => {
         </span>
       </div>
       <p
-        v-if="subline"
+        v-if="taken"
+        class="mt-0.5 text-meta text-toned lg:mt-1.5 lg:text-sm"
+        role="status"
+      >
+        {{ takenText }} <button
+          type="button"
+          class="hit-44 cursor-pointer font-medium text-accent-ink hover:underline"
+          @pointerdown.prevent
+          @click="openTaken"
+        >
+          Открыть
+        </button>
+      </p>
+      <p
+        v-else-if="subline"
         class="mt-0.5 text-meta text-toned lg:mt-1.5 lg:text-sm"
       >
         {{ subline }}

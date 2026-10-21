@@ -172,6 +172,12 @@ export interface Entry {
   note?: 'slow' | 'key'
   /** A question written down: up to three records like it, «Похожее в записях» under the receipt */
   similar?: Id[]
+  /** Records of this send merged into an open one like them (v22, G3): the new record's id → the record it went into */
+  merged?: Record<Id, Id>
+  /** The page was chosen by hand (Уточнение, «Не туда», «Ещё…»): the receipt offers «Запомнить» (v22, U5) */
+  learn?: boolean
+  /** «Запомнить» was tapped: the line is an example in the page's «Описание для Авто» */
+  learned?: boolean
 }
 
 export type ModelChoice = 'fast' | 'exact'

@@ -12,7 +12,7 @@ const props = defineProps<{
   /** A done record: the title is struck through */
   struck?: boolean
 }>()
-const emit = defineEmits<{ save: [value: string], focus: [boolean] }>()
+const emit = defineEmits<{ save: [value: string], focus: [boolean], draft: [value: string] }>()
 
 const draft = ref(props.value)
 const field = useTemplateRef<HTMLTextAreaElement>('field')
@@ -20,6 +20,7 @@ let editing = false
 watch(() => props.value, (v) => {
   if (!editing) draft.value = v
 })
+watch(draft, v => emit('draft', v))
 
 function onFocus() {
   editing = true

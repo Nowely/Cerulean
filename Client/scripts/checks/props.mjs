@@ -12,8 +12,8 @@ async function editor(p, name) {
   await p.waitForTimeout(500)
 }
 
-/** The modal sheet hides the toast from the accessibility tree, so it is found by its text */
-const toast = (p, text) => p.locator('ol li', { hasText: text }).first()
+/** The notice: at the sheet's foot while a sheet is open, else above the composer */
+const toast = (p, text) => p.locator('[data-notice]', { hasText: text }).first()
 
 /** Records of Покупки with a value of Отдел (or with one option of it) */
 const usage = (p, option) => store(p, (data, o) => {

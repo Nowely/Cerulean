@@ -10,6 +10,7 @@ import { cleanRecordText, dropPrefix, isQuestion, isSearch, parseDue } from '~/d
 import { answer } from '~/domain/search'
 import { newEntry } from '~/domain/factory'
 import { dayKey } from '~/domain/dates'
+import { addQty, duplicateOf, qtyProp } from '~/domain/merge'
 
 /** A page, a new page (a starter's name makes it from that starter), a starter itself, or «Оставить там» */
 export type Choice = { pageId: Id } | { newPage: string } | { template: TemplateKey } | { keep: true }
@@ -236,10 +237,68 @@ export const useJournalStore = defineStore('journal', () => {
     }
     const page = targetOf(choice)
     if (!page) return
+    if (entry.learned) forget(entry.id)
     data.moveRecords(ids, page.id)
-    data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, moved: !wasAsk, made: false })
+    // Chosen by hand: why Авто filed it no longer matters, and the receipt offers to remember the choice (v22, U5)
+    data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, moved: !wasAsk, made: false, note: undefined, learn: page.kind === 'page', learned: false })
     if (made !== page.id) dropIfEmpty(made)
     return page
+  }
+
+  /** The example «Запомнить» writes into the page's «Описание для Авто» */
+  const example = (entry: Entry) => `Например: «${entry.text}»`
+
+  /**
+   * «Запомнить» after a page was chosen by hand: the line becomes an example in that page's «Описание для Авто»,
+   * which Авто reads when filing (v22, U5). «Отменить» on the same line (`forget`) takes it out again.
+   */
+  function remember(entryId: Id) {
+    const entry = data.entries.find(e => e.id === entryId)
+    const page = entry?.pageId ? data.pages[entry.pageId] : undefined
+    if (!entry?.learn || !page || page.kind !== 'page') return
+    const line = example(entry)
+    const text = page.description.trimEnd()
+    if (!text.split('\n').includes(line)) data.updatePage(page.id, { description: text ? `${text}\n${line}` : line })
+    data.updateEntry(entry.id, { learned: true })
+  }
+
+  function forget(entryId: Id) {
+    const entry = data.entries.find(e => e.id === entryId)
+    const page = entry?.pageId ? data.pages[entry.pageId] : undefined
+    if (!entry) return
+    if (page) {
+      const line = example(entry)
+      const lines = page.description.split('\n')
+      if (lines.includes(line)) data.updatePage(page.id, { description: lines.filter(l => l !== line).join('\n') })
+    }
+    data.updateEntry(entry.id, { learned: false })
+  }
+
+  /** The open record a row of this send repeats on its page («Молоко» again), if any */
+  function duplicateFor(entryId: Id, recId: Id): Rec | undefined {
+    const entry = data.entries.find(e => e.id === entryId)
+    const rec = data.records[recId]
+    if (!entry || !rec || rec.deletedAt) return
+    return duplicateOf(rec, data.recordsOf(rec.pageId), new Set(entry.recordIds))
+  }
+
+  /**
+   * «Объединить» (v22, G3): the new record goes and the open one like it stays, with the quantities added when
+   * their units match. The receipt row says so in place; «Отменить» then leaves the merged record alone.
+   */
+  function merge(entryId: Id, recId: Id): Rec | undefined {
+    const entry = data.entries.find(e => e.id === entryId)
+    const rec = data.records[recId]
+    const into = duplicateFor(entryId, recId)
+    if (!entry || !rec || !into) return
+    const prop = qtyProp(data.pages[rec.pageId])
+    if (prop) {
+      const qty = addQty(into.values[prop.id], rec.values[prop.id])
+      if (qty !== (into.values[prop.id] ?? null)) data.updateRecord(into.id, { values: { ...into.values, [prop.id]: qty } })
+    }
+    data.purgeRecords([rec.id])
+    data.updateEntry(entry.id, { merged: { ...entry.merged, [rec.id]: into.id } })
+    return data.records[into.id]
   }
 
   /**
@@ -278,6 +337,8 @@ export const useJournalStore = defineStore('journal', () => {
     let page: Page | undefined
     for (const id of entryIds) page = choose(id, page ? { pageId: page.id } : choice) ?? page
     for (const id of made) if (id !== page?.id) dropIfEmpty(id)
+    // The series is one receipt: its latest send carries «Запомнить»
+    for (const id of entryIds.slice(0, -1)) data.updateEntry(id, { learn: false })
     return page
   }
 
@@ -304,7 +365,7 @@ export const useJournalStore = defineStore('journal', () => {
     const recs = [...ids].map(id => data.records[id]).filter((r): r is Rec => !!r)
       .map(r => ({ id: r.id, pageId: r.pageId, parentId: r.parentId, tags: [...r.tags], guesses: r.guesses, values: { ...r.values }, order: r.order }))
     const lines = data.entries.filter(e => e.recordIds?.some(id => ids.has(id)))
-      .map(e => ({ id: e.id, kind: e.kind, pageId: e.pageId, moved: e.moved, made: e.made }))
+      .map(e => ({ id: e.id, kind: e.kind, pageId: e.pageId, moved: e.moved, made: e.made, note: e.note, learn: e.learn, learned: e.learned }))
     const before = new Set(Object.keys(data.pages))
     const result = run()
     const created = Object.keys(data.pages).filter(id => !before.has(id))
@@ -363,5 +424,5 @@ export const useJournalStore = defineStore('journal', () => {
     }
   }
 
-  return { fresh, hasModel, previewFor, send, record, retry, choose, chooseOne, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume }
+  return { fresh, hasModel, previewFor, send, record, retry, choose, chooseOne, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume, remember, forget, duplicateFor, merge }
 })

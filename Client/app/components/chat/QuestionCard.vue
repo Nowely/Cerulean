@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Уточнение: «Куда положить «…»?» with the place chips (three guesses, «Ещё…», a new page; on day one the starters).
-// The record already waits in Входящие.
+// The record already waits in Входящие. Docked over Главная or a page it stays short, about 150px (v22, D5): the
+// question, one row of chips that scrolls sideways and fades at its edge, the footnote; in Журнал the chips wrap.
 import { computed } from 'vue'
 import { useRouter } from '#imports'
 import type { Entry } from '~/domain/types'
@@ -30,14 +31,18 @@ function choose(c: Choice) {
 
 <template>
   <div
-    class="flex flex-col gap-2.5 rounded-card border-[1.5px] border-accent p-3"
-    :class="float ? 'raised bg-default shadow-float' : 'bg-card'"
+    class="flex flex-col rounded-card border-[1.5px] border-accent bg-card"
+    :class="float ? 'gap-2 px-3 py-2.5 shadow-float' : 'gap-2.5 p-3'"
   >
-    <p class="text-row font-semibold leading-snug text-highlighted lg:text-15">
+    <p
+      class="text-row font-semibold leading-snug text-highlighted lg:text-15"
+      :class="{ 'pr-7': float }"
+    >
       Куда положить «{{ subject }}»?
     </p>
     <PlaceChips
       :entry="entry"
+      :row="float"
       @choose="choose"
     />
     <p class="text-caption font-normal leading-snug text-toned">

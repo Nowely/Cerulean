@@ -19,7 +19,7 @@ onMounted(async () => {
 <template>
   <NuxtPwaManifest />
   <UApp
-    :toaster="{ position: 'bottom-center', duration: 5000, expand: false }"
+    :toaster="null"
     :tooltip="{ delayDuration: 400 }"
   >
     <AppShell v-if="data.ready">
