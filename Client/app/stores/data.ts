@@ -349,11 +349,34 @@ export const useDataStore = defineStore('data', () => {
 
   // sections
 
-  function createSection(name: string): Section {
-    const s = newSection(name, sectionList.value.length)
-    sections.value[s.id] = s
+  /** A new section goes last, or right under `after` (from a section's «⋯») */
+  function createSection(name: string, after?: Id): Section {
+    const list = sectionList.value
+    const at = after ? list.findIndex(x => x.id === after) + 1 : list.length
+    const made = newSection(name, at)
+    sections.value[made.id] = made
+    const s = sections.value[made.id]!
+    renumber([...list.slice(0, at), s, ...list.slice(at)])
     save('sections', s)
-    return sections.value[s.id]!
+    return s
+  }
+
+  /** «Изменить порядок»: one step up or down */
+  function moveSection(id: Id, by: -1 | 1) {
+    const list = [...sectionList.value]
+    const i = list.findIndex(x => x.id === id)
+    const j = i + by
+    if (i < 0 || j < 0 || j >= list.length) return
+    ;[list[i], list[j]] = [list[j]!, list[i]!]
+    renumber(list)
+  }
+
+  function renumber(list: Section[]) {
+    list.forEach((x, i) => {
+      if (x.order === i) return
+      x.order = i
+      save('sections', x)
+    })
   }
 
   function updateSection(id: Id, patch: Partial<Section>) {
@@ -426,7 +449,7 @@ export const useDataStore = defineStore('data', () => {
     init, setSettings, toggleFolded,
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     addRecord, updateRecord, toggleLink, toggleDone, moveRecords, removeRecords, restoreRecords, purgeRecords, purgePages, emptyTrash,
-    createSection, updateSection, removeSection,
+    createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,
     snapshot, importSnapshot, wipe,
     flush: () => storage.value?.flush() ?? Promise.resolve()

@@ -3,10 +3,11 @@
 // captions (Избранное, Недавнее, the user's sections); Настройки at the bottom. Folding is the same state as
 // on Главная. While Главная is open the sections are shown once, in the centre: the sidebar keeps only Главная,
 // Найти, Чат, Входящие and Настройки. Elsewhere overdue is said once, at its highest place.
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from '#imports'
 import type { Id, Page, Rec, Section } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useFind } from '~/composables/useFind'
 import { pageBadge, recordBadge, type Badge } from '~/domain/summary'
@@ -17,6 +18,7 @@ import SectionMenu from '../home/SectionMenu.vue'
 const RECENT_SHOWN = 5
 
 const data = useDataStore()
+const ui = useUiStore()
 const route = useRoute()
 const now = useNow()
 const find = useFind()
@@ -64,7 +66,13 @@ function finishRename(s: Section, save: boolean) {
   const name = draftName.value.trim()
   if (save && name) data.updateSection(s.id, { name })
   renaming.value = null
+  if (ui.renameSection === s.id) ui.renameSection = null
 }
+// «Новая секция» from a section's «⋯»: off Главная its caption is here
+watch(() => ui.renameSection, (id) => {
+  const s = id && !onHome.value ? data.sections[id] : undefined
+  if (s) startRename(s)
+})
 const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
 </script>
 

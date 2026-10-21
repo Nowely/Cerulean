@@ -233,11 +233,16 @@ export const useJournalStore = defineStore('journal', () => {
   }
 
   /** Pages to offer for a record waiting in Входящие, worked out again from the pages there are now */
+  /**
+   * Recomputed from the pages as they are now. A line no page matches but a starter fits gets no guesses,
+   * so the starter («Дела») and «Новая страница» lead; earlier guesses and recent pages fill in otherwise.
+   */
   function guessesFor(rec: Rec): Id[] {
+    const ok = (id: Id) => id !== rec.pageId && !!validPage(id)
     const ranked = rank(rec.text, data.livePages, data.learned).map(r => r.pageId)
-    const out = [...ranked, ...(rec.guesses ?? [])]
-      .filter((id, i, a) => a.indexOf(id) === i && id !== rec.pageId && !!validPage(id))
-    return (out.length ? out : data.recent.filter(id => id !== rec.pageId && !!validPage(id))).slice(0, 3)
+    if (!ranked.length && templateFor(rec.text, data.livePages)) return []
+    const out = [...ranked, ...(rec.guesses ?? [])].filter((id, i, a) => a.indexOf(id) === i && ok(id))
+    return (out.length ? out : data.recent.filter(ok)).slice(0, 3)
   }
 
   /** «Отменить»: the records are gone, the journal keeps the line */

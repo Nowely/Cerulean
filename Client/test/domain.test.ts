@@ -151,6 +151,16 @@ describe('simple rules', () => {
     expect(r.guesses).toEqual([id('Задачи'), id('Идеи')])
     expect(classify('посмотреть тот сериал', d.pages).newName).toBe('Фильмы')
   })
+  it('files calls and payments to Задачи (U5)', () => {
+    expect(classify('позвонить маме', d.pages).pageId).toBe(id('Задачи'))
+    expect(classify('оплатить интернет', d.pages).pageId).toBe(id('Задачи'))
+  })
+  it('offers the starter, not an unrelated recent page, when no page fits (U5)', () => {
+    const shop = d.pages.find(p => p.title === 'Продукты')!
+    const r = classify('позвонить маме', [shop], {}, [shop.id])
+    expect(r.pageId).toBeNull()
+    expect(r.guesses).toEqual([])
+  })
   it('learns from a move', () => {
     const r = classify('подарок маме на др', d.pages, { подар: id('Идеи'), маме: id('Идеи') })
     expect(r.pageId).toBe(id('Идеи'))

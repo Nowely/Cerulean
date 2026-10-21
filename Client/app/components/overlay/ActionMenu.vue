@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // «⋯» menus: a bottom sheet on a phone, a dropdown on desktop. Same items, same order.
 // Until the menu code is in (useLater) the button stands on its own; a tap opens the menu once it is.
+import { ref, watch } from 'vue'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
 import DotsButton from '../common/DotsButton.vue'
@@ -31,6 +32,12 @@ defineProps<{
 const { isDesktop } = useScreen()
 const later = useLater()
 const open = defineModel<boolean>('open', { default: false })
+// A phone sheet is mounted on first open and kept for its closing animation: a long page has a «⋯» on
+// every row, and a sheet each would cost seconds to open the page
+const used = ref(false)
+watch(open, (v) => {
+  if (v) used.value = true
+}, { immediate: true })
 
 function openNow() {
   open.value = true
@@ -97,7 +104,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
       </slot>
     </span>
     <LazyUDrawer
-      v-if="!isDesktop && (later.ready.value || open)"
+      v-if="!isDesktop && used"
       v-model:open="open"
       :title="title ?? label"
       :content="{ onCloseAutoFocus: afterClose }"

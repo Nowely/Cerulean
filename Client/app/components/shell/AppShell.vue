@@ -9,7 +9,9 @@ import { useFind } from '~/composables/useFind'
 import { useViewport } from '~/composables/useViewport'
 import { FOCUS_PROXY_ID } from '~/composables/useCreatePage'
 import { useLater } from '~/composables/useLater'
+import { useNotify } from '~/composables/useNotify'
 import { useUiStore } from '~/stores/ui'
+import { useDataStore } from '~/stores/data'
 
 // Only the screen itself is in the first download. The sidebar (desktop only) keeps its width while it
 // loads; the overlays come with the menus and sheets (useLater), after the first paint.
@@ -30,6 +32,8 @@ const route = useRoute()
 const router = useRouter()
 const colorMode = useColorMode()
 const ui = useUiStore()
+const data = useDataStore()
+const notify = useNotify()
 useViewport()
 
 const later = useLater()
@@ -65,6 +69,14 @@ function touchEnd(e: TouchEvent) {
   if ((e.target as HTMLElement).closest('input, textarea, [data-no-swipe], .no-scrollbar')) return
   if (dx > 0) void router.push('/')
 }
+
+// A preview of something that never existed (an old or mistyped link) closes and says so;
+// something deleted stays open with «Этого больше нет»
+watch(() => peek.target.value, (t) => {
+  if (!t || (t.kind === 'page' ? data.pages[t.id] : data.records[t.id])) return
+  peek.close()
+  notify(t.kind === 'page' ? 'Такой страницы нет' : 'Такой записи нет', undefined, 3000)
+}, { immediate: true })
 
 // Leaving a screen closes its preview on a phone
 watch(() => route.path, () => {

@@ -142,10 +142,12 @@ export function classify(text: string, pages: Page[], learned: Learned = {}, rec
   const ranked = rank(text, pages, learned)
   const best = ranked[0]
   const confident = !!best && best.score >= 3 && (ranked[1]?.score ?? 0) < best.score
-  const guesses = [...ranked.map(r => r.pageId), ...recent.filter(id => pages.some(p => p.id === id && p.kind === 'page'))]
+  const topic = textTopics(text)[0]
+  // Recent pages do not fill in for a line a starter fits: «позвонить маме» offers «Дела», never Покупки
+  const filler = !ranked.length && templateFor(text, pages) ? [] : recent.filter(id => pages.some(p => p.id === id && p.kind === 'page'))
+  const guesses = [...ranked.map(r => r.pageId), ...filler]
     .filter((id, i, a) => a.indexOf(id) === i)
     .slice(0, 3)
-  const topic = textTopics(text)[0]
   const named = NEW_NAMES.find(([t]) => t === topic)?.[1] ?? null
   const taken = named && pages.some(p => fold(p.title) === fold(named))
   return { pageId: confident ? best.pageId : null, guesses, newName: confident || taken ? null : named }

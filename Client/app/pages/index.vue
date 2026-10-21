@@ -5,6 +5,7 @@ import { computed, ref, useTemplateRef } from 'vue'
 import { useHead, useRouter } from '#imports'
 import type { Id, Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { useFind } from '~/composables/useFind'
@@ -43,9 +44,9 @@ const recentOpen = ref(false)
 const recent = computed(() => data.recentlyMade)
 const recentShown = computed(() => recentOpen.value ? recent.value : recent.value.slice(0, RECENT_SHOWN))
 
-const newSection = ref<Id | null>(null)
+const ui = useUiStore()
 function addSection() {
-  newSection.value = data.createSection('Новая секция').id
+  ui.renameSection = data.createSection('Новая секция').id
 }
 
 // ---------- statuses: overdue is flagged once per screen, at its highest place ----------
@@ -333,9 +334,9 @@ function toTop() {
           :status="foldStatus(s.id, pages)"
           :compact="compact"
           :section="s"
-          :editing="newSection === s.id"
+          :editing="ui.renameSection === s.id"
           @toggle="data.updateSection(s.id, { collapsed: !s.collapsed })"
-          @done="newSection = null"
+          @done="ui.renameSection = null"
         />
         <div
           v-if="!s.collapsed"

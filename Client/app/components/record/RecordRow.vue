@@ -164,7 +164,9 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         class="group/row relative mx-2 flex min-h-13 items-center rounded-chip pr-3 lg:mx-0 lg:min-h-10 lg:pr-1.5"
         :class="[
           fresh ? 'bg-fresh' : selected ? 'bg-sel' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
-          swipe.dragging.value ? '' : 'transition-transform duration-200 ease-out-soft'
+          swipe.dragging.value ? '' : 'transition-transform duration-200 ease-out-soft',
+          // The browser keeps vertical scroll and leaves the sideways drag to the swipe (no pointercancel)
+          readonly ? '' : 'touch-pan-y'
         ]"
         :style="swipe.offset.value ? { transform: `translateX(${swipe.offset.value}px)` } : undefined"
         @pointerdown="!readonly && swipe.onStart($event)"
@@ -269,8 +271,8 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
 
         <!-- Desktop: the actions on hover; on touch they live in the swipe and in «⋯» -->
         <span
-          v-if="!readonly"
-          class="ml-1 hidden shrink-0 items-center gap-0.5 lg:group-hover/row:flex lg:group-focus-within/row:flex"
+          v-if="!readonly && isDesktop"
+          class="ml-1 hidden shrink-0 items-center gap-0.5 group-hover/row:flex group-focus-within/row:flex"
         >
           <component
             :is="later.ready.value ? LazyUTooltip : Bare"

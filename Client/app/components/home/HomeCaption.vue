@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // A section on Главная is a quiet caption: 12/500 muted, a chevron that turns right when folded, «⋯» for
 // user sections. Folded, it shows the count and the strongest status of its pages («Личное · 4 · 1 просрочено»;
-// in compact a dot instead of the words).
+// in compact a dot instead of the words). Captions are sticky, so a long list always says whose pages these are.
 import { nextTick, ref, useTemplateRef, watch } from 'vue'
 import type { Section } from '~/domain/types'
 import type { Badge } from '~/domain/summary'
@@ -37,15 +37,20 @@ watch(() => props.editing, (v) => {
 }, { immediate: true })
 
 function save() {
+  if (!renaming.value) return
   const n = draft.value.trim()
   if (n && props.section) data.updateSection(props.section.id, { name: n })
+  renaming.value = false
+  emit('done')
+}
+function cancel() {
   renaming.value = false
   emit('done')
 }
 </script>
 
 <template>
-  <div class="mt-4 flex h-6 items-center">
+  <div class="sticky top-0 z-2 mt-4 flex h-6 items-center bg-canvas">
     <input
       v-if="renaming"
       ref="input"
@@ -53,7 +58,7 @@ function save() {
       class="h-9 min-w-0 flex-1 rounded-item bg-default px-2 text-input text-highlighted ring ring-accent outline-none"
       aria-label="Название секции"
       @keydown.enter.prevent="save"
-      @keydown.esc="renaming = false"
+      @keydown.esc="cancel"
       @blur="save"
     >
     <h2
