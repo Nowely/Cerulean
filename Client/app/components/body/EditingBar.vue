@@ -89,7 +89,7 @@ function more(h: Hit) {
           v-for="(t, i) in chips"
           :key="t.id"
           type="button"
-          class="flex h-8.5 max-w-34 min-w-0 cursor-pointer items-center gap-1.5 rounded-chip pr-2.5 pl-2 text-15 text-highlighted active:bg-chip-elev-pressed lg:h-7.5 lg:max-w-55 lg:hover:bg-chip-elev-pressed"
+          class="flex h-8.5 max-w-34 min-w-0 cursor-pointer items-center gap-1.5 rounded-chip pr-2.5 pl-2 text-sm text-highlighted active:bg-chip-elev-pressed lg:h-7.5 lg:max-w-55 lg:hover:bg-chip-elev-pressed"
           :class="isDesktop && body.mention.value?.hi === i ? 'bg-chip-elev-pressed' : 'bg-chip-elev'"
           :aria-label="`Упомянуть «${t.name}»`"
           @click="act?.pickMention(t)"

@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
   rec: Rec
   /** row: the end of a phone receipt row (44px target) · line: line 2 of a desktop receipt row · prop: the record page */
   variant?: 'row' | 'line' | 'prop'
+  /** Read, not changed (the preview in Поиск): the date as plain words */
   readonly?: boolean
 }>(), { variant: 'row', readonly: false })
 
@@ -62,7 +63,13 @@ defineExpose({ show: () => open.value = true })
 </script>
 
 <template>
+  <span
+    v-if="readonly"
+    class="truncate"
+    :class="late ? 'text-warn-ink' : rec.due ? 'text-highlighted' : 'text-toned'"
+  >{{ rec.due ? text : 'Без срока' }}</span>
   <AdaptiveOverlay
+    v-else
     v-model:open="open"
     title="Срок"
     :subtitle="rec.text"
@@ -73,7 +80,7 @@ defineExpose({ show: () => open.value = true })
       <!-- The record page on a phone reads «25 октября · через 6 дней» in plain accent words, no glyph (MobileLinked) -->
       <button
         type="button"
-        class="group/due inline-flex min-w-0 shrink-0 cursor-pointer items-center gap-1 text-left disabled:cursor-default"
+        class="group/due inline-flex min-w-0 shrink-0 cursor-pointer items-center gap-1 text-left"
         :class="[
           late ? 'text-warn-ink' : rec.due ? 'text-accent-ink' : 'text-toned',
           variant === 'row' ? 'hit-44 relative -mr-1.5 h-7 rounded-badge px-1.5 text-13 active:bg-pressed' : '',
@@ -81,7 +88,6 @@ defineExpose({ show: () => open.value = true })
           variant === 'prop' ? '-mx-1.5 min-h-10 rounded-item px-1.5 text-base hover:bg-muted lg:text-15' : '',
           !rec.due ? '' : variant === 'prop' ? 'lg:font-medium' : 'font-medium'
         ]"
-        :disabled="readonly"
         :aria-label="rec.due ? `Срок: ${text}. Изменить` : 'Добавить срок'"
         :aria-expanded="open"
       >
@@ -92,10 +98,11 @@ defineExpose({ show: () => open.value = true })
           :class="variant === 'prop' ? 'hidden size-3.5 lg:block' : 'size-3'"
         />
         <span class="truncate">{{ text }}</span>
+        <!-- The button's gap is the space before «·» -->
         <span
           v-if="after"
           class="truncate font-normal lg:text-toned"
-        >&nbsp;· {{ after }}</span>
+        >· {{ after }}</span>
       </button>
     </template>
     <div class="flex flex-col pb-1">

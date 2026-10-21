@@ -34,10 +34,10 @@ export default {
 
     // Buttons: radius 8 (nested inside the 12 of cards); 36px by default, 32 for the dense desktop receipt actions,
     // 44 for primary actions on touch. A square (icon-only) button is a 44pt target on
-    // mobile and a 32px one on desktop.
+    // mobile and a 32px one on desktop. One not ready yet («Сохранить» before the key) is at half strength.
     button: {
       slots: {
-        base: 'rounded-item font-medium justify-center',
+        base: 'rounded-item font-medium justify-center disabled:opacity-50 aria-disabled:opacity-50',
         leadingIcon: 'shrink-0',
         trailingIcon: 'shrink-0'
       },
@@ -190,6 +190,7 @@ export default {
         separator: 'my-1',
         item: 'before:rounded-item items-center',
         itemLabel: 'truncate',
+        itemDescription: 'mt-px text-meta',
         itemTrailing: 'text-toned'
       },
       variants: {
@@ -237,18 +238,19 @@ export default {
         overlay: { true: { overlay: 'bg-scrim' } }
       }
     },
-    // Mobile sheets: radius 20 on top, a handle in the ring colour
+    // Mobile sheets: radius 20 on top, a 36×5 handle in the ring colour at full strength (vaul dims it to 0.7, under the
+    // 3:1 a control needs); the size sits in the bottom variant, where the theme sets its own
     drawer: {
       slots: {
         overlay: 'bg-scrim',
         content: 'raised bg-default ring ring-default',
-        handle: '!w-9 !h-1.25 !bg-ring rounded-full',
+        handle: '!bg-ring !opacity-100 rounded-full',
         container: 'p-0 gap-0',
         title: 'text-sheet text-highlighted',
         description: 'text-meta text-toned'
       },
       compoundVariants: [
-        { direction: 'bottom', inset: false, class: { content: 'rounded-t-sheet', handle: 'mt-2 mb-1' } }
+        { direction: 'bottom', inset: false, class: { content: 'rounded-t-sheet', handle: 'mt-2 mb-1 !w-9 !h-1.25' } }
       ]
     },
     tooltip: {
@@ -256,15 +258,16 @@ export default {
         content: 'bg-inverted text-canvas ring-0 shadow-none rounded-badge h-6 px-2 text-xs'
       }
     },
+    // Key caps fill like a chip of the surface they sit on, no edge (Поиск's foot, the «/» menu)
     kbd: {
       base: 'rounded-badge font-sans normal-case',
       variants: {
         size: {
-          md: 'h-5 min-w-5 px-1.5 text-xs'
+          md: 'h-5 min-w-6 px-1.5 text-xs'
         }
       },
       compoundVariants: [
-        { color: 'neutral', variant: 'outline', class: 'ring-line2 text-toned bg-transparent' }
+        { color: 'neutral', variant: 'outline', class: 'ring-0 text-toned bg-btn' }
       ],
       defaultVariants: {
         variant: 'outline'

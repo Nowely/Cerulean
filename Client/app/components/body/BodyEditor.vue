@@ -522,7 +522,7 @@ defineExpose({
       to="body"
     >
       <div
-        class="fixed z-50 w-68 rounded-card border border-default bg-default p-1.5 shadow-float"
+        class="raised fixed z-50 w-68 rounded-card border border-default bg-default p-1.5 shadow-float"
         :style="{ left: `${body.slash.value.rect.left - 8}px`, top: `${body.slash.value.rect.bottom + 6}px` }"
         role="listbox"
         aria-label="Вставить"
@@ -535,7 +535,7 @@ defineExpose({
           type="button"
           role="option"
           :aria-selected="i === body.slash.value.hi"
-          class="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-item px-2.5 text-left text-sm"
+          class="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-item px-2 text-left text-15"
           :class="i === body.slash.value.hi ? 'bg-muted text-highlighted' : 'text-default hover:bg-muted'"
           @click="pickSlash(item)"
         >

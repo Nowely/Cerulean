@@ -218,7 +218,7 @@ defineExpose({
   <button
     v-else
     type="button"
-    class="-mx-1.5 min-h-10 min-w-0 cursor-pointer truncate rounded-item px-1.5 text-left hover:bg-muted"
+    class="-mx-1.5 min-h-10 min-w-0 cursor-pointer truncate rounded-item px-1.5 text-left enabled:hover:bg-muted disabled:cursor-default"
     :class="text ? 'text-highlighted' : 'text-toned'"
     :disabled="readonly"
     @click="edit"

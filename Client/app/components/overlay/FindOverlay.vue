@@ -185,8 +185,7 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
             v-model="sectionValue"
             :items="sections"
             :icon="section ? 'i-lucide-check' : undefined"
-            class="min-w-40"
-            :class="section ? 'bg-accent-soft text-accent-ink ring-accent' : ''"
+            :class="section ? 'bg-accent-soft text-accent-ink ring-accent' : 'bg-btn ring-0 hover:bg-btn-pressed'"
             :ui="{ leadingIcon: 'text-accent-ink', trailingIcon: section ? 'text-accent-ink' : '' }"
           >
             <template #default>
@@ -320,7 +319,10 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
             <template v-if="current">
               <div class="flex items-center px-4 pb-2">
                 <span class="flex-1 text-cap text-toned">{{ current.kind === 'page' ? 'Страница' : 'Запись' }}</span>
-                <UButton @click="go(current, 'full')">
+                <UButton
+                  icon="i-lucide-square-arrow-out-up-right"
+                  @click="go(current, 'full')"
+                >
                   Открыть
                 </UButton>
               </div>
@@ -334,7 +336,7 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
                 v-else
                 :key="current.rec.id"
                 :rec="current.rec"
-                container="preview"
+                container="glance"
               />
             </template>
           </div>

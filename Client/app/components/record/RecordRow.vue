@@ -394,16 +394,16 @@ const inboxMenu = computed<MenuItem[][]>(() => [
         </span>
 
         <!-- Входящие: the strongest guess, one width (92–120) so the next row's chip lands under the thumb, then the
-             faint «⋯»; at 320 the chip drops under the text as line 2 -->
+             faint «⋯»; at 320 the chip drops under the text as line 2. Sunk into the phone's page, raised on the desktop -->
         <template v-if="choosing">
           <span
             v-if="guesses[0]"
-            class="sunk ml-1.5 flex max-w-30 min-w-23 shrink-0 max-[359px]:hidden"
+            class="sunk ml-1.5 flex max-w-30 min-w-23 shrink-0 max-[359px]:hidden lg:raised"
           >
             <ChipButton
               :label="`→ ${guesses[0].title || 'Без названия'}`"
               :aria-label="`Переместить в «${guesses[0].title || 'Без названия'}»`"
-              class="w-full justify-center font-medium"
+              class="w-full justify-center font-medium lg:h-8"
               @click="emit('choose', guesses[0].id)"
             />
           </span>
@@ -411,11 +411,13 @@ const inboxMenu = computed<MenuItem[][]>(() => [
             :items="inboxMenu"
             :title="rec.text"
             caption="Входящие"
+            divided
+            wide
             :label="`Ещё для «${rec.text}»`"
           >
             <button
               type="button"
-              class="relative -mr-2 ml-1.5 flex h-11 w-6 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed after:absolute after:inset-y-0 after:-right-1 after:-left-0.75 hover:text-highlighted active:bg-pressed aria-expanded:text-highlighted lg:mr-0 lg:h-9 lg:w-8"
+              class="relative -mr-2 ml-1.5 flex h-11 w-6 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed after:absolute after:inset-y-0 after:-right-1 after:-left-0.75 hover:text-highlighted active:bg-pressed lg:mr-0 lg:h-9 lg:w-8 lg:aria-expanded:text-highlighted"
               :aria-label="`Ещё для «${rec.text}»`"
               aria-haspopup="dialog"
             >

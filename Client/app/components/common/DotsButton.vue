@@ -7,7 +7,7 @@ withDefaults(defineProps<{ label: string, tone?: 'faint' | 'muted' }>(), { tone:
 <template>
   <button
     type="button"
-    class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-item hover:text-highlighted active:bg-pressed aria-expanded:text-highlighted"
+    class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-item hover:text-highlighted active:bg-pressed lg:aria-expanded:text-highlighted"
     :class="tone === 'faint' ? 'text-dimmed' : 'text-toned'"
     :aria-label="label"
   >

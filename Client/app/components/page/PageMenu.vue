@@ -121,7 +121,7 @@ const items = computed<MenuItem[][]>(() => {
         :size="24"
         tile
       />
-      <span class="min-w-0 flex-1 truncate text-base font-semibold text-highlighted">{{ page.title || 'Без названия' }}</span>
+      <span class="min-w-0 flex-1 truncate text-base font-medium text-highlighted">{{ page.title || 'Без названия' }}</span>
     </template>
   </ActionMenu>
 

@@ -390,12 +390,10 @@ const scenarios = [
     await p.getByRole('button', { name: /^В «/ }).first().click()
     await settle(p, 500)
   } },
+  // Задачи's own «Календарь» view: a layout picked for «Список» would turn that view into «Календарь 2»
   { name: 'MobileCalendar', device: MOBILE, run: async (p) => {
     await openPage(p, 'Задачи')
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
-    await p.getByRole('radio', { name: 'Календарь' }).click()
-    // v23 (F18): sheets have no ×, Esc closes them
-    await p.keyboard.press('Escape')
+    await p.getByRole('tab', { name: 'Календарь' }).click()
     await settle(p, 600)
   } },
   { name: 'Item', device: DESKTOP, run: p => openPage(p, 'Полумарафон к маю') },
@@ -747,7 +745,9 @@ async function twoTabs(page) {
   await other.getByRole('textbox', { name: 'Текст записи' }).waitFor()
   await data(other, d => d.updateRecord(Object.values(d.records).find(r => r.text === 'Яйца').id, { text: 'Яйца С0' }))
   await other.close()
-  await settle(page, 800)
+  // The other tab's write arrives on its own time: wait for the line rather than a fixed pause
+  await page.getByText('Запись изменили в другой вкладке').waitFor({ timeout: 5000 }).catch(() => {})
+  await settle(page, 400)
 }
 
 /** Покупки with 24 open records, «Хлеб и выпечка» and «Овощи и фрукты» folded, a fourth view (MobileLong) */

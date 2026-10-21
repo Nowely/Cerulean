@@ -260,13 +260,12 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
           <span class="min-w-0 flex-1 truncate">
             {{ title }} → <b class="font-medium text-highlighted">{{ several ? places.map(p => p.title || 'Без названия').join(', ') : page?.title || 'Без названия' }}</b>
           </span>
-          <!-- Desktop: the head is a link to the page in the panel, no chevron (Home); a folded line keeps it, a past
-               one has none -->
+          <!-- A phone card's head goes to its page; desktop's head is a link to the page in the panel, no chevron
+               (Home), and a one-line receipt has none either: a tap opens it (v23, M13) -->
           <UIcon
-            v-if="(line || !several) && !shut"
+            v-if="!several && !oneLine"
             name="i-lucide-chevron-right"
-            class="size-4 shrink-0 text-dimmed"
-            :class="line ? '' : 'lg:hidden'"
+            class="size-4 shrink-0 text-dimmed lg:hidden"
           />
         </button>
         <!-- A state, said quietly before «Не туда» -->
@@ -294,10 +293,11 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
       </div>
       <template v-if="!oneLine">
         <ul>
+          <!-- Rows 36 high with 44pt targets, no slits between them (spec, Receipt) -->
           <li
             v-for="(row, i) in rows"
             :key="row.key"
-            class="flex min-h-11 items-center gap-3 pr-1.5 pl-3"
+            class="flex min-h-9 items-center gap-3 pr-1.5 pl-3"
             :class="{ 'bg-fresh': joined && fresh && lastIds.has(row.key) }"
           >
             <span
@@ -313,7 +313,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
                 class="size-1.5 rounded-full bg-toned"
               />
             </span>
-            <div class="flex min-w-0 flex-1 flex-col py-1.5">
+            <div class="flex min-w-0 flex-1 flex-col py-0.5">
               <button
                 type="button"
                 class="min-w-0 cursor-pointer truncate text-left text-15 text-highlighted"
@@ -349,7 +349,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
             <button
               v-if="duplicate(row)"
               type="button"
-              class="mr-1.5 flex h-11 shrink-0 cursor-pointer items-center rounded-item px-3 text-13 font-medium lg:mr-0.5 text-accent-ink hover:bg-btn active:bg-btn-pressed"
+              class="hit-44 relative mr-1.5 flex h-8 shrink-0 cursor-pointer items-center rounded-item px-3 text-13 font-medium lg:mr-0.5 text-accent-ink hover:bg-btn active:bg-btn-pressed"
               :aria-label="duplicate(row)!.label"
               @click="journal.merge(row.entry.id, row.rec.id)"
             >
@@ -410,7 +410,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
             <li
               v-for="s in similar"
               :key="s.id"
-              class="flex min-h-11 items-center gap-3 pr-1.5 pl-3"
+              class="flex min-h-9 items-center gap-3 pr-1.5 pl-3"
             >
               <span
                 class="flex w-4.5 shrink-0 justify-center"
@@ -420,7 +420,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
               </span>
               <button
                 type="button"
-                class="flex min-w-0 flex-1 cursor-pointer flex-col py-1.5 text-left"
+                class="flex min-w-0 flex-1 cursor-pointer flex-col py-0.5 text-left"
                 :aria-label="isDesktop ? `Открыть «${s.text}» справа` : `Открыть «${s.text}»`"
                 @click="peek({ kind: 'record', id: s.id })"
               >

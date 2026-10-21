@@ -3,6 +3,7 @@
 // something (a sheet, a screen, a file picker) is one big button with a chevron, and choices go under the name.
 // On desktop: name and hint on the left, the control on the right, hairlines between lines.
 import { useScreen } from '~/composables/useScreen'
+import { nb } from '~/domain/text'
 
 withDefaults(defineProps<{
   label: string
@@ -25,6 +26,7 @@ withDefaults(defineProps<{
   acts?: boolean
   /** Phone: the control goes under the name at full width (segmented choices) */
   below?: boolean
+  /** Phone: the line is the dangerous action, in warn ink */
   tone?: 'warn'
 }>(), { hint: undefined, deskHint: undefined, hintTone: undefined, dot: undefined, value: undefined, valueTone: undefined, tone: undefined })
 defineEmits<{ open: [] }>()
@@ -37,10 +39,8 @@ const { isDesktop } = useScreen()
     class="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-default py-3 first-of-type:border-t-0"
   >
     <div class="min-w-0 flex-[1_1_16rem]">
-      <div
-        class="text-15 font-medium"
-        :class="tone === 'warn' ? 'text-warn-ink' : 'text-highlighted'"
-      >
+      <!-- The name stays ink; on desktop the warning is the button's («Удалить всё») -->
+      <div class="text-15 font-medium text-highlighted">
         {{ label }}
       </div>
       <p
@@ -53,7 +53,7 @@ const { isDesktop } = useScreen()
           class="size-2 shrink-0 rounded-full"
           :class="{ ok: 'bg-ok', warn: 'bg-warn', faint: 'bg-faint' }[dot]"
           aria-hidden="true"
-        />{{ deskHint ?? hint }}
+        />{{ nb(deskHint ?? hint ?? '') }}
       </p>
     </div>
     <slot />
@@ -83,7 +83,7 @@ const { isDesktop } = useScreen()
             v-if="hint"
             class="mt-0.5 block text-13 leading-snug"
             :class="[hintTone === 'warn' ? 'text-warn-ink' : 'text-toned', valueWraps ? 'truncate' : '']"
-          >{{ hint }}</span>
+          >{{ nb(hint) }}</span>
         </span>
         <span
           v-if="value && valueWraps"

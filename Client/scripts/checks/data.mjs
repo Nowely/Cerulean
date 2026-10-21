@@ -116,7 +116,8 @@ export default [
     expect(/Включить/.test(rows[0] ?? ''), 'no «Включить»')
     // v23 (M11): before the first copy line 2 is just «JSON или Markdown»; the status line says «копии нет»
     expect(/Сохранить копию\s*JSON или Markdown\s*$/.test(rows[1] ?? ''), 'the second row is not «Сохранить копию · JSON или Markdown»')
-    expect(/Загрузить копию[\s\S]*Добавить к текущим или заменить всё/.test(rows[2] ?? ''), 'the third row is not «Загрузить копию»')
+    // One-letter words are glued to the next one with a no-break space, which \s matches
+    expect(/Загрузить копию[\s\S]*Добавить к\sтекущим или заменить всё/.test(rows[2] ?? ''), 'the third row is not «Загрузить копию»')
   } },
   // 27: the monthly row under the sections; a tap downloads, × is «Не сейчас»; never once storage is persistent.
   // v23 (M11): the tap opens the one format choice first, and a pick downloads

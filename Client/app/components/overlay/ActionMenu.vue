@@ -41,6 +41,10 @@ defineProps<{
   labelled?: boolean
   /** Desktop: which edge of the trigger the dropdown lines up with; «⋯» buttons sit at a row's end */
   align?: 'start' | 'end'
+  /** Phone: a hairline between the groups (Входящие's other guesses above «Переместить…»); other sheets run on */
+  divided?: boolean
+  /** Desktop: 260 wide, for rows that are page names (Входящие's other guesses) */
+  wide?: boolean
 }>()
 
 const { isDesktop } = useScreen()
@@ -77,6 +81,9 @@ function run() {
   item?.onSelect()
 }
 
+// A row with a second line: the icon stays with the first line, not between the two
+const twoLines = { item: 'items-start py-2', itemLeadingIcon: 'mt-px' }
+
 // Reka puts focus back on the button in a timeout of its own; the action runs in the next one
 const afterClose = () => setTimeout(() => setTimeout(run))
 </script>
@@ -89,10 +96,11 @@ const afterClose = () => setTimeout(() => setTimeout(run))
       // The head belongs to the first group: no line between it and the first items (ListTabMenu)
       ...(labelled && !gi ? [{ type: 'label' as const, label: title ?? label, slot: 'head' as const }] : []),
       ...g.map(i => i.checked === undefined
-        ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : i.accent ? 'primary' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled, pill: i.pill, slot: i.pill ? 'pill' as const : undefined }
+        ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : i.accent ? 'primary' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled, pill: i.pill, slot: i.pill ? 'pill' as const : undefined, ui: i.hint ? twoLines : undefined }
         : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) })
     ])"
     :content="{ align: align ?? 'end', onCloseAutoFocus: afterClose }"
+    :ui="wide ? { content: 'w-65' } : undefined"
   >
     <slot :open="open">
       <DotsButton
@@ -151,10 +159,10 @@ const afterClose = () => setTimeout(() => setTimeout(run))
           </h2>
           <div
             v-else
-            class="mx-3 flex items-center gap-2.5 border-b border-default px-3 pt-1.5 pb-2.5"
+            class="mx-3 flex items-center gap-2.5 px-3 pt-1.5 pb-2.5"
           >
             <slot name="head">
-              <span class="min-w-0 flex-1 truncate text-base font-semibold text-highlighted">{{ title ?? label }}</span>
+              <span class="min-w-0 flex-1 truncate text-base font-medium text-highlighted">{{ title ?? label }}</span>
             </slot>
             <span
               v-if="caption"
@@ -167,7 +175,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
               :key="gi"
             >
               <div
-                v-if="gi > 0"
+                v-if="gi > 0 && divided"
                 class="mx-3 my-1 border-t border-default"
               />
               <button

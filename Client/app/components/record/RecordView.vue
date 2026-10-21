@@ -2,7 +2,8 @@
 // Every record is a page: its properties, its body edited in place (v23), «Связано», Подпункты.
 // Same component full (from navigation) and as a preview (from a link). A preview reads and ticks, and keeps
 // the record's properties, «+ Свойство» and «Связать» (spec, Preview); the phone's sheet and the desktop panel (edit)
-// also take the body. The title stays for «Открыть».
+// also take the body. The title stays for «Открыть». A glance (the preview in Поиск) only reads: values as plain
+// words, no «+ Свойство · Связать».
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
 import { useRouter } from '#imports'
 import type { Id, Rec } from '~/domain/types'
@@ -28,7 +29,7 @@ import { bodyOf } from '~/domain/body'
 
 const props = withDefaults(defineProps<{
   rec: Rec
-  container?: 'full' | 'preview'
+  container?: 'full' | 'preview' | 'glance'
   /** The phone's sheet and the desktop panel: the body can be changed there too */
   edit?: boolean
   /** The screen shows «Связано» in a column of its own on wide screens */
@@ -41,6 +42,7 @@ const peek = usePeek()
 const { isDesktop } = useScreen()
 
 const full = computed(() => props.container === 'full')
+const glance = computed(() => props.container === 'glance')
 const editable = computed(() => full.value || props.edit)
 const page = computed(() => data.pages[props.rec.pageId])
 const parent = computed(() => props.rec.parentId ? data.records[props.rec.parentId] : undefined)
@@ -79,7 +81,7 @@ const listed = computed(() => page.value ? propList(page.value, { norms: true })
 const rows = computed(() => listed.value.filter((p) => {
   if (p.key === 'note') return false
   // On desktop the empty Срок row offers «Добавить срок»
-  if (p.key === 'due') return !!props.rec.due || added.value.includes('due') || isDesktop.value
+  if (p.key === 'due') return !!props.rec.due || added.value.includes('due') || (isDesktop.value && !glance.value)
   return hasValue(props.rec.values[p.key]) || added.value.includes(p.key)
 }))
 /** «+ Свойство» lists what the record does not show yet; Заметка has its own row, «Норма» goes with its number */
@@ -128,11 +130,11 @@ function openPlace() {
 <template>
   <div
     class="pb-4"
-    :style="container === 'preview' ? '--row-bg: var(--ui-bg)' : undefined"
+    :style="!full ? '--row-bg: var(--ui-bg)' : undefined"
   >
     <div
       class="px-4 pt-1 lg:px-0"
-      :class="container === 'preview' ? 'lg:px-4' : 'lg:pt-0.5'"
+      :class="!full ? 'lg:px-4' : 'lg:pt-0.5'"
       data-title-block
     >
       <!-- «Запись изменили в другой вкладке»: above the title on a phone, under it on desktop (MobileTwoTabs, PageTwoTabs) -->
@@ -163,7 +165,7 @@ function openPlace() {
         <h1
           v-else
           class="min-w-0 flex-1 text-title text-highlighted"
-          :class="[{ 'text-dimmed line-through': rec.done }, container === 'preview' ? 'lg:text-xl' : '']"
+          :class="[{ 'text-dimmed line-through': rec.done }, !full ? 'lg:text-xl' : '']"
         >
           {{ nb(rec.text) }}
         </h1>
@@ -197,7 +199,7 @@ function openPlace() {
     <!-- Properties in the page's order: empty ones are hidden -->
     <dl
       class="mt-2.5 px-4 text-15 lg:mt-5 lg:px-0"
-      :class="container === 'preview' ? 'lg:px-4' : ''"
+      :class="!full ? 'lg:px-4' : ''"
     >
       <div
         v-for="p in rows"
@@ -213,6 +215,7 @@ function openPlace() {
             :rec="rec"
             :prop="p.prop"
             :due="p.key === 'due'"
+            :readonly="glance"
           />
         </dd>
       </div>
@@ -226,6 +229,7 @@ function openPlace() {
         </dt>
         <dd class="flex min-w-0 flex-1 items-center gap-2.5">
           <span
+            v-if="!glance"
             class="h-1.5 w-40 overflow-hidden rounded-full bg-trk"
             role="img"
             :aria-label="`${done} из ${subs.length}`"
@@ -257,7 +261,10 @@ function openPlace() {
           {{ formatAdded(rec.via, rec.addedAt, now) }}
         </dd>
       </div>
-      <div class="-ml-1 flex gap-3">
+      <div
+        v-if="!glance"
+        class="-ml-1 flex gap-3"
+      >
         <!-- «+ Свойство»: only what the record does not show yet, and «Новое свойство…» (B12) -->
         <AdaptiveOverlay
           v-model:open="picking"
@@ -333,7 +340,7 @@ function openPlace() {
     <!-- The body (v23): after «+ Свойство · Связать», never folded; empty, the faint «Заметка» -->
     <div
       class="mt-3 mb-1.5 lg:mt-3.5"
-      :class="[container === 'preview' ? 'px-4 lg:mx-4 lg:px-0' : 'mx-4 lg:mx-0', { 'body-target': editable }]"
+      :class="[!full ? 'px-4 lg:mx-4 lg:px-0' : 'mx-4 lg:mx-0', { 'body-target': editable }]"
     >
       <BodyField
         :key="rec.id"
@@ -357,14 +364,14 @@ function openPlace() {
       <h2
         :id="linksTitle"
         class="px-4 pt-3 text-cap leading-6 text-toned lg:px-0 lg:pb-1 lg:leading-5"
-        :class="container === 'preview' ? 'lg:px-4' : ''"
+        :class="!full ? 'lg:px-4' : ''"
       >
         Связано
       </h2>
       <RecordLinks
         :rec="rec"
         class="px-2 lg:px-0"
-        :class="container === 'preview' ? 'lg:px-2' : '-ml-1 lg:-ml-2.5'"
+        :class="!full ? 'lg:px-2' : '-ml-1 lg:-ml-2.5'"
       />
     </section>
 
@@ -377,7 +384,7 @@ function openPlace() {
       <h2
         id="subs-title"
         class="px-4 pt-3 text-cap leading-6 text-toned lg:px-0 lg:pb-1 lg:leading-5"
-        :class="container === 'preview' ? 'lg:px-4' : ''"
+        :class="!full ? 'lg:px-4' : ''"
       >
         Подпункты
       </h2>
@@ -400,7 +407,7 @@ function openPlace() {
       <button
         v-if="doneSubs.length && page"
         type="button"
-        class="mx-2 flex h-11 cursor-pointer items-center gap-1 rounded-item px-3 text-sm text-toned hover:bg-muted hover:text-highlighted active:bg-pressed lg:mx-0 lg:h-8 lg:px-1.5"
+        class="mx-1 flex h-11 cursor-pointer items-center gap-1 rounded-item px-3 text-sm text-toned hover:bg-muted hover:text-highlighted active:bg-pressed lg:mx-0 lg:h-8 lg:px-1.5"
         :aria-expanded="doneShown"
         @click="doneShown = !doneShown"
       >
