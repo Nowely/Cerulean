@@ -186,11 +186,13 @@ export const useDataStore = defineStore('data', () => {
       seen.add(idOfHit(hit))
       out.push(why === 'quote' ? { hit, why, quote: quote(hit) } : { hit, why })
     }
-    for (const id of rec?.mentions ?? []) push(hitOf(id), 'text')
+    // Its own links first (a mention of the same thing gives the row its reason), then its own mentions, then the others'
     for (const id of rec?.links ?? []) {
       const back = fromText.find(h => idOfHit(h) === id)
-      push(back ?? hitOf(id), back ? 'quote' : 'hand')
+      if (rec?.mentions?.includes(id)) push(hitOf(id), 'text')
+      else push(back ?? hitOf(id), back ? 'quote' : 'hand')
     }
+    for (const id of rec?.mentions ?? []) push(hitOf(id), 'text')
     for (const h of fromText) push(h, 'quote')
     for (const r of incoming.value.hand.get(recId) ?? []) push({ kind: 'record', rec: r }, 'hand')
     return out

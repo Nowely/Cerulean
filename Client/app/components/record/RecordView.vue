@@ -353,7 +353,7 @@ function openPlace() {
       <RecordLinks
         :rec="rec"
         class="px-2 lg:px-0"
-        :class="container === 'preview' ? 'lg:px-2' : '-ml-2.5'"
+        :class="container === 'preview' ? 'lg:px-2' : '-ml-1 lg:-ml-2.5'"
       />
     </section>
 

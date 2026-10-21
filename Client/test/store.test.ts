@@ -79,10 +79,10 @@ describe('data store', () => {
     const library = find('Вернуть книгу в библиотеку')
     const book = find('Атомные привычки')
     const titles = (id: string) => data.linksOf(id).map(h => h.kind === 'page' ? h.page.title : h.rec.text)
-    // The library record mentions the book in its body and is linked to «24 книги за год» by hand
-    expect(titles(library.id)).toEqual(['Атомные привычки', '24 книги за год'])
+    // The library record is linked to «24 книги за год» by hand and mentions the book in its body: its own links first
+    expect(titles(library.id)).toEqual(['24 книги за год', 'Атомные привычки'])
     expect(titles(book.id)).toEqual(['Вернуть книгу в библиотеку', 'Полумарафон к маю'])
-    expect(data.relatedOf(library.id).map(x => x.why)).toEqual(['text', 'hand'])
+    expect(data.relatedOf(library.id).map(x => x.why)).toEqual(['hand', 'text'])
     expect(data.relatedOf(book.id)[0]).toMatchObject({ why: 'quote', quote: 'Сначала дочитать Атомные привычки, осталось две главы.' })
 
     const marathon = find('Полумарафон к маю')
