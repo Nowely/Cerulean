@@ -5,7 +5,7 @@
 // «Отменить» on a receipt gives the text back aimed at its page for that one send («→ Покупки, только эта запись»).
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { refDebounced, useOnline } from '@vueuse/core'
-import type { Entry, Id } from '~/domain/types'
+import { GLYPHS, type Entry, type Id } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
@@ -110,9 +110,9 @@ const guessLine = computed(() => {
 
 const chip = computed(() => {
   if (destPage.value) {
-    return { label: untitled.value ? 'Эта страница' : destPage.value.title || 'Без названия', auto: false }
+    return { label: untitled.value ? 'Эта страница' : destPage.value.title || 'Без названия', icon: GLYPHS[destPage.value.glyph ?? 'doc'] }
   }
-  return { label: 'Авто', auto: true }
+  return { label: 'Авто', icon: 'cer:auto' }
 })
 const chipLabel = computed(() => once.value
   ? `Куда записать: «${chip.value.label}», только эта запись. Выбрать другое`
@@ -145,7 +145,7 @@ const hint = computed(() => props.placeholder ?? (
   props.mode === 'record'
     ? 'Подпункт'
     : props.mode === 'today'
-      ? 'Записать на сегодня…'
+      ? 'Запись на сегодня'
       : props.mode === 'page'
         ? (untitled.value && !data.recordsOf(props.pageId!).length ? 'Первая запись' : 'Новая запись')
         : 'Хлеб, позвонить в 10…'

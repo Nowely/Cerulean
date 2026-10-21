@@ -9,7 +9,6 @@ import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import PageTile from '../common/PageTile.vue'
-import { inPlace } from '~/domain/text'
 
 const props = defineProps<{ rec: Rec }>()
 const data = useDataStore()
@@ -105,7 +104,7 @@ const groups = computed(() => {
               <span
                 v-if="h.kind === 'record'"
                 class="truncate text-caption text-toned"
-              >{{ inPlace(data.placeOf(h.rec).title) }}</span>
+              >{{ data.placeOf(h.rec).title }}</span>
             </span>
             <UIcon
               v-if="linked.has(idOf(h))"

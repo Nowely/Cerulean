@@ -1,21 +1,21 @@
 <script setup lang="ts">
 // A page's icon. Everywhere it is a bare muted glyph (18 in rows, 16 in the composer and the desktop
 // sidebar, 14 in chips, receipts and record lines). Only on the page itself, next to its title and in
-// its page menu, it sits on the coloured tile (`tile`: 24 or 36).
+// its page menu, it sits on the coloured tile (`tile`: 24, or `page` next to a page title: 30 on a phone, 36 on desktop).
 import { computed } from 'vue'
 import { GLYPHS, type Glyph, type PageColor } from '~/domain/types'
 
 const props = withDefaults(defineProps<{
   glyph: Glyph | null | undefined
   color?: PageColor | null
-  size?: 14 | 16 | 18 | 24 | 36
+  size?: 14 | 16 | 18 | 24 | 36 | 'page'
   tile?: boolean
 }>(), { color: 'gray', size: 18, tile: false })
 
 const icon = computed(() => GLYPHS[props.glyph ?? 'doc'])
-const bare = computed(() => ({ 14: 'size-3.5', 16: 'size-4', 18: 'size-4.5', 24: 'size-6', 36: 'size-9' }[props.size]))
-const box = computed(() => ({ 14: 'size-3.5 rounded-tile-sm', 16: 'size-4 rounded-tile-sm', 18: 'size-4.5 rounded-tile-sm', 24: 'size-6 rounded-tile', 36: 'size-9 rounded-tile-lg' }[props.size]))
-const glyphSize = computed(() => ({ 14: 'size-2.5', 16: 'size-3', 18: 'size-3', 24: 'size-3.5', 36: 'size-5' }[props.size]))
+const bare = computed(() => ({ 14: 'size-3.5', 16: 'size-4', 18: 'size-4.5', 24: 'size-6', 36: 'size-9', page: 'size-7.5 lg:size-9' }[props.size]))
+const box = computed(() => ({ 14: 'size-3.5 rounded-tile-sm', 16: 'size-4 rounded-tile-sm', 18: 'size-4.5 rounded-tile-sm', 24: 'size-6 rounded-tile', 36: 'size-9 rounded-tile-lg', page: 'size-7.5 rounded-tile-md lg:size-9 lg:rounded-tile-lg' }[props.size]))
+const glyphSize = computed(() => ({ 14: 'size-2.5', 16: 'size-3', 18: 'size-3', 24: 'size-3.5', 36: 'size-5', page: 'size-4.5 lg:size-5' }[props.size]))
 </script>
 
 <template>

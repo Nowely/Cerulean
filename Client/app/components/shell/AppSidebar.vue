@@ -34,25 +34,13 @@ const recentShown = computed(() => recentOpen.value ? recent.value : recent.valu
 
 // ---------- statuses ----------
 
-const rawPage = (p: Page) => pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords)
-const rawRec = (r: Rec) => recordBadge(data.subitemsOf(r.id), now.value)
-
-/** The first visible row that says «просрочено» keeps warn */
-const loudId = computed(() => {
-  const rows: { id: Id, badge: Badge | null }[] = [{ id: data.inbox.id, badge: rawPage(data.inbox) }]
-  if (!folded('favorites')) {
-    for (const f of data.favorites) rows.push(f.kind === 'page' ? { id: f.page.id, badge: rawPage(f.page) } : { id: f.rec.id, badge: rawRec(f.rec) })
-  }
-  if (!folded('recent')) for (const p of recentShown.value) rows.push({ id: p.id, badge: rawPage(p) })
-  for (const s of data.sectionList) if (!s.collapsed) for (const p of pagesOf(s)) rows.push({ id: p.id, badge: rawPage(p) })
-  return rows.find(r => r.badge?.tone === 'warn')?.id ?? null
-})
-function shown(id: Id, b: Badge | null): Badge | null {
-  if (!b || onHome.value) return null
-  return b.tone === 'warn' && id !== loudId.value ? { ...b, tone: 'neutral' } : b
-}
-const badgeOf = (p: Page) => shown(p.id, rawPage(p))
-const recBadge = (r: Rec) => shown(r.id, rawRec(r))
+/**
+ * Next to Главная the rows are bare (Главная says it all). Elsewhere: Сегодня in an open Избранное says every
+ * «просрочено»; without it each page that holds one says it (v22, N3)
+ */
+const todayShown = computed(() => !folded('favorites') && data.favorites.some(f => f.kind === 'page' && f.page.kind === 'today'))
+const badgeOf = (p: Page): Badge | null => onHome.value ? null : pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords, { late: !todayShown.value || p.kind === 'today' })
+const recBadge = (r: Rec): Badge | null => onHome.value ? null : recordBadge(data.subitemsOf(r.id), now.value, { late: !todayShown.value })
 
 // «Переименовать» from a section's «⋯»: the name becomes a field in place
 const renaming = ref<Id | null>(null)

@@ -17,7 +17,7 @@ const empty = computed(() => !data.livePages.some(p => p.kind === 'page'))
 <template>
   <AppScreen>
     <template #header>
-      <header class="flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
+      <header class="flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
         <NuxtLink
           to="/settings"
           class="flex h-11 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"

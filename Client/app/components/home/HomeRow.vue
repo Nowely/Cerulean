@@ -19,7 +19,7 @@ const props = defineProps<{
   page?: Page
   rec?: Rec
   compact?: boolean
-  /** Overdue is said once per screen: a repeat on a lower row reads neutral */
+  /** Сегодня is on screen and says «просрочено» for this page: the row leaves it out */
   quiet?: boolean
 }>()
 const data = useDataStore()
@@ -33,14 +33,11 @@ const glyph = computed(() => props.page ? props.page.glyph : props.rec!.glyph ??
 const summary = computed<Summary>(() => props.page
   ? pageSummary(props.page, data.recordsOf(props.page.id), now.value, data.liveRecords)
   : recordSummary(data.subitemsOf(props.rec!.id), now.value))
-const badge = computed<Badge | null>(() => {
-  const b = props.page
-    ? pageBadge(props.page, data.recordsOf(props.page.id), now.value, data.liveRecords)
-    : recordBadge(data.subitemsOf(props.rec!.id), now.value)
-  return b && props.quiet && b.tone === 'warn' ? { ...b, tone: 'neutral' } : b
-})
+const badge = computed<Badge | null>(() => props.page
+  ? pageBadge(props.page, data.recordsOf(props.page.id), now.value, data.liveRecords, { late: !props.quiet })
+  : recordBadge(data.subitemsOf(props.rec!.id), now.value, { late: !props.quiet }))
 /** Compact: the one signal left is a dot on the glyph's corner, only where the status would be coloured */
-const dot = computed(() => props.compact && badge.value && badge.value.tone !== 'neutral' ? badge.value.tone : null)
+const dot = computed(() => props.compact && badge.value && badge.value.tone !== 'new' ? badge.value.tone : null)
 
 // A long press on a phone opens the page menu; the click that follows it must not open the page
 const menuOpen = ref(false)
@@ -77,7 +74,7 @@ function click(e: MouseEvent) {
     <a
       :href="to"
       class="flex min-w-0 flex-1 select-none items-center gap-3 rounded-card px-2 text-left [-webkit-touch-callout:none] active:bg-pressed lg:rounded-chip"
-      :class="compact ? 'min-h-8' : 'min-h-13 py-1.25 lg:min-h-12'"
+      :class="compact ? 'min-h-8' : 'min-h-12 py-0.75'"
       @click="click"
       @pointerdown="down"
       @pointerup="up"

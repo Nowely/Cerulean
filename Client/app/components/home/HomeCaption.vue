@@ -77,20 +77,16 @@ function cancel() {
           <span class="shrink-0 tabular-nums">· {{ count }}</span>
           <template v-if="status">
             <span
-              v-if="compact && status.tone !== 'neutral'"
+              v-if="compact"
               class="mx-0.5 size-1.5 shrink-0 rounded-full"
               :class="status.tone === 'warn' ? 'bg-warn' : 'bg-accent'"
               role="img"
               :aria-label="status.text"
             />
             <span
-              v-else-if="!compact"
+              v-else
               class="shrink-0 whitespace-nowrap tabular-nums"
-              :class="{
-                'text-warn': status.tone === 'warn',
-                'text-accent-ink': status.tone === 'accent',
-                'font-normal text-dimmed': status.tone === 'neutral'
-              }"
+              :class="status.tone === 'warn' ? 'text-warn' : 'text-accent-ink'"
             >· {{ status.text }}</span>
           </template>
         </template>

@@ -14,6 +14,10 @@ export interface MenuItem {
   danger?: boolean
   /** A switch row («Компактные строки»): the row toggles and shows its state */
   checked?: boolean
+  /** A second line under the label («Записи останутся на странице») */
+  hint?: string
+  /** Shown but not offered; the hint says why («Это единственный вид страницы») */
+  disabled?: boolean
   onSelect: () => void
 }
 
@@ -27,6 +31,8 @@ defineProps<{
   bare?: boolean
   /** Phone: a sheet without the title row (the menu of Главная) */
   headless?: boolean
+  /** Desktop: the title (and caption) head the dropdown too, as on the phone's sheet */
+  labelled?: boolean
 }>()
 
 const { isDesktop } = useScreen()
@@ -71,9 +77,12 @@ const afterClose = () => setTimeout(() => setTimeout(run))
   <LazyUDropdownMenu
     v-if="isDesktop && later.ready.value"
     v-model:open="open"
-    :items="items.map(g => g.map(i => i.checked === undefined
-      ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value }
-      : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) }))"
+    :items="[
+      ...(labelled ? [[{ type: 'label' as const, label: [title, caption].filter(Boolean).join(' · ') }]] : []),
+      ...items.map(g => g.map(i => i.checked === undefined
+        ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled }
+        : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) }))
+    ]"
     :content="{ align: 'end', onCloseAutoFocus: afterClose }"
   >
     <slot :open="open">
@@ -143,18 +152,30 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                 v-for="item in group"
                 :key="item.label"
                 type="button"
-                class="flex min-h-12.5 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base active:bg-pressed"
-                :class="item.danger ? 'text-warn-ink' : 'text-default'"
+                class="flex min-h-12.5 w-full items-center gap-3 rounded-chip px-3 text-left text-base"
+                :class="[
+                  item.disabled ? 'cursor-default' : 'cursor-pointer active:bg-pressed',
+                  item.disabled ? 'text-dimmed' : item.danger ? 'text-warn-ink' : 'text-default'
+                ]"
                 :role="item.checked === undefined ? undefined : 'switch'"
                 :aria-checked="item.checked"
-                @click="item.checked === undefined ? select(item) : item.onSelect()"
+                :aria-disabled="item.disabled || undefined"
+                @click="item.disabled ? undefined : item.checked === undefined ? select(item) : item.onSelect()"
               >
                 <UIcon
                   :name="item.icon"
                   class="size-5 shrink-0"
-                  :class="item.danger ? '' : 'text-toned'"
+                  :class="item.danger || item.disabled ? '' : 'text-toned'"
                 />
                 <span
+                  v-if="item.hint"
+                  class="flex min-w-0 flex-1 flex-col py-1.5"
+                >
+                  <span class="truncate">{{ item.label }}</span>
+                  <span class="text-13 text-toned">{{ item.hint }}</span>
+                </span>
+                <span
+                  v-else
                   class="truncate"
                   :class="item.value ? 'shrink-0' : 'min-w-0 flex-1'"
                 >{{ item.label }}</span>

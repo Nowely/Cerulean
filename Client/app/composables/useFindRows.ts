@@ -4,7 +4,6 @@ import type { Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { formatDue, isOverdue } from '~/domain/dates'
-import { inPlace } from '~/domain/text'
 
 export function useFindRows() {
   const data = useDataStore()
@@ -12,13 +11,13 @@ export function useFindRows() {
 
   function pageLine(p: Page): string {
     if (p.kind === 'inbox') return ''
-    return inPlace(p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Мои страницы')
+    return p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Мои страницы'
   }
 
   function recLine(r: Rec): string {
     const place = data.placeOf(r).title
     const due = r.due ? `${!r.done && isOverdue(r.due, now.value) ? 'было ' : ''}${formatDue(r.due, now.value)}` : ''
-    return [place ? inPlace(place) : '', due].filter(Boolean).join(' · ')
+    return [place, due].filter(Boolean).join(' · ')
   }
 
   return { pageLine, recLine }

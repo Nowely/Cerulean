@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // A record on its page. Mobile: swipe left for «Переместить» and «Удалить».
-// Desktop: the same actions appear on hover, and a right click opens all of them.
-// Keyboard and screen readers reach every action through «⋯».
+// Desktop: the same actions appear on hover after the row's values, and a right click opens all of them.
+// The row is one Tab stop, its text: ↑/↓ between rows, Space ticks, Enter opens, Delete deletes,
+// Shift+F10 opens «⋯», Alt+↑/↓ moves the row. The right side shows properties, never when it was made (v22).
 import { computed, ref, useTemplateRef, type FunctionalComponent } from 'vue'
 import { LazyUContextMenu, LazyUDropdownMenu, LazyUTooltip } from '#components'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
@@ -12,7 +13,7 @@ import { useScreen } from '~/composables/useScreen'
 import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useLater } from '~/composables/useLater'
-import { clock, formatAdded, formatDue, formatMoment, isOverdue } from '~/domain/dates'
+import { formatDue, isOverdue } from '~/domain/dates'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
 
@@ -20,16 +21,14 @@ const props = withDefaults(defineProps<{
   rec: Rec
   page: Page
   view?: ViewDef
-  /** Records added after this moment are new: the row is tinted and says when */
-  freshSince?: number
   /** Preview keeps reading and ticking only: no swipe, no hover actions */
   readonly?: boolean
   selected?: boolean
   /** Subitems under a record: a step is often a whole sentence, so it wraps instead of being cut */
   wrap?: boolean
-}>(), { freshSince: Number.POSITIVE_INFINITY, readonly: false, selected: false, wrap: false })
+}>(), { readonly: false, selected: false, wrap: false })
 
-const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'] }>()
+const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'], shift: [by: -1 | 1] }>()
 
 const data = useDataStore()
 const journal = useJournalStore()
@@ -53,16 +52,13 @@ function openMenu() {
 
 const subs = computed(() => data.subitemsOf(props.rec.id))
 const subsDone = computed(() => subs.value.filter(s => s.done).length)
-const fresh = computed(() => props.rec.addedAt > props.freshSince && !props.rec.done)
-const freshLabel = computed(() => now.value - props.rec.addedAt < 5 * 60_000 ? 'только что' : clock(props.rec.addedAt))
+// The rows of the latest send carry the fresh tint, which fades by itself (fresh-tint); nothing says «только что»
+const fresh = computed(() => Date.now() - props.rec.addedAt < 5000 && !props.rec.done)
 const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
 const inbox = computed(() => props.page.kind === 'inbox')
 const asking = computed(() => inbox.value && props.rec.tags.includes('clarify') && !props.rec.done)
-/** Waiting for the network: a state on line 2, not a tag */
+/** Waiting for the network: a state on the right, not a tag */
 const waiting = computed(() => inbox.value && props.rec.tags.includes('offline'))
-const added = computed(() => waiting.value
-  ? `ждёт сети · ${formatMoment(props.rec.addedAt, now.value)}`
-  : formatAdded(props.rec.via, props.rec.addedAt, now.value))
 
 /** «Справа в строке»: the view's chosen properties, empty ones hidden */
 const right = computed(() => {
@@ -117,6 +113,28 @@ const menu = computed(() => [
   ]
 ])
 
+// Keys on the row's text, its one Tab stop
+function onKey(e: KeyboardEvent) {
+  if (props.readonly) return
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.altKey) {
+    e.preventDefault()
+    emit('shift', e.key === 'ArrowUp' ? -1 : 1)
+  } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault()
+    const rows = [...document.querySelectorAll<HTMLElement>('[data-row-text]')]
+    rows[rows.indexOf(e.currentTarget as HTMLElement) + (e.key === 'ArrowUp' ? -1 : 1)]?.focus()
+  } else if (e.key === ' ') {
+    e.preventDefault()
+    data.toggleDone(props.rec.id)
+  } else if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault()
+    actions.remove([props.rec.id])
+  } else if (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) {
+    e.preventDefault()
+    openMenu()
+  }
+}
+
 /** Two pages worked out again from the pages there are now; «Ещё…» has the rest */
 const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id => data.pages[id]!))
 </script>
@@ -161,9 +179,10 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
     >
       <div
         ref="el"
-        class="group/row relative mx-2 flex min-h-13 items-center rounded-chip pr-3 lg:mx-0 lg:min-h-10 lg:pr-1.5"
+        class="group/row relative mx-1 flex min-h-11 items-center rounded-chip pr-3 lg:mx-0 lg:min-h-10 lg:pr-1.5"
         :class="[
-          fresh ? 'bg-fresh' : selected ? 'bg-sel' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
+          selected ? 'bg-sel' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
+          { 'fresh-tint': fresh },
           swipe.dragging.value ? '' : 'transition-transform duration-200 ease-out-soft',
           // The browser keeps vertical scroll and leaves the sideways drag to the swipe (no pointercancel)
           readonly ? '' : 'touch-pan-y'
@@ -178,38 +197,29 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         <RecordMark
           :rec="rec"
           :page="page"
+          :tabbable="readonly"
           class="lg:size-9"
           @toggle="data.toggleDone(rec.id)"
         />
         <button
           type="button"
-          class="flex min-h-13 min-w-0 flex-1 cursor-pointer flex-col justify-center gap-px rounded-item py-1 pr-1 pl-0.5 text-left lg:min-h-10"
+          data-row-text
+          class="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center gap-px rounded-item py-1 pr-1 pl-0.5 text-left lg:min-h-10"
           @click="emit('open')"
+          @keydown="onKey"
         >
           <span
             class="text-record"
             :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
           >{{ rec.text }}</span>
           <span
-            v-if="inbox"
-            class="truncate text-caption font-normal text-toned"
-          >{{ added }}</span>
-          <span
-            v-else-if="notePreview"
+            v-if="notePreview"
             class="truncate text-caption font-normal text-toned"
           >{{ notePreview }}</span>
         </button>
 
-        <span
-          v-if="fresh"
-          class="ml-2 shrink-0 text-caption text-accent-ink"
-        >{{ freshLabel }}</span>
-
-        <span
-          v-if="!fresh"
-          class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums lg:group-hover/row:hidden lg:group-focus-within/row:hidden"
-          :class="readonly ? 'lg:group-hover/row:flex lg:group-focus-within/row:flex' : ''"
-        >
+        <span class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums">
+          <span v-if="waiting">ждёт сети</span>
           <UIcon
             v-if="rec.note && !notePreview"
             name="i-lucide-file-text"
@@ -269,7 +279,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           </button>
         </span>
 
-        <!-- Desktop: the actions on hover; on touch they live in the swipe and in «⋯» -->
+        <!-- Desktop: the actions on hover, after the values; on touch they live in the swipe and in «⋯» -->
         <span
           v-if="!readonly && isDesktop"
           class="ml-1 hidden shrink-0 items-center gap-0.5 group-hover/row:flex group-focus-within/row:flex"
@@ -279,11 +289,12 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
             text="Переместить"
           >
             <UButton
-              icon="i-lucide-folder-input"
+              icon="i-lucide-arrow-right"
               variant="ghost"
               square
               size="sm"
-              aria-label="Переместить"
+              tabindex="-1"
+              :aria-label="`Переместить «${rec.text}»`"
               @click="actions.move([rec.id])"
             />
           </component>
@@ -296,7 +307,8 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
               variant="ghost"
               square
               size="sm"
-              aria-label="Удалить"
+              tabindex="-1"
+              :aria-label="`Удалить «${rec.text}»`"
               @click="actions.remove([rec.id])"
             />
           </component>
@@ -317,8 +329,9 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
               variant="ghost"
               square
               size="sm"
+              tabindex="-1"
               :aria-label="`Действия: ${rec.text}`"
-              class="sr-only focus:not-sr-only lg:not-sr-only lg:opacity-0 lg:group-hover/row:opacity-100 lg:focus:opacity-100 lg:aria-expanded:opacity-100"
+              class="sr-only lg:not-sr-only lg:opacity-0 lg:group-hover/row:opacity-100 lg:group-focus-within/row:opacity-100 lg:aria-expanded:opacity-100"
               @click="!later.ready.value && openMenu()"
             />
           </component>
@@ -329,7 +342,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
     <!-- Входящие: two guessed pages right on the row, saying what a tap does (a preview only reads) -->
     <div
       v-if="(asking || waiting) && !readonly"
-      class="flex flex-wrap gap-1.5 pr-3 pb-3 pl-13 lg:pl-11"
+      class="flex flex-wrap gap-1.5 pr-3 pb-3 pl-12 lg:pl-11"
     >
       <ChipButton
         v-for="g in guesses"

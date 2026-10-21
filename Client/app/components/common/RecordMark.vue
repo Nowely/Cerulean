@@ -12,7 +12,9 @@ const props = withDefaults(defineProps<{
   size?: 'sm' | 'md' | 'lg'
   /** Hit area around the mark; rows use the full 44 */
   area?: 'row' | 'tight'
-}>(), { size: 'md', area: 'row' })
+  /** A row is one Tab stop (its text); the mark stays clickable */
+  tabbable?: boolean
+}>(), { size: 'md', area: 'row', tabbable: true })
 
 const emit = defineEmits<{ toggle: [] }>()
 
@@ -33,6 +35,7 @@ const box = computed(() => props.area === 'row' ? 'size-11' : 'size-10 lg:size-9
     role="checkbox"
     :aria-checked="rec.done"
     :aria-label="`Отметить «${rec.text}»`"
+    :tabindex="tabbable ? undefined : -1"
     class="group/mark relative flex shrink-0 cursor-pointer items-center justify-center rounded-full"
     :class="box"
     @click.stop="emit('toggle')"

@@ -1,5 +1,5 @@
 // Starting points for a page. After a template is applied the page is an ordinary page.
-import type { Glyph, Page, PageColor, PropDef, TemplateKey, ViewDef } from './types'
+import type { Glyph, Layout, Page, PageColor, PropDef, TemplateKey, ViewDef } from './types'
 import { uid } from './ids'
 
 export const RECORD_NOUN: Page['noun'] = ['запись', 'записи', 'записей']
@@ -14,6 +14,18 @@ export interface Template {
   noun: Page['noun']
   props: () => PropDef[]
   views: (props: PropDef[]) => ViewDef[]
+}
+
+/** «Как показывать», as a view's own name and in lower case after it («Купить · список») */
+export const LAYOUT_NAMES: Record<Layout, string> = { list: 'Список', board: 'Доска', table: 'Таблица', calendar: 'Календарь' }
+
+/** A new view is named after its type; a second one of a type is «Список 2» (v22, U14) */
+export function nameForLayout(views: ViewDef[], layout: Layout, except?: string): string {
+  const base = LAYOUT_NAMES[layout]
+  const taken = new Set(views.filter(v => v.id !== except).map(v => v.name))
+  let n = 1
+  while (taken.has(n === 1 ? base : `${base} ${n}`)) n++
+  return n === 1 ? base : `${base} ${n}`
 }
 
 export function listView(name: string, patch: Partial<ViewDef> = {}): ViewDef {

@@ -266,7 +266,8 @@ export const useDataStore = defineStore('data', () => {
   function toggleDone(id: Id) {
     const rec = records.value[id]
     if (!rec) return
-    updateRecord(id, rec.done ? { done: false, doneAt: undefined } : { done: true, doneAt: Date.now() })
+    const now = Date.now()
+    updateRecord(id, rec.done ? { done: false, doneAt: undefined, tickedAt: now } : { done: true, doneAt: now, tickedAt: now })
   }
 
   /** Moves records to another page: the «уточнить» tag goes, values move by property name, Авто learns the words */

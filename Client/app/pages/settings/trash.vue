@@ -36,7 +36,8 @@ function detail(i: Item): string {
     const n = Object.values(data.records).filter(r => r.pageId === i.page.id && !r.parentId && !r.deletedAt).length
     return `страница · ${count(n, RECORD_FORMS)} · ${when}`
   }
-  return `из ${data.pages[i.rec.pageId]?.title || 'Без названия'} · ${when}`
+  const page = data.pages[i.rec.pageId]
+  return `${!page || page.deletedAt ? 'страница удалена' : page.title || 'Без названия'} · ${when}`
 }
 
 function restore(i: Item) {

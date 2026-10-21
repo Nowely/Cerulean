@@ -10,17 +10,16 @@ import { useJournalStore } from '~/stores/journal'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
-import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import { pageSubline, dueToday } from '~/domain/summary'
 import { groupByDue, matchesQuery } from '~/domain/views'
-import { listView } from '~/domain/templates'
+import { listView, nameForLayout } from '~/domain/templates'
 import PageTile from '../common/PageTile.vue'
-import TipCard from '../common/TipCard.vue'
 import TitleField from '../common/TitleField.vue'
 import GlyphPicker from './GlyphPicker.vue'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import ListLayout from './layouts/ListLayout.vue'
+import ViewTabs from './ViewTabs.vue'
 import RecordLine from '../record/RecordLine.vue'
 
 // A list is what most pages show; the other views and the settings load when a page needs them
@@ -39,7 +38,6 @@ const actions = useRecordActions()
 const ui = useUiStore()
 const now = useNow()
 const router = useRouter()
-const { isDesktop } = useScreen()
 const peek = usePeek()
 
 const full = computed(() => props.container === 'full')
@@ -48,13 +46,14 @@ const today = computed(() => props.page.kind === 'today')
 const setup = computed(() => full.value && props.page.kind === 'page' && !records.value.length && !data.liveRecords.some(r => r.pageId === props.page.id))
 const subline = computed(() => pageSubline(props.page, records.value, now.value, data.liveRecords))
 
-// What was added since the last visit is tinted on the rows
-const freshSince = ref(Number.POSITIVE_INFINITY)
-onMounted(() => {
-  freshSince.value = data.visitPage(props.page.id)
-})
+// Opening a page sets what counts as «новых» on Главная from now on. A row ticked after this moment stays in
+// place, struck through, until the page is opened again
+const openedAt = ref(Date.now())
+onMounted(() => data.visitPage(props.page.id))
 watch(() => props.page.id, (id, old) => {
-  if (id !== old) freshSince.value = data.visitPage(id)
+  if (id === old) return
+  openedAt.value = Date.now()
+  data.visitPage(id)
 })
 
 // Views: the tabs under the title. «Сегодня» has one built-in view.
@@ -69,11 +68,17 @@ watch(() => props.page.id, () => {
   viewId.value = null
 })
 
-/** «Новый вид» in «Настроить вид»: the sheet stays open on the new view */
+/**
+ * «Новый вид» (view menu or «Настроить вид»): right after the current tab, with its filter, named after its type;
+ * it is selected and «Настроить вид» opens on it, the name first
+ */
+const tabs = useTemplateRef<InstanceType<typeof ViewTabs>>('tabs')
 function addView() {
-  const v = listView(`Вид ${props.page.views.length + 1}`, { filter: props.page.hasDone ? [{ field: 'done', op: 'is', value: false }] : [] })
-  data.updatePage(props.page.id, { views: [...props.page.views, v] })
+  const at = props.page.views.findIndex(v => v.id === view.value.id) + 1
+  const v = listView(nameForLayout(props.page.views, 'list'), { filter: view.value.filter.filter(r => r.field === 'done') })
+  data.updatePage(props.page.id, { views: [...props.page.views.slice(0, at), v, ...props.page.views.slice(at)] })
   viewId.value = v.id
+  settingsOpen.value = true
 }
 
 const settingsOpen = ref(false)
@@ -94,7 +99,7 @@ async function toggleSearch() {
   }
 }
 const shown = computed(() => query.value.trim() ? records.value.filter(r => matchesQuery(r, query.value)) : records.value)
-const todayGroups = computed(() => groupByDue(dueToday(data.liveRecords, now.value).filter(r => matchesQuery(r, query.value)), now.value))
+const todayGroups = computed(() => groupByDue(dueToday(data.liveRecords, now.value, openedAt.value).filter(r => matchesQuery(r, query.value)), now.value))
 
 // Title: edited in place on the full page; a new page opens with it focused
 const titleInput = useTemplateRef<InstanceType<typeof TitleField>>('titleInput')
@@ -155,12 +160,12 @@ const emptyText = computed(() => {
 
 <template>
   <div
-    class="pb-4"
+    class="pb-4 max-lg:sunk"
     :style="!full ? '--row-bg: var(--ui-bg)' : undefined"
   >
     <!-- Title -->
     <div
-      class="px-5 pt-1 lg:px-0"
+      class="px-4 pt-1 lg:px-0"
       :class="!full ? 'lg:px-4' : 'lg:pt-0.5'"
     >
       <GlyphPicker
@@ -177,7 +182,7 @@ const emptyText = computed(() => {
           <span class="size-6 rounded-tile border-[1.5px] border-dashed border-ring" />Добавить значок
         </button>
       </GlyphPicker>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2.5 lg:gap-3.5">
         <GlyphPicker
           v-if="full && (page.glyph || !setup) && page.kind === 'page'"
           v-model:open="glyphOpen"
@@ -188,13 +193,13 @@ const emptyText = computed(() => {
         >
           <button
             type="button"
-            class="shrink-0 cursor-pointer rounded-tile-lg"
+            class="flex shrink-0 cursor-pointer rounded-tile-md lg:rounded-tile-lg"
             aria-label="Значок страницы"
           >
             <PageTile
               :glyph="page.glyph"
               :color="page.color"
-              :size="36"
+              size="page"
               tile
             />
           </button>
@@ -203,7 +208,7 @@ const emptyText = computed(() => {
           v-else-if="page.glyph"
           :glyph="page.glyph"
           :color="page.color"
-          :size="36"
+          size="page"
           tile
         />
         <TitleField
@@ -232,7 +237,7 @@ const emptyText = computed(() => {
       </div>
       <p
         v-if="subline"
-        class="mt-1 text-meta text-toned lg:mt-1.5"
+        class="mt-0.5 text-meta text-toned lg:mt-1.5"
       >
         {{ subline }}
       </p>
@@ -247,28 +252,20 @@ const emptyText = computed(() => {
     <!-- Views: underlined tabs; search and «Настроить вид» on the right -->
     <div
       v-if="!glance && (!today || searching)"
-      class="mt-3 flex items-end border-b border-default pr-0.5 pl-2 lg:mt-5 lg:px-0"
+      class="mt-1 flex items-end pr-0.5 pl-1 lg:mt-5 lg:border-b lg:border-default lg:px-0"
       :class="!full ? 'lg:mx-4' : ''"
     >
-      <div
+      <ViewTabs
         v-if="!searching"
-        class="no-scrollbar flex min-w-0 flex-1 overflow-x-auto lg:gap-5.5"
-        role="tablist"
-        aria-label="Виды"
-      >
-        <button
-          v-for="v in views"
-          :key="v.id"
-          type="button"
-          role="tab"
-          :aria-selected="v.id === view.id"
-          class="-mb-px flex h-11 shrink-0 cursor-pointer items-center whitespace-nowrap border-b-2 px-3 text-15 lg:h-10 lg:px-0.5"
-          :class="v.id === view.id ? 'border-accent font-medium text-highlighted' : 'border-transparent text-toned hover:text-highlighted'"
-          @click="viewId = v.id"
-        >
-          {{ v.name }}
-        </button>
-      </div>
+        ref="tabs"
+        :page="page"
+        :views="views"
+        :current="view"
+        :readonly="!full || today"
+        @select="id => viewId = id"
+        @settings="settingsOpen = true"
+        @add="addView"
+      />
       <div
         v-else
         class="flex h-11 min-w-0 flex-1 items-center gap-2 pl-3 lg:h-10 lg:pl-0.5"
@@ -312,7 +309,7 @@ const emptyText = computed(() => {
         <ViewSettings
           :page="page"
           :view="view"
-          @removed="viewId = null; settingsOpen = false"
+          @remove="settingsOpen = false; tabs?.remove(view)"
           @add="addView"
         />
       </AdaptiveOverlay>
@@ -327,7 +324,7 @@ const emptyText = computed(() => {
           :aria-label="g.label"
         >
           <h3
-            class="px-5 pt-4 pb-1 text-cap lg:px-2.5"
+            class="px-4 pt-3 text-cap leading-6 lg:px-2.5 lg:pt-4 lg:pb-1 lg:leading-5"
             :class="g.tone === 'warn' ? 'text-warn-ink' : 'text-toned'"
           >
             {{ g.label }}
@@ -338,7 +335,7 @@ const emptyText = computed(() => {
             :rec="r"
             brief
             density="list"
-            class="px-2 lg:px-0"
+            class="mx-1 lg:mx-0"
             @open="peek.peek({ kind: 'record', id: r.id })"
           />
         </section>
@@ -354,9 +351,9 @@ const emptyText = computed(() => {
           :page="page"
           :view="view"
           :records="shown"
-          :fresh-since="freshSince"
+          :since="openedAt"
           :readonly="!full"
-          :class="glance ? 'pt-3' : 'pt-1'"
+          :class="glance ? 'pt-3' : 'lg:pt-1'"
           @open="openRecord"
           @choose="choose"
         >
@@ -391,26 +388,6 @@ const emptyText = computed(() => {
         :readonly="!full"
         @open="openRecord"
       />
-
-      <div
-        v-if="full && page.hasDone && records.length >= 3"
-        class="mx-3 mt-4 lg:mx-0"
-      >
-        <TipCard
-          v-if="!isDesktop"
-          id="tip-swipe"
-          icon="i-lucide-arrow-left"
-        >
-          Смахни строку влево, чтобы переместить или удалить. Отметить можно только кружком.
-        </TipCard>
-        <TipCard
-          v-else
-          id="tip-hover"
-          icon="i-lucide-lightbulb"
-        >
-          Наведи на строку: справа появятся «Переместить» и «Удалить». <b class="font-semibold">Правый клик</b> открывает все действия.
-        </TipCard>
-      </div>
     </div>
   </div>
 </template>

@@ -23,8 +23,12 @@ function matches(rec: Rec, rule: FilterRule): boolean {
   return value === rule.value
 }
 
-export function filterRecords(records: Rec[], view: ViewDef): Rec[] {
-  return records.filter(r => view.filter.every(rule => matches(r, rule)))
+/**
+ * `since`: rows ticked or unticked after this moment (the page was opened) stay where they were, struck through,
+ * until the page is opened again; a tick never makes a row vanish under the finger (v22, U2)
+ */
+export function filterRecords(records: Rec[], view: ViewDef, since = Number.POSITIVE_INFINITY): Rec[] {
+  return records.filter(r => (r.tickedAt ?? 0) >= since || view.filter.every(rule => matches(r, rule)))
 }
 
 const byOrder = (a: Rec, b: Rec) => a.order - b.order
@@ -85,8 +89,8 @@ export function groupRecords(records: Rec[], groupBy: GroupBy, page: Page, now: 
 }
 
 /** Records of a view in display order, grouped. Groups have an empty label when the view is not grouped. */
-export function applyView(page: Page, records: Rec[], view: ViewDef, now: number): Group[] {
-  return groupRecords(sortRecords(filterRecords(records, view), view.sort), view.groupBy, page, now)
+export function applyView(page: Page, records: Rec[], view: ViewDef, now: number, since?: number): Group[] {
+  return groupRecords(sortRecords(filterRecords(records, view, since), view.sort), view.groupBy, page, now)
 }
 
 export function viewCount(page: Page, records: Rec[], view: ViewDef | undefined): number {

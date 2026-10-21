@@ -26,7 +26,7 @@
   /*
    * Type scale: nothing outside these sizes. Fixed steps for chrome
    * (11 the Журнал counter, 12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
-   * 16 inputs and journal text, 17 records, 20 sheet titles, 28 / 30 page titles)
+   * 16 inputs, journal text and records, 20 sheet titles, 24 / 30 page titles)
    * and role steps that switch to their desktop size at lg (see the media block below).
    */
   --text-*: initial;
@@ -52,14 +52,14 @@
   --text-30--line-height: 1.2;
 
   /* Roles from «Шрифт» in the doc: mobile value here, desktop value in the lg block */
-  --text-title: 28px;
-  --text-title--line-height: 1.2;
-  --text-title--letter-spacing: -0.01em;
+  --text-title: 24px;
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: -0.015em;
   --text-title--font-weight: 600;
   --text-sheet: 20px;
   --text-sheet--line-height: 1.3;
   --text-sheet--font-weight: 600;
-  --text-record: 17px;
+  --text-record: 16px;
   --text-record--line-height: 1.35;
   --text-row: 16px;
   --text-row--line-height: 1.3;
@@ -87,6 +87,7 @@
   --radius-badge: 7px;
   --radius-tile: 7px;
   --radius-tile-sm: 5px;
+  --radius-tile-md: 9px;
   --radius-tile-lg: 10px;
   --radius-sheet: 20px;
   --radius-pill: 22px;
@@ -115,11 +116,12 @@
 @media (width >= 64rem) {
   :root {
     --text-title: 30px;
+    --text-title--line-height: 1.2;
     --text-sheet: 15px;
     --text-record: 15px;
     --text-row: 14px;
     --text-row--font-weight: 500;
-    --text-body: 14px;
+    --text-body: 15px;
     --text-meta: 13px;
     --text-caption: 12px;
   }
@@ -232,6 +234,11 @@
   --btn-pressed: var(--chip-elev-pressed);
 }
 
+/* A page's body on a phone (Входящие chips, the board's column chips, an empty page): chips sit sunk into it */
+@utility sunk {
+  --btn: var(--trk);
+}
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
@@ -275,6 +282,32 @@
   &[data-fade-bottom] {
     --fade-bottom: 20px;
   }
+}
+
+/* The rows of the latest send: the fresh tint holds 4 s, then fades in 1 s to the row's own fill (v22). It is a
+   layer under the row's content, so hover fills the row again once it is gone */
+@utility fresh-tint {
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--fresh);
+    pointer-events: none;
+    animation: fresh-out 1s 4s forwards;
+  }
+}
+
+@keyframes fresh-out {
+  to { opacity: 0; }
+}
+
+/* A strip that scrolls sideways fades over its last 32px instead of cutting a tab in half */
+@utility fade-end {
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
 }
 
 @utility no-scrollbar {

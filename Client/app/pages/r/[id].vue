@@ -37,7 +37,7 @@ useHead({ title: computed(() => `${rec.value?.text ?? 'Запись'} · Cerulea
   <div class="flex min-h-0 flex-1">
     <AppScreen v-if="live && rec">
       <template #header>
-        <header class="flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
+        <header class="flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
           <NuxtLink
             :to="back.to"
             class="flex h-11 min-w-0 max-w-60 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"

@@ -49,11 +49,11 @@ const items = computed<MenuItem[][]>(() => [
       />
     </ActionMenu>
   </TitleHeader>
-  <header class="flex h-15 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1 pl-4 lg:hidden">
+  <header class="flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1 pl-4 lg:hidden">
     <h1 class="min-w-0 flex-1">
       <button
         type="button"
-        class="max-w-full cursor-pointer truncate text-left text-28 font-semibold tracking-[-.015em] text-highlighted"
+        class="max-w-full cursor-pointer truncate text-left text-title font-semibold text-highlighted"
         @click="emit('top')"
       >
         Главная

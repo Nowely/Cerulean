@@ -1,17 +1,17 @@
 <script setup lang="ts">
 // A record shown outside its page (receipts, found cards, Поиск, Сегодня):
-// the text, and under it «в Задачи · сегодня, 10:00» (place first, then the date). The mark works everywhere.
+// the text, and under it «Задачи · сегодня, 10:00» (the bare place name first, then the date). The mark works everywhere.
 import { computed } from 'vue'
 import type { Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { formatDue, formatDueBrief, isOverdue } from '~/domain/dates'
-import { inPlace, splitMatch } from '~/domain/text'
+import { splitMatch } from '~/domain/text'
 import RecordMark from '../common/RecordMark.vue'
 
 const props = withDefaults(defineProps<{
   rec: Rec
-  /** «в Задачи» on line 2; off where the place is already said (a receipt) */
+  /** «Задачи» on line 2; off where the place is already said (a receipt) */
   place?: boolean
   /** Only the time for a date of today (inside «Сегодня», whose «Просрочено» caption is its one warn signal) */
   brief?: boolean
@@ -41,7 +41,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
 <template>
   <div
     class="flex items-center"
-    :class="density === 'card' ? 'min-h-11 pr-3 pl-0.5' : 'min-h-12 pr-3 pl-0.5 lg:min-h-11'"
+    :class="density === 'card' ? 'min-h-11 pr-3 pl-0.5' : 'min-h-11 pr-3'"
   >
     <RecordMark
       :rec="rec"
@@ -53,7 +53,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
     <button
       type="button"
       class="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col items-start justify-center gap-px rounded-item py-1 pr-1.5 text-left"
-      :class="[density === 'card' ? 'text-15' : 'text-body', selected ? 'bg-elevated' : '']"
+      :class="[density === 'card' ? 'text-15' : 'pl-0.5 text-record leading-[1.3]', selected ? 'bg-elevated' : '']"
       @click="emit('open')"
     >
       <span
@@ -68,7 +68,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
         class="max-w-full truncate text-caption font-normal"
         :class="late && !brief ? 'text-warn-ink' : 'text-toned'"
       >
-        <template v-if="place && where">{{ inPlace(where) }}</template>
+        <template v-if="place && where">{{ where }}</template>
         <template v-if="place && where && (when || tag)"> · </template>
         <template v-if="when">{{ when }}</template>
         <template v-if="when && tag"> · </template>

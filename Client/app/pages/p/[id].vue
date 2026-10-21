@@ -29,7 +29,7 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
   <div class="flex min-h-0 flex-1">
     <AppScreen v-if="live && page">
       <template #header>
-        <header class="flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
+        <header class="flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
           <NuxtLink
             to="/"
             class="flex h-11 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"

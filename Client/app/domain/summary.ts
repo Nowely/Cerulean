@@ -14,7 +14,8 @@ export interface Summary {
 
 export interface Badge {
   text: string
-  tone: 'warn' | 'accent' | 'neutral'
+  /** `new` is not a word on screen but a 6px dot after the name; the text stays for screen readers */
+  tone: 'warn' | 'accent' | 'new'
 }
 
 const DEAL: [string, string, string] = ['дело', 'дела', 'дел']
@@ -36,10 +37,10 @@ export function overdue(records: Rec[], now: number): Rec[] {
   return records.filter(r => !r.done && r.due && r.due.date < today)
 }
 
-/** Open records due today or earlier, from every page: what «Сегодня» shows */
-export function dueToday(records: Rec[], now: number): Rec[] {
+/** Open records due today or earlier, from every page: what «Сегодня» shows (and rows ticked there since `since`) */
+export function dueToday(records: Rec[], now: number, since = Number.POSITIVE_INFINITY): Rec[] {
   const today = dayKey(now)
-  return sortRecords(records.filter(r => !r.done && r.due && r.due.date <= today), 'due')
+  return sortRecords(records.filter(r => (!r.done || (r.tickedAt ?? 0) >= since) && r.due && r.due.date <= today), 'due')
 }
 
 /** Records the first view shows, in its order: the counter and the names come from here */
@@ -71,7 +72,7 @@ export function pageSummary(page: Page, records: Rec[], now: number, today: Rec[
     return { lead: '', ...names(left, page, 2) }
   }
   if (!records.length) {
-    return { lead: page.title.trim() ? 'Нет записей. Пиши внизу, и они появятся здесь' : 'Новая страница', names: '', more: 0 }
+    return { lead: page.title.trim() ? 'Нет записей' : 'Новая страница', names: '', more: 0 }
   }
   if (page.hasDone) {
     const shown = firstView(page, records)
@@ -97,20 +98,23 @@ export function summaryText(s: Summary): string {
   return [s.lead, tail].filter(Boolean).join(' · ')
 }
 
-/** One badge at most, by priority: overdue, then «уточнить», then new since the last visit */
-export function pageBadge(page: Page, records: Rec[], now: number, today: Rec[] = []): Badge | null {
-  const late = overdue(page.kind === 'today' ? today : records, now).length
+/**
+ * One badge at most, by priority: overdue, then «уточнить», then new since the last visit.
+ * `late: false`: Сегодня is on screen and says «просрочено» for every page, so this one leaves it out
+ */
+export function pageBadge(page: Page, records: Rec[], now: number, today: Rec[] = [], opts: { late?: boolean } = {}): Badge | null {
+  const late = opts.late === false ? 0 : overdue(page.kind === 'today' ? today : records, now).length
   if (late) return { text: `${late} просрочено`, tone: 'warn' }
   const ask = records.filter(r => !r.done && r.tags.includes('clarify')).length
   if (ask) return { text: `${ask} уточнить`, tone: 'accent' }
   if (page.kind === 'today') return null
   const fresh = records.filter(r => !r.done && r.addedAt > page.seenAt).length
-  if (fresh) return { text: `${fresh} ${plural(fresh, NEW)}`, tone: 'neutral' }
+  if (fresh) return { text: `${fresh} ${plural(fresh, NEW)}`, tone: 'new' }
   return null
 }
 
-export function recordBadge(subitems: Rec[], now: number): Badge | null {
-  const late = overdue(subitems, now).length
+export function recordBadge(subitems: Rec[], now: number, opts: { late?: boolean } = {}): Badge | null {
+  const late = opts.late === false ? 0 : overdue(subitems, now).length
   return late ? { text: `${late} просрочено`, tone: 'warn' } : null
 }
 

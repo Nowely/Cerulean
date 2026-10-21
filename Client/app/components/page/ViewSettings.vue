@@ -4,11 +4,12 @@ import { computed, ref } from 'vue'
 import type { FilterRule, GroupBy, Layout, Page, PropType, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { groupOptions } from '~/domain/views'
+import { nameForLayout } from '~/domain/templates'
 import { uid } from '~/domain/ids'
 import SegmentedControl from '../common/SegmentedControl.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef }>()
-const emit = defineEmits<{ removed: [], add: [] }>()
+const emit = defineEmits<{ remove: [], add: [] }>()
 const data = useDataStore()
 
 function patch(p: Partial<ViewDef>) {
@@ -21,8 +22,12 @@ const LAYOUTS: { value: Layout, label: string }[] = [
   { value: 'table', label: 'Таблица' },
   { value: 'calendar', label: 'Календарь' }
 ]
-const layout = computed({ get: () => props.view.layout, set: (v: Layout) => patch({ layout: v }) })
-const name = computed({ get: () => props.view.name, set: (v: string) => patch({ name: v }) })
+// A view follows its type («Список» → «Доска») until a name is typed
+const layout = computed({
+  get: () => props.view.layout,
+  set: (v: Layout) => patch({ layout: v, ...(props.view.named ? {} : { name: nameForLayout(props.page.views, v, props.view.id) }) })
+})
+const name = computed({ get: () => props.view.name, set: (v: string) => patch({ name: v, named: true }) })
 
 // Select items can't carry an empty value: «Без групп» is 'none'
 const groups = computed(() => groupOptions(props.page).map(o => ({ label: o.label, value: o.value ?? 'none' })))
@@ -96,10 +101,9 @@ function addProp() {
   propOptions.value = ''
 }
 
+/** The page deletes it, with «Отменить» (the same as «Удалить вид» in the view menu) */
 function removeView() {
-  if (props.page.views.length < 2) return
-  data.updatePage(props.page.id, { views: props.page.views.filter(v => v.id !== props.view.id) })
-  emit('removed')
+  if (props.page.views.length > 1) emit('remove')
 }
 </script>
 

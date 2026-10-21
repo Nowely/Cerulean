@@ -52,6 +52,10 @@ export interface ViewDef {
   sort: 'manual' | 'due' | 'name'
   /** «Справа в строке»: what a row shows on its right */
   shown: (Id | 'due' | 'note')[]
+  /** Group captions folded in this view (group keys), kept per page and view */
+  folded?: string[]
+  /** The name was typed: it no longer follows the type («Список», «Доска 2») */
+  named?: boolean
 }
 
 export type PageKind = 'page' | 'inbox' | 'today'
@@ -97,6 +101,8 @@ export interface Rec {
   text: string
   done: boolean
   doneAt?: number
+  /** Last tick or untick: a row ticked while its page is open stays in place until the page is opened again */
+  tickedAt?: number
   note: string
   values: Record<Id, string | number | null>
   due: Due | null

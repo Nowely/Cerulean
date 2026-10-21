@@ -39,9 +39,13 @@ const editable = computed(() => full.value || props.edit)
 const page = computed(() => data.pages[props.rec.pageId])
 const parent = computed(() => props.rec.parentId ? data.records[props.rec.parentId] : undefined)
 const subs = computed(() => data.subitemsOf(props.rec.id))
-// Open subitems first; the done ones fold into «3 готово ›»
-const openSubs = computed(() => subs.value.filter(s => !s.done))
-const doneSubs = computed(() => subs.value.filter(s => s.done))
+// Open subitems first; the done ones fold into «3 готово ›». One ticked while the record is open stays in its
+// place, struck through, until the record is opened again
+const openedAt = ref(Date.now())
+watch(() => props.rec.id, () => openedAt.value = Date.now())
+const stays = (s: Rec) => !s.done || (s.tickedAt ?? 0) >= openedAt.value
+const openSubs = computed(() => subs.value.filter(stays))
+const doneSubs = computed(() => subs.value.filter(s => !stays(s)))
 const doneShown = ref(false)
 const done = computed(() => subs.value.filter(s => s.done).length)
 const links = computed(() => data.linksOf(props.rec.id))
@@ -98,7 +102,7 @@ function openPlace() {
     :style="container === 'preview' ? '--row-bg: var(--ui-bg)' : undefined"
   >
     <div
-      class="px-5 pt-1 lg:px-0"
+      class="px-4 pt-1 lg:px-0"
       :class="container === 'preview' ? 'lg:px-4' : 'lg:pt-0.5'"
     >
       <div class="flex items-center gap-2 lg:gap-3">
@@ -139,7 +143,6 @@ function openPlace() {
         :class="full ? 'hidden' : ''"
         @click="openPlace"
       >
-        в
         <PageTile
           v-if="!parent"
           :glyph="page?.glyph"
@@ -152,7 +155,7 @@ function openPlace() {
 
     <!-- Properties: empty ones are hidden -->
     <dl
-      class="mt-3 px-5 text-15 lg:mt-5 lg:px-0"
+      class="mt-2.5 px-4 text-15 lg:mt-5 lg:px-0"
       :class="container === 'preview' ? 'lg:px-4' : ''"
     >
       <div
@@ -235,7 +238,7 @@ function openPlace() {
         <button
           v-if="hasHidden && !showAll"
           type="button"
-          class="flex h-10 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted"
+          class="flex h-11 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted lg:h-10"
           @click="showAll = true"
         >
           <UIcon
@@ -246,7 +249,7 @@ function openPlace() {
         <LinkPicker :rec="rec">
           <button
             type="button"
-            class="flex h-10 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted"
+            class="flex h-11 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted lg:h-10"
           >
             <UIcon
               name="i-lucide-link"
@@ -259,8 +262,8 @@ function openPlace() {
 
     <!-- Note: edited where it is -->
     <div
-      class="mt-3 border-t border-default pt-3"
-      :class="container === 'preview' ? 'px-5 lg:mx-4 lg:px-0' : 'mx-5 lg:mx-0'"
+      class="mt-3.5 mb-1 lg:mt-4"
+      :class="container === 'preview' ? 'px-4 lg:mx-4 lg:px-0' : 'mx-4 lg:mx-0'"
     >
       <UTextarea
         v-if="editable && (noteEditing || rec.note)"
@@ -272,13 +275,13 @@ function openPlace() {
         placeholder="Заметка"
         aria-label="Заметка"
         class="w-full"
-        :ui="{ base: 'p-0 text-body leading-relaxed text-default' }"
+        :ui="{ base: 'p-0 text-body leading-normal text-default lg:leading-relaxed' }"
         @focus="noteEditing = true; emit('editing', true)"
         @blur="noteDone"
       />
       <p
         v-else-if="rec.note"
-        class="whitespace-pre-line text-body leading-relaxed text-default"
+        class="whitespace-pre-line text-body leading-normal text-default lg:leading-relaxed"
       >
         {{ rec.note }}
       </p>
@@ -295,13 +298,13 @@ function openPlace() {
     <!-- Связано: both ways; on a wide screen the record page shows it in a column instead -->
     <section
       v-if="links.length"
-      class="mt-5"
+      class="lg:mt-2"
       :class="aside ? 'xl:hidden' : ''"
       :aria-labelledby="linksTitle"
     >
       <h2
         :id="linksTitle"
-        class="px-5 pb-1 text-cap text-toned lg:px-0"
+        class="px-4 pt-3 text-cap leading-6 text-toned lg:px-0 lg:pb-1 lg:leading-5"
         :class="container === 'preview' ? 'lg:px-4' : ''"
       >
         Связано
@@ -316,12 +319,12 @@ function openPlace() {
     <!-- Подпункты always have «Готово» -->
     <section
       v-if="subs.length || full"
-      class="mt-5"
+      class="lg:mt-2"
       aria-labelledby="subs-title"
     >
       <h2
         id="subs-title"
-        class="px-5 pb-1 text-cap text-toned lg:px-0"
+        class="px-4 pt-3 text-cap leading-6 text-toned lg:px-0 lg:pb-1 lg:leading-5"
         :class="container === 'preview' ? 'lg:px-4' : ''"
       >
         Подпункты
@@ -356,7 +359,7 @@ function openPlace() {
       </button>
       <p
         v-else-if="!subs.length"
-        class="px-5 py-1 text-meta text-toned lg:px-0"
+        class="px-4 py-1 text-meta text-toned lg:px-0"
       >
         Подпунктов пока нет. Пиши внизу, и они появятся здесь.
       </p>

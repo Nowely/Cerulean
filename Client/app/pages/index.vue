@@ -7,10 +7,9 @@ import type { Id, Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
-import { useScreen } from '~/composables/useScreen'
 import { useFind } from '~/composables/useFind'
 import { useCreatePage } from '~/composables/useCreatePage'
-import { pageBadge, recordBadge, type Badge } from '~/domain/summary'
+import { pageBadge, type Badge } from '~/domain/summary'
 import { TEMPLATES } from '~/domain/templates'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import HomeHeader from '~/components/home/HomeHeader.vue'
@@ -26,7 +25,6 @@ const data = useDataStore()
 const now = useNow()
 const router = useRouter()
 const find = useFind()
-const { isDesktop } = useScreen()
 const { create } = useCreatePage()
 const screen = useTemplateRef<InstanceType<typeof AppScreen>>('screen')
 
@@ -51,42 +49,23 @@ function addSection() {
 
 // ---------- statuses: overdue is flagged once per screen, at its highest place ----------
 
-const badgeOf = (p: Page) => pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords)
-const recBadgeOf = (r: Rec) => recordBadge(data.subitemsOf(r.id), now.value)
-const RANK = { warn: 3, accent: 2, neutral: 1 } as const
+/** Сегодня in an open Избранное says every «просрочено»; without it each page that holds one says it (v22, N3) */
+const todayOnScreen = computed(() => !folded('favorites') && data.favorites.some(f => f.kind === 'page' && f.page.kind === 'today'))
+const quiet = (p: Page | Rec) => todayOnScreen.value && !('kind' in p && p.kind === 'today')
+const badgeOf = (p: Page) => pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords, { late: !quiet(p) })
+const RANK = { warn: 3, accent: 2, new: 1 } as const
 
-/** The strongest status of a folded group: «1 просрочено», «2 уточнить» or «3 новых» */
-function strongest(pages: Page[]): Badge | null {
+/** A folded caption's status: the strongest of its pages, «1 просрочено» or «2 уточнить» (new records are not said there) */
+function foldStatus(pages: Page[]): Badge | null {
   let best: Badge | null = null
   for (const p of pages) {
     const b = badgeOf(p)
-    if (b && (!best || RANK[b.tone] > RANK[best.tone])) best = b
+    if (b && b.tone !== 'new' && (!best || RANK[b.tone] > RANK[best.tone])) best = b
   }
   return best
 }
 
 const sections = computed(() => data.sectionList.map(s => ({ section: s, pages: pagesOf(s.id) })))
-
-/** Every place on screen that can say «просрочено», top to bottom; the first keeps warn */
-const loudKey = computed(() => {
-  const places: { key: string, badge: Badge | null }[] = [{ key: data.inbox.id, badge: badgeOf(data.inbox) }]
-  if (!folded('favorites')) {
-    for (const f of data.favorites) places.push(f.kind === 'page' ? { key: f.page.id, badge: badgeOf(f.page) } : { key: f.rec.id, badge: recBadgeOf(f.rec) })
-  }
-  if (folded('recent')) places.push({ key: 'recent', badge: strongest(recent.value) })
-  else for (const p of recentShown.value) places.push({ key: p.id, badge: badgeOf(p) })
-  for (const { section, pages } of sections.value) {
-    if (section.collapsed) places.push({ key: section.id, badge: strongest(pages) })
-    else for (const p of pages) places.push({ key: p.id, badge: badgeOf(p) })
-  }
-  return places.find(p => p.badge?.tone === 'warn')?.key ?? null
-})
-const quiet = (key: string) => loudKey.value !== key
-/** A folded caption's status, neutral when overdue was already said higher up */
-function foldStatus(key: string, pages: Page[]): Badge | null {
-  const b = strongest(pages)
-  return b && b.tone === 'warn' && quiet(key) ? { ...b, tone: 'neutral' } : b
-}
 
 // ---------- pull down opens Поиск, the title scrolls to the top ----------
 
@@ -116,7 +95,7 @@ function toTop() {
     </template>
 
     <div
-      class="mx-auto w-full pt-1 pr-1.5 pb-4 pl-2 lg:max-w-196 lg:px-8 lg:pt-0"
+      class="mx-auto w-full pr-1.5 pb-4 pl-2 lg:max-w-196 lg:px-8"
       @touchstart.passive="touchStart"
       @touchend.passive="touchEnd"
     >
@@ -124,7 +103,7 @@ function toTop() {
         <HomeRow
           :page="data.inbox"
           :compact="compact"
-          :quiet="quiet(data.inbox.id)"
+          :quiet="quiet(data.inbox)"
         />
       </div>
 
@@ -152,13 +131,13 @@ function toTop() {
               v-if="f.kind === 'page'"
               :page="f.page"
               :compact="compact"
-              :quiet="quiet(f.page.id)"
+              :quiet="quiet(f.page)"
             />
             <HomeRow
               v-else
               :rec="f.rec"
               :compact="compact"
-              :quiet="quiet(f.rec.id)"
+              :quiet="quiet(f.rec)"
             />
           </template>
         </div>
@@ -197,7 +176,7 @@ function toTop() {
             <button
               type="button"
               class="flex w-full cursor-pointer items-center gap-3 rounded-card px-2 text-left hover:bg-muted active:bg-pressed lg:rounded-chip"
-              :class="compact ? 'min-h-8' : 'min-h-13 py-1.25 lg:min-h-12'"
+              :class="compact ? 'min-h-8' : 'min-h-12 py-0.75'"
               @click="create({ template: t.key, stay: true })"
             >
               <UIcon
@@ -226,7 +205,7 @@ function toTop() {
         <button
           type="button"
           class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-card px-2 text-left active:bg-pressed lg:rounded-chip"
-          :class="compact ? 'min-h-8' : 'min-h-13 py-1.25 lg:min-h-12'"
+          :class="compact ? 'min-h-8' : 'min-h-12 py-0.75'"
           @click="router.push('/settings?key')"
         >
           <UIcon
@@ -267,7 +246,7 @@ function toTop() {
           name="Мои страницы"
           :folded="folded('recent')"
           :count="recent.length"
-          :status="foldStatus('recent', recent)"
+          :status="foldStatus(recent)"
           :compact="compact"
           @toggle="data.toggleFolded('recent')"
         />
@@ -278,7 +257,7 @@ function toTop() {
               :key="p.id"
               :page="p"
               :compact="compact"
-              :quiet="quiet(p.id)"
+              :quiet="quiet(p)"
             />
           </div>
           <button
@@ -295,29 +274,6 @@ function toTop() {
               :class="recentOpen ? '-rotate-90' : ''"
             />
           </button>
-          <div
-            v-if="!isDesktop && userPages.length > 1 && !data.settings.dismissed.includes('hold-tip')"
-            class="mt-1 flex items-center"
-          >
-            <p class="flex min-w-0 flex-1 items-center gap-3 px-2 py-1.5 text-sm text-toned">
-              <UIcon
-                name="i-lucide-pointer"
-                class="size-4.5 shrink-0"
-              />
-              Удерживай строку, чтобы перенести страницу в секцию или в Избранное
-            </p>
-            <button
-              type="button"
-              class="hit-44 relative mr-0.5 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed hover:text-highlighted"
-              aria-label="Закрыть подсказку"
-              @click="dismiss('hold-tip')"
-            >
-              <UIcon
-                name="i-lucide-x"
-                class="size-4.5"
-              />
-            </button>
-          </div>
         </template>
       </section>
 
@@ -331,7 +287,7 @@ function toTop() {
           :name="s.name"
           :folded="s.collapsed"
           :count="pages.length"
-          :status="foldStatus(s.id, pages)"
+          :status="foldStatus(pages)"
           :compact="compact"
           :section="s"
           :editing="ui.renameSection === s.id"
@@ -347,7 +303,7 @@ function toTop() {
             :key="p.id"
             :page="p"
             :compact="compact"
-            :quiet="quiet(p.id)"
+            :quiet="quiet(p)"
           />
           <div
             v-if="!pages.length"
