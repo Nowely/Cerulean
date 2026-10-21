@@ -74,7 +74,19 @@ function hits(text: string, vocab: string[]): number {
   return vocab.filter(v => v.includes(' ') ? f.includes(` ${v}`) : ws.some(w => w.startsWith(v) && (v.length > 2 || w === v))).length
 }
 
+/** A typed prefix names the page: «идея: сад на балконе» is for Идеи, whatever «балкон» says (parse.dropPrefix) */
+const PREFIX_TOPICS: Record<string, Topic> = {
+  идея: 'idea', идеи: 'idea', мысль: 'idea', заметка: 'note', цель: 'goal', задача: 'todo', покупки: 'shop', купить: 'shop'
+}
+
+function prefixTopic(text: string): Topic | null {
+  const m = /^\s*([а-яё]+)\s*:/i.exec(text)
+  return m ? PREFIX_TOPICS[fold(m[1]!)] ?? null : null
+}
+
 export function textTopics(text: string): Topic[] {
+  const named = prefixTopic(text)
+  if (named) return [named]
   return (Object.keys(VOCAB) as Topic[])
     .map(t => [t, hits(text, VOCAB[t])] as const)
     .filter(([, n]) => n > 0)
@@ -90,9 +102,10 @@ export interface Ranked {
   score: number
 }
 
-/** Pages ranked for a line. Scores: topic word 3, a word shared with the page title or description 2, a taught word 4. */
+/** Pages ranked for a line. Scores: topic word 3, a word shared with the page title or description 2, a taught word 4, a typed prefix 10. */
 export function rank(text: string, pages: Page[], learned: Learned = {}): Ranked[] {
   const topics = textTopics(text)
+  const named = prefixTopic(text)
   const own = new Set(stems(unquoted(text)))
   return pages
     .filter(p => p.kind === 'page')
@@ -102,6 +115,7 @@ export function rank(text: string, pages: Page[], learned: Learned = {}): Ranked
       if (topic) {
         const n = hits(text, VOCAB[topic])
         score += n * 3
+        if (topic === named) score += 10
         if (!n && topics.length && topics.every(t => FALLBACK[t] === topic) && !pages.some(p => pageTopic(p) === topics[0])) score += 3
       }
       for (const s of stems(`${page.title} ${page.description}`)) if (own.has(s)) score += 2

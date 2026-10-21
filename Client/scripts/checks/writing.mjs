@@ -81,7 +81,7 @@ export default [
     const t = await box(n)
     const content = await box(p.getByRole('dialog').locator('.overflow-y-auto').last())
     expect(t.top >= content.bottom - 1, 'the notice covers the sheet\'s content')
-    expect(await n.locator('span').first().evaluate(e => getComputedStyle(e).webkitLineClamp === '2'), 'long text does not wrap to two lines')
+    expect(await n.locator('.line-clamp-2').evaluate(e => getComputedStyle(e).webkitLineClamp === '2'), 'long text does not wrap to two lines')
     const action = n.getByRole('button', { name: 'Отменить' })
     expect(await action.evaluate(e => e.scrollWidth <= e.clientWidth + 1), 'the action is cut')
   } },

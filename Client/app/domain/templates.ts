@@ -82,7 +82,7 @@ export const TEMPLATES: Template[] = [
     noun: ['дело', 'дела', 'дел'],
     props: () => [],
     views: () => [
-      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
+      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
       listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
     ]
   },

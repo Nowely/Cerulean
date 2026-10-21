@@ -60,27 +60,23 @@ function edit(what: 'title' | 'glyph') {
 }
 
 const items = computed<MenuItem[][]>(() => {
-  const own: MenuItem[] = props.page.kind === 'page'
-    ? [
-        { label: 'Переименовать', icon: 'i-lucide-pencil', onSelect: () => edit('title') },
-        { label: 'Значок и цвет', icon: 'i-lucide-smile', onSelect: () => edit('glyph') }
-      ]
-    : []
+  const own = props.page.kind === 'page'
   const first: MenuItem[] = [
-    ...own,
+    ...(own ? [{ label: 'Переименовать', icon: 'i-lucide-pencil', onSelect: () => edit('title') }] : []),
     {
       label: props.page.favorite === null ? 'Добавить в избранное' : 'Убрать из избранного',
       icon: 'i-lucide-star',
       onSelect: () => data.toggleFavorite({ kind: 'page', id: props.page.id })
     }
   ]
-  if (props.page.kind === 'page') {
+  if (own) {
     first.push({ label: 'Описание для Авто', icon: 'i-lucide-lightbulb', value: props.page.description || 'нет', onSelect: () => describing.value = true })
+    first.push({ label: 'Значок и цвет', icon: 'i-lucide-smile', onSelect: () => edit('glyph') })
     first.push({ label: 'Переместить в секцию', icon: 'i-lucide-arrow-right', value: section.value?.name ?? 'Мои страницы', onSelect: () => moving.value = true })
   }
   if (props.page.kind !== 'today' && !props.home) first.push({ label: 'Настроить вид', icon: 'i-lucide-sliders-horizontal', onSelect: () => emit('settings') })
   // Their number counts Срок and Заметка too, so it matches the rows of the list
-  if (props.page.kind === 'page') first.push({ label: 'Свойства', icon: 'i-lucide-list', value: String(propList(props.page).length), onSelect: () => propSheets.list(props.page.id) })
+  if (own) first.push({ label: 'Свойства', icon: 'i-lucide-list', value: String(propList(props.page).length), onSelect: () => propSheets.list(props.page.id) })
   first.push({ label: 'Скопировать как текст', icon: 'i-lucide-copy', onSelect: copy })
   return system.value ? [first] : [first, [{ label: 'Удалить', icon: 'i-lucide-trash-2', danger: true, onSelect: remove }]]
 })
@@ -91,7 +87,6 @@ const items = computed<MenuItem[][]>(() => {
     v-model:open="open"
     :items="items"
     :title="page.title || 'Без названия'"
-    :caption="section ? `секция «${section.name}»` : undefined"
     label="Действия со страницей"
     :bare="bare"
   >

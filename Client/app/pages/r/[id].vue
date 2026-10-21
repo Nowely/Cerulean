@@ -70,22 +70,6 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
           :crumbs="crumbs"
           inside
         />
-        <div
-          v-if="changedElsewhere"
-          role="status"
-          class="mx-4 mt-1 mb-1 flex items-center gap-2 rounded-chip bg-card pr-1 pl-3 text-sm text-default lg:mx-0 lg:mb-3"
-        >
-          <span class="min-w-0 flex-1">Запись изменили в другой вкладке</span>
-          <UButton
-            color="primary"
-            variant="ghost"
-            size="lg"
-            class="px-2.5 font-normal"
-            @click="data.takeWaiting(rec.id)"
-          >
-            Обновить
-          </UButton>
-        </div>
         <RecordView
           :rec="rec"
           :aside="aside"
@@ -93,6 +77,24 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
         >
           <template #menu>
             <RecordMenu :rec="rec" />
+          </template>
+          <template #status>
+            <div
+              v-if="changedElsewhere"
+              role="status"
+              class="mt-1 mb-2 flex items-center gap-2 rounded-chip bg-card pr-1 pl-3 text-sm text-default lg:mt-3 lg:mb-0"
+            >
+              <span class="min-w-0 flex-1">Запись изменили в другой вкладке</span>
+              <UButton
+                color="primary"
+                variant="ghost"
+                size="lg"
+                class="px-2.5 font-normal"
+                @click="data.takeWaiting(rec.id)"
+              >
+                Обновить
+              </UButton>
+            </div>
           </template>
         </RecordView>
       </div>

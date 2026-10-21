@@ -137,12 +137,12 @@ function empty() {
     </template>
 
     <div class="mx-auto w-full pb-8 lg:max-w-180 lg:px-8 lg:pt-7">
-      <h1 class="px-5 pt-1 text-title text-highlighted lg:px-0 lg:pt-0">
+      <h1 class="px-4 pt-1 text-title text-highlighted lg:px-0 lg:pt-0">
         Корзина
       </h1>
       <p
         v-if="items.length"
-        class="px-5 pt-1.5 pb-3 text-15 text-toned lg:px-0 lg:pt-2 lg:pb-4 lg:text-sm"
+        class="px-4 pt-0.5 pb-2 text-sm text-toned lg:px-0 lg:pt-2 lg:pb-4"
       >
         Удалённое хранится 30 дней, потом исчезает само
       </p>

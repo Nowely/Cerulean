@@ -23,7 +23,8 @@ const route = useRoute()
 const now = useNow()
 const find = useFind()
 
-const isCurrent = (path: string) => route.path === path
+// While Найти is open it is the one current row (PaletteNone)
+const isCurrent = (path: string) => !find.isOpen.value && route.path === path
 const onHome = computed(() => route.path === '/')
 const folded = (key: string) => data.settings.folded.includes(key)
 const pagesOf = (s: Section) => data.livePages.filter(p => p.sectionId === s.id)
@@ -73,7 +74,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
       <NuxtLink
         to="/"
         class="side-row"
-        :aria-current="onHome ? 'page' : undefined"
+        :aria-current="isCurrent('/') ? 'page' : undefined"
       >
         <UIcon
           name="cer:home"
@@ -115,10 +116,11 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
           :glyph="data.inbox.glyph"
           :size="16"
         />
-        <span class="min-w-0 flex-1 truncate">Входящие</span>
+        <span class="min-w-0 truncate">Входящие</span>
         <CountBadge
           v-if="badgeOf(data.inbox)"
           :badge="badgeOf(data.inbox)!"
+          :class="{ 'ml-auto': badgeOf(data.inbox)!.tone !== 'new' }"
         />
       </NuxtLink>
 
@@ -157,10 +159,11 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
                   :glyph="f.page.glyph"
                   :size="16"
                 />
-                <span class="min-w-0 flex-1 truncate">{{ f.page.title || 'Без названия' }}</span>
+                <span class="min-w-0 truncate">{{ f.page.title || 'Без названия' }}</span>
                 <CountBadge
                   v-if="badgeOf(f.page)"
                   :badge="badgeOf(f.page)!"
+                  :class="{ 'ml-auto': badgeOf(f.page)!.tone !== 'new' }"
                 />
               </NuxtLink>
               <NuxtLink
@@ -173,10 +176,11 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
                   :glyph="f.rec.glyph ?? 'doc'"
                   :size="16"
                 />
-                <span class="min-w-0 flex-1 truncate">{{ f.rec.text }}</span>
+                <span class="min-w-0 truncate">{{ f.rec.text }}</span>
                 <CountBadge
                   v-if="recBadge(f.rec)"
                   :badge="recBadge(f.rec)!"
+                  :class="{ 'ml-auto': recBadge(f.rec)!.tone !== 'new' }"
                 />
               </NuxtLink>
             </template>
@@ -214,12 +218,13 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
                 :size="16"
               />
               <span
-                class="min-w-0 flex-1 truncate"
+                class="min-w-0 truncate"
                 :class="{ 'text-dimmed': !p.title }"
               >{{ p.title || 'Без названия' }}</span>
               <CountBadge
                 v-if="badgeOf(p)"
                 :badge="badgeOf(p)!"
+                :class="{ 'ml-auto': badgeOf(p)!.tone !== 'new' }"
               />
             </NuxtLink>
             <button
@@ -285,12 +290,13 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
                 :size="16"
               />
               <span
-                class="min-w-0 flex-1 truncate"
+                class="min-w-0 truncate"
                 :class="{ 'text-dimmed': !p.title }"
               >{{ p.title || 'Без названия' }}</span>
               <CountBadge
                 v-if="badgeOf(p)"
                 :badge="badgeOf(p)!"
+                :class="{ 'ml-auto': badgeOf(p)!.tone !== 'new' }"
               />
             </NuxtLink>
           </template>

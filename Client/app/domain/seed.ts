@@ -76,7 +76,7 @@ export function demo(now = Date.now()): Dataset {
     description: 'дела со сроком: звонки, оплаты, документы',
     noun: ['дело', 'дела', 'дел'],
     views: [
-      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
+      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
       listView('Календарь', { layout: 'calendar', filter: [{ field: 'done', op: 'is', value: false }] }),
       listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
     ],
@@ -145,7 +145,7 @@ export function demo(now = Date.now()): Dataset {
     description: 'ремонт, уборка, мастера',
     noun: ['дело', 'дела', 'дел'],
     views: [
-      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
+      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
       listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
     ],
     openedAt: at(18, 10, -1),

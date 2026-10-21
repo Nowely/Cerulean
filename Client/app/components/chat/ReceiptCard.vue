@@ -85,7 +85,8 @@ const wrongShown = computed(() => !offline.value && !several.value && !sends.val
 const similar = computed(() => (props.entry.similar ?? []).map(id => data.records[id]).filter((r): r is Rec => !!r && !r.deletedAt))
 const NOTES = {
   slow: { icon: 'i-lucide-clock', text: 'ИИ не ответил, запись ждёт во Входящих.', action: 'Повторить' },
-  key: { icon: 'cer:auto', text: 'Разложено по простым правилам: ключ не принят.', action: 'Проверить ключ' }
+  // It leads to Настройки, so it carries «›» like «в Журнале ›» (HomeRulesOnly)
+  key: { icon: 'cer:auto', text: 'Разложено по простым правилам: ключ не принят.', action: 'Проверить ключ', go: true }
 } as const
 /** A page chosen by hand: «Запомнить» writes the line into its «Описание для Авто», «Отменить» takes it out */
 const learn = computed(() => {
@@ -114,7 +115,6 @@ function duplicate(row: Row) {
   return dup ? duplicateWords(dup, data.pages[dup.pageId]) : null
 }
 const made = computed(() => sends.value.some(e => e.made) && !props.entry.moved)
-const resumed = computed(() => !!props.entry.resumed && !props.entry.moved)
 
 /** Line 2 of a record row: its page when the rows went to several pages, a state, or nothing (a date is its own button) */
 function subOf(row: Row, i: number): string {
@@ -125,7 +125,8 @@ function subOf(row: Row, i: number): string {
   if (dup) return dup.sub
   if (several.value) return [data.pages[r.pageId]?.title || 'Без названия', r.tags.includes('clarify') ? 'уточнить' : ''].filter(Boolean).join(' · ')
   if (made.value && i === 0) return 'новая страница из шаблона'
-  if (resumed.value) return 'разобрано, когда появилась сеть'
+  // Per send: in a series only the rows that waited for the network say so
+  if (row.entry.resumed && !props.entry.moved) return 'разобрано, когда появилась сеть'
   return ''
 }
 
@@ -366,10 +367,15 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           <span class="min-w-0 flex-1 py-2 text-meta text-toned">{{ note.text }}</span>
           <button
             type="button"
-            class="flex h-11 shrink-0 cursor-pointer items-center rounded-item px-2 text-sm font-medium text-accent-ink hover:bg-btn active:bg-btn-pressed"
+            class="flex h-11 shrink-0 cursor-pointer items-center gap-0.5 rounded-item px-2 text-sm font-medium text-accent-ink hover:bg-btn active:bg-btn-pressed"
             @click="onNote"
           >
             {{ note.action }}
+            <UIcon
+              v-if="'go' in note"
+              name="i-lucide-chevron-right"
+              class="size-3.5"
+            />
           </button>
         </div>
         <!-- As a note line with the search glyph, then rows like the receipt's own: text, place and date under it -->

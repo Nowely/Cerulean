@@ -6,6 +6,7 @@ import { computed, ref, useTemplateRef, watch } from 'vue'
 import type { Id, PropDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { usePropSheets } from '~/composables/usePropSheets'
+import { useScreen } from '~/composables/useScreen'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import PropList from './PropList.vue'
 import PropEditor from './PropEditor.vue'
@@ -17,6 +18,9 @@ const editing = computed(() => sheet.value?.screen === 'edit')
 const isNew = computed(() => editing.value && !sheet.value?.propId)
 const confirming = ref(false)
 const editor = useTemplateRef<InstanceType<typeof PropEditor>>('editor')
+const { isDesktop } = useScreen()
+/** Desktop: «Удалить свойство» and «Готово» are the dialog's footer, not the header and the end of the list */
+const footer = computed(() => isDesktop.value && editing.value && !isNew.value && !confirming.value)
 
 const open = ref(false)
 watch(sheet, (s) => {
@@ -90,7 +94,7 @@ function closed() {
         @click="back()"
       />
       <UButton
-        v-else-if="!confirming"
+        v-else-if="!confirming && !footer"
         color="primary"
         variant="ghost"
         size="lg"
@@ -110,6 +114,7 @@ function closed() {
         :page="page"
         :prop-id="sheet.propId"
         :type="sheet.type"
+        :footer="footer"
         @back="back()"
         @created="created"
       />
@@ -119,6 +124,26 @@ function closed() {
         @edit="edit"
         @create="create"
       />
+    </template>
+    <template
+      v-if="footer"
+      #footer
+    >
+      <UButton
+        variant="ghost"
+        class="-ml-2.5 px-2.5 text-sm font-medium text-warn-ink"
+        @click="editor?.removeProp()"
+      >
+        Удалить свойство
+      </UButton>
+      <UButton
+        color="primary"
+        variant="solid"
+        class="h-9 px-4 text-sm"
+        @click="back()"
+      >
+        Готово
+      </UButton>
     </template>
   </AdaptiveOverlay>
 </template>

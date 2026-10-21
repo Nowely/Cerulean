@@ -15,7 +15,8 @@ import { ofProp, plural, RECORD_FORMS } from '~/domain/text'
 import { uid } from '~/domain/ids'
 import SegmentedControl from '../common/SegmentedControl.vue'
 
-const props = defineProps<{ page: Page, propId: Id | null, type?: PropType }>()
+/** `footer`: the dialog's footer has «Удалить свойство» (desktop) */
+const props = defineProps<{ page: Page, propId: Id | null, type?: PropType, footer?: boolean }>()
 const emit = defineEmits<{ back: [], created: [prop: PropDef] }>()
 /** «Удалить «Отдел»?» takes the sheet's place; the header hides «Готово» meanwhile */
 const confirming = defineModel<boolean>('confirming', { default: false })
@@ -157,7 +158,7 @@ function tidy() {
   if (prop) name.value = prop.name
 }
 onBeforeUnmount(tidy)
-defineExpose({ tidy })
+defineExpose({ tidy, removeProp })
 </script>
 
 <template>
@@ -328,7 +329,7 @@ defineExpose({ tidy })
     </template>
 
     <button
-      v-if="!isNew"
+      v-if="!isNew && !footer"
       type="button"
       class="mt-2.5 flex min-h-12.5 w-full cursor-pointer items-center gap-3 rounded-chip px-1 text-left text-base text-warn-ink hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
       @click="removeProp"
@@ -340,7 +341,7 @@ defineExpose({ tidy })
     </button>
 
     <div
-      v-else
+      v-else-if="isNew"
       class="mt-4.5 flex justify-end gap-2"
     >
       <UButton
