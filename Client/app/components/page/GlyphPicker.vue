@@ -34,8 +34,16 @@ const tint = computed(() => props.color ? `var(--c-${props.color})` : 'var(--mut
 const swatch = (c: PageColor | null) => c ? `var(--c-${c})` : 'var(--muted)'
 
 const field = useTemplateRef<{ inputRef?: HTMLInputElement | null }>('field')
-/** The «⋯» it was opened from, while it is still on screen */
-const reference = computed(() => isDesktop.value && props.anchor?.isConnected ? props.anchor : undefined)
+/** What opens it here (the page tile, «Добавить значок») */
+const wrap = useTemplateRef<HTMLElement>('wrap')
+/**
+ * Desktop: the popover stands at the «⋯» it was opened from while that is on screen, else at its own trigger. The
+ * trigger stays outside the popover, so the popover is named by its own title, not by the button
+ */
+const reference = computed(() => {
+  if (!isDesktop.value) return undefined
+  return props.anchor?.isConnected ? props.anchor : wrap.value?.querySelector<HTMLElement>('button') ?? undefined
+})
 
 function openNow() {
   open.value = true
@@ -44,20 +52,29 @@ function openNow() {
 </script>
 
 <template>
+  <span
+    v-if="$slots.default"
+    ref="wrap"
+    class="contents"
+    @click="openNow"
+  >
+    <slot />
+  </span>
   <LazyUPopover
-    v-if="isDesktop && later.ready.value"
+    v-if="isDesktop && (later.ready.value || open)"
     v-model:open="open"
     :reference="reference"
     :content="{
-      'align': 'end',
+      // Right edges line up under the «⋯»; under the tile it opens from its left edge
+      'align': anchor?.isConnected ? 'end' : 'start',
       'sideOffset': 6,
       'collisionPadding': 12,
       'aria-label': `Значок и цвет: ${title}`,
-      // Typing finds an icon at once
-      'onOpenAutoFocus': (e: Event) => { e.preventDefault(); field?.inputRef?.focus() }
+      // Typing finds an icon at once; closing gives focus back to where it was opened
+      'onOpenAutoFocus': (e: Event) => { e.preventDefault(); field?.inputRef?.focus() },
+      'onCloseAutoFocus': (e: Event) => { e.preventDefault(); reference?.focus() }
     }"
   >
-    <slot />
     <template #content>
       <div class="w-98 px-3 pt-3 pb-3.5">
         <div class="px-1 pb-2.5">
@@ -155,115 +172,106 @@ function openNow() {
       </div>
     </template>
   </LazyUPopover>
-  <template v-else>
-    <span
-      v-if="$slots.default"
-      class="contents"
-      @click="openNow"
-    >
-      <slot />
-    </span>
-    <LazyUDrawer
-      v-if="!isDesktop && (later.ready.value || open)"
-      v-model:open="open"
-      title="Значок и цвет"
-      :description="title"
-      :content="{ onOpenAutoFocus: (e: Event) => e.preventDefault() }"
-    >
-      <template #content>
-        <div class="flex max-h-[85dvh] flex-col pb-[max(env(safe-area-inset-bottom),1.375rem)]">
-          <div class="shrink-0 pt-0.5 pr-2 pl-6">
-            <h2 class="truncate text-sheet text-highlighted">
-              Значок и цвет
-            </h2>
-            <p class="truncate text-sm text-toned">
-              {{ title }}
-            </p>
-          </div>
-          <div class="shrink-0 px-3 pt-3 pb-1">
-            <UInput
-              v-model="q"
-              icon="i-lucide-search"
-              variant="soft"
-              size="lg"
-              placeholder="Найти значок: дом, книга…"
-              aria-label="Найти значок"
-              autocomplete="off"
-              class="w-full"
-            >
-              <template
-                v-if="q"
-                #trailing
-              >
-                <UButton
-                  icon="i-lucide-x"
-                  variant="ghost"
-                  square
-                  size="sm"
-                  aria-label="Очистить"
-                  @click="q = ''"
-                />
-              </template>
-            </UInput>
-          </div>
-          <div
-            class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
-            data-vaul-no-drag
+  <LazyUDrawer
+    v-if="!isDesktop && (later.ready.value || open)"
+    v-model:open="open"
+    title="Значок и цвет"
+    :description="title"
+    :content="{ onOpenAutoFocus: (e: Event) => e.preventDefault() }"
+  >
+    <template #content>
+      <div class="flex max-h-[85dvh] flex-col pb-[max(env(safe-area-inset-bottom),1.375rem)]">
+        <div class="shrink-0 pt-0.5 pr-2 pl-6">
+          <h2 class="truncate text-sheet text-highlighted">
+            Значок и цвет
+          </h2>
+          <p class="truncate text-sm text-toned">
+            {{ title }}
+          </p>
+        </div>
+        <div class="shrink-0 px-3 pt-3 pb-1">
+          <UInput
+            v-model="q"
+            icon="i-lucide-search"
+            variant="soft"
+            size="lg"
+            placeholder="Найти значок: дом, книга…"
+            aria-label="Найти значок"
+            autocomplete="off"
+            class="w-full"
           >
-            <div
-              class="grid grid-cols-6 gap-x-1.5 gap-y-1 px-3 pt-1.5"
-              role="group"
-              aria-label="Значок"
+            <template
+              v-if="q"
+              #trailing
             >
-              <button
-                v-for="x in icons"
-                :key="x.glyph"
-                type="button"
-                class="flex h-12 cursor-pointer items-center justify-center rounded-card"
-                :class="x.glyph === current ? '' : 'text-toned active:bg-pressed'"
-                :style="x.glyph === current ? { background: `var(--b-${color ?? 'gray'})`, color: tint, boxShadow: `inset 0 0 0 1.5px ${tint}` } : undefined"
-                :aria-label="x.name"
-                :aria-pressed="x.glyph === current"
-                @click="emit('change', { glyph: x.glyph })"
-              >
-                <UIcon
-                  :name="GLYPHS[x.glyph]"
-                  class="size-5.5"
-                />
-              </button>
-            </div>
-            <p
-              v-if="!icons.length"
-              class="px-6 pt-3.5 text-15 text-toned"
+              <UButton
+                icon="i-lucide-x"
+                variant="ghost"
+                square
+                size="sm"
+                aria-label="Очистить"
+                @click="q = ''"
+              />
+            </template>
+          </UInput>
+        </div>
+        <div
+          class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          data-vaul-no-drag
+        >
+          <div
+            class="grid grid-cols-6 gap-x-1.5 gap-y-1 px-3 pt-1.5"
+            role="group"
+            aria-label="Значок"
+          >
+            <button
+              v-for="x in icons"
+              :key="x.glyph"
+              type="button"
+              class="flex h-12 cursor-pointer items-center justify-center rounded-card"
+              :class="x.glyph === current ? '' : 'text-toned active:bg-pressed'"
+              :style="x.glyph === current ? { background: `var(--b-${color ?? 'gray'})`, color: tint, boxShadow: `inset 0 0 0 1.5px ${tint}` } : undefined"
+              :aria-label="x.name"
+              :aria-pressed="x.glyph === current"
+              @click="emit('change', { glyph: x.glyph })"
             >
-              Такого значка нет. Попробуй другое слово.
-            </p>
-            <p class="px-6 pt-3.5 pb-0.5 text-cap text-toned">
-              Цвет
-            </p>
-            <div
-              class="flex justify-between px-3.5"
-              role="group"
-              aria-label="Цвет"
+              <UIcon
+                :name="GLYPHS[x.glyph]"
+                class="size-5.5"
+              />
+            </button>
+          </div>
+          <p
+            v-if="!icons.length"
+            class="px-6 pt-3.5 text-15 text-toned"
+          >
+            Такого значка нет. Попробуй другое слово.
+          </p>
+          <p class="px-6 pt-3.5 pb-0.5 text-cap text-toned">
+            Цвет
+          </p>
+          <div
+            class="flex justify-between px-3.5"
+            role="group"
+            aria-label="Цвет"
+          >
+            <button
+              v-for="c in PAGE_CHOICES"
+              :key="c ?? 'none'"
+              type="button"
+              class="flex size-11 cursor-pointer items-center justify-center"
+              :aria-label="c ? COLOR_NAMES[c] : 'Без цвета'"
+              :aria-pressed="c === color"
+              @click="emit('change', { color: c })"
             >
-              <button
-                v-for="c in PAGE_CHOICES"
-                :key="c ?? 'none'"
-                type="button"
-                class="flex size-11 cursor-pointer items-center justify-center"
-                :aria-label="c ? COLOR_NAMES[c] : 'Без цвета'"
-                :aria-pressed="c === color"
-                @click="emit('change', { color: c })"
-              >
-                <span
-                  class="size-6 rounded-full"
-                  :style="{ background: swatch(c), boxShadow: c === color ? `0 0 0 2px var(--elev), 0 0 0 4px ${swatch(c)}` : undefined }"
-                />
-              </button>
-            </div>
+              <span
+                class="size-6 rounded-full"
+                :style="{ background: swatch(c), boxShadow: c === color ? `0 0 0 2px var(--elev), 0 0 0 4px ${swatch(c)}` : undefined }"
+              />
+            </button>
           </div>
         </div>
-      </template>
-    </LazyUDrawer>
-  </template>
+      </div>
+    </template>
+  </LazyUDrawer>
 </template>
