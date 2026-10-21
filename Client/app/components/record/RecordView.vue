@@ -359,10 +359,13 @@ function openPlace() {
       <button
         v-else-if="editable"
         type="button"
-        class="-ml-1 flex h-10 cursor-pointer items-center rounded-item px-1 text-15 text-toned hover:text-highlighted"
+        class="-ml-1 flex h-10 cursor-pointer items-center gap-2.5 rounded-item px-1 text-15 text-toned hover:text-highlighted"
         @click="editNote"
       >
-        Добавить заметку
+        <UIcon
+          name="i-lucide-pencil"
+          class="size-4.5 shrink-0"
+        />Добавить заметку
       </button>
     </div>
 

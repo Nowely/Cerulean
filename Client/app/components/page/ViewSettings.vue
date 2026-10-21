@@ -117,6 +117,7 @@ function removeView() {
           :items="filters"
           variant="ghost"
           class="min-w-36"
+          :ui="{ base: 'text-toned justify-end' }"
         />
       </label>
       <label class="flex min-h-12.5 items-center gap-3 px-2 lg:min-h-11">
@@ -126,6 +127,7 @@ function removeView() {
           :items="SORTS"
           variant="ghost"
           class="min-w-36"
+          :ui="{ base: 'text-toned justify-end' }"
         />
       </label>
     </div>

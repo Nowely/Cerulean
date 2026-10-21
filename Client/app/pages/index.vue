@@ -103,7 +103,7 @@ function toTop() {
     >
       <StoreWarning
         v-if="data.storageError"
-        class="mx-3 mt-1 mb-1 lg:m-0"
+        class="mx-3 mt-1 mb-1 lg:mx-0 lg:mt-0 lg:mb-2"
       />
       <div role="list">
         <HomeRow

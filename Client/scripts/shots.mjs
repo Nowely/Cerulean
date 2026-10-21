@@ -179,6 +179,94 @@ const scenarios = [
   } },
   { name: 'MobileConnect', device: MOBILE, run: p => openConnection(p, 'OpenRouter') },
 
+  // v22
+  { name: 'MobileMixed', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await send(p, 'творог, позвонить маме завтра в 10')
+  } },
+  { name: 'MobileModelSlow', device: MOBILE, run: async (p) => {
+    await addKey(p)
+    // OpenAI never answers: after 10 s the record waits in Входящие
+    await p.unroute(OPENAI)
+    await p.route(OPENAI, () => {})
+    await open(p, '/')
+    await send(p, 'батарейки для пульта')
+    await settle(p, 11000)
+  } },
+  { name: 'MobileRulesOnly', device: MOBILE, run: async (p) => {
+    await addKey(p)
+    await p.unroute(OPENAI)
+    await p.route(OPENAI, route => route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":{"message":"Incorrect API key"}}' }))
+    await open(p, '/')
+    await send(p, 'батарейки')
+  } },
+  { name: 'MobileSaveFail', device: MOBILE, run: async (p) => {
+    await fillStorage(p)
+    await openHome(p)
+    await p.evaluate(() => {
+      window.__storageFull = true
+    })
+    await send(p, 'купить батарейки')
+  } },
+  { name: 'MobileNoStore', device: MOBILE, run: async (p) => {
+    await breakStorage(p)
+    await open(p, '/')
+  } },
+  { name: 'MobileNoStoreFix', device: MOBILE, run: async (p) => {
+    await breakStorage(p)
+    await open(p, '/')
+    await p.getByRole('button', { name: 'Как исправить' }).click()
+    await p.waitForURL(/\/settings/)
+    await settle(p, 400)
+  } },
+  { name: 'MobileBackup', device: MOBILE, run: async (p) => {
+    await keeping(p, false)
+    await openHome(p)
+    await data(p, (d, at) => d.setSettings({ copiedAt: at }), NOW.getTime() - 37 * DAY)
+    await p.getByRole('button', { name: /^Сохранить копию/ }).scrollIntoViewIfNeeded()
+    await settle(p, 400)
+  } },
+  { name: 'MobileImport', device: MOBILE, run: p => importSheet(p) },
+  { name: 'MobileTwoTabs', device: MOBILE, run: p => twoTabs(p) },
+  { name: 'MobileTabMenu', device: MOBILE, run: async (p) => {
+    await openPage(p, 'Покупки')
+    await p.getByRole('tab', { name: 'Купить' }).click()
+    await settle(p, 600)
+  } },
+  { name: 'MobileLong', device: MOBILE, run: p => longList(p) },
+  { name: 'MobileTicked', device: MOBILE, run: async (p) => {
+    await openPage(p, 'Покупки')
+    await p.getByRole('checkbox', { name: 'Отметить «Хлеб»' }).click()
+    await p.getByRole('checkbox', { name: 'Отметить «Молоко»' }).click()
+    await settle(p, 600)
+  } },
+  { name: 'MobileLinked', device: MOBILE, run: p => openRecord(p, 'Вернуть книгу в библиотеку') },
+  { name: 'MobileLink', device: MOBILE, run: async (p) => {
+    await openRecord(p, 'Вернуть книгу в библиотеку')
+    await p.getByRole('button', { name: /^Связать/ }).first().click()
+    await settle(p, 600)
+  } },
+  { name: 'MobilePropList', device: MOBILE, run: p => pageProps(p) },
+  { name: 'MobilePropEdit', device: MOBILE, run: async (p) => {
+    await pageProps(p)
+    await p.getByRole('button', { name: 'Изменить «Отдел»' }).click()
+    // The list sheet closes first, then the editor opens
+    await settle(p, 1400)
+  } },
+  { name: 'MobilePropNew', device: MOBILE, run: async (p) => {
+    await pageProps(p)
+    await p.getByRole('dialog').getByRole('button', { name: /Новое свойство/ }).click()
+    await settle(p, 500)
+    await p.getByRole('textbox', { name: /Название/ }).last().fill('Магазин')
+    await p.getByRole('radio', { name: 'Выбор' }).click().catch(() => p.getByRole('button', { name: 'Выбор' }).click())
+    await settle(p, 500)
+  } },
+  { name: 'MobilePropAdd', device: MOBILE, run: async (p) => {
+    await openRecord(p, 'Хлеб')
+    await p.getByRole('button', { name: 'Свойство', exact: true }).click()
+    await settle(p, 600)
+  } },
+
   { name: 'Home', device: DESKTOP, run: p => openHome(p) },
   { name: 'HomeCompact', device: DESKTOP, run: async (p) => {
     await openHome(p)
@@ -270,7 +358,95 @@ const scenarios = [
     await settle(p)
   } },
   { name: 'Settings', device: DESKTOP, run: p => open(p, '/settings') },
-  { name: 'Connect', device: DESKTOP, run: p => openConnection(p, 'Другой') }
+  { name: 'Connect', device: DESKTOP, run: p => openConnection(p, 'Другой') },
+
+  // v22
+  { name: 'ConnectRouter', device: DESKTOP, run: p => openConnection(p, 'OpenRouter') },
+  { name: 'ListTabMenu', device: DESKTOP, run: async (p) => {
+    await openPage(p, 'Покупки')
+    await p.getByRole('tab', { name: 'Купить' }).click({ button: 'right' })
+    await settle(p, 500)
+  } },
+  { name: 'ListLong', device: DESKTOP, run: p => longList(p) },
+  { name: 'PageLink', device: DESKTOP, run: async (p) => {
+    await openRecord(p, 'Вернуть книгу в библиотеку')
+    await p.getByRole('button', { name: /^Связать/ }).first().click()
+    await settle(p, 600)
+  } },
+  { name: 'MainPick', device: DESKTOP, run: async (p) => {
+    await open(p, '/journal')
+    await p.getByRole('button', { name: 'Ещё…' }).last().click()
+    await settle(p, 600)
+  } },
+  { name: 'HomeSaveFail', device: DESKTOP, run: async (p) => {
+    await fillStorage(p)
+    await openHome(p)
+    await p.evaluate(() => {
+      window.__storageFull = true
+    })
+    await send(p, 'купить батарейки')
+  } },
+  { name: 'HomeNoStore', device: DESKTOP, run: async (p) => {
+    await breakStorage(p)
+    await open(p, '/')
+  } },
+  { name: 'HomeSlow', device: DESKTOP, run: async (p) => {
+    await addKey(p)
+    await p.unroute(OPENAI)
+    await p.route(OPENAI, () => {})
+    await open(p, '/')
+    await send(p, 'батарейки для пульта')
+    await settle(p, 11000)
+  } },
+  { name: 'HomeRulesOnly', device: DESKTOP, run: async (p) => {
+    await addKey(p)
+    await p.unroute(OPENAI)
+    await p.route(OPENAI, route => route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":{"message":"Incorrect API key"}}' }))
+    await open(p, '/')
+    await send(p, 'батарейки')
+  } },
+  { name: 'HomeAsked', device: DESKTOP, run: async (p) => {
+    await openHome(p)
+    await send(p, 'когда менять фильтр?')
+  } },
+  { name: 'HomeBackup', device: DESKTOP, run: async (p) => {
+    await keeping(p, false)
+    await openHome(p)
+    await data(p, (d, at) => d.setSettings({ copiedAt: at }), NOW.getTime() - 37 * DAY)
+    await settle(p, 400)
+  } },
+  { name: 'SettingsNoStore', device: DESKTOP, run: async (p) => {
+    await breakStorage(p)
+    await open(p, '/settings')
+  } },
+  { name: 'SettingsImport', device: DESKTOP, run: p => importSheet(p) },
+  { name: 'PageTwoTabs', device: DESKTOP, run: p => twoTabs(p) },
+  { name: 'ListProps', device: DESKTOP, run: p => pageProps(p) },
+  { name: 'ListPropEdit', device: DESKTOP, run: async (p) => {
+    await pageProps(p)
+    await p.getByRole('button', { name: 'Изменить «Отдел»' }).click()
+    // The list sheet closes first, then the editor opens
+    await settle(p, 1400)
+  } },
+  { name: 'MainPropAdd', device: DESKTOP, run: async (p) => {
+    await open(p, '/journal')
+    await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
+    await settle(p, 400)
+    await p.getByRole('button', { name: 'Свойство', exact: true }).click()
+    await settle(p, 500)
+  } },
+  { name: 'MainPropNew', device: DESKTOP, run: async (p) => {
+    await open(p, '/journal')
+    await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
+    await settle(p, 400)
+    await p.getByRole('button', { name: 'Свойство', exact: true }).click()
+    await settle(p, 400)
+    await p.getByRole('button', { name: /Новое свойство/ }).click()
+    await settle(p, 500)
+    await p.getByRole('textbox', { name: /Название/ }).last().fill('Магазин')
+    await p.getByRole('radio', { name: 'Выбор' }).click().catch(() => p.getByRole('button', { name: 'Выбор' }).click())
+    await settle(p, 500)
+  } }
 ]
 
 async function settle(page, ms = 250) {
@@ -373,10 +549,7 @@ const OPENAI = '**/api.openai.com/**'
 async function addKey(page) {
   await page.route(OPENAI, route => route.abort('internetdisconnected'))
   await open(page, '/settings')
-  await page.getByRole('button', { name: /^Подключение/ }).click()
-  await page.getByRole('textbox', { name: 'Ключ OpenAI' }).fill('sk-demo-0000000000000000000000000000000000007Qa2')
-  await page.getByRole('button', { name: 'Сохранить' }).click()
-  await page.getByRole('switch', { name: 'Сначала простые правила' }).click()
+  await data(page, d => d.setSettings({ provider: 'openai', apiKey: 'sk-demo-0000000000000000000000000000000000007Qa2', rulesFirst: false }))
   await settle(page, 300)
 }
 
@@ -386,6 +559,105 @@ async function openPage(page, title, exact = true) {
   await page.getByRole('link', { name: new RegExp(exact ? `^${title}` : title) }).first().click()
   await page.waitForURL(/\/(p|r)\//)
   await settle(page, 400)
+}
+
+const DAY = 86400000
+
+/** The data store, read or changed in the page */
+function data(page, fn, arg) {
+  return page.evaluate(([src, a]) => {
+    const d = document.querySelector('#__nuxt').__vue_app__.config.globalProperties.$pinia._s.get('data')
+    return new Function('d', 'a', `return (${src})(d, a)`)(d, a)
+  }, [fn.toString(), arg])
+}
+
+/** Storage stubs, the same as the checks use (scripts/checks/data.mjs) */
+const breakStorage = page => page.addInitScript(() => {
+  indexedDB.open = () => {
+    throw new DOMException('A mutation operation was attempted on a database that did not allow mutations.', 'InvalidStateError')
+  }
+})
+const fillStorage = page => page.addInitScript(() => {
+  const put = IDBObjectStore.prototype.put
+  IDBObjectStore.prototype.put = function (...args) {
+    if (window.__storageFull) throw new DOMException('The quota has been exceeded.', 'QuotaExceededError')
+    return put.apply(this, args)
+  }
+})
+const keeping = (page, persisted) => page.addInitScript((value) => {
+  Object.defineProperty(navigator, 'storage', {
+    configurable: true,
+    value: { persisted: async () => value, persist: async () => value, estimate: async () => ({}) }
+  })
+}, persisted)
+
+/** «Загрузить копию» with a copy of this demo plus one page and two records */
+async function importSheet(page) {
+  await open(page, '/settings')
+  const text = await data(page, (d) => {
+    const s = JSON.parse(JSON.stringify(d.snapshot()))
+    const books = s.pages.find(x => x.title === 'Книги')
+    s.pages.push({ ...books, id: 'p-films', title: 'Фильмы', favorite: null })
+    s.records.push({ ...s.records.find(r => r.pageId === books.id), id: 'r-dune', pageId: 'p-films', text: 'Дюна', favorite: null })
+    return JSON.stringify({ app: 'cerulean', version: 1, exportedAt: Date.now(), ...s, entries: [] })
+  })
+  const chooser = page.waitForEvent('filechooser')
+  // A phone row is the button; desktop has «Выбрать файл» at the row's end
+  await page.getByRole('button', { name: /^(Загрузить копию|Выбрать файл)/ }).first().click()
+  await (await chooser).setFiles({ name: 'cerulean-2026-09-12.json', mimeType: 'application/json', buffer: Buffer.from(text) })
+  await settle(page, 700)
+}
+
+/** «Яйца» open here while another tab renames it */
+async function twoTabs(page) {
+  await openRecord(page, 'Яйца')
+  const other = await page.context().newPage()
+  await other.goto(page.url())
+  await other.waitForSelector('main')
+  await settle(other, 500)
+  await data(other, d => d.updateRecord(Object.values(d.records).find(r => r.text === 'Яйца').id, { text: 'Яйца С0' }))
+  await other.close()
+  await settle(page, 800)
+}
+
+/** Покупки with 24 open records, «Хлеб и выпечка» and «Овощи и фрукты» folded, a fourth view (MobileLong) */
+async function longList(page) {
+  await openPage(page, 'Покупки')
+  await data(page, (d) => {
+    const pg = d.livePages.find(x => x.title === 'Покупки')
+    const dept = pg.props.find(x => x.name === 'Отдел')
+    const qty = pg.props.find(x => x.name === 'Количество')
+    const opt = n => dept.options.find(o => o.name === n).id
+    const rows = [['Батон', 'Хлеб и выпечка'], ['Лаваш', 'Хлеб и выпечка', '2 шт'], ['Кефир', 'Молочное', '1 л'], ['Сметана', 'Молочное'], ['Творог', 'Молочное', '2 шт'], ['Йогурт', 'Молочное', '4 шт'],
+      ['Огурцы', 'Овощи и фрукты'], ['Картошка', 'Овощи и фрукты', '2 кг'], ['Лук', 'Овощи и фрукты'], ['Яблоки', 'Овощи и фрукты', '1 кг'],
+      ['Гречка', 'Бакалея'], ['Рис', 'Бакалея'], ['Макароны', 'Бакалея', '2 пачки'], ['Овсянка', 'Бакалея'], ['Соль', 'Бакалея'],
+      ['Губки', 'Бытовая химия'], ['Мыло', 'Бытовая химия', '3 шт'], ['Пакеты для мусора', 'Бытовая химия']]
+    rows.forEach(([text, group, n], i) => d.addRecord({ pageId: pg.id, text, order: 100 + i, addedAt: Date.now() - 3600000, values: { [dept.id]: opt(group), ...(n ? { [qty.id]: n } : {}) } }))
+    d.updatePage(pg.id, { views: [...pg.views, { ...pg.views[0], id: 'v-board', name: 'Доска', layout: 'board', named: false }] })
+  })
+  await settle(page, 400)
+  await fold(page, ['Хлеб и выпечка', 'Овощи и фрукты'])
+  // Clicking a caption further down scrolled the list: the state shows it from the top
+  await page.locator('.scroll-fade').first().evaluate((el) => {
+    el.scrollTop = 0
+  })
+  await settle(page, 400)
+}
+
+/** A record page, found by its text */
+async function openRecord(page, text) {
+  await open(page, '/')
+  const id = await data(page, (d, t) => Object.values(d.records).find(r => r.text === t && !r.deletedAt)?.id, text)
+  await open(page, `/r/${id}`)
+}
+
+/** «Свойства» from the page «⋯» of Покупки */
+async function pageProps(page) {
+  await openPage(page, 'Покупки')
+  await page.getByRole('button', { name: /^(Действия со страницей|Меню страницы)/ }).last().click()
+  await settle(page, 500)
+  await page.getByRole(page.viewportSize().width >= 1024 ? 'menuitem' : 'button', { name: /^Свойства/ }).last().click()
+  await settle(page, 1000)
 }
 
 await mkdir(OUT, { recursive: true })

@@ -1,40 +1,18 @@
 <script setup lang="ts">
 // The browser keeps nothing (a private window, blocked site data). The one tinted warning in the product:
 // on Главная it opens the list and leads to Настройки; there it replaces the status line and says what to do.
-// Desktop Главная has it as the first row of the column instead, with a warn glyph.
+// The same block on desktop (v22 desktop addendum, HomeNoStore).
 import { useRouter } from '#imports'
-import { useScreen } from '~/composables/useScreen'
 import { useCopy } from '~/composables/useCopy'
 
 const props = withDefaults(defineProps<{ place?: 'home' | 'settings' }>(), { place: 'home' })
 const router = useRouter()
-const { isDesktop } = useScreen()
 const { saveCopy } = useCopy()
 const home = props.place === 'home'
 </script>
 
 <template>
   <div
-    v-if="home && isDesktop"
-    role="alert"
-  >
-    <a
-      href="/settings"
-      class="flex min-h-12 items-center gap-3 rounded-chip px-2 py-1.25 hover:bg-muted active:bg-pressed"
-      @click.prevent="router.push('/settings')"
-    >
-      <UIcon
-        name="i-lucide-circle-alert"
-        class="size-4.5 shrink-0 text-warn"
-      />
-      <span class="flex min-w-0 flex-1 flex-col gap-px">
-        <span class="text-sm leading-5 font-medium text-highlighted">Изменения не сохраняются</span>
-        <span class="text-13 leading-4.5 text-toned">Браузер не даёт хранить данные: всё пропадёт, когда закроешь вкладку.</span>
-      </span>
-    </a>
-  </div>
-  <div
-    v-else
     :role="home ? 'alert' : 'status'"
     class="rounded-card bg-warn-soft px-3.5 pt-3 pb-1"
   >

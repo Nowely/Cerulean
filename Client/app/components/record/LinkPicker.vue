@@ -7,12 +7,15 @@ import type { Hit } from '~/domain/search'
 import { recent, search } from '~/domain/search'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
+import { useScreen } from '~/composables/useScreen'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import PageTile from '../common/PageTile.vue'
 
 const props = defineProps<{ rec: Rec }>()
 const data = useDataStore()
 const now = useNow()
+// On a phone the keyboard would cover the lists the sheet opens to show (MobileLink); desktop types at once
+const { isDesktop } = useScreen()
 const open = ref(false)
 const q = ref('')
 const idOf = (h: Hit) => h.kind === 'page' ? h.page.id : h.rec.id
@@ -32,8 +35,11 @@ const groups = computed(() => {
     const hits = search(q.value, data.livePages, data.liveRecords, { titlesOnly: true, sectionId: null }).filter(own).slice(0, 30)
     return hits.length ? [{ label: '', hits }] : []
   }
+  // A few of the user's own pages, not Входящие or Сегодня, nor the page this record is on (MobileLink)
   const was = new Set(before.value.map(idOf))
-  const lately = recent(data.livePages, data.liveRecords, now.value, 16).flatMap(g => g.hits).filter(h => own(h) && !was.has(idOf(h)))
+  const lately = recent(data.livePages, data.liveRecords, now.value, 16).flatMap(g => g.hits)
+    .filter(h => own(h) && !was.has(idOf(h)) && !(h.kind === 'page' && (h.page.kind !== 'page' || h.page.id === props.rec.pageId)))
+    .slice(0, 4)
   return [
     { label: 'Связано', hits: before.value },
     { label: 'Открыто недавно', hits: lately }
@@ -59,7 +65,7 @@ const groups = computed(() => {
         placeholder="Страницы и записи"
         aria-label="Найти, что связать"
         class="w-full"
-        autofocus
+        :autofocus="isDesktop"
       />
     </div>
     <ul

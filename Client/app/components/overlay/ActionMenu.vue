@@ -33,6 +33,8 @@ defineProps<{
   headless?: boolean
   /** Desktop: the title (and caption) head the dropdown too, as on the phone's sheet */
   labelled?: boolean
+  /** Desktop: which edge of the trigger the dropdown lines up with; «⋯» buttons sit at a row's end */
+  align?: 'start' | 'end'
 }>()
 
 const { isDesktop } = useScreen()
@@ -83,7 +85,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
         ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled }
         : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) }))
     ]"
-    :content="{ align: 'end', onCloseAutoFocus: afterClose }"
+    :content="{ align: align ?? 'end', onCloseAutoFocus: afterClose }"
   >
     <slot :open="open">
       <DotsButton

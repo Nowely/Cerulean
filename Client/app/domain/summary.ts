@@ -69,7 +69,8 @@ export function pageSummary(page: Page, records: Rec[], now: number, today: Rec[
   if (page.kind === 'inbox') {
     const left = open(records)
     if (!left.length) return { lead: 'Сюда попадает то, что не удалось разложить', names: '', more: 0 }
-    return { lead: '', ...names(left, page, 2) }
+    // In the page's own order, the newest on top, as Входящие lists them
+    return { lead: '', ...names(sortRecords(left, 'manual'), page, 2) }
   }
   if (!records.length) {
     return { lead: page.title.trim() ? 'Нет записей' : 'Новая страница', names: '', more: 0 }
