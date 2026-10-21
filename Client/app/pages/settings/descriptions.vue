@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Описания для Авто, all pages at once (a phone screen; desktop shows the same list inline in Настройки)
+// «Что класть на страницы»: every page's «Что сюда класть» at once (a phone screen; desktop shows the same list inline in Настройки)
 import { computed } from 'vue'
 import { useHead } from '#imports'
 import { useDataStore } from '~/stores/data'
@@ -8,7 +8,7 @@ import DeskHeader from '~/components/shell/DeskHeader.vue'
 import DescriptionList from '~/components/settings/DescriptionList.vue'
 import { useScreen } from '~/composables/useScreen'
 
-useHead({ title: 'Описания для Авто · Cerulean' })
+useHead({ title: 'Что класть на страницы · Cerulean' })
 const data = useDataStore()
 const { isDesktop } = useScreen()
 const empty = computed(() => !data.livePages.some(p => p.kind === 'page'))
@@ -38,23 +38,23 @@ const empty = computed(() => !data.livePages.some(p => p.kind === 'page'))
             class="hover:text-highlighted"
           >Настройки</NuxtLink>
           <span class="text-dimmed">/</span>
-          <b class="truncate font-medium text-highlighted">Описания для Авто</b>
+          <b class="truncate font-medium text-highlighted">Что класть на страницы</b>
         </nav>
       </DeskHeader>
     </template>
 
     <div class="mx-auto w-full pb-8 lg:max-w-180 lg:px-8 lg:pt-7">
       <h1 class="px-5 pt-1 text-title text-highlighted lg:px-0 lg:pt-0">
-        Описания для Авто
+        Что класть на страницы
       </h1>
       <p class="px-5 pt-1.5 pb-3 text-15 leading-snug text-toned lg:px-0 lg:pt-2 lg:pb-5 lg:text-sm">
-        По описанию решается, куда положить запись. Пиши, что класть на страницу, можно с примерами.
+        По этим словам решается, куда положить запись. Пиши, что класть на страницу, можно с примерами.
       </p>
       <p
         v-if="empty"
         class="px-5 py-4 text-meta text-toned lg:px-0"
       >
-        Страниц пока нет. Описание появится вместе с первой страницей.
+        Страниц пока нет. Строка появится вместе с первой страницей.
       </p>
       <DescriptionList
         v-else

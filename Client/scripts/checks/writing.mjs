@@ -202,8 +202,8 @@ export default [
     await line.locator('..').getByRole('button', { name: 'Запомнить' }).click()
     const description = () => store(p, data => data.livePages.find(x => x.title === 'Задачи').description)
     expect((await description()).includes('Например: «подарок Лене на новоселье»'), 'the example is not in Задачи\'s description')
-    const done = p.getByText('Запомнено в описании «Задачи».')
-    expect(await shows(done), 'no «Запомнено в описании «Задачи».»')
+    const done = p.getByText('Запомнено: такое класть в «Задачи».')
+    expect(await shows(done), 'no «Запомнено: такое класть в «Задачи».»')
     await done.locator('..').getByRole('button', { name: 'Отменить' }).click()
     expect(!(await description()).includes('Например'), '«Отменить» did not take the example out')
     expect(await shows(line), 'the line did not turn back to «Запомнить»')
@@ -219,7 +219,7 @@ export default [
     await line.locator('..').getByRole('button', { name: 'Запомнить' }).click()
     const description = () => store(p, data => data.livePages.find(x => x.title === 'Дела по дому').description)
     expect((await description()).includes('Например: «позвонить маме»'), 'the example is not in the description')
-    await p.getByText('Запомнено в описании «Дела по дому».').locator('..').getByRole('button', { name: 'Отменить' }).click()
+    await p.getByText('Запомнено: такое класть в «Дела по дому».').locator('..').getByRole('button', { name: 'Отменить' }).click()
     expect(!(await description()).includes('Например'), '«Отменить» did not take it out')
   } },
   // 35. Plain words: the AI notes and their verbs; no «модель» outside Настройки

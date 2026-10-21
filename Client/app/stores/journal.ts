@@ -246,11 +246,11 @@ export const useJournalStore = defineStore('journal', () => {
     return page
   }
 
-  /** The example «Запомнить» writes into the page's «Описание для Авто» */
+  /** The example «Запомнить» writes into the page's «Что сюда класть» */
   const example = (entry: Entry) => `Например: «${entry.text}»`
 
   /**
-   * «Запомнить» after a page was chosen by hand: the line becomes an example in that page's «Описание для Авто»,
+   * «Запомнить» after a page was chosen by hand: the line becomes an example in that page's «Что сюда класть»,
    * which Авто reads when filing (v22, U5). «Отменить» on the same line (`forget`) takes it out again.
    */
   function remember(entryId: Id) {

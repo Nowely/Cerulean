@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// «⋯» of a page: Переименовать, Значок и цвет, Избранное, Описание для Авто, section, view settings, «Свойства», copy, delete.
+// «⋯» of a page: Переименовать, Значок и цвет, Избранное, «Что сюда класть», section, view settings, «Свойства», copy, delete.
 // From Главная «Переименовать» and «Значок и цвет» open the page with its title or icon picker ready.
 import { computed, defineAsyncComponent, ref } from 'vue'
 import { useRouter } from '#imports'
@@ -64,7 +64,7 @@ const items = computed<MenuItem[][]>(() => {
   const own: MenuItem[] = props.page.kind === 'page'
     ? [
         { label: 'Переименовать', icon: 'i-lucide-pencil', onSelect: () => edit('title') },
-        { label: 'Значок и цвет', icon: 'i-lucide-smile', onSelect: () => edit('glyph') }
+        { label: 'Значок и цвет', icon: 'i-lucide-palette', onSelect: () => edit('glyph') }
       ]
     : []
   const first: MenuItem[] = [
@@ -76,7 +76,8 @@ const items = computed<MenuItem[][]>(() => {
     }
   ]
   if (props.page.kind === 'page') {
-    first.push({ label: 'Описание для Авто', icon: 'i-lucide-lightbulb', value: props.page.description || 'нет', onSelect: () => describing.value = true })
+    // The words Авто files by (v23: never «описание»), in muted on the right
+    first.push({ label: 'Что сюда класть', icon: 'i-lucide-lightbulb', value: props.page.description || 'не задано', onSelect: () => describing.value = true })
     first.push({ label: 'Переместить в секцию', icon: 'i-lucide-arrow-right', value: section.value?.name ?? 'Мои страницы', onSelect: () => moving.value = true })
   }
   if (props.page.kind !== 'today' && !props.home) first.push({ label: 'Настроить вид', icon: 'i-lucide-sliders-horizontal', onSelect: () => emit('settings') })

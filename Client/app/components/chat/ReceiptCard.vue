@@ -87,13 +87,13 @@ const NOTES = {
   slow: { icon: 'i-lucide-clock', text: 'ИИ не ответил, запись ждёт во Входящих.', action: 'Повторить' },
   key: { icon: 'cer:auto', text: 'Разложено по простым правилам: ключ не принят.', action: 'Проверить ключ' }
 } as const
-/** A page chosen by hand: «Запомнить» writes the line into its «Описание для Авто», «Отменить» takes it out */
+/** A page chosen by hand: «Запомнить» writes the line into its «Что сюда класть», «Отменить» takes it out */
 const learn = computed(() => {
   const e = props.entry
   if (!e.learn || !page.value || page.value.kind !== 'page' || several.value) return null
   const name = page.value.title || 'Без названия'
   return e.learned
-    ? { icon: 'i-lucide-bookmark', text: `Запомнено в описании «${name}».`, action: 'Отменить' }
+    ? { icon: 'i-lucide-bookmark', text: `Запомнено: такое класть в «${name}».`, action: 'Отменить' }
     : { icon: 'i-lucide-bookmark', text: `Запомнить: такое класть в «${name}».`, action: 'Запомнить' }
 })
 const note = computed(() => props.entry.note && !props.entry.moved ? NOTES[props.entry.note] : learn.value)

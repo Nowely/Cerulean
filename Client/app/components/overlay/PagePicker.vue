@@ -185,10 +185,9 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
                   name="cer:auto"
                   class="size-4.5 shrink-0 text-toned"
                 />
-                <span class="min-w-0 flex-1 truncate text-highlighted">Авто<span
-                  v-if="ui.picker.auto.picks"
-                  class="text-toned"
-                > → {{ ui.picker.auto.picks }}</span></span>
+                <span class="min-w-0 flex-1 truncate text-highlighted">Авто</span>
+                <!-- What Авто does, in its own words (v23: «разложится по страницам», never «описание») -->
+                <span class="max-w-48 shrink-0 truncate text-meta text-toned">{{ ui.picker.auto.picks ? `сейчас → ${ui.picker.auto.picks}` : 'разложится по страницам' }}</span>
                 <UIcon
                   v-if="ui.picker.auto.chosen"
                   name="i-lucide-check"
