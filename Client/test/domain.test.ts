@@ -215,6 +215,8 @@ describe('simple rules', () => {
     expect(drafts.map(x => x.text)).toEqual(['Кефир', 'Батон', 'Сметана'])
     expect(drafts[0]!.values[p.props[0]!.id]).toBe('1 л')
     expect(dept.options!.find(o => o.id === guessOption('батон', dept))!.name).toBe('Хлеб и выпечка')
+    // A routing prefix is dropped on a list page too
+    expect(draftsFor('покупки: хлеб', p, NOW).map(x => x.text)).toEqual(['Хлеб'])
   })
 })
 

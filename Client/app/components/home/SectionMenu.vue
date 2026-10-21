@@ -8,7 +8,7 @@ import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useCreatePage } from '~/composables/useCreatePage'
 import { useNotify } from '~/composables/useNotify'
-import { count, PAGE_FORMS } from '~/domain/text'
+import { clip, count, PAGE_FORMS } from '~/domain/text'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import DotsButton from '../common/DotsButton.vue'
 import SectionOrder from './SectionOrder.vue'
@@ -48,7 +48,8 @@ const items = computed<MenuItem[][]>(() => [
  * with «Отменить» for 8 s, which brings the section back with its pages
  */
 function remove() {
-  const name = props.section.name
+  // A long name is cut, so the notice keeps where the pages went within its two lines
+  const name = clip(props.section.name)
   const { pages, undo } = data.removeSection(props.section.id)
   const where = pages.length ? `, ${count(pages.length, PAGE_FORMS)} в Моих страницах` : ''
   notify(`Секция ${name} удалена${where}`, { label: 'Отменить', run: undo }, 8000)

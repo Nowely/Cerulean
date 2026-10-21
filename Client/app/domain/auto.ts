@@ -93,7 +93,8 @@ export interface Draft {
 export function draftsFor(text: string, page: Page, now: number): Draft[] {
   const qtyProp = page.props.find(p => p.name === 'Количество')
   const select = page.props.find(p => p.type === 'select' && isListPage(page))
-  const lines = isListPage(page) ? splitItems(text) : splitParts(dropPrefix(text))
+  // «покупки: хлеб» is a routing prefix on a list page too: the page says it, the record does not
+  const lines = isListPage(page) ? splitItems(dropPrefix(text)) : splitParts(dropPrefix(text))
   return lines.map((line) => {
     const { due, rest } = parseDue(line, now)
     const values: Rec['values'] = {}

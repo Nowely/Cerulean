@@ -37,6 +37,11 @@ export function nb(s: string): string {
 }
 
 /** Lower case without ё, same length as the input (safe for index math) */
+/** A name cut to `max` characters with «…», for notices that must keep what comes after it */
+export function clip(s: string, max = 24): string {
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s
+}
+
 export function fold(s: string): string {
   return s.toLowerCase().replace(/ё/g, 'е')
 }
