@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The one sheet of «Свойства» and «Свойство» (a dialog on desktop), opened through usePropSheets. The list leads to
-// the editor in the same sheet. «Готово», × and «Отмена» go back where the editor was opened: the list, or once
-// the sheet has closed, «Настроить вид» or the record. The scrim, Escape and a swipe close everything.
+// the editor in the same sheet. «Готово» and «Отмена» go back where the editor was opened: the list, or once the
+// sheet has closed, «Настроить вид» or the record. The scrim, Escape and a swipe close everything; no × (v23, F18).
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import type { Id, PropDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -82,19 +82,10 @@ function closed() {
     @closed="closed"
   >
     <template
-      v-if="editing"
+      v-if="editing && !isNew && !confirming && !footer"
       #close
     >
       <UButton
-        v-if="isNew"
-        icon="i-lucide-x"
-        variant="ghost"
-        square
-        aria-label="Закрыть без создания"
-        @click="back()"
-      />
-      <UButton
-        v-else-if="!confirming && !footer"
         color="primary"
         variant="ghost"
         size="lg"
@@ -103,7 +94,6 @@ function closed() {
       >
         Готово
       </UButton>
-      <span v-else />
     </template>
     <template v-if="page && sheet">
       <PropEditor

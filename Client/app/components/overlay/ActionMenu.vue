@@ -14,6 +14,8 @@ export interface MenuItem {
   /** Right side of the row: the current value («Дом», «еда, напитки…») */
   value?: string
   danger?: boolean
+  /** The way back, in accent ink («Вернуть» in Корзина's row menu) */
+  accent?: boolean
   /** A switch row («Компактные строки»): the row toggles and shows its state */
   checked?: boolean
   /** A second line under the label («Записи останутся на странице») */
@@ -87,7 +89,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
       // The head belongs to the first group: no line between it and the first items (ListTabMenu)
       ...(labelled && !gi ? [{ type: 'label' as const, label: title ?? label, slot: 'head' as const }] : []),
       ...g.map(i => i.checked === undefined
-        ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled, pill: i.pill, slot: i.pill ? 'pill' as const : undefined }
+        ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : i.accent ? 'primary' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled, pill: i.pill, slot: i.pill ? 'pill' as const : undefined }
         : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) })
     ])"
     :content="{ align: align ?? 'end', onCloseAutoFocus: afterClose }"
@@ -175,7 +177,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                 class="flex min-h-12.5 w-full items-center gap-3 rounded-chip px-3 text-left text-base"
                 :class="[
                   item.disabled ? 'cursor-default' : 'cursor-pointer active:bg-pressed',
-                  item.disabled ? 'text-dimmed' : item.danger ? 'text-warn-ink' : 'text-default'
+                  item.disabled ? 'text-dimmed' : item.danger ? 'text-warn-ink' : item.accent ? 'text-accent-ink' : 'text-default'
                 ]"
                 :role="item.checked === undefined ? undefined : 'switch'"
                 :aria-checked="item.checked"
@@ -186,7 +188,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                 <UIcon
                   :name="item.icon"
                   class="size-5 shrink-0"
-                  :class="item.danger || item.disabled ? '' : 'text-toned'"
+                  :class="item.danger || item.accent || item.disabled ? '' : 'text-toned'"
                 />
                 <span
                   v-if="item.pill"

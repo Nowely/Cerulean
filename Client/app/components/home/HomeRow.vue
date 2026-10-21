@@ -45,8 +45,9 @@ const menuOpen = ref(false)
 let timer: ReturnType<typeof setTimeout> | undefined
 let pressed = false
 function down(e: PointerEvent) {
-  if (isDesktop.value || !props.page || e.pointerType === 'mouse') return
+  // A long press is followed by no click on most phones: any next press starts afresh
   pressed = false
+  if (isDesktop.value || !props.page || e.pointerType === 'mouse') return
   timer = setTimeout(() => {
     pressed = true
     menuOpen.value = true
@@ -68,9 +69,10 @@ function click(e: MouseEvent) {
 </script>
 
 <template>
+  <!-- Lit by hover and keyboard focus only: focus given back by a closed sheet leaves it plain (v23, F18) -->
   <div
     role="listitem"
-    class="group/row relative flex items-center rounded-card hover:bg-muted focus-within:bg-muted lg:rounded-chip"
+    class="group/row relative flex items-center rounded-card hover:bg-muted has-focus-visible:bg-muted lg:rounded-chip"
   >
     <a
       :href="to"

@@ -4,6 +4,9 @@
 // (useLater) the trigger stands on its own; a tap opens the overlay once it is.
 // A notice raised while it is open shows at the sheet's foot; over a desktop dialog it stays above the composer and
 // rises over the scrim, and a click on it leaves the dialog open.
+// One sheet pattern (v23, F18): no ×. A sheet has its grabber and closes by a tap outside, a swipe down or Esc; a
+// popover or dialog by a click outside or Esc. `#close` is for the rare header button that does something else
+// («Готово» of the property editor).
 import { computed } from 'vue'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
@@ -56,7 +59,10 @@ function openNow() {
         {{ ui.notice?.title }}
       </p>
       <div class="flex max-h-[70dvh] flex-col">
-        <div class="flex shrink-0 items-center gap-2 pt-3 pr-2 pl-5">
+        <div
+          class="flex min-h-11 shrink-0 items-center gap-2 pt-3 pl-5"
+          :class="$slots.close ? 'pr-2' : 'pr-5'"
+        >
           <div class="min-w-0 flex-1">
             <h2 class="truncate text-sheet text-highlighted">
               {{ title }}
@@ -68,15 +74,7 @@ function openNow() {
               {{ subtitle }}
             </p>
           </div>
-          <slot name="close">
-            <UButton
-              icon="i-lucide-x"
-              variant="ghost"
-              square
-              aria-label="Закрыть"
-              @click="open = false"
-            />
-          </slot>
+          <slot name="close" />
         </div>
         <div
           class="min-h-0 flex-1 overflow-y-auto px-3"
@@ -105,7 +103,7 @@ function openNow() {
         class="flex max-h-[min(36rem,var(--reka-popover-content-available-height))] flex-col overflow-hidden"
         :class="width ?? 'w-96'"
       >
-        <div class="flex shrink-0 items-start gap-2 pt-2.5 pr-1.5 pl-4">
+        <div class="flex shrink-0 items-start gap-2 pt-2.5 pr-4 pl-4">
           <div class="min-w-0 flex-1 py-1">
             <h2 class="truncate text-15 font-semibold text-highlighted">
               {{ title }}
@@ -117,16 +115,7 @@ function openNow() {
               {{ subtitle }}
             </p>
           </div>
-          <slot name="close">
-            <UButton
-              icon="i-lucide-x"
-              variant="ghost"
-              square
-              size="sm"
-              aria-label="Закрыть"
-              @click="open = false"
-            />
-          </slot>
+          <slot name="close" />
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
           <slot />
@@ -150,7 +139,10 @@ function openNow() {
     >
       <template #content>
         <div class="flex max-h-[85dvh] flex-col">
-          <div class="flex shrink-0 items-center gap-2 pt-1 pr-2 pl-6">
+          <div
+            class="flex min-h-11 shrink-0 items-center gap-2 pt-1 pl-6"
+            :class="$slots.close ? 'pr-2' : 'pr-6'"
+          >
             <div
               v-if="stacked"
               class="min-w-0 flex-1"
@@ -176,15 +168,7 @@ function openNow() {
                 {{ subtitle }}
               </p>
             </template>
-            <slot name="close">
-              <UButton
-                icon="i-lucide-x"
-                variant="ghost"
-                square
-                aria-label="Закрыть"
-                @click="open = false"
-              />
-            </slot>
+            <slot name="close" />
           </div>
           <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-[max(env(safe-area-inset-bottom),1rem)]">
             <slot />

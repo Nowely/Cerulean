@@ -145,8 +145,9 @@ export function demo(now = Date.now()): Dataset {
       listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
       listView('Сделано', { filter: [{ field: 'done', op: 'is', value: true }] })
     ],
-    openedAt: at(18, 10, -1),
-    seenAt: at(18, 10, -1)
+    // Opened after yesterday's «вызвать мастера», so it is not «новых» on Главная
+    openedAt: at(21, 0, -1),
+    seenAt: at(21, 0, -1)
   }, now)
 
   inbox!.openedAt = at(9, 3)
@@ -166,8 +167,9 @@ export function demo(now = Date.now()): Dataset {
     note: 'Брать С0, десяток в картонной упаковке. Если нет, подойдут С1.'
   })
   add(products, 'Взять два десятка, если будет скидка', { parentId: eggs.id, addedAt: at(8, 41) })
-  add(products, 'Бананы', { values: { [qty.id]: '1 кг', [dept.id]: opt('Овощи и фрукты') }, addedAt: at(18, 0, -1) })
-  add(products, 'Порошок', { values: { [dept.id]: opt('Бытовая химия') }, addedAt: at(18, 1, -1) })
+  // Written yesterday at 19:20 in one line, the first receipt in Журнал (v23, B5)
+  const bananas = add(products, 'Бананы', { ...chat(19, 20, -1), values: { [qty.id]: '1 кг', [dept.id]: opt('Овощи и фрукты') } })
+  const powder = add(products, 'Порошок', { ...chat(19, 20, -1), values: { [dept.id]: opt('Бытовая химия') } })
   add(products, 'Кофе в зёрнах', { ...chat(10, 0, -3), done: true, doneAt: at(19, 0, -2), values: { [dept.id]: opt('Бакалея') } })
   add(products, 'Помидоры', { ...chat(10, 0, -4), done: true, doneAt: at(19, 0, -2), values: { [dept.id]: opt('Овощи и фрукты') } })
   for (const [text, n, min] of [['Куриная грудка', 2, 1], ['Яблоки', 0, 3], ['Макароны', 3, 1], ['Туалетная бумага', 1, 2]] as const) {
@@ -207,7 +209,7 @@ export function demo(now = Date.now()): Dataset {
   library.links = [habits.id]
   marathon.links = [habits.id]
   const filter = add(chores, 'Поменять фильтр воды', { due: { date: date(2) }, addedAt: at(18, 0, -2) })
-  add(chores, 'Вызвать мастера', { addedAt: at(18, 5, -2) })
+  const master = add(chores, 'Вызвать мастера', { ...chat(20, 40, -1) })
 
   // Входящие: two records Авто could not place
   const gift = add(inbox!, 'Подарок маме на др', { ...chat(9, 2), tags: ['clarify'], guesses: [tasks.id, ideas.id, chores.id] })
@@ -229,6 +231,8 @@ export function demo(now = Date.now()): Dataset {
   for (const text of ['Взять рассаду', 'Закрыть воду', 'Забрать шланг', 'Купить уголь']) add(dacha, text, { addedAt: at(9, 0, -12) })
 
   const entries: Entry[] = [
+    newEntry({ at: at(19, 20, -1), text: 'бананы 1 кг, порошок', kind: 'routed', pageId: products.id, recordIds: [bananas.id, powder.id] }),
+    newEntry({ at: at(20, 40, -1), text: 'вызвать мастера', kind: 'routed', pageId: chores.id, recordIds: [master.id] }),
     newEntry({ at: at(22, 15, -1), text: 'посмотреть тот сериал', kind: 'ask', pageId: inbox!.id, recordIds: [series.id], newName: 'Фильмы' }),
     newEntry({ at: at(8, 40), text: 'молоко, яйца, сыр', kind: 'routed', pageId: products.id, recordIds: [milk.id, eggs.id, cheese.id] }),
     newEntry({ at: at(8, 52), text: 'позвонить стоматологу сегодня в 10', kind: 'routed', pageId: tasks.id, recordIds: [dentist.id] }),

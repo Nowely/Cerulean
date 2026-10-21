@@ -57,15 +57,15 @@ export default [
       return r.top >= 0 && r.bottom <= innerHeight
     }), 'the sent row is not in view')
   } },
-  // 4. B29: Подключение keeps «Работает · gpt-6-luna» and the service with the key whole
+  // 4. B29: Подключение says its state on one line. v23 (M11, F16) changed the words: «OpenRouter · подключено» and no
+  // key value (the key and the model live in the connection's own screen)
   { id: 'acc-4-connection-row', device: MOBILE, run: async (p) => {
     await open(p, '/settings')
     await store(p, data => data.setSettings({ provider: 'openrouter', apiKey: 'sk-or-v1-0123456789abcdef9f2c', keyState: 'ok' }))
     await p.waitForTimeout(300)
-    const value = p.getByText(/^OpenRouter · sk-…9f2c$/)
-    expect(await shows(value), 'no «OpenRouter · sk-…9f2c»')
-    expect(await value.first().evaluate(e => e.scrollWidth <= e.clientWidth + 1), 'the value is cut')
-    const status = p.getByText(/^Работает · /)
+    expect(!(await p.getByText(/sk-…9f2c/).count()), 'Настройки show the key')
+    const status = p.getByText(/^OpenRouter · подключено$/)
+    expect(await shows(status), 'no «OpenRouter · подключено»')
     expect(await status.first().evaluate(e => e.getClientRects().length === 1 && e.getBoundingClientRect().height < 24), 'the status wraps')
   } },
   // 5. B1: a finger swipe opens «Переместить» and «Удалить»; the mark and the name stay where they were
@@ -159,7 +159,8 @@ export default [
     const lines = p.locator('li .text-meta')
     for (const l of await lines.all()) expect(await l.evaluate(e => e.scrollWidth <= e.clientWidth + 1), `«${await l.textContent()}» is cut`)
     expect(await shows(p.getByRole('button', { name: 'Вернуть' })), 'no «Вернуть»')
-    expect(await shows(p.getByRole('button', { name: /^Удалить навсегда «/ })), 'no «Удалить»')
+    // v23 (B7, M12): «Удалить навсегда» moved into the row's faint «⋯»
+    expect(await shows(p.getByRole('button', { name: /^Ещё для «/ })), 'no row «⋯»')
     await p.getByRole('button', { name: 'Очистить' }).click()
     expect(await shows(p.getByText(/\d+ страниц[аы]? \(\d+ запис[а-я]*\) и \d+ запис[а-я]* удалятся навсегда/)), 'the confirm does not count the records inside the page')
   } },

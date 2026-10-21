@@ -104,7 +104,7 @@ describe('demo summaries match the spec', () => {
 
   it('home rows', () => {
     expect(line('Покупки')).toBe('6 купить · хлеб, молоко, сыр +3')
-    expect(line('Задачи')).toBe('3 дела · позвонить стоматологу, оплатить интернет, вернуть книгу в библиотеку')
+    expect(line('Задачи')).toBe('3 дела · оплатить интернет, позвонить стоматологу, вернуть книгу в библиотеку') // v23 B1: overdue leads the summary; the list keeps manual order
     expect(line('Цели')).toBe('2 цели · полумарафон к маю, 24 книги за год')
     expect(line('Книги')).toBe('1 книга · «Атомные привычки»')
     expect(line('Входящие')).toBe('подарок маме на др, посмотреть тот сериал')

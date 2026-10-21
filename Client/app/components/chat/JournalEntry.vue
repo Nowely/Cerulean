@@ -4,7 +4,8 @@ import type { Entry } from '~/domain/types'
 import { clock } from '~/domain/dates'
 import EntryCard from './EntryCard.vue'
 
-defineProps<{ entry: Entry }>()
+/** `past`: a day before today, whose receipts are one line (v23, B5) */
+defineProps<{ entry: Entry, past?: boolean }>()
 </script>
 
 <template>
@@ -21,6 +22,9 @@ defineProps<{ entry: Entry }>()
         :datetime="new Date(entry.at).toISOString()"
       >{{ clock(entry.at) }}</time>
     </div>
-    <EntryCard :entry="entry" />
+    <EntryCard
+      :entry="entry"
+      :past="past"
+    />
   </article>
 </template>

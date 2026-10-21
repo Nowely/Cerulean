@@ -53,10 +53,6 @@ async function replace() {
     dialog
     alert
   >
-    <!-- No ×: «Отмена» is one of the choices (MobileImport, SettingsImport) -->
-    <template #close>
-      <span />
-    </template>
     <div class="flex flex-col gap-2 px-3 pt-1 lg:gap-0 lg:px-2">
       <p class="pb-2 text-15 leading-normal text-toned lg:pb-0 lg:text-default">
         <template v-if="step === 'choose'">

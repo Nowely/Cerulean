@@ -1,6 +1,6 @@
 // One line per page: «6 купить · хлеб, молоко, сыр +3», and the badge on the title line
 import type { Page, Rec } from './types'
-import { dayKey, formatDueBrief } from './dates'
+import { addDays, dayKey, formatDueBrief } from './dates'
 import { count, lowerFirst, plural } from './text'
 import { filterRecords, sortRecords } from './views'
 
@@ -37,6 +37,16 @@ export function overdue(records: Rec[], now: number): Rec[] {
   return records.filter(r => !r.done && r.due && r.due.date < today)
 }
 
+/**
+ * «На неделе» on Сегодня (v23, B4): open records due in the six days after today, by date, so each weekday names
+ * one date (and rows ticked there since `since`)
+ */
+export function dueThisWeek(records: Rec[], now: number, since = Number.POSITIVE_INFINITY): Rec[] {
+  const today = dayKey(now)
+  const last = addDays(today, 6)
+  return sortRecords(records.filter(r => (!r.done || (r.tickedAt ?? 0) >= since) && r.due && r.due.date > today && r.due.date <= last), 'due')
+}
+
 /** Open records due today or earlier, from every page: what «Сегодня» shows (and rows ticked there since `since`) */
 export function dueToday(records: Rec[], now: number, since = Number.POSITIVE_INFINITY): Rec[] {
   const today = dayKey(now)
@@ -47,6 +57,16 @@ export function dueToday(records: Rec[], now: number, since = Number.POSITIVE_IN
 function firstView(page: Page, records: Rec[]): Rec[] {
   const view = page.views[0]
   return view ? sortRecords(filterRecords(records, view), view.sort) : records
+}
+
+/**
+ * What needs action comes first (v23, B1): overdue, then due today, then new since the page was last opened, then
+ * the rest in the order given. Names only: the overdue word stays where «once per screen» puts it
+ */
+export function byAction(records: Rec[], now: number, seenAt = Number.POSITIVE_INFINITY): Rec[] {
+  const today = dayKey(now)
+  const rank = (r: Rec) => r.done ? 4 : r.due && r.due.date < today ? 0 : r.due?.date === today ? 1 : r.addedAt > seenAt ? 2 : 3
+  return records.map((r, i) => ({ r, i, k: rank(r) })).sort((a, b) => a.k - b.k || a.i - b.i).map(x => x.r)
 }
 
 /** Number properties below their «Норма» */
@@ -70,7 +90,7 @@ export function pageSummary(page: Page, records: Rec[], now: number, today: Rec[
     const left = open(records)
     if (!left.length) return { lead: 'Сюда попадает то, что не удалось разложить', names: '', more: 0 }
     // In the page's own order, the newest on top, as Входящие lists them
-    return { lead: '', ...names(sortRecords(left, 'manual'), page, 2) }
+    return { lead: '', ...names(byAction(sortRecords(left, 'manual'), now, page.seenAt), page, 2) }
   }
   if (!records.length) {
     return { lead: page.title.trim() ? 'Нет записей' : 'Новая страница', names: '', more: 0 }
@@ -78,17 +98,18 @@ export function pageSummary(page: Page, records: Rec[], now: number, today: Rec[
   if (page.hasDone) {
     const shown = firstView(page, records)
     if (!open(records).length) return { lead: 'Всё сделано', names: '', more: 0 }
-    return { lead: count(shown.length, page.noun), ...names(shown, page) }
+    return { lead: count(shown.length, page.noun), ...names(byAction(shown, now, page.seenAt), page) }
   }
   const all = sortRecords(records, 'manual')
-  return { lead: count(all.length, page.noun), ...names(all, page) }
+  return { lead: count(all.length, page.noun), ...names(byAction(all, now, page.seenAt), page) }
 }
 
 /** A record shown as a page (Полумарафон к маю): «3 из 6 · дальше пробежка 6 км, 19:00» */
 export function recordSummary(subitems: Rec[], now: number): Summary {
   if (!subitems.length) return { lead: 'Нет подпунктов', names: '', more: 0 }
   const done = subitems.filter(s => s.done).length
-  const next = sortRecords(open(subitems), 'manual')[0]
+  // «дальше» names what needs action first, as the page summaries do (v23, B1)
+  const next = byAction(sortRecords(open(subitems), 'manual'), now)[0]
   if (!next) return { lead: `${done} из ${subitems.length}`, names: 'всё сделано', more: 0 }
   const when = next.due ? `, ${formatDueBrief(next.due, now)}` : ''
   return { lead: `${done} из ${subitems.length}`, names: `дальше ${lowerFirst(next.text)}${when}`, more: 0 }
@@ -123,6 +144,8 @@ export function recordBadge(subitems: Rec[], now: number, opts: { late?: boolean
 export function pageSubline(page: Page, records: Rec[], now: number, today: Rec[] = []): string {
   if (page.kind === 'today') {
     const due = dueToday(today, now)
+    // Nothing today: no «0 дел», the page says it in its empty line (v23, M15)
+    if (!due.length) return ''
     const late = overdue(due, now).length
     return [`${count(due.length, DEAL)} со всех страниц`, late ? `${late} просрочено` : ''].filter(Boolean).join(' · ')
   }

@@ -40,8 +40,13 @@ const props = withDefaults(defineProps<{
   chatLink?: boolean
   /** The keyboard is up on a phone: one line, a tap opens the card */
   line?: boolean
-}>(), { series: undefined, docked: false, chatLink: false, line: false })
+  /** Written before today (v23, B5): one line with no «›» and no «Не туда»; a tap opens the card in place */
+  past?: boolean
+}>(), { series: undefined, docked: false, chatLink: false, line: false, past: false })
 const emit = defineEmits<{ open: [], undone: [entry: Entry] }>()
+/** A past receipt still shut: one line */
+const shut = ref(props.past && props.entry.kind !== 'offline')
+const oneLine = computed(() => props.line || shut.value)
 
 const data = useDataStore()
 const journal = useJournalStore()
@@ -196,12 +201,19 @@ function choose(c: Choice) {
 }
 
 function openHead() {
+  if (shut.value) {
+    shut.value = false
+    return
+  }
   if (props.line) return emit('open')
   if (!several.value && page.value) peek({ kind: 'page', id: page.value.id })
 }
 
-/** Inside a docked card the pressed state needs the raised fill so it never merges with the chips under it */
-const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-13 font-medium text-toned hover:bg-btn hover:text-highlighted active:bg-btn-pressed aria-pressed:bg-btn-pressed aria-pressed:text-highlighted'
+/**
+ * «Не туда» and the line's «Отменить» in the toast action style, 14/500 accent ink (v23, F12). Inside a docked card
+ * the pressed state needs the raised fill so it never merges with the chips under it
+ */
+const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-sm font-medium text-accent-ink hover:bg-btn active:bg-btn-pressed aria-pressed:bg-btn-pressed'
 </script>
 
 <template>
@@ -233,7 +245,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           type="button"
           class="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 pl-3 text-left text-sm text-toned active:bg-pressed"
           :class="line ? 'pr-0' : 'pr-1'"
-          :aria-expanded="line ? false : undefined"
+          :aria-expanded="oneLine ? false : undefined"
           @click="openHead"
         >
           <UIcon
@@ -248,9 +260,10 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           <span class="min-w-0 flex-1 truncate">
             {{ title }} → <b class="font-medium text-highlighted">{{ several ? places.map(p => p.title || 'Без названия').join(', ') : page?.title || 'Без названия' }}</b>
           </span>
-          <!-- Desktop: the head is a link to the page in the panel, no chevron (Home); a folded line keeps it -->
+          <!-- Desktop: the head is a link to the page in the panel, no chevron (Home); a folded line keeps it, a past
+               one has none -->
           <UIcon
-            v-if="line || !several"
+            v-if="(line || !several) && !shut"
             name="i-lucide-chevron-right"
             class="size-4 shrink-0 text-dimmed"
             :class="line ? '' : 'lg:hidden'"
@@ -262,7 +275,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           class="shrink-0 px-1 text-13 text-toned"
         >перемещено</span>
         <button
-          v-if="wrongShown"
+          v-if="wrongShown && !shut"
           type="button"
           :class="[quiet, line ? 'px-1.75' : 'px-2.5']"
           :aria-pressed="wrongOpen"
@@ -279,7 +292,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           Отменить
         </button>
       </div>
-      <template v-if="!line">
+      <template v-if="!oneLine">
         <ul>
           <li
             v-for="(row, i) in rows"

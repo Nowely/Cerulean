@@ -121,9 +121,10 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
         class="flex max-h-[85dvh] flex-col"
         :class="anchor ? 'max-h-[min(30rem,var(--reka-popover-content-available-height))] px-2 pt-3 pb-2' : 'lg:max-h-[70dvh]'"
       >
+        <!-- No × (v23, F18): a tap outside, a swipe down or Esc closes it -->
         <div
           class="flex shrink-0 items-start gap-2"
-          :class="anchor ? 'pb-2.5 pl-2' : 'pr-2 pl-6 lg:pt-3 lg:pl-5'"
+          :class="anchor ? 'pr-2 pb-2.5 pl-2' : 'min-h-11 pr-6 pl-6 lg:pt-3 lg:pr-5 lg:pl-5'"
         >
           <div
             class="min-w-0 flex-1"
@@ -142,14 +143,6 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
               {{ ui.picker.subtitle }}
             </p>
           </div>
-          <UButton
-            icon="i-lucide-x"
-            variant="ghost"
-            square
-            :size="anchor ? 'sm' : undefined"
-            aria-label="Закрыть"
-            @click="open = false"
-          />
         </div>
         <div
           class="shrink-0"

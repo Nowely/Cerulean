@@ -102,7 +102,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
         :aria-current="isCurrent('/journal') ? 'page' : undefined"
       >
         <UIcon
-          name="i-lucide-message-square"
+          name="cer:journal"
           class="side-ico"
         />
         <span class="min-w-0 flex-1 truncate">Журнал</span>

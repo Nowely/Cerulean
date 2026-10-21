@@ -6,7 +6,7 @@ import type { Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { formatDue, formatDueBrief, isOverdue } from '~/domain/dates'
-import { splitMatch } from '~/domain/text'
+import { nb, splitMatch } from '~/domain/text'
 import RecordMark from '../common/RecordMark.vue'
 
 const props = withDefaults(defineProps<{
@@ -19,7 +19,9 @@ const props = withDefaults(defineProps<{
   query?: string
   density?: 'card' | 'list'
   selected?: boolean
-}>(), { place: true, brief: false, query: '', density: 'card', selected: false })
+  /** Right of the text, 14 muted: the weekday under «На неделе» («ср», «завтра»); line 2 then names the place only */
+  end?: string
+}>(), { place: true, brief: false, query: '', density: 'card', selected: false, end: '' })
 
 const emit = defineEmits<{ open: [] }>()
 const data = useDataStore()
@@ -29,7 +31,7 @@ const page = computed(() => data.pages[props.rec.pageId])
 const where = computed(() => data.placeOf(props.rec).title)
 const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
 const when = computed(() => {
-  if (!props.rec.due) return ''
+  if (!props.rec.due || props.end) return ''
   const d = props.brief ? formatDueBrief(props.rec.due, now.value) : formatDue(props.rec.due, now.value)
   return late.value ? `было ${d}` : d
 })
@@ -61,7 +63,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
         :class="{ 'text-dimmed line-through': rec.done }"
       >
         <template v-if="parts.mid">{{ parts.pre }}<mark class="rounded-[3px] bg-accent-soft font-semibold text-highlighted">{{ parts.mid }}</mark>{{ parts.post }}</template>
-        <template v-else>{{ rec.text }}</template>
+        <template v-else>{{ nb(rec.text) }}</template>
       </span>
       <span
         v-if="hasLine2"
@@ -78,5 +80,16 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
         >{{ tag }}</span>
       </span>
     </button>
+    <span
+      v-if="end"
+      class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned"
+    >
+      <UIcon
+        v-if="rec.note"
+        name="i-lucide-file-text"
+        class="size-4"
+        aria-label="есть заметка"
+      />{{ end }}
+    </span>
   </div>
 </template>

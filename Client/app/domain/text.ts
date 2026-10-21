@@ -27,6 +27,15 @@ export function lowerFirst(s: string): string {
   return s.charAt(0).toLowerCase() + s.slice(1)
 }
 
+/**
+ * A one-letter preposition or conjunction («в, к, с, у, о, и, а») stays with the next word: a no-break space after it
+ * (v23, F9). For titles, line 2 and the question card as shown; a draft being typed is left as typed, and a saved
+ * title turns it back into a plain space (`\s` takes it), so the stored text never holds it.
+ */
+export function nb(s: string): string {
+  return s.replace(/(?<=^|[\s(«„"])([вксуоиаВКСУОИА]) (?=\S)/g, '$1 ')
+}
+
 /** Lower case without ё, same length as the input (safe for index math) */
 export function fold(s: string): string {
   return s.toLowerCase().replace(/ё/g, 'е')

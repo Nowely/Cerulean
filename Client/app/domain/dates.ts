@@ -65,6 +65,11 @@ export function dayAim(key: string, now: number): string {
   return d.getFullYear() !== new Date(now).getFullYear() ? `${base} ${d.getFullYear()}` : base
 }
 
+/** The day a row of «На неделе» shows on its right (v23, B4): «завтра», then the short weekday («ср», «вс») */
+export function weekday(key: string, now: number): string {
+  return daysBetween(dayKey(now), key) === 1 ? 'завтра' : WEEKDAYS[keyToDate(key).getDay()]!
+}
+
 /** Only the time when the day goes without saying (in «Сегодня»): «10:00», otherwise the short form */
 export function formatDueBrief(due: Due, now: number): string {
   if (due.time && daysBetween(dayKey(now), due.date) === 0) return due.time

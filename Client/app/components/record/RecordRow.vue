@@ -6,7 +6,7 @@
 // Shift+F10 opens «⋯», Alt+↑/↓ moves the row. The right side shows properties, never when it was made (v22).
 import { computed, nextTick, onMounted, ref, useTemplateRef, type FunctionalComponent } from 'vue'
 import { LazyUContextMenu, LazyUDropdownMenu, LazyUTooltip } from '#components'
-import type { Id, Page, PageColor, Rec, ViewDef } from '~/domain/types'
+import { GLYPHS, type Id, type Page, type PageColor, type Rec, type ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import { useNow } from '~/composables/useNow'
@@ -15,6 +15,7 @@ import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useLater } from '~/composables/useLater'
 import { formatDue, isOverdue } from '~/domain/dates'
+import { nb } from '~/domain/text'
 import { formatValue, optionOf } from '~/domain/props'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
@@ -49,7 +50,7 @@ const { isDesktop } = useScreen()
 const actions = useRecordActions()
 const el = useTemplateRef<HTMLElement>('el')
 const ACTIONS_WIDTH = 184
-const swipe = useSwipe(el, ACTIONS_WIDTH)
+const swipe = useSwipe(el, ACTIONS_WIDTH, useTemplateRef<HTMLElement>('box'))
 
 // Until the menu code is in (useLater) the row, its hover buttons and «⋯» stand without their menus and
 // tooltips; a phone never gets the right-click menu or the tooltips at all
@@ -75,6 +76,8 @@ const inbox = computed(() => props.page.kind === 'inbox')
 const asking = computed(() => inbox.value && props.rec.tags.includes('clarify') && !props.rec.done)
 /** Waiting for the network: a state on the right, not a tag */
 const waiting = computed(() => inbox.value && props.rec.tags.includes('offline'))
+/** A Входящие row that still needs a place: its guess chip and «⋯» end the row (a preview only reads) */
+const choosing = computed(() => (asking.value || waiting.value) && !props.readonly)
 
 /** «Справа в строке»: the view's chosen properties, empty ones hidden; a «Выбор» value is its pill (v23) */
 const right = computed(() => {
@@ -181,12 +184,25 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
-/** Two pages worked out again from the pages there are now; «Ещё…» has the rest */
-const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id => data.pages[id]!))
+/**
+ * Входящие (v23, B1, F13): one chip with the strongest guess, worked out again from the pages there are now; the
+ * faint «⋯» has the other guesses, «Переместить…» and «Удалить», so every swipe on the row is in it too
+ */
+const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 3).map(id => data.pages[id]).filter((p): p is Page => !!p))
+const inboxMenu = computed<MenuItem[][]>(() => [
+  guesses.value.slice(1).map(g => ({ label: `→ ${g.title || 'Без названия'}`, icon: GLYPHS[g.glyph ?? 'doc'], onSelect: () => emit('choose', g.id) })),
+  [
+    { label: 'Переместить…', icon: 'i-lucide-arrow-right', onSelect: () => emit('choose', 'more') },
+    { label: 'Удалить', icon: 'i-lucide-trash-2', danger: true, onSelect: remove }
+  ]
+].filter(g => g.length))
 </script>
 
 <template>
-  <div class="relative">
+  <div
+    ref="box"
+    class="relative"
+  >
     <!-- Swipe actions grow from the right edge over the row's values; the mark and the text stay in place (B1) -->
     <div
       v-if="!readonly && !isDesktop"
@@ -292,7 +308,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           <span
             class="text-record"
             :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
-          >{{ rec.text }}</span>
+          >{{ nb(rec.text) }}</span>
           <span
             v-if="notePreview"
             class="truncate text-caption font-normal text-toned"
@@ -309,7 +325,10 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           </span>
         </button>
 
-        <span class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums">
+        <span
+          v-if="waiting || subs.length || (rec.note && !notePreview) || right.length"
+          class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums"
+        >
           <span v-if="waiting">ждёт сети</span>
           <span
             v-if="subs.length"
@@ -371,9 +390,43 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           </button>
         </span>
 
+        <!-- Входящие: the strongest guess, one width (92–120) so the next row's chip lands under the thumb, then the
+             faint «⋯»; at 320 the chip drops under the text as line 2 -->
+        <template v-if="choosing">
+          <span
+            v-if="guesses[0]"
+            class="sunk ml-1.5 flex max-w-30 min-w-23 shrink-0 max-[359px]:hidden"
+          >
+            <ChipButton
+              :label="`→ ${guesses[0].title || 'Без названия'}`"
+              :aria-label="`Переместить в «${guesses[0].title || 'Без названия'}»`"
+              class="w-full justify-center font-medium"
+              @click="emit('choose', guesses[0].id)"
+            />
+          </span>
+          <ActionMenu
+            :items="inboxMenu"
+            :title="rec.text"
+            caption="Входящие"
+            :label="`Ещё для «${rec.text}»`"
+          >
+            <button
+              type="button"
+              class="relative -mr-2 ml-1.5 flex h-11 w-6 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed after:absolute after:inset-y-0 after:-right-1 after:-left-0.75 hover:text-highlighted active:bg-pressed aria-expanded:text-highlighted lg:mr-0 lg:h-9 lg:w-8"
+              :aria-label="`Ещё для «${rec.text}»`"
+              aria-haspopup="dialog"
+            >
+              <UIcon
+                name="i-lucide-ellipsis"
+                class="size-4.5"
+              />
+            </button>
+          </ActionMenu>
+        </template>
+
         <!-- Desktop: the actions on hover, after the values; on touch they live in the swipe and in «⋯» -->
         <span
-          v-if="!readonly && isDesktop && !lifted"
+          v-if="!readonly && isDesktop && !lifted && !choosing"
           class="ml-1 hidden shrink-0 items-center gap-0.5 group-hover/row:flex group-focus-within/row:flex"
         >
           <component
@@ -407,7 +460,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         </span>
         <component
           :is="later.ready.value ? LazyUDropdownMenu : Bare"
-          v-if="!readonly && isDesktop"
+          v-if="!readonly && isDesktop && !choosing"
           v-model:open="menuOpen"
           :items="menu"
           :content="{ align: 'end', onCloseAutoFocus: backToRow }"
@@ -430,7 +483,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           </component>
         </component>
         <!-- Phone: «⋯» is a sheet, opened by a long press that lets go without moving, and by screen readers -->
-        <template v-else-if="!readonly">
+        <template v-else-if="!readonly && !isDesktop">
           <button
             type="button"
             class="sr-only"
@@ -449,22 +502,19 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
       </div>
     </component>
 
-    <!-- Входящие: two guessed pages right on the row, saying what a tap does (a preview only reads) -->
+    <!-- Входящие at 320: the guess is line 2, under the text -->
     <div
-      v-if="(asking || waiting) && !readonly"
-      class="flex flex-wrap gap-1.5 pr-3 pb-3 pl-12 lg:pl-11"
+      v-if="choosing && guesses[0]"
+      class="flex pr-3 pb-2 pl-12 min-[360px]:hidden"
     >
-      <ChipButton
-        v-for="g in guesses"
-        :key="g.id"
-        :label="`→ ${g.title || 'Без названия'}`"
-        :aria-label="`Переместить в «${g.title || 'Без названия'}»`"
-        @click="emit('choose', g.id)"
-      />
-      <ChipButton
-        label="Ещё…"
-        @click="emit('choose', 'more')"
-      />
+      <span class="sunk flex max-w-30 min-w-23">
+        <ChipButton
+          :label="`→ ${guesses[0].title || 'Без названия'}`"
+          :aria-label="`Переместить в «${guesses[0].title || 'Без названия'}»`"
+          class="w-full justify-center font-medium"
+          @click="emit('choose', guesses[0].id)"
+        />
+      </span>
     </div>
   </div>
 </template>

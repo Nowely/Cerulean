@@ -13,6 +13,7 @@ import { usePeek } from '~/composables/usePeek'
 import { usePropSheets } from '~/composables/usePropSheets'
 import { filterRecords, noValueLabel, sortRecords } from '~/domain/views'
 import { formatDue, isOverdue } from '~/domain/dates'
+import { nb } from '~/domain/text'
 import { recordSummary } from '~/domain/summary'
 import { formatValue, optionColor, optionOf } from '~/domain/props'
 import RecordMark from '../../common/RecordMark.vue'
@@ -191,7 +192,7 @@ const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
             <span
               class="text-base lg:text-15"
               :class="r.done ? 'text-dimmed line-through' : 'text-highlighted'"
-            >{{ r.text }}</span>
+            >{{ nb(r.text) }}</span>
             <span
               v-if="subOf(r)"
               class="text-13"
