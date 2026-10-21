@@ -108,6 +108,7 @@ function onUndone(e: Entry) {
         :series="series"
         :line="line"
         docked
+        :chat-link="mode === 'auto'"
         @open="opened = true"
         @undone="onUndone"
       />

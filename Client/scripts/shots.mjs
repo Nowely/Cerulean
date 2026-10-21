@@ -142,6 +142,8 @@ const scenarios = [
     await openHome(p)
     await homeMenu(p, 'Новая страница')
     await p.waitForURL(/\/p\//)
+    // The title takes focus as soon as the page is on screen
+    await p.getByRole('textbox', { name: 'Название страницы' }).and(p.locator(':focus')).waitFor({ timeout: 3000 })
     await settle(p, 400)
   } },
   { name: 'MobileOffline', device: MOBILE, run: async (p) => {
@@ -301,7 +303,9 @@ async function homeMenu(page, item) {
   }
   // The sheet hands focus back to «⋯» once it has closed: drop it so no focus ring shows
   await settle(page, 1000)
-  await page.evaluate(() => document.activeElement?.blur())
+  await page.evaluate(() => {
+    if (document.activeElement?.getAttribute('aria-label') === 'Действия с Главной') document.activeElement.blur()
+  })
   await settle(page, 200)
 }
 

@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<{
   rec: Rec
   /** «в Задачи» on line 2; off where the place is already said (a receipt) */
   place?: boolean
-  /** Only the time for a date of today (inside «Сегодня») */
+  /** Only the time for a date of today (inside «Сегодня», whose «Просрочено» caption is its one warn signal) */
   brief?: boolean
   /** Highlight a search match */
   query?: string
@@ -66,7 +66,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
       <span
         v-if="hasLine2"
         class="max-w-full truncate text-caption font-normal"
-        :class="late ? 'text-warn-ink' : 'text-toned'"
+        :class="late && !brief ? 'text-warn-ink' : 'text-toned'"
       >
         <template v-if="place && where">{{ inPlace(where) }}</template>
         <template v-if="place && where && (when || tag)"> · </template>

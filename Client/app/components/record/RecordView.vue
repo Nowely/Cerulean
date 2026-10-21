@@ -39,6 +39,10 @@ const editable = computed(() => full.value || props.edit)
 const page = computed(() => data.pages[props.rec.pageId])
 const parent = computed(() => props.rec.parentId ? data.records[props.rec.parentId] : undefined)
 const subs = computed(() => data.subitemsOf(props.rec.id))
+// Open subitems first; the done ones fold into «3 готово ›»
+const openSubs = computed(() => subs.value.filter(s => !s.done))
+const doneSubs = computed(() => subs.value.filter(s => s.done))
+const doneShown = ref(false)
 const done = computed(() => subs.value.filter(s => s.done).length)
 const links = computed(() => data.linksOf(props.rec.id))
 const linksTitle = useId()
@@ -46,11 +50,11 @@ const linksTitle = useId()
 const ui = useUiStore()
 const titleField = useTemplateRef<InstanceType<typeof TitleField>>('titleField')
 // «Переименовать» in «⋯»
-watch(() => ui.focusTitle, async (id) => {
-  if (!full.value || id !== props.rec.id) return
+watch([() => ui.focusTitle, titleField], async ([id, field]) => {
+  if (!full.value || id !== props.rec.id || !field) return
   ui.focusTitle = null
   await nextTick()
-  titleField.value?.focus()
+  field.focus()
 }, { immediate: true })
 const note = computed({
   get: () => props.rec.note,
@@ -324,7 +328,7 @@ function openPlace() {
       </h2>
       <ul v-if="subs.length && page">
         <li
-          v-for="s in subs"
+          v-for="s in doneShown ? [...openSubs, ...doneSubs] : openSubs"
           :key="s.id"
         >
           <RecordRow
@@ -337,8 +341,21 @@ function openPlace() {
           />
         </li>
       </ul>
+      <button
+        v-if="doneSubs.length && page"
+        type="button"
+        class="mx-2 flex h-11 cursor-pointer items-center gap-1 rounded-item px-3 text-sm text-toned hover:bg-muted hover:text-highlighted active:bg-pressed lg:mx-0 lg:h-8 lg:px-1.5"
+        :aria-expanded="doneShown"
+        @click="doneShown = !doneShown"
+      >
+        {{ doneSubs.length }} готово<UIcon
+          name="i-lucide-chevron-right"
+          class="size-3.5 text-dimmed transition-transform"
+          :class="{ 'rotate-90': doneShown }"
+        />
+      </button>
       <p
-        v-else
+        v-else-if="!subs.length"
         class="px-5 py-1 text-meta text-toned lg:px-0"
       >
         Подпунктов пока нет. Пиши внизу, и они появятся здесь.

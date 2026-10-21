@@ -26,11 +26,13 @@ const props = withDefaults(defineProps<{
   entry: Entry
   /** Docked: the sends joined into this receipt, oldest first, ending with `entry` */
   series?: Entry[]
-  /** Floated above a composer: «в Чате ›», a 10 s window */
+  /** Floated above a composer: a 10 s window */
   docked?: boolean
+  /** Docked on Главная: the footer also has «в Чате ›» */
+  chatLink?: boolean
   /** The keyboard is up on a phone: one line, a tap opens the card */
   line?: boolean
-}>(), { series: undefined, docked: false, line: false })
+}>(), { series: undefined, docked: false, chatLink: false, line: false })
 const emit = defineEmits<{ open: [], undone: [entry: Entry] }>()
 
 const data = useDataStore()
@@ -276,7 +278,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           </UButton>
           <span class="flex-1" />
           <NuxtLink
-            v-if="docked"
+            v-if="docked && chatLink"
             to="/chat"
             class="-mr-1.5 flex h-8 shrink-0 items-center gap-0.5 rounded-item pr-1.5 pl-2.5 text-13 text-dimmed hover:bg-btn hover:text-highlighted"
           >

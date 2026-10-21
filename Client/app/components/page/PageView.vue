@@ -105,11 +105,12 @@ function onTitleFocus(v: boolean) {
 }
 const glyphOpen = ref(false)
 // «Переименовать» and «Значок и цвет» from a «⋯», here or on Главная
-watch(() => ui.focusTitle, async (id) => {
-  if (!full.value || id !== props.page.id) return
+// It waits for the field itself: a page opened in the same tap mounts after its setup has run
+watch([() => ui.focusTitle, titleInput], async ([id, field]) => {
+  if (!full.value || id !== props.page.id || !field) return
   ui.focusTitle = null
   await nextTick()
-  titleInput.value?.focus()
+  field.focus()
 }, { immediate: true })
 watch(() => ui.openGlyph, (id) => {
   if (!full.value || id !== props.page.id) return

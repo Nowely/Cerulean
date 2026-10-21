@@ -13,6 +13,7 @@
     "test": "vitest run",
     "eval": "vitest run --config vitest.eval.config.ts",
     "test:watch": "vitest",
+    "checks": "node scripts/checks.mjs",
     "shots": "node scripts/shots.mjs"
   },
   "dependencies": {

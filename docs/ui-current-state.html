@@ -82,6 +82,16 @@ section.block > .wrap { display: grid; gap: 18px; }
 .tag.better { background: var(--ok-soft); color: var(--ok-ink); }
 .tag.diff { background: var(--accent-soft); color: var(--accent-ink); }
 .tag.wait { background: var(--warn-soft); color: var(--warn-ink); }
+.tag.fail { background: var(--warn-ink); color: var(--bg); }
+
+.checks { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.checks table { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.45; min-width: 640px; }
+.checks th, .checks td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--line); }
+.checks thead th { border-top: 0; font-size: 12.5px; font-weight: 500; color: var(--faint); letter-spacing: 0.02em; }
+.checks tr.sub th { background: var(--surface); color: var(--ink); font-weight: 600; font-size: 13.5px; }
+.checks td.num { font-variant-numeric: tabular-nums; color: var(--faint); white-space: nowrap; }
+.checks td b { color: var(--ink); font-weight: 500; }
+.checks td:nth-child(3) { white-space: nowrap; }
 
 .group { padding-block: 36px 4px; }
 .group { max-width: calc(1160px); margin-inline: auto; }
@@ -112,15 +122,15 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
 </head>
 <body>
 <header class="wrap hero">
-  <p class="eyebrow">Cerulean · клиент · 20 октября 2026</p>
+  <p class="eyebrow">Cerulean · клиент · 21 октября 2026</p>
   <h1>Приложение рядом с макетом</h1>
-  <p class="lead">Каждое состояние: слева макет (холст, версия 55), справа приложение, в светлой и тёмной теме. Перенос v20 закончен на всех экранах телефона и компьютера.</p>
+  <p class="lead">Каждое состояние: слева макет (холст, версия 57, v21), справа приложение, в светлой и тёмной теме. Ниже таблица проверок: каждый пункт дельты v21 и каждый баг из отчёта QA со своей проверкой и результатом.</p>
   <dl class="facts">
-    <div><dt>Состояний</dt><dd>48</dd></div>
-    <div><dt>Кадров (светлая и тёмная)</dt><dd>192</dd></div>
-    <div><dt>Как в макете или лучше</dt><dd>43</dd></div>
-    <div><dt>Иначе, с причиной</dt><dd>5</dd></div>
-    
+    <div><dt>Состояний</dt><dd>57</dd></div>
+    <div><dt>Кадров (светлая и тёмная)</dt><dd>216</dd></div>
+    <div><dt>Как в макете или лучше</dt><dd>56</dd></div>
+    <div><dt>Иначе, с причиной</dt><dd>1</dd></div>
+    <div><dt>Проверок пройдено</dt><dd>50 из 52</dd></div>
   </dl>
 </header>
 
@@ -152,7 +162,15 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
 <section class="block">
   <div class="wrap prose">
     <h2>Что сделано</h2>
-    <ul><li>Утверждённая пара тем: светлая «Строгий, плоский» и тёмная ночная, с ролями elev, panel, chip, warn-fill. Цвета только в <code>tokens.css</code>.</li><li>Правила «Меньше шума»: значки без плашек (плашка только в шапке страницы), счётчики простым текстом, кнопки без рамок.</li><li>Правки v16-app-sync и ревью v19: тексты, второй вид у Целей, связь Полумарафона, Корзина с подтверждением.</li><li>Главная v20: шапка с «⋯», секция Недавнее, сворачивание секций, компактный режим без статусов, «⋯» у строки и долгое нажатие.</li><li>Правки Fable: поле не прыгает при наборе, клавиатура не закрывается после отправки, серия «3 записи → Продукты», «Отменить» возвращает текст.</li><li>Полноэкранный Поиск на телефоне и один выбор страницы с поиском вместо четырёх.</li><li>Перенос на все экраны: без вкладок (Чат и Настройки открываются с Главной), боковая панель как в Codex, один тонкий composer, квитанции на сетке Поиска, подписи групп 12/500, утопленные поля поиска, строка «Секция» у новой страницы, «во Входящие».</li><li>На компьютере: шапки 72 px у Главной, Чата и Настроек, Поиск по Ctrl K с недавними записями, четыре новых состояния Главной.</li></ul>
+    <ul><li>Дельта v21, все 27 пунктов: первый день без страниц, «Отменить» на одну отправку, одна квитанция для всех экранов, срок по тапу, микрофон, чипы Входящих со стрелкой, превью для ссылок, названия на месте, меньше шума, десктоп без дерева на Главной и с тонкой строкой «‹ Главная».</li><li>Баги из отчёта QA: свайп пальцем, запуск без сети (проверено на сборке), длинные страницы (600 записей: 9,7 с → 0,7 с), меню секции как в спецификации, липкие подписи секций, русская страница 404, U5 (звонки и платежи без страницы Задач предлагают шаблон, а не случайную страницу).</li><li>Процесс: <code>docs/decisions.md</code> (журнал решений с источником и местом в коде), <code>AGENTS.md</code> в корне, <code>scripts/checks.mjs</code> (скриптовые проверки), исходники этого отчёта в <code>docs/report/</code>.</li></ul>
+  </div>
+</section>
+
+<section class="block" id="checks">
+  <div class="wrap">
+    <h2>Проверки</h2>
+    <p class="lead">Каждый пункт дельты и каждый баг со своей проверкой: что нажать и что должно случиться. Пункт без пройденной проверки не сделан.</p>
+    <div class="checks"><table><thead><tr><th scope="col">№</th><th scope="col">Пункт и проверка</th><th scope="col">Итог</th><th scope="col">Как проверено</th></tr></thead><tbody><tr class="sub"><th colspan="4" scope="colgroup">v21 · цикл записи</th></tr><tr><td class="num">1</td><td><b>День первый без страниц</b><br>Свежие данные, «хлеб» → «1 запись → Покупки»; «Отменить» → страницы Покупки нет. «прочитать Канемана» → четыре шаблона.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-1); кадры «Первая запись без страниц», «Уточнение в первый день». <a href="#s-MobileFirstSent">кадр</a></td></tr><tr><td class="num">2</td><td><b>«Отменить» на одну отправку</b><br>«молоко», «Отменить», отправить снова, затем «позвонить маме» → Задачи.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-2); кадр «После «Отменить»». <a href="#s-MobileUndo">кадр</a></td></tr><tr><td class="num">3</td><td><b>Одна квитанция везде</b><br>На Продуктах «Авто», «позвонить маме» → квитанция «1 запись → Задачи» над полем, не тост.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-3). <a href="#s-MobilePageSend">кадр</a></td></tr><tr><td class="num">4</td><td><b>Серия называет, что отменяет</b><br>«Отменить «Яблоки»» или «Отменить последние 2», строки подсвечены; в одну строку есть «›».</td><td><span class="tag better">Да</span></td><td>Кадры «Серия», «Отправлено» на компьютере. <a href="#s-MobileSeries">кадр</a></td></tr><tr><td class="num">5</td><td><b>«Не туда» в шапке</b><br>Внизу только «Отменить» (и «в Чате ›» на Главной); нажатое «Не туда» залито chip-pressed.</td><td><span class="tag better">Да</span></td><td>Кадры квитанций. «в Чате ›» теперь только на Главной. <a href="#s-MobileSent">кадр</a></td></tr><tr><td class="num">6</td><td><b>Строка догадки</b><br>Начинается у текста чипа; в первый день — «Пиши что угодно: разложится по страницам».</td><td><span class="tag better">Да</span></td><td>Кадр «Первый день». <a href="#s-MobileFirst">кадр</a></td></tr><tr><td class="num">7</td><td><b>Срок по тапу</b><br>«позвонить стоматологу завтра в 10» → тап «завтра, 10:00» → «Сегодня» → запись в Сегодня.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-7). <a href="#s-MobileDue">кадр</a></td></tr><tr><td class="num">8</td><td><b>Микрофон</b><br>Волна, «Слушаю…», слова; «Остановить» оставляет черновик. Без сети бледный, тап → «Диктовка без сети не работает».</td><td><span class="tag better">Да</span></td><td>Кадры «Диктовка» (телефон и компьютер); без сети проверено вручную в эмуляции. <a href="#s-MobileVoice">кадр</a></td></tr><tr class="sub"><th colspan="4" scope="colgroup">v21 · перенос, поиск, правка</th></tr><tr><td class="num">9</td><td><b>Чипы Входящих</b><br>«→ Задачи», «→ Идеи», «Ещё…»; выбор → «Подарок маме на др → Задачи · Отменить».</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-9). <a href="#s-MobileInbox">кадр</a></td></tr><tr><td class="num">10</td><td><b>Превью для ссылок</b><br>Строки Сегодня и «Связано» открывают превью; × возвращает на страницу. Поиск ведёт на страницу.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-10). <a href="#s-MobileToday">кадр</a></td></tr><tr><td class="num">11</td><td><b>Названия на месте</b><br>Enter или уход из поля сохраняет, Esc возвращает; «Переименовать» в «⋯». Сегодня и Входящие не переименовываются.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-11); длинные названия переносятся (B5). <a href="#s-MobileItem">кадр</a></td></tr><tr class="sub"><th colspan="4" scope="colgroup">v21 · меньше шума</th></tr><tr><td class="num">12</td><td><b>Нет точки у Чата</b><br>Ни в шапке Главной, ни в панели компьютера.</td><td><span class="tag better">Да</span></td><td>Кадры Главной. <a href="#s-MobileHome">кадр</a></td></tr><tr><td class="num">13</td><td><b>Время в конце строки Чата</b><br>Карточки на всю ширину.</td><td><span class="tag better">Да</span></td><td>Кадр Чата. <a href="#s-MobileChat">кадр</a></td></tr><tr><td class="num">14</td><td><b>Виды</b><br>Нет «+» после вкладок; «Новый вид» в «Настроить вид» с подписью «Название вида»; у Сегодня нет полосы видов.</td><td><span class="tag better">Да</span></td><td>Кадры «Настроить вид», «Сегодня». <a href="#s-MobileView">кадр</a></td></tr><tr><td class="num">15</td><td><b>Пустая страница</b><br>Нет «Как показывать»; с фокусом в названии — «Назови страницу, потом пиши внизу.».</td><td><span class="tag better">Да</span></td><td>Кадр «Новая страница». Заодно исправлено: фокус не доходил до названия новой страницы. <a href="#s-MobileBlank">кадр</a></td></tr><tr><td class="num">16</td><td><b>Тихий первый день</b><br>Подсказка про долгое нажатие ждёт второй страницы; строка про ключ уступает место карточке над полем.</td><td><span class="tag better">Да</span></td><td>Кадр «Первая запись без страниц». <a href="#s-MobileFirstSent">кадр</a></td></tr><tr><td class="num">17</td><td><b>Даты</b><br>«Добавлено» всегда с датой («вручную · сейчас»); просроченный срок — «было вчера» и на странице записи.</td><td><span class="tag better">Да</span></td><td>Кадр записи. <a href="#s-MobileGoal">кадр</a></td></tr><tr><td class="num">18</td><td><b>Корзина</b><br>«Удалить навсегда» — корзина warn, не ×.</td><td><span class="tag better">Да</span></td><td>Кадр Корзины. <a href="#s-MobileTrash">кадр</a></td></tr><tr><td class="num">19</td><td><b>Настройки</b><br>Модель скрыта без ключа; в Подключении «Сохранить» видна сразу и неактивна без ключа.</td><td><span class="tag better">Да</span></td><td>Кадры «Настройки», «Подключение». <a href="#s-MobileConnect">кадр</a></td></tr><tr class="sub"><th colspan="4" scope="colgroup">v21 · компьютер</th></tr><tr><td class="num">20</td><td><b>Без дерева на Главной</b><br>1440: секции один раз, в центре; на других экранах дерево в панели.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-20). <a href="#s-Home">кадр</a></td></tr><tr><td class="num">21</td><td><b>Строка названия 72 px</b><br>Значок, название и «⋯» в одной строке, путь назад — строка 13 px над ним.</td><td><span class="tag better">Да</span></td><td>Кадры «Страница», «Запись». <a href="#s-Page">кадр</a></td></tr><tr><td class="num">22</td><td><b>Один слой наведения</b><br>Строка под мышью показывает свои значки с подсказками, и только их.</td><td><span class="tag better">Да</span></td><td>Проверено при разработке, кадр «Страница». <a href="#s-Page">кадр</a></td></tr><tr><td class="num">23</td><td><b>«Из чата» одной строкой</b><br>«Из чата · 2 записи сегодня ›» открывает Чат.</td><td><span class="tag better">Да</span></td><td>Кадр «Страница». <a href="#s-Page">кадр</a></td></tr><tr><td class="num">24</td><td><b>Один фильтр в Поиске</b><br>«Все секции ⌄»; «Только названия» нет нигде.</td><td><span class="tag better">Да</span></td><td>Кадр Поиска. <a href="#s-Palette">кадр</a></td></tr><tr><td class="num">25</td><td><b>Правая панель</b><br>Строки квитанции, находки, «Связано» и «Открыть» в «⋯» карточки доски открывают панель.</td><td><span class="tag better">Да</span></td><td>Кадры «Чат», «Доска»; «Открыть» в «⋯» карточки — скрипт (B26 открывает тот же лист). <a href="#s-Board">кадр</a></td></tr><tr><td class="num">26</td><td><b>Срок на компьютере</b><br>Вторая строка записи в квитанции, поповер 300 px; без даты — «Добавить срок».</td><td><span class="tag better">Да</span></td><td>Кадр «Срок в Чате». <a href="#s-MainDue">кадр</a></td></tr><tr><td class="num">27</td><td><b>Названия сохраняются при уходе из поля</b><br>Enter и blur сохраняют.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-11: уход из поля сохраняет). <a href="#s-Item">кадр</a></td></tr><tr class="sub"><th colspan="4" scope="colgroup">Баги из отчёта QA</th></tr><tr><td class="num">B1</td><td><b>Свайп пальцем</b><br>Строка уезжает влево под пальцем и открывает «Переместить» и «Удалить».</td><td><span class="tag wait">Частично</span></td><td><code>touch-action: pan-y</code> на строках, причина из отчёта устранена. На живом iPhone и Android ещё не проверено.</td></tr><tr><td class="num">B2</td><td><b>Запуск без сети</b><br>Установленное приложение открывается офлайн.</td><td><span class="tag better">Да</span></td><td>Сборка <code>.output</code>: после регистрации service worker отключили сеть, /chat открылся из кэша.</td></tr><tr><td class="num">B4</td><td><b>Длинные страницы</b><br>600 записей в Продуктах: открытие и запись без задержек.</td><td><span class="tag better">Да</span></td><td>Сборка, Chromium: открытие 9,7 с → 0,7 с (при 4× замедлении 60 с → 3,7 с), 11 тыс. узлов → 1,7 тыс.; отправка 0,9 с при 4×. Показываются первые 100 строк и «Показать ещё».</td></tr><tr><td class="num">B5</td><td><b>Названия не обрезаются</b><br>Длинное название страницы и записи переносится и читается целиком.</td><td><span class="tag better">Да</span></td><td>Поле названия растёт по тексту. <a href="#s-MobileItem">кадр</a></td></tr><tr><td class="num">B8</td><td><b>«Отменить» не залипает</b><br>См. v21 · 2.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-2). <a href="#s-MobileUndo">кадр</a></td></tr><tr><td class="num">B9</td><td><b>Квитанция на Главной не пропадает</b><br>«Не туда» остаётся тихой кнопкой, пока квитанцию не сменит другая.</td><td><span class="tag better">Да</span></td><td>Проверено при разработке: квитанция живёт, пока её не сменит следующая. <a href="#s-MobileSent">кадр</a></td></tr><tr><td class="num">B12</td><td><b>«Выбор» без вариантов</b><br>«Сохранить» неактивна, пока нет хотя бы одного варианта.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (B12).</td></tr><tr><td class="num">B13</td><td><b>Перенос с «Отменить»</b><br>Чип Входящих и колонка доски дают тост с «Отменить».</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (v21-9, B13-board). <a href="#s-MobileBoardMove">кадр</a></td></tr><tr><td class="num">B14</td><td><b>Меню секции</b><br>Новая страница, Переименовать, Изменить порядок, Новая секция, Удалить секцию.</td><td><span class="tag wait">Частично</span></td><td>«Изменить порядок» — временный лист со стрелками: в макетах экрана нет, v22 приносит перетаскивание.</td></tr><tr><td class="num">B15</td><td><b>Меню страницы</b><br>«Переименовать» и «Значок и цвет».</td><td><span class="tag better">Да</span></td><td>Кадр меню страницы. <a href="#s-MobilePageMenu">кадр</a></td></tr><tr><td class="num">B16</td><td><b>Дата в квитанции</b><br>«позвонить стоматологу сегодня в 10» → в строке «сегодня, 10:00».</td><td><span class="tag better">Да</span></td><td>Кадр «Отправлено». <a href="#s-MobileSent">кадр</a></td></tr><tr><td class="num">B17</td><td><b>Просрочка одинаково</b><br>«было …» в warn; точка календаря warn; в Сегодня warn только подпись.</td><td><span class="tag better">Да</span></td><td>Кадры «Сегодня», «Календарь». <a href="#s-MobileToday">кадр</a></td></tr><tr><td class="num">B18</td><td><b>Корзина возвращает назад</b><br>Из «⋯» Главной — назад на Главную.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (B18). <a href="#s-MobileTrash">кадр</a></td></tr><tr><td class="num">B19</td><td><b>Тексты</b><br>Единственное число в Корзине; «30 дней» один раз.</td><td><span class="tag better">Да</span></td><td>Кадр «Очистить корзину». <a href="#s-MobileTrashClear">кадр</a></td></tr><tr><td class="num">B21</td><td><b>Чипы Входящих переносятся</b><br>«Ещё…» не уходит за край; нет метки «уточнить».</td><td><span class="tag better">Да</span></td><td>Кадр Входящих. <a href="#s-MobileInbox">кадр</a></td></tr><tr><td class="num">B22</td><td><b>Офлайн-тексты</b><br>«ждёт сети · сегодня, 9:14»; после сети — «разобрано, когда появилась сеть».</td><td><span class="tag better">Да</span></td><td>Кадр «Без сети». <a href="#s-MobileOffline">кадр</a></td></tr><tr><td class="num">B23</td><td><b>Тост шаблона</b><br>«Открыть» закрывает тост.</td><td><span class="tag better">Да</span></td><td>Действие любого тоста теперь закрывает его.</td></tr><tr><td class="num">B24</td><td><b>Подписи полей</b><br>Подписи над полями; ручной ключ OpenRouter свёрнут.</td><td><span class="tag better">Да</span></td><td>Кадр «Подключение». <a href="#s-Connect">кадр</a></td></tr><tr><td class="num">B25</td><td><b>«Другой»: адрес</b><br>«Сохранить» неактивна; плохой адрес — «Адрес начинается с https://».</td><td><span class="tag better">Да</span></td><td>Кадр «Подключение» на компьютере. <a href="#s-Connect">кадр</a></td></tr><tr><td class="num">B26</td><td><b>Колонка доски — лист</b><br>На телефоне «⋯» карточки открывает лист.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (B26). <a href="#s-MobileBoard">кадр</a></td></tr><tr><td class="num">B27</td><td><b>Липкие подписи секций</b><br>Подпись секции остаётся вверху, пока её страницы на экране.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (B27).</td></tr><tr><td class="num">B28</td><td><b>Русская 404</b><br>/nonexistent → «Такой страницы нет · На главную»; превью несуществующего закрывается с тостом.</td><td><span class="tag better">Да</span></td><td>скрипт scripts/checks.mjs (B28).</td></tr><tr><td class="num">B29</td><td><b>Подключение в Настройках</b><br>Строка не переносится на три.</td><td><span class="tag better">Да</span></td><td>Кадр «Настройки». <a href="#s-MobileSettings">кадр</a></td></tr><tr><td class="num">B32</td><td><b>Статус в Настройках компьютера</b><br>Строка статуса не прячется под шапкой.</td><td><span class="tag better">Да</span></td><td>Кадр «Настройки» на компьютере. <a href="#s-Settings">кадр</a></td></tr><tr><td class="num">U5</td><td><b>Звонки и платежи</b><br>«позвонить …», «оплатить …» → Задачи; без страницы задач — шаблон «Дела», а не случайная недавняя страница. Подсказки Входящих пересчитываются.</td><td><span class="tag better">Да</span></td><td>Тесты в <code>test/domain.test.ts</code>.</td></tr></tbody></table></div>
   </div>
 </section>
 
@@ -161,82 +179,107 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
       <h2>Главная</h2>
       <p class="lead">Экран v20 с правками Fable, без вкладок: Чат и Настройки открываются отсюда.</p>
       <div class="cards">
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileHome" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Со сводкой</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Mobile-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/Mobile-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileHome-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileHome-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Входящие, Избранное, Недавнее, секции. Просрочка сказана один раз на экран, ниже она нейтральная. Значки без плашек.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileCompact" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Компактно</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileCompact-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileCompact-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileCompact-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileCompact-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Строки по 32 px, без статусов: только точка на значке, где статус был бы цветным.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileFolded" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Свёрнутые секции</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileFolded-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileFolded-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileFolded-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileFolded-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Свёрнутая секция показывает «· N» и статус.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileCompactFolded" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Компактно и свёрнуто</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileCompactFolded-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileCompactFolded-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileCompactFolded-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileCompactFolded-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>В свёрнутой компактной секции статус сжат до точки.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileHomeMenu" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Меню «⋯»</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileHomeMenu-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileHomeMenu-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileHomeMenu-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileHomeMenu-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Компактные строки, Новая страница, Новая секция, Настройки, Корзина.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileRecent" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Недавнее</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileRecent-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileRecent-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileRecent-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileRecent-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Пять новых страниц без секции, «Ещё N» и подсказка про долгое нажатие. Страницы в приложении пустые, поэтому сводки другие.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileFirst" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Первый запуск</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileFirst-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileFirst-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileFirst-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileFirst-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>«Начать с шаблона» и строка про ключ, обе убираются крестиком.</p>
+        <p>«Начать с шаблона» и строка про ключ, обе убираются крестиком. Строка догадки говорит, для чего поле: «Пиши что угодно: разложится по страницам».</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileWrite" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Пишу</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileWrite-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileWrite-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileWrite-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileWrite-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Чип остаётся «Авто», догадка строкой над полем, текст не прыгает.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileSent" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Отправлено</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileSent-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileSent-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileSent-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileSent-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Квитанция с полоской отсчёта внутри «Отменить» и «Не туда».</p>
+        <p>«Не туда» в шапке квитанции, внизу только «Отменить «Позвонить стоматологу»» с отсчётом и «в Чате ›». Распознанная дата — кнопка справа в строке.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileSeries" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Серия</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileSeries-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileSeries-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileSeries-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileSeries-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Три отправки в одну страницу за 30 секунд складываются в «3 записи → Продукты». Слияние выключается одной константой, если Josh выберет простую квитанцию.</p>
+        <p>Три отправки за 30 секунд складываются в «3 записи → Продукты»; «Отменить последние 3» и подсветка этих строк.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobilePending" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Разбирается</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobilePending-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobilePending-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobilePending-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobilePending-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Карточка ожидания над полем.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobilePick" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Куда записать</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobilePick-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobilePick-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobilePick-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobilePick-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Выбор страницы с поиском: Авто, Похоже на, Открыто недавно, секции. В приложении открыт из Чата, в макете с Главной.</p>
+      </article>
+      <article id="s-MobileFirstSent" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Первая запись без страниц</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><div class="miss">нет кадра</div><div class="miss">нет кадра</div></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileFirstSent-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileFirstSent-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
+        <p>Нет ни одной страницы, но подходит шаблон: Авто создаёт «Покупки» в Недавнем, первая строка — «новая страница из шаблона». «Отменить» убирает и запись, и страницу. В макете отдельного кадра нет.</p>
+      </article>
+      <article id="s-MobileFirstAsk" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Уточнение в первый день</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><div class="miss">нет кадра</div><div class="miss">нет кадра</div></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileFirstAsk-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileFirstAsk-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
+        <p>Ничего не подходит: карточка предлагает ещё не созданные шаблоны и «Новая страница «Книги»». В макете отдельного кадра нет.</p>
+      </article>
+      <article id="s-MobileUndo" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>После «Отменить»</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><div class="miss">нет кадра</div><div class="miss">нет кадра</div></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileUndo-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileUndo-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
+        <p>Текст вернулся в поле с целью «Продукты» на одну отправку: «→ Продукты, только эта запись». После отправки или очистки снова Авто. В макете отдельного кадра нет.</p>
+      </article>
+      <article id="s-MobileDue" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Срок из квитанции</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><div class="miss">нет кадра</div><div class="miss">нет кадра</div></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileDue-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileDue-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
+        <p>Тап по распознанной дате открывает лист «Срок»: Сегодня, Завтра, В субботу, Без срока и время. Без «Другое время…». В макете отдельного кадра нет.</p>
+      </article>
+      <article id="s-MobileVoice" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Диктовка</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileVoice-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileVoice-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileVoice-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileVoice-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
+        <p>Волна, «Слушаю…», затем слова; отправка становится «Остановить». Без сети микрофон бледный и говорит «Диктовка без сети не работает».</p>
       </article></div>
     </section>
     <section class="group" id="find">
       <h2>Поиск</h2>
       <p class="lead">Полноэкранный поиск на телефоне.</p>
       <div class="cards">
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileFind" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Пусто</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileFind-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileFind-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileFind-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileFind-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Недавние записи и чип «Все секции».</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileFindTyped" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>С запросом</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileFindTyped-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileFindTyped-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileFindTyped-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileFindTyped-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Страницы и записи с подсветкой совпадений и счётчиком.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileFindNone" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Ничего не нашлось</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileFindNone-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileFindNone-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileFindNone-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileFindNone-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Подсказка, что делать дальше.</p>
@@ -246,12 +289,12 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
       <h2>Корзина</h2>
       <p class="lead">Правки блокера из ревью v18: удаление навсегда только с подтверждением.</p>
       <div class="cards">
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileTrash" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Корзина</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileTrash-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileTrash-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileTrash-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileTrash-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Записи и страница с четырьмя записями, «Вернуть» и удаление навсегда.</p>
+        <p>Возврат туда, откуда пришёл. «Удалить навсегда» — корзина warn вместо ×; подпись про 30 дней одна.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileTrashClear" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Очистить</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileTrashClear-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileTrashClear-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileTrashClear-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileTrashClear-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Лист с числом записей и страниц и кнопкой «Удалить навсегда».</p>
@@ -261,176 +304,196 @@ footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
       <h2>Остальные экраны: телефон</h2>
       <p class="lead">Перенос v20 на все экраны: нет вкладок, один тонкий composer, квитанции на сетке Поиска, подписи групп 12/500.</p>
       <div class="cards">
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileChat" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Чат</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileChat-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileChat-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileChat-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileChat-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Экран из Главной: «‹ Главная», Найти справа, заголовок «Чат» уезжает вместе с журналом. Каждая отправка своей квитанцией.</p>
+        <p>Время в конце строки с текстом, карточки на всю ширину. Каждая отправка своей квитанцией, «Не туда» в шапке.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileChatEmpty" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Чат пустой</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileChatEmpty-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileChatEmpty-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileChatEmpty-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileChatEmpty-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Подсказка и примеры над тонким composer.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileOffline" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Нет сети</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileOffline-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileOffline-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileOffline-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileOffline-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Квитанция «ждёт сети» на той же сетке строк.</p>
       </article>
-      <article class="card phone" data-tag="diff" data-dev="phone">
-        <header><h3>Входящие</h3><span class="tag diff">Иначе</span></header>
+      <article id="s-MobileInbox" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Входящие</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileInbox-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileInbox-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileInbox-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileInbox-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Чипы выбора пока прокручиваются вбок, в макете они переносятся. Справа у записи метка «уточнить».</p>
+        <p>Чипы говорят, что делают: «→ Задачи», «→ Идеи», «Ещё…», и переносятся на новую строку. Метки «уточнить» у строки больше нет; выбор показывает тост с «Отменить».</p>
       </article>
-      <article class="card phone" data-tag="diff" data-dev="phone">
-        <header><h3>Сегодня</h3><span class="tag diff">Иначе</span></header>
+      <article id="s-MobileToday" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Сегодня</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileToday-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileToday-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileToday-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileToday-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>В приложении есть вкладка вида «Сегодня и просрочено», в макете вкладок нет.</p>
+        <p>Без полосы видов, поиск в шапке. Подпись «Просрочено» — единственный warn на экране, строки под ней спокойные.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileTasks" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Задачи</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileTasks-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileTasks-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileTasks-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileTasks-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Подписи групп в новой роли, «⋯» в шапке muted.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileList" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Список</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileList-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileList-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileList-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileList-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>Чип composer — название страницы, без значка.</p>
       </article>
-      <article class="card phone" data-tag="diff" data-dev="phone">
-        <header><h3>Цель</h3><span class="tag diff">Иначе</span></header>
+      <article id="s-MobileGoal" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Цель</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileGoal-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileGoal-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileGoal-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileGoal-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Статус в приложении — плашка, подпункты показаны с готовыми.</p>
+        <p>Свойства простым текстом, «Срок» — кнопка с листом «Срок». Открытые подпункты сначала, готовые свёрнуты в «3 готово ›».</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileBoard" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Доска</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileBoard-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileBoard-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileBoard-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileBoard-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Заголовки колонок в роли подписи.</p>
+        <p>Полоса колонок переносится, ничего не уходит за край. У каждой карточки «В «Достигнута» →», «⋯» открывает лист.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileCalendar" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Календарь</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileCal-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileCal-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileCalendar-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileCalendar-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p></p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileItem" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Запись</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileItem-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileItem-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileItem-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileItem-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Composer «Подпункт» без чипа.</p>
+        <p>Название — поле на месте: Enter или уход из поля сохраняет, Esc возвращает. «Срок» открывает лист, «Добавлено» всегда с датой.</p>
       </article>
-      <article class="card phone" data-tag="diff" data-dev="phone">
-        <header><h3>Настроить вид</h3><span class="tag diff">Иначе</span></header>
+      <article id="s-MobileView" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Настроить вид</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileView-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileView-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileView-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileView-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Лист называется «Вид «Купить»», в макете «Настроить вид».</p>
+        <p>Лист «Настроить вид» с подписью «Название вида», внизу «Новый вид»; «+» после вкладок убран.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileSheet" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Лист записи</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileSheet-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileSheet-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileSheet-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileSheet-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p></p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobilePageMenu" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Меню страницы</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobilePageMenu-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobilePageMenu-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobilePageMenu-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobilePageMenu-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
         <p>«Переместить в секцию» открывает лист «Секция», после переноса тост с «Отменить».</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileBlank" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Новая страница</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileBlank-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileBlank-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileBlank-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileBlank-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Строка «Секция  Недавнее ⌄» под названием, подписи «Начать с шаблона» и «Как показывать».</p>
+        <p>Без «Как показывать». Название в фокусе сразу, composer спрятан, пустой текст «Назови страницу, потом пиши внизу.». Полоса видов в приложении остаётся (в макете её закрывает клавиатура).</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileSettings" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Настройки</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileSettings-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileSettings-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileSettings-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileSettings-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p>Экран из Главной без вкладок. «Компактные строки» стали переключателем, как в «⋯» Главной.</p>
+        <p>Модель скрыта без ключа. «Компактные строки» — переключатель.</p>
       </article>
-      <article class="card phone" data-tag="same" data-dev="phone">
+      <article id="s-MobileConnect" class="card phone" data-tag="same" data-dev="phone">
         <header><h3>Подключение</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MobileConnect-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/mock/MobileConnect-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileConnect-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileConnect-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
-        <p></p>
+        <p>Подписи над полями, «Сохранить» видна сразу и ждёт ключ. У «Другой» адрес проверяется своим текстом: «Адрес начинается с https://».</p>
+      </article>
+      <article id="s-MobilePageSend" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Отправка со страницы в другую</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><div class="miss">нет кадра</div><div class="miss">нет кадра</div></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobilePageSend-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobilePageSend-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
+        <p>На Продуктах с чипом «Авто» «позвонить маме» ушло в Задачи: та же квитанция над полем, не тост. «в Чате ›» только на Главной. В макете отдельного кадра нет.</p>
+      </article>
+      <article id="s-MobileBoardMove" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Доска: перенос</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><div class="miss">нет кадра</div><div class="miss">нет кадра</div></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MobileBoardMove-light.webp" alt="" loading="lazy" width="390" height="844" class="t-light"><img src="ui-state/app/MobileBoardMove-dark.webp" alt="" loading="lazy" width="390" height="844" class="t-dark"></figure></div>
+        <p>«Полумарафон к маю → Достигнута · Отменить», открытая колонка не прыгает. В макете отдельного кадра нет.</p>
       </article></div>
     </section>
     <section class="group" id="desk">
       <h2>Компьютер</h2>
       <p class="lead">Боковая панель без вкладок: Главная, Найти, Чат, затем Входящие и секции, Настройки внизу. Сворачивание секций общее с Главной.</p>
       <div class="cards">
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-Home" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Главная</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Home-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Home-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Home-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Home-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Шапка 72 px с «Главная» и одним «⋯». Рядом с Главной строки панели без статусов.</p>
+        <p>Пока открыта Главная, в панели только Главная, Найти, Чат, Входящие и Настройки: дерево показано один раз, в центре.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-HomeCompact" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Главная, компактно</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeCompact-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeCompact-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeCompact-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeCompact-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
         <p>Строки 32 px, точка на значке вместо статуса.</p>
       </article>
-      <article class="card desk" data-tag="diff" data-dev="desk">
+      <article id="s-HomeMenu" class="card desk" data-tag="diff" data-dev="desk">
         <header><h3>Меню «⋯»</h3><span class="tag diff">Иначе</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeMenu-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeMenu-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeMenu-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeMenu-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
         <p>Те же пункты, что на телефоне. «Компактные строки» в меню компьютера — галочка, а не переключатель.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-HomeRecent" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Недавнее</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeRecent-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeRecent-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeRecent-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeRecent-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
         <p>Семь страниц без секции, пять и «Ещё 2»; панель показывает те же. Дом и Личное свёрнуты в обоих местах сразу.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-HomeWrite" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Пишу</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeWrite-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeWrite-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeWrite-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeWrite-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
         <p>Чип остаётся «Авто», догадка строкой над полем, поле растёт вверх.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-HomeSent" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Серия</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeSent-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeSent-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeSent-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeSent-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Две отправки в Продукты в одной квитанции. «Не туда» в шапке, «в Чате ›», внизу только «Отменить» с отсчётом.</p>
+        <p>Две отправки в Продукты в одной квитанции. «Не туда» в шапке, «в Чате ›», внизу только «Отменить последние 2» с отсчётом. Срок — вторая строка записи.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-Chat" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Чат</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Main-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Main-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Chat-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Chat-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Шапка 72 px в колонке 640 с Найти справа; запись открыта в панели.</p>
+        <p>Время в конце строки. Строки квитанции и находки открывают запись в правой панели.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-Page" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Страница</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/List-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/List-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Page-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Page-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Подписи групп, «⋯» muted, тонкий composer с чипом «Продукты».</p>
+        <p>Название и «⋯» в одной строке, путь назад — тонкая строка «‹ Главная» над ним. Справа одна тихая строка «Из чата · 6 записей сегодня ›».</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-Item" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Запись</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Page-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Page-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Item-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Item-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p></p>
+        <p>«‹ Цели /» над названием, «⋯» в строке названия. Готовые подпункты свёрнуты в «3 готово ›».</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-Board" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Доска</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Board-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Board-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Board-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Board-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p></p>
+        <p>Колонки на подложке, карточки с «В «Достигнута» →» при наведении. «⋯» карточки: «Открыть» (правая панель), затем колонки. Перенос даёт тост с «Отменить».</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-Palette" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Поиск</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Palette-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Palette-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Palette-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Palette-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Утопленное поле, «Недавние записи» с путём.</p>
+        <p>Один фильтр «Все секции»; «Только названия» убран.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-PaletteTyped" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Поиск с запросом</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/PaletteTyped-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/PaletteTyped-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/PaletteTyped-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/PaletteTyped-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
         <p>Совпадение ink 500, остальное muted; у страниц секция второй строкой.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-Settings" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Настройки</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Settings-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Settings-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Settings-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Settings-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p>Шапка 72 px, строка статуса сразу под ней, переключатель «Компактные строки».</p>
+        <p>Строка статуса не прячется под шапкой. Модель видна только с ключом.</p>
       </article>
-      <article class="card desk" data-tag="same" data-dev="desk">
+      <article id="s-Connect" class="card desk" data-tag="same" data-dev="desk">
         <header><h3>Подключение</h3><span class="tag same">Как в макете</span></header>
         <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/Connect-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/Connect-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/Connect-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/Connect-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
-        <p></p>
+        <p>Подписи над полями, «Сохранить» с самого начала, неактивна, пока не хватает адреса, ключа или модели.</p>
+      </article>
+      <article id="s-HomeVoice" class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Диктовка</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/HomeVoice-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/HomeVoice-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/HomeVoice-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/HomeVoice-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
+        <p>Как на телефоне: волна, слова в поле, «Остановить».</p>
+      </article>
+      <article id="s-MainDue" class="card desk" data-tag="same" data-dev="desk">
+        <header><h3>Срок в Чате</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><img src="ui-state/mock/MainDue-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/mock/MainDue-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure><figure><figcaption>Приложение</figcaption><img src="ui-state/app/MainDue-light.webp" alt="" loading="lazy" width="1440" height="900" class="t-light"><img src="ui-state/app/MainDue-dark.webp" alt="" loading="lazy" width="1440" height="900" class="t-dark"></figure></div>
+        <p>Вторая строка записи — тихая кнопка срока; поповер 300 px с теми же вариантами, запись открыта справа.</p>
       </article></div>
     </section>
 
 <section class="block">
   <div class="wrap prose">
     <h2>Что дальше</h2>
-    <ul><li>Идёт ревью Fable этих макетов; принятые Josh правки придут отдельной небольшой дельтой и попадут в этот же PR.</li><li>Открытый вопрос: серия «3 записи → Продукты» или простая квитанция. Переключается константой <code>SERIES_MS</code> в <code>HomeDock.vue</code>.</li><li>Не нарисовано в макетах, поэтому оставлено как было: «⋯» строки и «Корзина» на компьютере открывают то же, что на телефоне; «Все секции» в Поиске на компьютере — список.</li></ul>
+    <ul><li>Дельта v22 (42 пункта и таблица веса действий) идёт в этот же PR.</li><li>Приёмка тредом макетов по строкам «Проверка» на локальной сборке ветки.</li><li>«Изменить порядок» секций пока простой лист со стрелками: в макетах экрана нет, v22 приносит перетаскивание.</li></ul>
   </div>
 </section>
 
-<footer class="wrap">Кадры сняты <code>pnpm shots</code> со статической сборки (390×844 и 1440×900). Макеты: холст, версия 55.</footer>
+<footer class="wrap">Кадры сняты <code>pnpm shots</code> с dev-сервера (390×844 и 1440×900). Макеты: холст, версия 57. Скриптовые проверки: <code>node scripts/checks.mjs</code>. Исходники отчёта: <code>docs/report/</code>.</footer>
 
 <script>
 (() => {
