@@ -1,15 +1,21 @@
 <script setup lang="ts">
 // «Секция»: where a page lives. From the property line of a new page and from «Переместить в секцию» in its
-// «⋯». A move says where the page went and can be taken back.
+// «⋯». A move says where the page went and can be taken back. With `menu` and a trigger in the default slot (a new
+// page's «Секция» line) it opens on desktop as a menu at that line (v24 fixes desktop, 4), a sheet on a phone.
+import { computed } from 'vue'
 import type { Id, Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNotify } from '~/composables/useNotify'
+import { useScreen } from '~/composables/useScreen'
+import { useLater } from '~/composables/useLater'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 
-const props = defineProps<{ page: Page }>()
+const props = defineProps<{ page: Page, menu?: boolean }>()
 const open = defineModel<boolean>('open', { default: false })
 const data = useDataStore()
 const notify = useNotify()
+const { isDesktop } = useScreen()
+const later = useLater()
 
 function move(to: Id | null) {
   open.value = false
@@ -20,10 +26,40 @@ function move(to: Id | null) {
   const name = to ? data.sections[to]?.name : 'Мои страницы'
   notify(`Страница в секции «${name}»`, { label: 'Отменить', run: () => data.updatePage(id, { sectionId: from }) })
 }
+
+const asMenu = computed(() => props.menu && isDesktop.value)
+const items = computed(() => [null, ...data.sectionList].map(s => ({
+  label: s?.name ?? 'Мои страницы',
+  type: 'checkbox' as const,
+  checked: (s?.id ?? null) === props.page.sectionId,
+  onSelect: () => move(s?.id ?? null)
+})))
+
+function openNow() {
+  open.value = true
+  void later.load()
+}
 </script>
 
 <template>
+  <LazyUDropdownMenu
+    v-if="asMenu && later.ready.value"
+    v-model:open="open"
+    :items="items"
+    :content="{ align: 'start' }"
+    :ui="{ content: 'w-60' }"
+  >
+    <slot />
+  </LazyUDropdownMenu>
+  <span
+    v-else-if="$slots.default"
+    class="contents"
+    @click="openNow"
+  >
+    <slot />
+  </span>
   <AdaptiveOverlay
+    v-if="!asMenu"
     v-model:open="open"
     title="Секция"
     dialog

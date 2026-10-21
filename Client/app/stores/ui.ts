@@ -76,6 +76,8 @@ export const useUiStore = defineStore('ui', () => {
   const openGlyph = ref<Id | null>(null)
   /** «Заметка к странице» from a menu: the page draws its note with the caret at the end (v23) */
   const focusNote = ref<Id | null>(null)
+  /** «Сделать записью» on a page note (v24): the page shows its first view, where the new record is */
+  const firstView = ref<Id | null>(null)
   /** A section whose name becomes a field («Новая секция», «Переименовать»), wherever its caption is on screen */
   const renameSection = ref<Id | null>(null)
   /** Text Поиск opens with («Найти» on the toast after a question was written on a page) */
@@ -98,6 +100,7 @@ export const useUiStore = defineStore('ui', () => {
     focusTitle,
     openGlyph,
     focusNote,
+    firstView,
     renameSection,
     findQuery,
     outbox,
