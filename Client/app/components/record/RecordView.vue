@@ -394,7 +394,7 @@ function openPlace() {
       />
     </section>
 
-    <!-- Подпункты always have «Готово» -->
+    <!-- Подпункты always have the checkbox -->
     <section
       v-if="subs.length || full"
       class="lg:mt-2"
@@ -429,7 +429,7 @@ function openPlace() {
         :aria-expanded="doneShown"
         @click="doneShown = !doneShown"
       >
-        {{ doneSubs.length }} готово<UIcon
+        {{ doneSubs.length }} сделано<UIcon
           name="i-lucide-chevron-right"
           class="size-3.5 text-dimmed transition-transform"
           :class="{ 'rotate-90': doneShown }"

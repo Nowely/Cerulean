@@ -78,7 +78,7 @@ export function demo(now = Date.now()): Dataset {
     views: [
       listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
       listView('Календарь', { layout: 'calendar', filter: [{ field: 'done', op: 'is', value: false }] }),
-      listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
+      listView('Сделано', { filter: [{ field: 'done', op: 'is', value: true }] })
     ],
     openedAt: at(8, 55),
     seenAt: at(8, 55)
@@ -143,7 +143,7 @@ export function demo(now = Date.now()): Dataset {
     noun: ['дело', 'дела', 'дел'],
     views: [
       listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
-      listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
+      listView('Сделано', { filter: [{ field: 'done', op: 'is', value: true }] })
     ],
     openedAt: at(18, 10, -1),
     seenAt: at(18, 10, -1)

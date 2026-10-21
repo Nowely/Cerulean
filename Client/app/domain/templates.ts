@@ -31,13 +31,25 @@ export function listView(name: string, patch: Partial<ViewDef> = {}): ViewDef {
   return { id: uid('v'), name, layout: 'list', filter: [], groupBy: null, sort: 'manual', shown: ['due'], ...patch }
 }
 
-/** «Список» shows what is left, «Готово» what is done; a page without «Готово» shows everything */
+/** The view of finished records (v23, one meaning per word: «Готово» is only a button now) */
+export const DONE_VIEW = 'Сделано'
+const doneView = () => listView(DONE_VIEW, { filter: [{ field: 'done', op: 'is', value: true }] })
+
+/** «Список» shows what is left, «Сделано» what is done; a page without a checkbox shows everything */
 export function defaultViews(hasDone: boolean): ViewDef[] {
   if (!hasDone) return [listView('Список')]
-  return [
-    listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
-    listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
-  ]
+  return [listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }), doneView()]
+}
+
+const isOldDone = (v: ViewDef) => v.name === 'Готово' && v.filter.length === 1 && v.filter[0]!.field === 'done' && v.filter[0]!.value === true
+
+/**
+ * A stored page as v23 reads it, with no step over the data: the done view a starter named «Готово» reads as
+ * «Сделано» (a view the user named so, with other rules, keeps its name). The same object when nothing changes
+ */
+export function readPage(page: Page): Page {
+  if (!page.views?.some(isOldDone) || page.views.some(v => v.name === DONE_VIEW)) return page
+  return { ...page, views: page.views.map(v => isOldDone(v) ? { ...v, name: DONE_VIEW } : v) }
 }
 
 export const DEPARTMENTS = ['Хлеб и выпечка', 'Молочное', 'Овощи и фрукты', 'Мясо и рыба', 'Бакалея', 'Бытовая химия', 'Прочее']
@@ -80,7 +92,8 @@ export const TEMPLATES: Template[] = [
     props: () => [],
     views: () => [
       listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
-      listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
+      listView('Календарь', { layout: 'calendar', filter: [{ field: 'done', op: 'is', value: false }] }),
+      doneView()
     ]
   },
   {

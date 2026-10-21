@@ -113,7 +113,7 @@ const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
     v-if="!prop"
     class="mx-5 mt-4 rounded-card bg-card p-4 text-sm text-toned lg:mx-0"
   >
-    Для доски нужно свойство «Выбор»: его варианты станут колонками, например «Надо», «В процессе», «Готово».
+    Для доски нужно свойство «Выбор»: его варианты станут колонками, например «Надо», «В процессе», «Сделано».
     <UButton
       class="mt-3 block"
       aria-haspopup="dialog"

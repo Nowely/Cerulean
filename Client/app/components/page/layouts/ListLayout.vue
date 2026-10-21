@@ -61,6 +61,9 @@ const shown = computed(() => {
     .filter(g => g.records.length)
 })
 const hidden = computed(() => total.value - shown.value.reduce((n, g) => n + g.records.length, 0))
+/** An ungrouped view of ticked records names itself above its rows: «Сделано» (v23); Покупки keeps its own words */
+const doneCaption = computed(() => !isListPage(props.page) && total.value > 0 && groups.value.length === 1 && !groups.value[0]!.label
+  && props.view.filter.some(r => r.field === 'done' && r.value === true))
 
 // ---------- moving a row ----------
 
@@ -128,6 +131,12 @@ function clearDone() {
 
 <template>
   <div ref="root">
+    <h3
+      v-if="doneCaption"
+      class="flex min-h-9 items-center px-4 pt-3 text-cap leading-6 text-toned lg:px-2.5 lg:pb-1 lg:leading-5"
+    >
+      Сделано
+    </h3>
     <section
       v-for="g in shown"
       :key="g.key"
@@ -224,7 +233,7 @@ function clearDone() {
       class="mx-1.5 mt-1 flex h-11 cursor-pointer items-center rounded-item px-2.5 text-base text-accent-ink hover:bg-muted active:bg-pressed lg:mx-0 lg:h-9 lg:text-15"
       @click="clearDone"
     >
-      {{ isListPage(page) ? 'Очистить купленное' : 'Очистить готовое' }}
+      {{ isListPage(page) ? 'Очистить купленное' : 'Очистить сделанное' }}
     </button>
     <slot
       v-if="!total"

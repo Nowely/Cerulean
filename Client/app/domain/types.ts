@@ -83,9 +83,9 @@ export interface Page {
   color: PageColor | null
   sectionId: Id | null
   order: number
-  /** Pages with «Готово» show checkboxes, the rest show a dot */
+  /** Pages with the checkbox (a «Сделано» view) show checkboxes, the rest show a dot */
   hasDone: boolean
-  /** «Описание для Авто»: what goes here; Авто reads it when filing */
+  /** «Что сюда класть»: the words that tell Авто what goes here (v23: never called «описание» on screen) */
   description: string
   props: PropDef[]
   /** The order of «Свойства»: property ids with 'due' and 'note' among them. Without it the page's own come first */
@@ -178,7 +178,7 @@ export interface Entry {
   merged?: Record<Id, Id>
   /** The page was chosen by hand (Уточнение, «Не туда», «Ещё…»): the receipt offers «Запомнить» (v22, U5) */
   learn?: boolean
-  /** «Запомнить» was tapped: the line is an example in the page's «Описание для Авто» */
+  /** «Запомнить» was tapped: the line is an example in the page's «Что сюда класть» */
   learned?: boolean
 }
 
