@@ -14,6 +14,7 @@ import AppScreen from '~/components/shell/AppScreen.vue'
 import DeskHeader from '~/components/shell/DeskHeader.vue'
 import BackHeader from '~/components/shell/BackHeader.vue'
 import PageTile from '~/components/common/PageTile.vue'
+import DotsButton from '~/components/common/DotsButton.vue'
 import ActionMenu, { type MenuItem } from '~/components/overlay/ActionMenu.vue'
 
 useHead({ title: 'Корзина · Cerulean' })
@@ -158,7 +159,7 @@ function empty() {
       </h1>
       <p
         v-if="items.length"
-        class="px-4 pt-1.5 pb-3 text-15 text-toned lg:px-0 lg:pt-2 lg:pb-4 lg:text-sm"
+        class="px-4 pt-0.5 pb-2 text-sm text-toned lg:px-0 lg:pt-2 lg:pb-4"
       >
         Удалённое хранится 30 дней, потом исчезает само
       </p>
@@ -207,7 +208,14 @@ function empty() {
               :title="nameOf(i)"
               :caption="detail(i)"
               :label="`Ещё для «${nameOf(i)}»`"
-            />
+            >
+              <template #default="{ open }">
+                <DotsButton
+                  :label="`Ещё для «${nameOf(i)}»`"
+                  :aria-expanded="open"
+                />
+              </template>
+            </ActionMenu>
           </span>
         </li>
       </ul>
