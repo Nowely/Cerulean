@@ -82,7 +82,7 @@ export default [
     await open(p, '/')
     await p.getByRole('link', { name: /^Покупки/ }).first().click()
     await p.waitForURL(/\/p\//)
-    await p.getByRole('button', { name: /^Хлеб/ }).first().click()
+    await p.getByRole('button', { name: 'Хлеб', exact: true }).first().click()
     await p.waitForURL(/\/r\//)
     await p.getByRole('button', { name: 'Свойство', exact: true }).click()
     const menu = p.getByRole('dialog')

@@ -15,6 +15,8 @@ withDefaults(defineProps<{
   value?: string
   /** Phone: an accent value is what a tap does («Включить», «Сейчас») */
   valueTone?: 'accent'
+  /** Phone: a value that doesn't fit beside a one-line hint goes whole under it, never cut («OpenRouter · sk-…9f2c») */
+  valueWraps?: boolean
   /** Phone: the whole line is a button */
   opens?: boolean
   /** Phone: a line that acts at once has no chevron */
@@ -64,16 +66,25 @@ const { isDesktop } = useScreen()
         class="size-5 shrink-0"
         :class="tone === 'warn' ? '' : 'text-toned'"
       />
-      <span class="min-w-0 flex-1">
-        <span class="block text-base">{{ label }}</span>
+      <span
+        class="min-w-0 flex-1"
+        :class="valueWraps ? 'flex flex-wrap items-center gap-x-3 gap-y-0.5' : ''"
+      >
+        <span :class="valueWraps ? 'min-w-0 flex-auto' : 'block'">
+          <span class="block text-base">{{ label }}</span>
+          <span
+            v-if="hint"
+            class="mt-0.5 block text-13 leading-snug"
+            :class="[hintTone === 'warn' ? 'text-warn-ink' : 'text-toned', valueWraps ? 'truncate' : '']"
+          >{{ hint }}</span>
+        </span>
         <span
-          v-if="hint"
-          class="mt-0.5 block text-13 leading-snug"
-          :class="hintTone === 'warn' ? 'text-warn-ink' : 'text-toned'"
-        >{{ hint }}</span>
+          v-if="value && valueWraps"
+          class="text-15 whitespace-nowrap text-toned"
+        >{{ value }}</span>
       </span>
       <span
-        v-if="value"
+        v-if="value && !valueWraps"
         class="max-w-[45%] shrink-0 truncate text-15"
         :class="valueTone === 'accent' ? 'text-accent-ink' : 'text-toned'"
       >{{ value }}</span>

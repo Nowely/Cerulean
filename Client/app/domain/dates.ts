@@ -130,9 +130,14 @@ export function formatDate(t: number, now: number): string {
 
 /** A moment relative to now: «сегодня, 8:40», «вчера, 22:15», «16 окт», «16 окт 2025» */
 export function formatMoment(t: number, now: number): string {
-  const diff = daysBetween(dayKey(now), dayKey(t))
-  const word = dayWord(diff)
-  if (word) return `${word}, ${clock(t)}`
+  const word = dayWord(daysBetween(dayKey(now), dayKey(t)))
+  return word ? `${word}, ${clock(t)}` : formatDayShort(t, now)
+}
+
+/** Only the day: «сегодня», «вчера», «16 окт», «16 окт 2025» (Корзина: «удалено вчера») */
+export function formatDayShort(t: number, now: number): string {
+  const word = dayWord(daysBetween(dayKey(now), dayKey(t)))
+  if (word) return word
   const d = new Date(t)
   const dm = `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
   return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`

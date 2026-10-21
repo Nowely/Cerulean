@@ -59,7 +59,7 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
 
       <div
         class="mx-auto w-full lg:px-8"
-        :class="view?.wide ? 'lg:max-w-none' : 'lg:max-w-170'"
+        :class="view?.wide ? 'lg:max-w-none' : 'lg:max-w-186'"
       >
         <DeskBack :crumbs="[{ to: '/', label: 'Главная' }]" />
         <PageView

@@ -113,6 +113,8 @@ defineExpose({ openSettings: () => settingsOpen.value = true, toggleSearch: () =
 
 // Search inside the page
 const searching = ref(false)
+/** The view bar (tabs, search, «Настроить вид»); Сегодня shows it only while searching */
+const bar = computed(() => !glance.value && !setup.value && (!today.value || searching.value))
 const query = ref('')
 const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
 async function toggleSearch() {
@@ -191,7 +193,7 @@ const emptyText = computed(() => {
     <!-- Title -->
     <div
       class="px-4 pt-1 lg:px-0"
-      :class="!full ? 'lg:px-4' : 'lg:pt-0.5'"
+      :class="!full ? 'lg:px-4' : 'lg:pt-px'"
     >
       <GlyphPicker
         v-if="full && setup && !page.glyph"
@@ -255,14 +257,14 @@ const emptyText = computed(() => {
         <!-- Desktop: «⋯» ends the title row (a phone has it in the header) -->
         <span
           v-if="full && $slots.menu"
-          class="hidden shrink-0 self-start pt-1 lg:block"
+          class="hidden shrink-0 self-start lg:block"
         >
           <slot name="menu" />
         </span>
       </div>
       <p
         v-if="subline"
-        class="mt-0.5 text-meta text-toned lg:mt-1.5"
+        class="mt-0.5 text-meta text-toned lg:mt-1.5 lg:text-sm"
       >
         {{ subline }}
       </p>
@@ -274,10 +276,11 @@ const emptyText = computed(() => {
       @focus="v => emit('editing', v)"
     />
 
-    <!-- Views: underlined tabs; search and «Настроить вид» on the right -->
+    <!-- Views: underlined tabs; search and «Настроить вид» on the right. A page with no records yet has none:
+         views come from «⋯ → Настроить вид» -->
     <div
-      v-if="!glance && (!today || searching)"
-      class="mt-1 flex items-end pr-0.5 pl-1 lg:mt-5 lg:border-b lg:border-default lg:px-0"
+      v-if="bar"
+      class="mt-1 flex items-end pr-0.5 pl-1 lg:px-0"
       :class="!full ? 'lg:mx-4' : ''"
     >
       <ViewTabs
@@ -380,7 +383,7 @@ const emptyText = computed(() => {
           :records="shown"
           :since="openedAt"
           :readonly="!full"
-          :class="glance ? 'pt-3' : 'lg:pt-1'"
+          :class="glance ? 'pt-3' : bar ? '' : 'lg:pt-1'"
           @open="openRecord"
           @choose="choose"
         >

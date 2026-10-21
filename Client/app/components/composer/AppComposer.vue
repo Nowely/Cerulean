@@ -103,6 +103,7 @@ const guess = computed(() => {
   if (d.kind === 'inbox') return 'Входящие'
   if (d.kind === 'page') return d.count > 1 ? `${name(d.pageId)} · ${count(d.count, RECORD_FORMS)}` : name(d.pageId)
   if (d.kind === 'split') return d.parts.map(p => `${name(p.to)} ${p.count}`).join(', ')
+  if (d.kind === 'starter') return d.count > 1 ? `${d.name} · ${count(d.count, RECORD_FORMS)}` : d.name
   return ''
 })
 /** The line on the pill: the guess while there is text, the day-one hint before the first record */

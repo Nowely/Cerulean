@@ -62,7 +62,7 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
         </header>
       </template>
 
-      <div class="mx-auto w-full lg:max-w-170 lg:px-8">
+      <div class="mx-auto w-full lg:max-w-186 lg:px-8">
         <DeskBack
           :crumbs="crumbs"
           inside

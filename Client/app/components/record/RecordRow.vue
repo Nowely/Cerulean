@@ -3,7 +3,7 @@
 // Desktop: the same actions appear on hover after the row's values, and a right click opens all of them.
 // The row is one Tab stop, its text: ↑/↓ between rows, Space ticks, Enter opens, Delete deletes,
 // Shift+F10 opens «⋯», Alt+↑/↓ moves the row. The right side shows properties, never when it was made (v22).
-import { computed, ref, useTemplateRef, type FunctionalComponent } from 'vue'
+import { computed, onMounted, ref, useTemplateRef, type FunctionalComponent } from 'vue'
 import { LazyUContextMenu, LazyUDropdownMenu, LazyUTooltip } from '#components'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -14,6 +14,7 @@ import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useLater } from '~/composables/useLater'
 import { formatDue, isOverdue } from '~/domain/dates'
+import { formatValue } from '~/domain/props'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
 
@@ -26,7 +27,9 @@ const props = withDefaults(defineProps<{
   selected?: boolean
   /** Subitems under a record: a step is often a whole sentence, so it wraps instead of being cut */
   wrap?: boolean
-}>(), { readonly: false, selected: false, wrap: false })
+  /** Written while the page is open: the row comes into view when it appears */
+  reveal?: boolean
+}>(), { readonly: false, selected: false, wrap: false, reveal: false })
 
 const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'], shift: [by: -1 | 1] }>()
 
@@ -54,6 +57,10 @@ const subs = computed(() => data.subitemsOf(props.rec.id))
 const subsDone = computed(() => subs.value.filter(s => s.done).length)
 // The rows of the latest send carry the fresh tint, which fades by itself (fresh-tint); nothing says «только что»
 const fresh = computed(() => Date.now() - props.rec.addedAt < 5000 && !props.rec.done)
+// A row just written here comes into view, wherever its group puts it (B4: a long page sorted by Отдел)
+onMounted(() => {
+  if (props.reveal && fresh.value) el.value?.scrollIntoView({ block: 'nearest' })
+})
 const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
 const inbox = computed(() => props.page.kind === 'inbox')
 const asking = computed(() => inbox.value && props.rec.tags.includes('clarify') && !props.rec.done)
@@ -78,8 +85,10 @@ const right = computed(() => {
       if (name) out.push({ key, text: name })
     } else if (prop.type === 'number' && prop.normProp) {
       continue // shown as a stepper
+    } else if (prop.type === 'date' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      out.push({ key, text: formatDue({ date: value }, now.value) })
     } else {
-      out.push({ key, text: `${value}${prop.unit ? ` ${prop.unit}` : ''}` })
+      out.push({ key, text: formatValue(prop, value, now.value) })
     }
   }
   return out
@@ -141,16 +150,17 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
 
 <template>
   <div class="relative">
-    <!-- Swipe actions sit behind the row -->
+    <!-- Swipe actions grow from the right edge over the row's values; the mark and the text stay in place (B1) -->
     <div
       v-if="!readonly && !isDesktop"
-      class="absolute inset-y-0 right-2 flex gap-1"
-      :class="swipe.offset.value === 0 ? 'invisible' : ''"
+      class="absolute inset-y-0.5 right-1 z-1 flex justify-end gap-1 overflow-hidden"
+      :class="[swipe.offset.value === 0 ? 'invisible' : '', swipe.dragging.value ? '' : 'transition-[width] duration-200 ease-out-soft']"
+      :style="{ width: `${-swipe.offset.value}px` }"
       :aria-hidden="swipe.offset.value === 0"
     >
       <button
         type="button"
-        class="flex w-22 cursor-pointer flex-col items-center justify-center gap-0.75 rounded-chip bg-elevated text-xs font-medium text-highlighted active:bg-accented"
+        class="flex w-22 shrink-0 cursor-pointer flex-col items-center justify-center gap-0.75 rounded-chip bg-elevated text-xs font-medium text-highlighted active:bg-accented"
         :tabindex="swipe.offset.value === 0 ? -1 : 0"
         @click="swipe.close(); actions.move([rec.id])"
       >
@@ -161,7 +171,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
       </button>
       <button
         type="button"
-        class="flex w-22 cursor-pointer flex-col items-center justify-center gap-0.75 rounded-chip bg-warn text-xs font-medium text-on-accent active:opacity-90"
+        class="flex w-22 shrink-0 cursor-pointer flex-col items-center justify-center gap-0.75 rounded-chip bg-warn text-xs font-medium text-on-accent active:opacity-90"
         :tabindex="swipe.offset.value === 0 ? -1 : 0"
         @click="swipe.close(); actions.remove([rec.id])"
       >
@@ -183,11 +193,11 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         :class="[
           selected ? 'bg-sel' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
           { 'fresh-tint': fresh },
-          swipe.dragging.value ? '' : 'transition-transform duration-200 ease-out-soft',
+          swipe.dragging.value ? '' : 'transition-[padding] duration-200 ease-out-soft',
           // The browser keeps vertical scroll and leaves the sideways drag to the swipe (no pointercancel)
           readonly ? '' : 'touch-pan-y'
         ]"
-        :style="swipe.offset.value ? { transform: `translateX(${swipe.offset.value}px)` } : undefined"
+        :style="swipe.offset.value ? { paddingRight: `${12 - swipe.offset.value}px` } : undefined"
         @pointerdown="!readonly && swipe.onStart($event)"
         @pointermove="!readonly && swipe.onMove($event)"
         @pointerup="swipe.onEnd()"
@@ -220,16 +230,16 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
 
         <span class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums">
           <span v-if="waiting">ждёт сети</span>
+          <span
+            v-if="subs.length"
+            :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
+          >{{ subsDone }}/{{ subs.length }}</span>
           <UIcon
             v-if="rec.note && !notePreview"
             name="i-lucide-file-text"
             class="size-4"
             aria-label="есть заметка"
           />
-          <span
-            v-if="subs.length"
-            :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
-          >{{ subsDone }}/{{ subs.length }}</span>
           <span
             v-for="r in right"
             :key="r.key"

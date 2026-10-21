@@ -38,16 +38,18 @@ function toggleFold(key: string) {
 const STEP = 100
 const limit = ref(STEP)
 const total = computed(() => groups.value.reduce((n, g) => n + g.records.length, 0))
-/** The groups cut to the first `limit` rows, in order; a group with nothing left is not shown */
+/**
+ * The groups cut to the first `limit` rows, in order; a group with nothing left is not shown. A row written since
+ * the page was opened always shows, in its group, even past the cut: a send must never land out of sight (B4)
+ */
 const shown = computed(() => {
   if (total.value <= limit.value) return groups.value
-  let left = limit.value
-  return groups.value.map((g) => {
-    const records = g.records.slice(0, Math.max(0, left))
-    left -= records.length
-    return { ...g, records }
-  }).filter(g => g.records.length)
+  let i = 0
+  const since = props.since ?? Number.POSITIVE_INFINITY
+  return groups.value.map(g => ({ ...g, records: g.records.filter(r => i++ < limit.value || r.addedAt >= since) }))
+    .filter(g => g.records.length)
 })
+const hidden = computed(() => total.value - shown.value.reduce((n, g) => n + g.records.length, 0))
 
 // ---------- moving a row ----------
 
@@ -107,7 +109,7 @@ function shift(rec: Rec, by: -1 | 1) {
       >
         <button
           type="button"
-          class="flex min-h-9 w-full cursor-pointer items-center gap-1 px-4 pt-3 text-left text-cap leading-6 lg:min-h-8 lg:px-2.5 lg:leading-5"
+          class="flex min-h-9 w-full cursor-pointer items-center gap-1 px-4 pt-3 text-left text-cap leading-6 lg:px-2.5 lg:pb-1 lg:leading-5"
           :class="g.tone === 'warn' ? 'text-warn-ink' : 'text-toned hover:text-highlighted'"
           :aria-expanded="!folded.has(g.key)"
           @click="toggleFold(g.key)"
@@ -134,6 +136,7 @@ function shift(rec: Rec, by: -1 | 1) {
             :page="page"
             :view="view"
             :readonly="readonly"
+            :reveal="r.addedAt >= (since ?? Number.POSITIVE_INFINITY)"
             @open="emit('open', r)"
             @choose="id => emit('choose', r, id)"
             @shift="by => shift(r, by)"
@@ -142,12 +145,12 @@ function shift(rec: Rec, by: -1 | 1) {
       </ul>
     </section>
     <button
-      v-if="total > limit"
+      v-if="hidden > 0"
       type="button"
       class="mx-2 mt-1 flex h-11 cursor-pointer items-center rounded-item px-3 text-15 text-accent-ink hover:bg-muted active:bg-pressed lg:mx-0 lg:h-9 lg:px-2.5 lg:text-sm"
       @click="limit += STEP * 2"
     >
-      Показать ещё {{ total - limit }}
+      Показать ещё {{ hidden }}
     </button>
     <slot
       v-if="!total"

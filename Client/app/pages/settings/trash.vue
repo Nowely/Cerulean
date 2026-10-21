@@ -7,7 +7,7 @@ import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useNotify } from '~/composables/useNotify'
-import { formatMoment } from '~/domain/dates'
+import { formatDayShort } from '~/domain/dates'
 import { count, plural, RECORD_FORMS } from '~/domain/text'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import DeskHeader from '~/components/shell/DeskHeader.vue'
@@ -30,12 +30,15 @@ type Item = { kind: 'page', page: Page, at: number } | { kind: 'record', rec: Re
 const items = computed<Item[]>(() => data.trash)
 const keyOf = (i: Item) => i.kind === 'page' ? i.page.id : i.rec.id
 
+/** Records that go with a deleted page */
+function inside(page: Page): number {
+  return Object.values(data.records).filter(r => r.pageId === page.id && !r.parentId && !r.deletedAt).length
+}
+
+/** «Задачи · удалено вчера», «страница · 4 записи · удалено 14 окт»: only the day; it wraps after a «·», never inside a date */
 function detail(i: Item): string {
-  const when = `удалено ${formatMoment(i.at, now.value)}`
-  if (i.kind === 'page') {
-    const n = Object.values(data.records).filter(r => r.pageId === i.page.id && !r.parentId && !r.deletedAt).length
-    return `страница · ${count(n, RECORD_FORMS)} · ${when}`
-  }
+  const when = `удалено ${formatDayShort(i.at, now.value).replace(/ /g, '\u00a0')}`
+  if (i.kind === 'page') return `страница · ${count(inside(i.page), RECORD_FORMS).replace(' ', '\u00a0')} · ${when}`
   const page = data.pages[i.rec.pageId]
   return `${!page || page.deletedAt ? 'страница удалена' : page.title || 'Без названия'} · ${when}`
 }
@@ -52,20 +55,29 @@ function restore(i: Item) {
   }
 }
 
+/** A page says what goes with it: «Страница и 4 записи в ней удалятся навсегда» */
+function purgeText(i: Item): string {
+  if (i.kind !== 'page') return 'Вернуть будет нельзя.'
+  const n = inside(i.page)
+  return `${n ? `Страница и ${count(n, RECORD_FORMS)} в ней удалятся` : 'Страница удалится'} навсегда. Вернуть будет нельзя.`
+}
+
 function purge(i: Item) {
   ui.confirm({
     title: `Удалить «${i.kind === 'page' ? i.page.title || 'Без названия' : i.rec.text}» навсегда?`,
-    text: i.kind === 'page' ? 'Страница и её записи удалятся. Вернуть будет нельзя.' : 'Вернуть будет нельзя.',
+    text: purgeText(i),
     action: 'Удалить навсегда',
     run: () => i.kind === 'page' ? data.purgePages([i.page.id]) : data.purgeRecords([i.rec.id])
   })
 }
 
-/** «2 записи и 1 страница» */
+/** «1 страница (4 записи) и 2 записи»: the count says what goes with a page too */
 const what = computed(() => {
-  const pages = items.value.filter(i => i.kind === 'page').length
-  const recs = items.value.length - pages
-  return [recs ? count(recs, RECORD_FORMS) : '', pages ? count(pages, ['страница', 'страницы', 'страниц']) : ''].filter(Boolean).join(' и ')
+  const pages = items.value.flatMap(i => i.kind === 'page' ? [i.page] : [])
+  const recs = items.value.length - pages.length
+  const within = pages.reduce((n, p) => n + inside(p), 0)
+  const pageWord = pages.length ? `${count(pages.length, ['страница', 'страницы', 'страниц'])}${within ? ` (${count(within, RECORD_FORMS)})` : ''}` : ''
+  return [pageWord, recs ? count(recs, RECORD_FORMS) : ''].filter(Boolean).join(' и ')
 })
 
 function empty() {
@@ -142,41 +154,45 @@ function empty() {
         <li
           v-for="i in items"
           :key="keyOf(i)"
-          class="group flex min-h-15 items-center gap-3 rounded-chip pr-1 pl-3 lg:min-h-12 lg:hover:bg-muted"
+          class="group flex min-h-15 items-center gap-2 rounded-chip pr-1 pl-2 lg:min-h-12 lg:hover:bg-muted"
         >
-          <PageTile
-            v-if="i.kind === 'page'"
-            :glyph="i.page.glyph"
-            :color="i.page.color"
-          />
           <span
-            v-else
             class="flex size-6 shrink-0 items-center justify-center"
             aria-hidden="true"
-          ><span
-            class="size-1.5 rounded-full bg-ring"
-          /></span>
+          >
+            <PageTile
+              v-if="i.kind === 'page'"
+              :glyph="i.page.glyph"
+              :color="i.page.color"
+            />
+            <span
+              v-else
+              class="size-1.5 rounded-full bg-ring"
+            />
+          </span>
           <span class="min-w-0 flex-1 py-2">
             <span class="block truncate text-record text-highlighted">{{ i.kind === 'page' ? (i.page.title || 'Без названия') : i.rec.text }}</span>
-            <span class="block truncate text-meta text-toned">{{ detail(i) }}</span>
+            <span class="block text-meta text-toned">{{ detail(i) }}</span>
           </span>
-          <UButton
-            color="primary"
-            variant="ghost"
-            class="shrink-0"
-            @click="restore(i)"
-          >
-            Вернуть
-          </UButton>
-          <UButton
-            icon="i-lucide-trash-2"
-            variant="ghost"
-            square
-            aria-label="Удалить навсегда"
-            :ui="{ leadingIcon: 'text-warn-ink' }"
-            class="shrink-0 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
-            @click="purge(i)"
-          />
+          <span class="flex shrink-0 gap-1">
+            <UButton
+              color="primary"
+              variant="ghost"
+              class="px-1.5 text-15 font-normal"
+              @click="restore(i)"
+            >
+              Вернуть
+            </UButton>
+            <UButton
+              color="error"
+              variant="ghost"
+              :aria-label="`Удалить навсегда «${i.kind === 'page' ? (i.page.title || 'Без названия') : i.rec.text}»`"
+              class="px-1.5 text-15 font-normal"
+              @click="purge(i)"
+            >
+              Удалить
+            </UButton>
+          </span>
         </li>
       </ul>
       <div

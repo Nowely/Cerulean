@@ -166,7 +166,7 @@ onMounted(() => {
       <TitleHeader title="Настройки" />
     </template>
 
-    <div class="mx-auto w-full pb-8 lg:max-w-180 lg:px-8 lg:pb-16">
+    <div class="mx-auto w-full pb-8 lg:max-w-196 lg:px-8 lg:pb-16">
       <h1 class="px-5 pb-1 text-28 font-semibold tracking-[-.015em] text-highlighted lg:hidden">
         Настройки
       </h1>
@@ -181,12 +181,8 @@ onMounted(() => {
         role="status"
       >
         <span
-          class="size-2 shrink-0 rounded-full bg-ok lg:hidden"
+          class="size-2 shrink-0 rounded-full bg-ok"
           aria-hidden="true"
-        />
-        <UIcon
-          name="i-lucide-check"
-          class="hidden size-4 shrink-0 text-ok lg:block"
         />
         <span>Работает офлайн, всё хранится в этом браузере</span>
       </div>
@@ -206,6 +202,7 @@ onMounted(() => {
           :hint-tone="keyStatus.tone"
           desk-hint="Без ключа работают только простые правила"
           :value="key ? `${service} · ${maskKey(key)}` : 'Добавить'"
+          :value-wraps="!!key"
           opens
           @open="keyEditor?.open()"
         >

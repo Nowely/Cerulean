@@ -16,7 +16,7 @@ import ReceiptCard from '../chat/ReceiptCard.vue'
 
 const SERIES_MS = 30_000
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   mode?: 'auto' | 'page' | 'today'
   pageId?: Id
   /** Главная on day one: the guess line says what the composer is for */
@@ -30,9 +30,21 @@ const toast = useToast()
 const { isDesktop } = useScreen()
 const composer = useTemplateRef<InstanceType<typeof AppComposer>>('composer')
 
-/** Lines sent from here, in order */
-const ids = ref<Id[]>([])
-const shown = ref(false)
+// Lines sent from here, in order, and whether their card shows: kept in the store per screen (B9)
+const key = computed(() => `${props.mode}:${props.pageId ?? ''}`)
+const state = () => (ui.docks[key.value] ??= { ids: [], shown: false })
+const ids = computed<Id[]>({
+  get: () => ui.docks[key.value]?.ids ?? [],
+  set: (v) => {
+    state().ids = v
+  }
+})
+const shown = computed<boolean>({
+  get: () => ui.docks[key.value]?.shown ?? false,
+  set: (v) => {
+    state().shown = v
+  }
+})
 const typing = ref(false)
 /** A tap on the one-line receipt shows the card with the keyboard still up */
 const opened = ref(false)

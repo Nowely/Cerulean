@@ -49,6 +49,11 @@ export const useUiStore = defineStore('ui', () => {
   const refill = ref<{ text: string, aim: Id | 'auto' } | null>(null)
   /** When the last toast showed: a toast and a docked card never show together */
   const toastAt = ref(0)
+  /**
+   * What each composer's dock holds (Главная, a page, Сегодня), by screen: a receipt stays when its screen is left
+   * and comes back with it, until it is replaced or dismissed (B9)
+   */
+  const docks = ref<Record<string, { ids: Id[], shown: boolean }>>({})
 
   return {
     picker,
@@ -59,6 +64,7 @@ export const useUiStore = defineStore('ui', () => {
     findQuery,
     refill,
     toastAt,
+    docks,
     pick: (p: Picker) => { picker.value = p },
     confirm: (c: Confirm) => { confirming.value = c }
   }

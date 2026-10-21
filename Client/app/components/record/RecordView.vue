@@ -232,7 +232,7 @@ function openPlace() {
             :aria-label="`${done} из ${subs.length}`"
           >
             <span
-              class="block h-full rounded-full bg-accent"
+              class="block h-full rounded-full bg-toned"
               :style="{ width: `${(done / subs.length) * 100}%` }"
             />
           </span>

@@ -1,7 +1,8 @@
 // Авто: where a line goes and what records it becomes. The stores run it; this file only decides.
 import type { Due, Id, Page, Rec } from './types'
 import type { ModelResult } from './model'
-import { classify, guessOption, textTopics, type Learned, type RuleResult } from './rules'
+import { classify, guessOption, templateFor, textTopics, type Learned, type RuleResult } from './rules'
+import { templateByKey } from './templates'
 import { cleanRecordText, dropPrefix, isSearch, parseDue, parseQty, splitItems, splitParts } from './parse'
 import { capitalize, fold } from './text'
 
@@ -12,6 +13,8 @@ export type Preview
     | { kind: 'page', pageId: Id, count: number }
     | { kind: 'inbox', count: number }
     | { kind: 'split', parts: { to: Id | 'inbox', count: number }[] }
+    /** Day one: no page of the kind yet, so the send makes one from its template («→ Покупки») */
+    | { kind: 'starter', name: string, count: number }
 
 export interface AutoContext {
   pages: Page[]
@@ -43,7 +46,10 @@ export function preview(text: string, ctx: AutoContext): Preview {
   const page = ctx.pages.find(p => p.id === r.pageId)
   if (page) return { kind: 'page', pageId: page.id, count: draftsFor(t, page, now).length }
   // With a model the decision waits for send; the chip stays «Авто» instead of promising Входящие
-  return ctx.model ? { kind: 'idle' } : { kind: 'inbox', count: 1 }
+  if (ctx.model) return { kind: 'idle' }
+  const starter = templateFor(t, ctx.pages)
+  if (!starter) return { kind: 'inbox', count: 1 }
+  return { kind: 'starter', name: templateByKey(starter).name, count: (starter === 'shop' ? splitItems(t) : splitParts(dropPrefix(t))).length }
 }
 
 /** A part of a send and where the rules put it; no page: Входящие with «уточнить» (or the model, when there is one) */

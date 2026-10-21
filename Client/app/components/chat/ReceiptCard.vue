@@ -356,12 +356,14 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           />
           Нет сети. Запись во Входящих и разберётся, когда сеть появится.
         </div>
+        <!-- «Отменить» goes when its window ends; «в Журнале ›» on Главная stays (v21 C5) -->
         <div
-          v-if="fresh && !offline"
-          class="flex items-center gap-2 border-t px-3 py-2"
+          v-if="(fresh && !offline) || (docked && chatLink)"
+          class="flex min-h-13 items-center gap-2 border-t px-3 py-2"
           :class="docked ? 'border-line' : 'border-canvas'"
         >
           <UButton
+            v-if="fresh && !offline"
             class="relative overflow-hidden"
             @click="undo"
           >
