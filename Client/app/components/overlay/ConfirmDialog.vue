@@ -12,6 +12,8 @@ const open = computed({
     if (!v) ui.confirming = null
   }
 })
+/** A question that waits for a choice: an `alertdialog` (Reka passes the role through to its content) */
+const alert = { role: 'alertdialog' } as object
 function run() {
   const c = ui.confirming
   ui.confirming = null
@@ -26,6 +28,7 @@ function run() {
     :title="ui.confirming?.title"
     :description="ui.confirming?.text"
     :ui="{ content: 'max-w-sm' }"
+    :content="alert"
   >
     <template #footer>
       <UButton

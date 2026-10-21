@@ -25,10 +25,12 @@ function matches(rec: Rec, rule: FilterRule): boolean {
 
 /**
  * `since`: rows ticked or unticked after this moment (the page was opened) stay where they were, struck through,
- * until the page is opened again; a tick never makes a row vanish under the finger (v22, U2)
+ * until the page is opened again; a tick never makes a row vanish under the finger (v22, U2). Only the views the row
+ * belonged to before the tick keep it: a row ticked on «Купить» never shows up on «Запасы»
  */
 export function filterRecords(records: Rec[], view: ViewDef, since = Number.POSITIVE_INFINITY): Rec[] {
-  return records.filter(r => (r.tickedAt ?? 0) >= since || view.filter.every(rule => matches(r, rule)))
+  const fits = (r: Rec) => view.filter.every(rule => matches(r, rule))
+  return records.filter(r => fits(r) || ((r.tickedAt ?? 0) >= since && fits({ ...r, done: !r.done })))
 }
 
 const byOrder = (a: Rec, b: Rec) => a.order - b.order

@@ -231,6 +231,10 @@ export default {
         footer: 'px-5 pb-5 pt-0 justify-end',
         title: 'text-sheet text-highlighted',
         description: 'text-meta text-toned'
+      },
+      // Nuxt UI paints the scrim in the `overlay` variant, which comes after the slot: set it there too
+      variants: {
+        overlay: { true: { overlay: 'bg-scrim' } }
       }
     },
     // Mobile sheets: radius 20 on top, a handle in the ring colour

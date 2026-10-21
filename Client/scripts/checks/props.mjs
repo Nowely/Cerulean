@@ -60,6 +60,24 @@ export default [
     expect(await usage(p, 'Бытовая химия') === n, '«Отменить» did not bring the values back')
     expect(await p.getByRole('dialog').count(), '«Отменить» closed the sheet')
   } },
+  // Desktop: the notice rises over the dialog's scrim, and «Отменить» works with the dialog still open
+  { id: 'props-weight-option-desk', device: DESKTOP, run: async (p) => {
+    await editor(p, 'Отдел')
+    await p.getByRole('button', { name: 'Удалить вариант «Бытовая химия»' }).click()
+    const t = toast(p, 'Вариант «Бытовая химия» удалён')
+    expect(await shows(t), 'no notice over the dialog')
+    expect(await t.evaluate((e) => {
+      const r = e.getBoundingClientRect()
+      return e.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2))
+    }), 'the notice is under the dialog\'s scrim')
+    expect(await t.evaluate(e => !e.closest('[aria-hidden="true"]')), 'the notice is hidden from screen readers')
+    const form = await p.locator('form').filter({ has: p.getByRole('textbox', { name: 'Новая запись' }) }).boundingBox()
+    const at = await t.boundingBox()
+    expect(at.y + at.height <= form.y && Math.abs(at.x + at.width - form.x - form.width) <= 1, 'the notice is not at the right above the composer')
+    await t.getByRole('button', { name: 'Отменить' }).click()
+    expect(await shows(p.getByRole('button', { name: 'Удалить вариант «Бытовая химия»' })), '«Отменить» did not bring the option back')
+    expect(await p.getByRole('dialog').count(), '«Отменить» closed the dialog')
+  } },
   { id: 'props-weight-delete', device: MOBILE, run: async (p) => {
     await editor(p, 'Отдел')
     const n = await usage(p)

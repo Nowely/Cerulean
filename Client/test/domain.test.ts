@@ -102,7 +102,7 @@ describe('demo summaries match the spec', () => {
 
   it('home rows', () => {
     expect(line('Покупки')).toBe('6 купить · хлеб, молоко, сыр +3')
-    expect(line('Задачи')).toBe('3 дела · оплатить интернет, позвонить стоматологу, вернуть книгу в библиотеку')
+    expect(line('Задачи')).toBe('3 дела · позвонить стоматологу, оплатить интернет, вернуть книгу в библиотеку')
     expect(line('Цели')).toBe('2 цели · полумарафон к маю, 24 книги за год')
     expect(line('Книги')).toBe('1 книга · «Атомные привычки»')
     expect(line('Входящие')).toBe('подарок маме на др, посмотреть тот сериал')
@@ -123,6 +123,16 @@ describe('demo summaries match the spec', () => {
     expect(pageSubline(page('Задачи'), top('Задачи'), NOW)).toBe('3 дела · 1 просрочено')
     expect(pageSubline(page('Входящие'), top('Входящие'), NOW)).toBe('2 уточнить')
     expect(pageSubline(page('Сегодня'), [], NOW, d.records)).toBe('3 дела со всех страниц · 1 просрочено')
+  })
+
+  it('a row ticked while the page is open stays only in the views it fit before the tick', () => {
+    const p = page('Покупки')
+    const [buy, stock] = [p.views.find(v => v.name === 'Купить')!, p.views.find(v => v.name === 'Запасы')!]
+    const opened = NOW - 60_000
+    const recs = top('Покупки').map(r => r.text === 'Молоко' ? { ...r, done: true, tickedAt: NOW } : r)
+    const names = (v: typeof buy) => applyView(p, recs, v, NOW, opened).flatMap(g => g.records.map(r => r.text))
+    expect(names(buy)).toContain('Молоко')
+    expect(names(stock)).not.toContain('Молоко')
   })
 
   it('«Купить» is grouped by Отдел in department order', () => {
@@ -171,6 +181,9 @@ describe('simple rules', () => {
     expect(classify('позвонить стоматологу сегодня в 10', d.pages).pageId).toBe(id('Задачи'))
     expect(classify('вызвать сантехника', d.pages).pageId).toBe(id('Дела по дому'))
     expect(classify('прочитать «Мастер и Маргарита»', d.pages).pageId).toBe(id('Книги'))
+    // A typed prefix names the page over a topic word of another one
+    expect(classify('идея: сад на балконе', d.pages).pageId).toBe(id('Идеи'))
+    expect(classify('цель: купить велосипед', d.pages).pageId).toBe(id('Цели'))
   })
   it('leaves unclear lines to Уточнение, with a name for a new page', () => {
     const r = classify('подарок маме на др', d.pages, {}, [id('Задачи'), id('Идеи')])

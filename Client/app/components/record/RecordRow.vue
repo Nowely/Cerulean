@@ -4,7 +4,7 @@
 // the row's values, a right click opens all of them, and a ⋮⋮ handle in the left gutter drags the row.
 // The row is one Tab stop, its text: ↑/↓ between rows, Space ticks, Enter opens, Delete deletes,
 // Shift+F10 opens «⋯», Alt+↑/↓ moves the row. The right side shows properties, never when it was made (v22).
-import { computed, onMounted, ref, useTemplateRef, type FunctionalComponent } from 'vue'
+import { computed, nextTick, onMounted, ref, useTemplateRef, type FunctionalComponent } from 'vue'
 import { LazyUContextMenu, LazyUDropdownMenu, LazyUTooltip } from '#components'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -130,9 +130,25 @@ const menu = computed(() => [
     { label: 'Скопировать текст', icon: 'i-lucide-copy', onSelect: () => actions.copy(props.rec) }
   ],
   [
-    { label: 'Удалить', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => actions.remove([props.rec.id]) }
+    { label: 'Удалить', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: remove }
   ]
 ])
+
+const text = useTemplateRef<HTMLElement>('text')
+/** A delete from the keyboard or the menu: the focus goes on to the next row (the one above after the last), not to the page */
+function remove() {
+  const rows = [...document.querySelectorAll<HTMLElement>('[data-row-text]')]
+  const at = rows.indexOf(text.value!)
+  const next = rows[at + 1] ?? rows[at - 1]
+  actions.remove([props.rec.id])
+  // After the menu's own focus return, which runs as it goes
+  if (at >= 0) void nextTick(() => setTimeout(() => next?.focus()))
+}
+/** The menu went (Esc, or an action that stays here): the focus is back on the row, not on its hidden «⋯» */
+function backToRow(e: Event) {
+  e.preventDefault()
+  text.value?.focus()
+}
 
 /** The same actions as the phone's «⋯» sheet, opened by a long press that lets go without moving */
 const sheet = computed<MenuItem[][]>(() => menu.value.map(g => g.map(i => ({ label: i.label, icon: i.icon, danger: 'color' in i, onSelect: i.onSelect }))))
@@ -156,7 +172,7 @@ function onKey(e: KeyboardEvent) {
     data.toggleDone(props.rec.id)
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     e.preventDefault()
-    actions.remove([props.rec.id])
+    remove()
   } else if (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) {
     e.preventDefault()
     openMenu()
@@ -264,6 +280,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           class="w-2.5 shrink-0 lg:w-2"
         />
         <button
+          ref="text"
           type="button"
           data-row-text
           class="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center gap-px rounded-item py-1 pr-1 pl-0.5 text-left lg:min-h-10"
@@ -381,7 +398,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           v-if="!readonly && isDesktop"
           v-model:open="menuOpen"
           :items="menu"
-          :content="{ align: 'end' }"
+          :content="{ align: 'end', onCloseAutoFocus: backToRow }"
         >
           <component
             :is="later.ready.value ? LazyUTooltip : Bare"

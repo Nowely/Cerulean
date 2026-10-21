@@ -147,6 +147,11 @@ function openPlace() {
       class="px-4 pt-1 lg:px-0"
       :class="container === 'preview' ? 'lg:px-4' : 'lg:pt-0.5'"
     >
+      <!-- «Запись изменили в другой вкладке»: above the title on a phone, under it on desktop (MobileTwoTabs, PageTwoTabs) -->
+      <slot
+        v-if="!isDesktop"
+        name="status"
+      />
       <div
         class="flex items-center lg:gap-3"
         :class="rec.glyph ? 'gap-2.5' : 'gap-2'"
@@ -196,6 +201,10 @@ function openPlace() {
         />
         <span class="text-default">{{ parent?.text ?? page?.title }}</span>
       </button>
+      <slot
+        v-if="isDesktop"
+        name="status"
+      />
     </div>
 
     <!-- Properties in the page's order: empty ones are hidden -->

@@ -51,6 +51,7 @@ async function replace() {
     v-model:open="open"
     :title="step === 'confirm' ? 'Заменить всё?' : 'Загрузить копию'"
     dialog
+    alert
   >
     <!-- No ×: «Отмена» is one of the choices (MobileImport, SettingsImport) -->
     <template #close>
