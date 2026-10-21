@@ -31,7 +31,7 @@ describe('dates', () => {
     expect(formatDue({ date: '2027-05-18' }, NOW)).toBe('18 мая 2027')
     expect(formatDueLong({ date: '2027-05-18' }, NOW)).toBe('18 мая 2027 · через 7 месяцев')
     expect(formatDay(NOW, NOW)).toBe('Сегодня, 19 октября')
-    expect(formatAdded('chat', new Date(2026, 9, 19, 8, 40).getTime(), NOW)).toBe('из чата · сегодня, 8:40')
+    expect(formatAdded('chat', new Date(2026, 9, 19, 8, 40).getTime(), NOW)).toBe('с Главной · сегодня, 8:40')
   })
 })
 
@@ -73,7 +73,7 @@ describe('demo summaries match the spec', () => {
   const line = (title: string) => summaryText(pageSummary(page(title), top(title), NOW, d.records))
 
   it('home rows', () => {
-    expect(line('Продукты')).toBe('6 купить · хлеб, молоко, сыр +3')
+    expect(line('Покупки')).toBe('6 купить · хлеб, молоко, сыр +3')
     expect(line('Задачи')).toBe('3 дела · оплатить интернет, позвонить стоматологу, вернуть книгу в библиотеку')
     expect(line('Цели')).toBe('2 цели · полумарафон к маю, 24 книги за год')
     expect(line('Книги')).toBe('1 книга · «Атомные привычки»')
@@ -84,22 +84,22 @@ describe('demo summaries match the spec', () => {
   })
 
   it('badges', () => {
-    expect(pageBadge(page('Продукты'), top('Продукты'), NOW)?.text).toBe('1 новая')
+    expect(pageBadge(page('Покупки'), top('Покупки'), NOW)?.text).toBe('1 новая')
     expect(pageBadge(page('Задачи'), top('Задачи'), NOW)).toEqual({ text: '1 просрочено', tone: 'warn' })
     expect(pageBadge(page('Входящие'), top('Входящие'), NOW)).toEqual({ text: '2 уточнить', tone: 'accent' })
     expect(pageBadge(page('Сегодня'), [], NOW, d.records)?.text).toBe('1 просрочено')
   })
 
   it('page sub-lines', () => {
-    expect(pageSubline(page('Продукты'), top('Продукты'), NOW)).toBe('6 купить · 2 заканчиваются')
+    expect(pageSubline(page('Покупки'), top('Покупки'), NOW)).toBe('6 купить · 2 заканчиваются')
     expect(pageSubline(page('Задачи'), top('Задачи'), NOW)).toBe('3 дела · 1 просрочено')
     expect(pageSubline(page('Входящие'), top('Входящие'), NOW)).toBe('2 уточнить')
     expect(pageSubline(page('Сегодня'), [], NOW, d.records)).toBe('3 дела со всех страниц · 1 просрочено')
   })
 
   it('«Купить» is grouped by Отдел in department order', () => {
-    const p = page('Продукты')
-    const groups = applyView(p, top('Продукты'), p.views[0]!, NOW)
+    const p = page('Покупки')
+    const groups = applyView(p, top('Покупки'), p.views[0]!, NOW)
     expect(groups.map(g => g.label)).toEqual(['Хлеб и выпечка', 'Молочное', 'Овощи и фрукты', 'Бытовая химия'])
     expect(groups[1]!.records.map(r => r.text)).toEqual(['Молоко', 'Сыр', 'Яйца'])
   })
@@ -111,7 +111,7 @@ describe('demo summaries match the spec', () => {
 
   it('export keeps everything readable and round-trips JSON', () => {
     const md = toMarkdown(d.pages, d.records, d.sections, NOW)
-    expect(md).toContain('### Продукты')
+    expect(md).toContain('### Покупки')
     expect(md).toContain('- [ ] Молоко · Количество: 2 л, Отдел: Молочное')
     expect(md).toContain('  - [ ] Взять два десятка, если будет скидка')
     const json = toJSON({ ...d, settings: { model: 'fast', rulesFirst: true, homeRows: 'summary', dismissed: [] }, learned: {} }, NOW)
@@ -138,8 +138,8 @@ describe('simple rules', () => {
   const d = liveDemo()
   const id = (title: string) => d.pages.find(p => p.title === title)!.id
   it('files clear lines', () => {
-    expect(classify('кефир', d.pages).pageId).toBe(id('Продукты'))
-    expect(classify('молоко, яйца, сыр', d.pages).pageId).toBe(id('Продукты'))
+    expect(classify('кефир', d.pages).pageId).toBe(id('Покупки'))
+    expect(classify('молоко, яйца, сыр', d.pages).pageId).toBe(id('Покупки'))
     expect(classify('позвонить стоматологу сегодня в 10', d.pages).pageId).toBe(id('Задачи'))
     expect(classify('вызвать сантехника', d.pages).pageId).toBe(id('Дела по дому'))
     expect(classify('прочитать «Мастер и Маргарита»', d.pages).pageId).toBe(id('Книги'))
@@ -156,7 +156,7 @@ describe('simple rules', () => {
     expect(classify('оплатить интернет', d.pages).pageId).toBe(id('Задачи'))
   })
   it('offers the starter, not an unrelated recent page, when no page fits (U5)', () => {
-    const shop = d.pages.find(p => p.title === 'Продукты')!
+    const shop = d.pages.find(p => p.title === 'Покупки')!
     const r = classify('позвонить маме', [shop], {}, [shop.id])
     expect(r.pageId).toBeNull()
     expect(r.guesses).toEqual([])
@@ -166,7 +166,7 @@ describe('simple rules', () => {
     expect(r.pageId).toBe(id('Идеи'))
   })
   it('splits a shopping line and fills Количество and Отдел', () => {
-    const p = d.pages.find(x => x.title === 'Продукты')!
+    const p = d.pages.find(x => x.title === 'Покупки')!
     const dept = p.props.find(x => x.name === 'Отдел')!
     const drafts = draftsFor('кефир 1 л, батон и сметана', p, NOW)
     expect(drafts.map(x => x.text)).toEqual(['Кефир', 'Батон', 'Сметана'])

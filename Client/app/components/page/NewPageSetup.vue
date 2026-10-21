@@ -12,7 +12,7 @@ const props = defineProps<{ page: Page }>()
 const emit = defineEmits<{ focus: [boolean] }>()
 const data = useDataStore()
 
-const sectionName = computed(() => props.page.sectionId ? data.sections[props.page.sectionId]?.name ?? 'Недавнее' : 'Недавнее')
+const sectionName = computed(() => props.page.sectionId ? data.sections[props.page.sectionId]?.name ?? 'Мои страницы' : 'Мои страницы')
 const choosing = ref(false)
 const description = computed({
   get: () => props.page.description,

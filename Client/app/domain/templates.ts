@@ -60,7 +60,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     key: 'todo',
-    name: 'Дела',
+    name: 'Задачи',
     glyph: 'check',
     color: 'blue',
     description: 'дела и сроки',
@@ -85,12 +85,12 @@ export const TEMPLATES: Template[] = [
   },
   {
     key: 'note',
-    name: 'Заметки',
-    glyph: 'doc',
-    color: 'gray',
+    name: 'Идеи',
+    glyph: 'bulb',
+    color: 'yellow',
     description: 'мысли, ссылки, черновики',
     hasDone: false,
-    noun: ['заметка', 'заметки', 'заметок'],
+    noun: ['идея', 'идеи', 'идей'],
     props: () => [],
     views: () => defaultViews(false)
   }

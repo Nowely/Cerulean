@@ -12,7 +12,7 @@ export function useFindRows() {
 
   function pageLine(p: Page): string {
     if (p.kind === 'inbox') return ''
-    return inPlace(p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Недавнее')
+    return inPlace(p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Мои страницы')
   }
 
   function recLine(r: Rec): string {

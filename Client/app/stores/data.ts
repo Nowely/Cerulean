@@ -96,7 +96,7 @@ export const useDataStore = defineStore('data', () => {
   const inbox = computed(() => livePages.value.find(p => p.kind === 'inbox')!)
   const clarify = computed(() => liveRecords.value.filter(r => r.tags.includes('clarify') && !r.done))
   const sectionList = computed(() => Object.values(sections.value).sort((a, b) => a.order - b.order))
-  /** «Недавнее»: pages without a section and outside Избранное, newest first by creation (a list you aim at must not reorder) */
+  /** «Мои страницы»: pages without a section and outside Избранное, newest first by creation (a list you aim at must not reorder) */
   const recentlyMade = computed(() => livePages.value
     .filter(p => p.kind === 'page' && !p.sectionId && p.favorite === null)
     .sort((a, b) => b.createdAt - a.createdAt))
@@ -182,7 +182,7 @@ export const useDataStore = defineStore('data', () => {
     return pages.value[page.id]!
   }
 
-  /** A page made from a starter (icon, description, views, «Готово»); without a section it lands in «Недавнее» */
+  /** A page made from a starter (icon, description, views, «Готово»); without a section it lands in «Мои страницы» */
   function createFromTemplate(key: TemplateKey, init: Partial<Page> = {}): Page {
     const page = createPage({ title: '', ...init })
     updatePage(page.id, applyTemplate(page, key))
@@ -386,7 +386,7 @@ export const useDataStore = defineStore('data', () => {
     save('sections', s)
   }
 
-  /** Deleting a section keeps its pages: they move to «Недавнее» (pages without a section) */
+  /** Deleting a section keeps its pages: they move to «Мои страницы» (pages without a section) */
   function removeSection(id: Id) {
     for (const p of livePages.value.filter(p => p.sectionId === id)) updatePage(p.id, { sectionId: null })
     delete sections.value[id]

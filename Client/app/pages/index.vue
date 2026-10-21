@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Главная: Входящие, then sections as quiet folding captions: Избранное, Недавнее (pages without a section),
+// Главная: Входящие, then sections as quiet folding captions: Избранное, Мои страницы (pages without a section),
 // the user's sections. Write at the bottom; what was written shows above the composer.
 import { computed, ref, useTemplateRef } from 'vue'
 import { useHead, useRouter } from '#imports'
@@ -257,14 +257,14 @@ function toTop() {
         </button>
       </div>
 
-      <!-- Недавнее: pages without a section, newest first, five rows and «Ещё N» -->
+      <!-- Мои страницы: pages without a section, newest first, five rows and «Ещё N» -->
       <section
         v-if="recent.length"
         aria-labelledby="cap-recent"
       >
         <HomeCaption
           id="recent"
-          name="Недавнее"
+          name="Мои страницы"
           :folded="folded('recent')"
           :count="recent.length"
           :status="foldStatus('recent', recent)"

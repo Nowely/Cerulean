@@ -17,7 +17,7 @@ export function useRecordActions() {
     notify(ids.length === 1 ? 'Запись в корзине' : `${count(ids.length, RECORD_FORMS)} в корзине`, { label: 'Отменить', run: () => data.restoreRecords(ids) })
   }
 
-  /** «Переместить»: pick a page; a record waiting in Входящие also settles its Уточнение in Чат */
+  /** «Переместить»: pick a page; a record waiting in Входящие also settles its Уточнение in Журнал */
   function move(ids: Id[]) {
     const first = data.records[ids[0]!]
     if (!first) return
@@ -40,7 +40,7 @@ export function useRecordActions() {
     })
   }
 
-  /** A choice on a row of Входящие: the record moves and its Уточнение in Чат settles; «Отменить» puts both back */
+  /** A choice on a row of Входящие: the record moves and its Уточнение in Журнал settles; «Отменить» puts both back */
   function place(rec: Rec, choice: Choice) {
     const from = rec.pageId
     const { result: page, undo } = journal.undoable([rec.id], () => journal.chooseForRecord(rec.id, choice))

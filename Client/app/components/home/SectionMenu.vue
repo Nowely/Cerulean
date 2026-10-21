@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // «⋯» of a section, as in the spec: Новая страница, Переименовать, Изменить порядок, Новая секция (right under
-// this one, its name a field at once), Удалить секцию. Deleting a section keeps its pages, they move to «Недавнее».
+// this one, its name a field at once), Удалить секцию. Deleting a section keeps its pages, they move to «Мои страницы».
 import { computed, ref } from 'vue'
 import type { Section } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -34,7 +34,7 @@ const items = computed<MenuItem[][]>(() => [
         if (!n) return data.removeSection(props.section.id)
         ui.confirm({
           title: `Удалить секцию «${props.section.name}»?`,
-          text: 'Страницы останутся, они переедут в Недавнее.',
+          text: 'Страницы останутся, они перейдут в Мои страницы.',
           action: 'Удалить секцию',
           run: () => data.removeSection(props.section.id)
         })

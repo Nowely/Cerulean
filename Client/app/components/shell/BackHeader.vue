@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Top of a pushed screen on a phone (a page, a record, Чат, Настройки, Корзина): «‹ Главная» and the
+// Top of a pushed screen on a phone (a page, a record, Журнал, Настройки, Корзина): «‹ Главная» and the
 // screen's actions on the right. There are no tabs: every screen is reached from Главная.
 defineProps<{ to: string, label: string }>()
 </script>

@@ -53,7 +53,7 @@ watch(() => colorMode.value, () => nextTick(() => {
 }), { immediate: true, flush: 'post' })
 useHead({ meta: [{ name: 'theme-color', content: themeColor }] })
 
-// On a phone a swipe to the right goes back from Чат to Главная (Чат is a screen pushed from Главная)
+// On a phone a swipe to the right goes back from Журнал to Главная (Журнал is a screen pushed from Главная)
 let x0 = 0
 let y0 = 0
 function touchStart(e: TouchEvent) {
@@ -61,7 +61,7 @@ function touchStart(e: TouchEvent) {
   y0 = e.touches[0]!.clientY
 }
 function touchEnd(e: TouchEvent) {
-  if (isDesktop.value || route.path !== '/chat') return
+  if (isDesktop.value || route.path !== '/journal') return
   const t = e.changedTouches[0]!
   const dx = t.clientX - x0
   const dy = t.clientY - y0

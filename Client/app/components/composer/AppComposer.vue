@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // The one place to write, the same on every screen: a 44px pill with the destination chip · a field that grows
 // with the text · mic → send. The chip is text only and opens the page picker. It never changes while typing,
-// so the text never moves: in Авто the guess is a line right on the pill, at the chip's text («→ Продукты»).
-// «Отменить» on a receipt gives the text back aimed at its page for that one send («→ Продукты, только эта запись»).
+// so the text never moves: in Авто the guess is a line right on the pill, at the chip's text («→ Покупки»).
+// «Отменить» on a receipt gives the text back aimed at its page for that one send («→ Покупки, только эта запись»).
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { refDebounced, useOnline } from '@vueuse/core'
 import type { Entry, Id } from '~/domain/types'
@@ -17,7 +17,7 @@ import { useLater } from '~/composables/useLater'
 import DestChip from './DestChip.vue'
 
 const props = withDefaults(defineProps<{
-  /** auto: Главная and Чат · page: a page's own composer · record: adds Подпункты · today: Авто with today's date */
+  /** auto: Главная and Журнал · page: a page's own composer · record: adds Подпункты · today: Авто with today's date */
   mode: 'auto' | 'page' | 'record' | 'today'
   pageId?: Id
   recordId?: Id
@@ -91,7 +91,7 @@ const untitled = computed(() => props.mode === 'page' && page.value && !page.val
 // The live decision of Авто, a beat behind the typing so nothing flickers
 const typed = refDebounced(text, 180)
 const decision = computed(() => dest.value === 'auto' ? journal.previewFor(typed.value) : { kind: 'idle' as const })
-/** Where the text would go: «Продукты», «Входящие», «Поиск», or nothing yet */
+/** Where the text would go: «Покупки», «Входящие», «Поиск», or nothing yet */
 const guess = computed(() => {
   if (once.value) return `${destPage.value?.title || 'Без названия'}, только эта запись`
   const d = decision.value

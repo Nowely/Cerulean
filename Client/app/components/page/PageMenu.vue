@@ -73,7 +73,7 @@ const items = computed<MenuItem[][]>(() => {
   ]
   if (props.page.kind === 'page') {
     first.push({ label: 'Описание для Авто', icon: 'i-lucide-lightbulb', value: props.page.description || 'нет', onSelect: () => describing.value = true })
-    first.push({ label: 'Переместить в секцию', icon: 'i-lucide-arrow-right', value: section.value?.name ?? 'Недавнее', onSelect: () => moving.value = true })
+    first.push({ label: 'Переместить в секцию', icon: 'i-lucide-arrow-right', value: section.value?.name ?? 'Мои страницы', onSelect: () => moving.value = true })
   }
   if (props.page.kind !== 'today' && !props.home) first.push({ label: 'Настроить вид', icon: 'i-lucide-sliders-horizontal', onSelect: () => emit('settings') })
   first.push({ label: 'Скопировать как текст', icon: 'i-lucide-copy', onSelect: copy })

@@ -17,7 +17,7 @@ function move(to: Id | null) {
   if (to === from) return
   const id = props.page.id
   data.updatePage(id, { sectionId: to })
-  const name = to ? data.sections[to]?.name : 'Недавнее'
+  const name = to ? data.sections[to]?.name : 'Мои страницы'
   notify(`Страница в секции «${name}»`, { label: 'Отменить', run: () => data.updatePage(id, { sectionId: from }) })
 }
 </script>
@@ -36,7 +36,7 @@ function move(to: Id | null) {
         class="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base text-highlighted hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
         @click="move(s?.id ?? null)"
       >
-        <span class="min-w-0 flex-1 truncate">{{ s?.name ?? 'Недавнее' }}</span>
+        <span class="min-w-0 flex-1 truncate">{{ s?.name ?? 'Мои страницы' }}</span>
         <UIcon
           v-if="(s?.id ?? null) === page.sectionId"
           name="i-lucide-check"

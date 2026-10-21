@@ -1,8 +1,8 @@
 <script setup lang="ts">
-// Desktop navigation, no tabs (as in Codex): Главная, Найти, Чат; then Входящие and the sections as folding
-// captions (Избранное, Недавнее, the user's sections); Настройки at the bottom. Folding is the same state as
+// Desktop navigation, no tabs (as in Codex): Главная, Найти, Журнал; then Входящие and the sections as folding
+// captions (Избранное, Мои страницы, the user's sections); Настройки at the bottom. Folding is the same state as
 // on Главная. While Главная is open the sections are shown once, in the centre: the sidebar keeps only Главная,
-// Найти, Чат, Входящие and Настройки. Elsewhere overdue is said once, at its highest place.
+// Найти, Журнал, Входящие and Настройки. Elsewhere overdue is said once, at its highest place.
 import { computed, ref, watch } from 'vue'
 import { useRoute } from '#imports'
 import type { Id, Page, Rec, Section } from '~/domain/types'
@@ -107,15 +107,15 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
         <span class="text-13 text-dimmed">Ctrl K</span>
       </button>
       <NuxtLink
-        to="/chat"
+        to="/journal"
         class="side-row"
-        :aria-current="isCurrent('/chat') ? 'page' : undefined"
+        :aria-current="isCurrent('/journal') ? 'page' : undefined"
       >
         <UIcon
           name="i-lucide-message-square"
           class="side-ico"
         />
-        <span class="min-w-0 flex-1 truncate">Чат</span>
+        <span class="min-w-0 flex-1 truncate">Журнал</span>
       </NuxtLink>
 
       <NuxtLink
@@ -197,7 +197,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
 
         <section
           v-if="recent.length"
-          aria-label="Недавнее"
+          aria-label="Мои страницы"
         >
           <div class="side-head">
             <button
@@ -206,7 +206,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
               :aria-expanded="!folded('recent')"
               @click="data.toggleFolded('recent')"
             >
-              Недавнее <UIcon
+              Мои страницы <UIcon
                 name="i-lucide-chevron-down"
                 class="side-chev"
                 :class="{ '-rotate-90': folded('recent') }"

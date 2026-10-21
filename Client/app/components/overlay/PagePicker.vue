@@ -28,7 +28,7 @@ watch(open, (v) => {
 
 const choosable = computed(() => data.livePages.filter(p => p.kind === 'page' || p.kind === 'inbox'))
 const byId = (ids: Id[]) => ids.map(id => data.pages[id]).filter((p): p is Page => !!p && !p.deletedAt && p.kind !== 'today')
-const sectionName = (p: Page) => p.kind === 'inbox' ? '' : p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Недавнее'
+const sectionName = (p: Page) => p.kind === 'inbox' ? '' : p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Мои страницы'
 
 interface Group { label: string, pages: Page[], where?: boolean }
 
@@ -46,7 +46,7 @@ const groups = computed<Group[]>(() => {
   const out: Group[] = []
   if (guesses.length) out.push({ label: 'Похоже на', pages: guesses, where: true })
   out.push({ label: 'Открыто недавно', pages: opened, where: true })
-  if (data.recentlyMade.length) out.push({ label: 'Недавнее', pages: data.recentlyMade })
+  if (data.recentlyMade.length) out.push({ label: 'Мои страницы', pages: data.recentlyMade })
   for (const s of data.sectionList) {
     const pages = data.livePages.filter(p => p.sectionId === s.id && p.kind === 'page')
     if (pages.length) out.push({ label: s.name, pages })

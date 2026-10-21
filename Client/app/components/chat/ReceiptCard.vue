@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Квитанция: what was created and where, on Поиск's row grid (glyph or mark at 12px, text at 42px, record rows
 // 36px). «Не туда» is always the quiet header button; the footer holds only «Отменить» while fresh, whose countdown
-// is a line along its own bottom edge (15 s in Чат, 10 s after the last send when docked, paused while touched or
+// is a line along its own bottom edge (15 s in Журнал, 10 s after the last send when docked, paused while touched or
 // open). After that only «Отменить» goes: the receipt and its «Не туда» stay.
 // Docked above a composer a series of sends to one page reads as one receipt: «Отменить «Яблоки»» takes back the
 // latest send (its rows tinted fresh), «Не туда» moves them all. With the keyboard up it is one 44px line.
@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<{
   series?: Entry[]
   /** Floated above a composer: a 10 s window */
   docked?: boolean
-  /** Docked on Главная: the footer also has «в Чате ›» */
+  /** Docked on Главная: the footer also has «в Журнале ›» */
   chatLink?: boolean
   /** The keyboard is up on a phone: one line, a tap opens the card */
   line?: boolean
@@ -279,10 +279,10 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           <span class="flex-1" />
           <NuxtLink
             v-if="docked && chatLink"
-            to="/chat"
+            to="/journal"
             class="-mr-1.5 flex h-8 shrink-0 items-center gap-0.5 rounded-item pr-1.5 pl-2.5 text-13 text-dimmed hover:bg-btn hover:text-highlighted"
           >
-            в Чате<UIcon
+            в Журнале<UIcon
               name="i-lucide-chevron-right"
               class="size-3.5"
             />

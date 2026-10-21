@@ -39,7 +39,7 @@ export function demo(now = Date.now()): Dataset {
   const home = newSection('Дом', 0)
   const personal = newSection('Личное', 1)
 
-  // Продукты: «Купить» grouped by Отдел, «Запасы» with numbers against a norm, «Куплено»
+  // Покупки: «Купить» grouped by Отдел, «Запасы» with numbers against a norm, «Куплено»
   const shop = shoppingProps()
   const qty = shop[0]!
   const dept = shop[1]!
@@ -48,7 +48,7 @@ export function demo(now = Date.now()): Dataset {
   left.normProp = norm.id
   const opt = (name: string) => dept.options!.find(o => o.name === name)!.id
   const products = newPage({
-    title: 'Продукты',
+    title: 'Покупки',
     glyph: 'basket',
     color: 'green',
     sectionId: home.id,
@@ -156,7 +156,7 @@ export function demo(now = Date.now()): Dataset {
   today!.favorite = 0
   today!.openedAt = at(8, 50)
 
-  // Продукты
+  // Покупки
   const chat = (h: number, m: number, shift = 0) => ({ via: 'chat' as const, addedAt: at(h, m, shift) })
   const bread = add(products, 'Хлеб', { ...chat(9, 10), values: { [dept.id]: opt('Хлеб и выпечка') } })
   bread.order = -1
@@ -216,7 +216,7 @@ export function demo(now = Date.now()): Dataset {
   const gift = add(inbox!, 'Подарок маме на др', { ...chat(9, 2), tags: ['clarify'], guesses: [tasks.id, ideas.id, chores.id] })
   const series = add(inbox!, 'Посмотреть тот сериал', { ...chat(22, 15, -1), tags: ['clarify'], guesses: [ideas.id, tasks.id, books.id] })
 
-  // Корзина: a record from Задачи deleted yesterday, a page with its records, a record from Продукты
+  // Корзина: a record from Задачи deleted yesterday, a page with its records, a record from Покупки
   add(tasks, 'Позвонить в банк', { addedAt: at(10, 0, -6), deletedAt: at(18, 0, -1) })
   add(products, 'Овсянка', { addedAt: at(10, 0, -9), deletedAt: at(12, 0, -7) })
   const dacha = newPage({

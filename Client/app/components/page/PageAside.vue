@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Desktop, right of a page: one quiet row «Из чата · 2 записи сегодня ›» that opens Чат, and the Описание для Авто
+// Desktop, right of a page: one quiet row «С Главной · 2 записи сегодня ›» that opens Журнал, and the Описание для Авто
 import { computed, ref } from 'vue'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -36,10 +36,10 @@ function save() {
   >
     <NuxtLink
       v-if="fromChat"
-      to="/chat"
+      to="/journal"
       class="mb-1 flex h-9 items-center gap-1 rounded-item px-2.5 text-sm text-toned hover:bg-muted hover:text-highlighted"
     >
-      Из чата · {{ fromChat }}<UIcon
+      С Главной · {{ fromChat }}<UIcon
         name="i-lucide-chevron-right"
         class="size-3.5 text-dimmed"
       />

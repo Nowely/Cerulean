@@ -109,7 +109,7 @@ export function isDueToday(due: Due | null | undefined, now: number): boolean {
   return !!due && due.date === dayKey(now)
 }
 
-/** Day header in Чат: «Сегодня, 19 октября», «Вчера», «17 октября», «17 октября 2025» */
+/** Day header in Журнал: «Сегодня, 19 октября», «Вчера», «17 октября», «17 октября 2025» */
 export function formatDay(t: number, now: number): string {
   const diff = daysBetween(dayKey(now), dayKey(t))
   const d = new Date(t)
@@ -129,7 +129,7 @@ export function formatMoment(t: number, now: number): string {
   return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`
 }
 
-/** «Добавлено» always has a date: «из чата · сегодня, 8:40», «вручную · 17 окт», «вручную · сейчас» for a record just made */
+/** «Добавлено» always has a date: «с Главной · сегодня, 8:40», «вручную · 17 окт», «вручную · сейчас» for a record just made */
 export function formatAdded(via: 'chat' | 'manual', at: number, now: number): string {
-  return `${via === 'chat' ? 'из чата' : 'вручную'} · ${now - at < 60_000 ? 'сейчас' : formatMoment(at, now)}`
+  return `${via === 'chat' ? 'с Главной' : 'вручную'} · ${now - at < 60_000 ? 'сейчас' : formatMoment(at, now)}`
 }

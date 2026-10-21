@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// Top of Главная. Phone: the title in the page-title role and three glyphs, Найти, Чат and «⋯».
-// No dot on Чат: the «уточнить» count lives on Входящие only.
-// Desktop: the 72px title header with «⋯» only (Найти and Чат are in the sidebar).
+// Top of Главная. Phone: the title in the page-title role and three glyphs, Найти, Журнал and «⋯».
+// No dot on Журнал: the «уточнить» count lives on Входящие only.
+// Desktop: the 72px title header with «⋯» only (Найти and Журнал are in the sidebar).
 // «⋯» of Главная: «Компактные строки», «Новая страница», «Новая секция», «Настройки», «Корзина».
 import { computed } from 'vue'
 import { useRouter } from '#imports'
@@ -71,9 +71,9 @@ const items = computed<MenuItem[][]>(() => [
       />
     </button>
     <NuxtLink
-      to="/chat"
+      to="/journal"
       class="flex size-11 items-center justify-center rounded-item text-toned active:bg-pressed"
-      aria-label="Чат"
+      aria-label="Журнал"
     >
       <UIcon
         name="i-lucide-message-square"

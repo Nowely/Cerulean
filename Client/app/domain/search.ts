@@ -1,4 +1,4 @@
-// Поиск: pages and records by text; recent groups when nothing is typed; answers to a question in Чат
+// Поиск: pages and records by text; recent groups when nothing is typed; answers to a question in Журнал
 import type { Id, Page, Rec } from './types'
 import { addDays, dayKey } from './dates'
 import { fold, stems } from './text'

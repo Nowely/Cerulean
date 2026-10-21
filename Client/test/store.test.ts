@@ -9,7 +9,7 @@ vi.mock('~/domain/model', async (orig) => {
     ...real,
     askModel: vi.fn(async (_c: unknown, text: string, pages: { id: string, title: string }[]) => ({
       kind: 'record',
-      pageId: pages.find(p => p.title === 'Продукты')!.id,
+      pageId: pages.find(p => p.title === 'Покупки')!.id,
       items: [{ text: text.replace(/ для пульта/, ''), date: null, time: null, qty: '4 шт', option: 'Прочее' }],
       guesses: [],
       newPageName: null
@@ -47,21 +47,21 @@ describe('data store', () => {
 
   it('writes reactive objects to IndexedDB (the DataCloneError on main)', async () => {
     const { data, dbName } = await fresh({ demo: true })
-    const products = data.livePages.find(p => p.title === 'Продукты')!
+    const products = data.livePages.find(p => p.title === 'Покупки')!
     const rec = data.addRecord({ pageId: products.id, text: 'Кефир', values: { a: 1 } })
     data.updateRecord(rec.id, { note: 'обезжиренный', due: { date: '2026-10-20' } })
     expect(data.storageError).toBeNull()
     await data.flush()
     const again = await reload(dbName)
     expect(again.records[rec.id]).toMatchObject({ text: 'Кефир', note: 'обезжиренный', due: { date: '2026-10-20' } })
-    expect(again.livePages.map(p => p.title)).toContain('Продукты')
+    expect(again.livePages.map(p => p.title)).toContain('Покупки')
   })
 
   it('keeps pages of a deleted section and empties the trash', async () => {
     const { data } = await fresh({ demo: true })
     const home = data.sectionList.find(s => s.name === 'Дом')!
     data.removeSection(home.id)
-    expect(data.livePages.find(p => p.title === 'Продукты')!.sectionId).toBeNull()
+    expect(data.livePages.find(p => p.title === 'Покупки')!.sectionId).toBeNull()
     const books = data.livePages.find(p => p.title === 'Книги')!
     data.removePage(books.id)
     expect(data.trash[0]).toMatchObject({ kind: 'page' })
@@ -99,7 +99,7 @@ describe('Авто without a key', () => {
   it('files a clear line by simple rules', async () => {
     const { data, journal } = await fresh({ demo: true })
     const entry = await journal.send('кефир 1 л', 'auto')
-    const products = data.livePages.find(p => p.title === 'Продукты')!
+    const products = data.livePages.find(p => p.title === 'Покупки')!
     expect(entry.kind).toBe('routed')
     expect(entry.pageId).toBe(products.id)
     const rec = data.records[entry.recordIds![0]!]!
@@ -175,12 +175,12 @@ describe('day one (v21 F1)', () => {
   it('files calls into Дела and asks about a book with the starters to choose from', async () => {
     const { data, journal } = await fresh()
     const call = await journal.send('позвонить маме', 'auto')
-    expect(data.pages[call.pageId!]!.title).toBe('Дела')
+    expect(data.pages[call.pageId!]!.title).toBe('Задачи')
     const book = await journal.send('прочитать Канемана', 'auto')
     expect(book.kind).toBe('ask')
-    expect(data.livePages.filter(p => p.kind === 'page').map(p => p.title)).toEqual(['Дела'])
+    expect(data.livePages.filter(p => p.kind === 'page').map(p => p.title)).toEqual(['Задачи'])
     const page = journal.choose(book.id, { template: 'note' })!
-    expect(page).toMatchObject({ title: 'Заметки', template: 'note' })
+    expect(page).toMatchObject({ title: 'Идеи', template: 'note' })
     expect(data.recordsOf(page.id).map(r => r.text)).toEqual(['Прочитать Канемана'])
   })
 
@@ -231,6 +231,6 @@ describe('Авто with a key', () => {
     expect(data.records[parked.id]).toBeUndefined()
     const rec = data.records[e.recordIds![0]!]!
     expect(rec.text).toBe('Батарейки')
-    expect(data.pages[rec.pageId]!.title).toBe('Продукты')
+    expect(data.pages[rec.pageId]!.title).toBe('Покупки')
   })
 })

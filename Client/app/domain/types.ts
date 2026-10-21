@@ -1,4 +1,4 @@
-// The data model. Everything lives on pages: Чат and Поиск only point at pages and records.
+// The data model. Everything lives on pages: Журнал and Поиск only point at pages and records.
 
 export type Id = string
 
@@ -125,7 +125,7 @@ export interface Section {
 
 export type EntryKind = 'pending' | 'routed' | 'ask' | 'found' | 'undone' | 'offline'
 
-/** One line of the Чат journal: what was written and where it went */
+/** One line of the Журнал journal: what was written and where it went */
 export interface Entry {
   id: Id
   at: number

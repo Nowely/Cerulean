@@ -16,7 +16,7 @@ export function useCreatePage() {
   const notify = useNotify()
 
   /**
-   * Without a section the page goes to «Недавнее». `stay`: a first-run template row makes the page
+   * Without a section the page goes to «Мои страницы». `stay`: a first-run template row makes the page
    * and stays on Главная, a toast says where it is and opens it.
    */
   function create(opts: { sectionId?: Id | null, template?: TemplateKey, stay?: boolean } = {}) {
@@ -25,7 +25,7 @@ export function useCreatePage() {
       data.updatePage(page.id, applyTemplate(page, opts.template))
       if (opts.stay) {
         const name = TEMPLATES.find(t => t.key === opts.template)?.name ?? page.title
-        notify(`Страница ${name} создана в Недавнем`, { label: 'Открыть', run: () => void router.push(`/p/${page.id}`) })
+        notify(`Страница ${name} создана в Моих страницах`, { label: 'Открыть', run: () => void router.push(`/p/${page.id}`) })
         return page
       }
     } else {

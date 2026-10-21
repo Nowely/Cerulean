@@ -72,7 +72,7 @@ describe('model connection', () => {
     const now = Date.parse('2026-10-19T12:00:00Z')
     const input = JSON.parse(promptInput('хлеб', demo(now).pages, now)) as { today: string, pages: { title: string, list: boolean }[], line: string }
     expect(input.today).toBe('2026-10-19')
-    expect(input.pages.find(p => p.title === 'Продукты')?.list).toBe(true)
+    expect(input.pages.find(p => p.title === 'Покупки')?.list).toBe(true)
     expect(input.pages.find(p => p.title === 'Задачи')?.list).toBe(false)
     expect(input.pages.some(p => p.title === 'Входящие')).toBe(false)
   })

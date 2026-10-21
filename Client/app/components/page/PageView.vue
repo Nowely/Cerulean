@@ -123,7 +123,7 @@ function openRecord(rec: Rec) {
   else peek.peek({ kind: 'record', id: rec.id })
 }
 
-/** A choice on a row of Входящие settles the same Уточнение as in Чат */
+/** A choice on a row of Входящие settles the same Уточнение as in Журнал */
 function choose(rec: Rec, choice: Id | 'more' | 'new') {
   if (choice === 'more') {
     ui.pick({ title: 'Куда положить', subtitle: rec.text, current: rec.pageId, guesses: journal.guessesFor(rec), run: c => actions.place(rec, c) })

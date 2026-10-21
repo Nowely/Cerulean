@@ -1,4 +1,4 @@
-// Чат and Авто: what was written, where it went, and the one-tap fixes («Не туда», «Отменить», Уточнение)
+// Журнал and Авто: what was written, where it went, and the one-tap fixes («Не туда», «Отменить», Уточнение)
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Entry, Id, Page, Rec, TemplateKey } from '~/domain/types'
@@ -48,7 +48,7 @@ export const useJournalStore = defineStore('journal', () => {
     return entry
   }
 
-  /** No page fits but a starter does (day one: «хлеб»): the page is made from it in «Недавнее» and the line goes there */
+  /** No page fits but a starter does (day one: «хлеб»): the page is made from it in «Мои страницы» and the line goes there */
   function make(entry: Entry, key: TemplateKey, text: string, opts: { today?: boolean } = {}): Entry {
     const page = data.createFromTemplate(key)
     return place(entry, page, draftsFor(text, page, Date.now()), opts, true)
@@ -210,7 +210,7 @@ export const useJournalStore = defineStore('journal', () => {
 
   /**
    * Runs a change to records (a move, a choice) so it can be taken back: the records, their subitems and the
-   * Чат lines about them return to how they were, and a page the change made goes again while it is empty.
+   * Журнал lines about them return to how they were, and a page the change made goes again while it is empty.
    */
   function undoable<T>(recIds: Id[], run: () => T): { result: T, undo: () => void } {
     const ids = new Set(recIds)
@@ -235,7 +235,7 @@ export const useJournalStore = defineStore('journal', () => {
   /** Pages to offer for a record waiting in Входящие, worked out again from the pages there are now */
   /**
    * Recomputed from the pages as they are now. A line no page matches but a starter fits gets no guesses,
-   * so the starter («Дела») and «Новая страница» lead; earlier guesses and recent pages fill in otherwise.
+   * so the starter («Задачи») and «Новая страница» lead; earlier guesses and recent pages fill in otherwise.
    */
   function guessesFor(rec: Rec): Id[] {
     const ok = (id: Id) => id !== rec.pageId && !!validPage(id)

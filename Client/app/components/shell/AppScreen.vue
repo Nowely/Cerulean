@@ -3,7 +3,7 @@
 import { computed, useTemplateRef } from 'vue'
 import { useScroll } from '@vueuse/core'
 
-/** The dock's column: Главная 720, Чат 640, pages 680 */
+/** The dock's column: Главная 720, Журнал 640, pages 680 */
 withDefaults(defineProps<{ wide?: boolean, chat?: boolean }>(), { wide: false, chat: false })
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const { arrivedState } = useScroll(scroller)

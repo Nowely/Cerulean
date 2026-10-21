@@ -25,7 +25,7 @@
 
   /*
    * Type scale: nothing outside these sizes. Fixed steps for chrome
-   * (11 the Чат counter, 12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
+   * (11 the Журнал counter, 12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
    * 16 inputs and journal text, 17 records, 20 sheet titles, 28 / 30 page titles)
    * and role steps that switch to their desktop size at lg (see the media block below).
    */
@@ -68,7 +68,7 @@
   --text-body--line-height: 1.45;
   --text-meta: 14px;
   --text-meta--line-height: 1.35;
-  /* Every group label: sections, page groups, Доска columns, Настройки groups, picker and Поиск groups, Чат days */
+  /* Every group label: sections, page groups, Доска columns, Настройки groups, picker and Поиск groups, Журнал days */
   --text-cap: 12px;
   --text-cap--line-height: 20px;
   --text-cap--letter-spacing: 0.02em;

@@ -51,7 +51,7 @@ const checks = [
     await p.waitForTimeout(400)
     expect(!(await store(p, data => data.livePages.some(x => x.title === 'Покупки'))), 'Покупки is still there after «Отменить»')
     await send(p, 'прочитать Канемана')
-    for (const t of ['Покупки', 'Дела', 'Цели', 'Заметки']) expect(await p.getByRole('button', { name: new RegExp(t) }).count(), `no starter «${t}»`)
+    for (const t of ['Покупки', 'Задачи', 'Цели', 'Идеи']) expect(await p.getByRole('button', { name: new RegExp(t) }).count(), `no starter «${t}»`)
   } },
   { id: 'v21-2', device: MOBILE, run: async (p) => {
     await open(p, '/')
@@ -66,7 +66,7 @@ const checks = [
   } },
   { id: 'v21-3', device: MOBILE, run: async (p) => {
     await open(p, '/')
-    await p.getByRole('link', { name: /^Продукты/ }).first().click()
+    await p.getByRole('link', { name: /^Покупки/ }).first().click()
     await p.waitForURL(/\/p\//)
     await p.getByRole('button', { name: /^Куда:/ }).click()
     await p.waitForTimeout(400)
@@ -101,7 +101,7 @@ const checks = [
     await open(p, '/')
     const side = p.getByRole('complementary', { name: 'Навигация' })
     expect(!(await side.getByRole('region', { name: 'Избранное' }).count()), 'the sidebar repeats the tree on Главная')
-    await p.goto(`${BASE}/chat`)
+    await p.goto(`${BASE}/journal`)
     expect(await shows(side.getByRole('region', { name: 'Избранное' })), 'the sidebar has no tree off Главная')
   } },
   { id: 'B13-board', device: MOBILE, run: async (p) => {

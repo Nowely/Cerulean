@@ -36,26 +36,26 @@ const scenarios = [
   } },
   { name: 'MobileRecent', device: MOBILE, run: p => recentPages(p) },
   { name: 'MobileFirst', device: MOBILE, run: p => open(p, '/', false) },
-  { name: 'MobileChat', device: MOBILE, run: p => open(p, '/chat') },
-  { name: 'MobileChatEmpty', device: MOBILE, run: p => open(p, '/chat', false) },
-  { name: 'MobileList', device: MOBILE, run: p => openPage(p, 'Продукты') },
+  { name: 'MobileChat', device: MOBILE, run: p => open(p, '/journal') },
+  { name: 'MobileChatEmpty', device: MOBILE, run: p => open(p, '/journal', false) },
+  { name: 'MobileList', device: MOBILE, run: p => openPage(p, 'Покупки') },
   { name: 'MobileToday', device: MOBILE, run: p => openPage(p, 'Сегодня', false) },
   { name: 'MobileInbox', device: MOBILE, run: p => openPage(p, 'Входящие') },
   { name: 'MobileTasks', device: MOBILE, run: p => openPage(p, 'Задачи') },
   { name: 'MobileItem', device: MOBILE, run: async (p) => {
-    await openPage(p, 'Продукты')
+    await openPage(p, 'Покупки')
     await p.getByRole('button', { name: /^Яйца/ }).click()
     await p.waitForURL(/\/r\//)
     await settle(p, 400)
   } },
   { name: 'MobileGoal', device: MOBILE, run: p => openPage(p, 'Полумарафон к маю') },
   { name: 'MobilePageMenu', device: MOBILE, run: async (p) => {
-    await openPage(p, 'Продукты')
+    await openPage(p, 'Покупки')
     await p.getByRole('button', { name: 'Действия со страницей' }).click()
     await settle(p, 600)
   } },
   { name: 'MobileView', device: MOBILE, run: async (p) => {
-    await openPage(p, 'Продукты')
+    await openPage(p, 'Покупки')
     await p.getByRole('button', { name: 'Настроить вид' }).click()
     await settle(p)
   } },
@@ -120,7 +120,7 @@ const scenarios = [
     await settle(p, 400)
   } },
   { name: 'MobilePageSend', device: MOBILE, run: async (p) => {
-    await openPage(p, 'Продукты')
+    await openPage(p, 'Покупки')
     await p.getByRole('button', { name: /^Куда:/ }).click()
     await settle(p, 500)
     await p.getByRole('dialog').getByRole('button', { name: /^Авто/ }).click()
@@ -134,8 +134,8 @@ const scenarios = [
     await settle(p, 800)
   } },
   { name: 'MobileSheet', device: MOBILE, run: async (p) => {
-    await open(p, '/chat')
-    await p.locator('button', { hasText: 'Продукты' }).last().click()
+    await open(p, '/journal')
+    await p.locator('button', { hasText: 'Покупки' }).last().click()
     await settle(p, 600)
   } },
   { name: 'MobileBlank', device: MOBILE, run: async (p) => {
@@ -148,7 +148,7 @@ const scenarios = [
   } },
   { name: 'MobileOffline', device: MOBILE, run: async (p) => {
     await addKey(p)
-    await open(p, '/chat')
+    await open(p, '/journal')
     await p.getByRole('textbox', { name: 'Новая запись' }).fill('батарейки для пульта')
     await p.keyboard.press('Enter')
     await settle(p, 600)
@@ -173,7 +173,7 @@ const scenarios = [
     await settle(p, 600)
   } },
   { name: 'MobilePick', device: MOBILE, run: async (p) => {
-    await open(p, '/chat')
+    await open(p, '/journal')
     await p.getByRole('button', { name: 'Ещё…' }).last().click()
     await settle(p, 600)
   } },
@@ -216,13 +216,13 @@ const scenarios = [
     await settle(p, 800)
   } },
   { name: 'MainDue', device: DESKTOP, run: async (p) => {
-    await open(p, '/chat')
+    await open(p, '/journal')
     await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
     await settle(p, 400)
     await p.getByRole('button', { name: /^Срок: / }).first().click()
     await settle(p, 600)
   } },
-  { name: 'Page', device: DESKTOP, run: p => openPage(p, 'Продукты') },
+  { name: 'Page', device: DESKTOP, run: p => openPage(p, 'Покупки') },
   { name: 'Board', device: DESKTOP, run: async (p) => {
     await openPage(p, 'Цели')
     await p.getByRole('tab', { name: 'По статусу' }).click()
@@ -254,12 +254,12 @@ const scenarios = [
   } },
   { name: 'Item', device: DESKTOP, run: p => openPage(p, 'Полумарафон к маю') },
   { name: 'Chat', device: DESKTOP, run: async (p) => {
-    await open(p, '/chat')
+    await open(p, '/journal')
     await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
     await settle(p, 400)
   } },
   { name: 'Palette', device: DESKTOP, run: async (p) => {
-    await open(p, '/chat')
+    await open(p, '/journal')
     await p.keyboard.press('Control+k')
     await settle(p, 400)
   } },

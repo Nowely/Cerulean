@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Desktop top of Главная, Чат and Настройки: the screen's title in the page-title role (30/600) in the
+// Desktop top of Главная, Журнал and Настройки: the screen's title in the page-title role (30/600) in the
 // content column, its few actions on the right. Pages keep the 48px bar (DeskHeader).
 withDefaults(defineProps<{ title: string, width?: 'home' | 'chat' }>(), { width: 'home' })
 </script>

@@ -131,7 +131,7 @@ const NEW_NAMES: [Topic, string][] = [
   ['goal', 'Цели'],
   ['home', 'Дом'],
   ['shop', 'Покупки'],
-  ['note', 'Заметки']
+  ['note', 'Идеи']
 ]
 
 /**
@@ -143,7 +143,7 @@ export function classify(text: string, pages: Page[], learned: Learned = {}, rec
   const best = ranked[0]
   const confident = !!best && best.score >= 3 && (ranked[1]?.score ?? 0) < best.score
   const topic = textTopics(text)[0]
-  // Recent pages do not fill in for a line a starter fits: «позвонить маме» offers «Дела», never Покупки
+  // Recent pages do not fill in for a line a starter fits: «позвонить маме» offers «Задачи», never Покупки
   const filler = !ranked.length && templateFor(text, pages) ? [] : recent.filter(id => pages.some(p => p.id === id && p.kind === 'page'))
   const guesses = [...ranked.map(r => r.pageId), ...filler]
     .filter((id, i, a) => a.indexOf(id) === i)
@@ -153,7 +153,7 @@ export function classify(text: string, pages: Page[], learned: Learned = {}, rec
   return { pageId: confident ? best.pageId : null, guesses, newName: confident || taken ? null : named }
 }
 
-/** Which starter a kind of line belongs to: calls, payments and visits are Дела, thoughts are Заметки */
+/** Which starter a kind of line belongs to: calls, payments and visits are Задачи, thoughts are Идеи */
 const TOPIC_TEMPLATE: Partial<Record<Topic, TemplateKey>> = {
   shop: 'shop',
   todo: 'todo',

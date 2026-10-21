@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// One line of Чат: what was written with its time at the end of the line, then its card at the full width
+// One line of Журнал: what was written with its time at the end of the line, then its card at the full width
 import type { Entry } from '~/domain/types'
 import { clock } from '~/domain/dates'
 import EntryCard from './EntryCard.vue'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Where a line can go instead: the same chips in an Уточнение and under «Не туда». Three guesses, «Ещё…» (the page
 // picker with the guesses on top), then «Новая страница «…»». Before any page fits there is nothing to guess: the
-// starters not made yet are the choices, each makes its page in «Недавнее».
+// starters not made yet are the choices, each makes its page in «Мои страницы».
 import { computed } from 'vue'
 import type { Entry, Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
