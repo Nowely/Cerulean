@@ -22,6 +22,7 @@ import { useScreen } from '~/composables/useScreen'
 import { useNotify } from '~/composables/useNotify'
 import { count, RECORD_FORMS } from '~/domain/text'
 import { duplicateWords } from '~/domain/merge'
+import { useFindRows } from '~/composables/useFindRows'
 import PageTile from '../common/PageTile.vue'
 import DueButton from '../record/DueButton.vue'
 import PlaceChips from './PlaceChips.vue'
@@ -49,6 +50,7 @@ const router = useRouter()
 const { peek } = usePeek()
 const { isDesktop } = useScreen()
 const notify = useNotify()
+const { recLine } = useFindRows()
 
 const sends = computed(() => props.series?.length ? props.series : [props.entry])
 const page = computed<Page | undefined>(() => props.entry.pageId ? data.pages[props.entry.pageId] : undefined)
@@ -370,6 +372,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
             {{ note.action }}
           </button>
         </div>
+        <!-- As a note line with the search glyph, then rows like the receipt's own: text, place and date under it -->
         <section
           v-if="similar.length"
           :aria-labelledby="`similar-${entry.id}`"
@@ -377,26 +380,39 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
         >
           <h3
             :id="`similar-${entry.id}`"
-            class="px-3 pt-2 text-cap leading-6 text-toned"
+            class="flex items-center gap-3 pt-1.5 pr-1.5 pl-3 text-meta text-toned"
           >
-            Похожее в записях
+            <UIcon
+              name="i-lucide-search"
+              class="size-4.5 shrink-0"
+            />Похожее в записях
           </h3>
-          <button
-            v-for="s in similar"
-            :key="s.id"
-            type="button"
-            class="flex min-h-9 w-full cursor-pointer items-center gap-3 pr-3 pl-3 text-left hover:bg-btn active:bg-pressed"
-            :aria-label="isDesktop ? `Открыть «${s.text}» справа` : undefined"
-            @click="peek({ kind: 'record', id: s.id })"
-          >
-            <PageTile
-              :glyph="data.pages[s.pageId]?.glyph"
-              :size="14"
-              class="mx-0.5"
-            />
-            <span class="min-w-0 flex-1 truncate text-15 text-highlighted">{{ s.text }}</span>
-            <span class="shrink-0 text-13 text-toned">{{ data.pages[s.pageId]?.title }}</span>
-          </button>
+          <ul>
+            <li
+              v-for="s in similar"
+              :key="s.id"
+              class="flex min-h-11 items-center gap-3 pr-1.5 pl-3"
+            >
+              <span
+                class="flex w-4.5 shrink-0 justify-center"
+                aria-hidden="true"
+              >
+                <PageTile :glyph="data.pages[s.pageId]?.glyph" />
+              </span>
+              <button
+                type="button"
+                class="flex min-w-0 flex-1 cursor-pointer flex-col py-1.5 text-left"
+                :aria-label="isDesktop ? `Открыть «${s.text}» справа` : `Открыть «${s.text}»`"
+                @click="peek({ kind: 'record', id: s.id })"
+              >
+                <span
+                  class="truncate text-15 text-highlighted"
+                  :class="{ 'text-dimmed line-through': s.done }"
+                >{{ s.text }}</span>
+                <span class="truncate text-13 text-toned">{{ recLine(s) }}</span>
+              </button>
+            </li>
+          </ul>
         </section>
         <div
           v-if="offline"

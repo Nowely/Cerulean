@@ -599,7 +599,9 @@ async function fold(page, names) {
 }
 
 async function dismissKeyCard(page) {
-  await page.getByRole('button', { name: 'Скрыть строку про ключ' }).click()
+  // Phone only: desktop Главная has no key row (v22)
+  const hide = page.getByRole('button', { name: 'Скрыть строку про ключ' })
+  if (await hide.count()) await hide.click()
   await page.mouse.move(0, 0)
   await settle(page)
 }
