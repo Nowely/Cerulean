@@ -15,6 +15,7 @@ import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useLater } from '~/composables/useLater'
 import { formatDue, isOverdue } from '~/domain/dates'
+import { nb } from '~/domain/text'
 import { formatValue } from '~/domain/props'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
@@ -288,7 +289,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
           <span
             class="text-record"
             :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
-          >{{ rec.text }}</span>
+          >{{ nb(rec.text) }}</span>
           <span
             v-if="notePreview"
             class="truncate text-caption font-normal text-toned"

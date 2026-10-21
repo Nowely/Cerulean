@@ -1,8 +1,10 @@
 <script setup lang="ts">
 // A page or record title edited in place: a field that grows with the text, no border (the `hover` fill on desktop).
 // Enter or leaving it saves, Esc puts the old text back, spaces are tidied. A required title that is left empty
-// keeps the old text.
-import { ref, useTemplateRef, watch } from 'vue'
+// keeps the old text. At rest the short words are glued to the next one (nb, v23 F9); in the field being typed
+// in the spaces are plain again, and the saved title never holds the glue.
+import { nextTick, ref, useTemplateRef, watch } from 'vue'
+import { nb } from '~/domain/text'
 
 const props = defineProps<{
   value: string
@@ -14,24 +16,32 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ save: [value: string], focus: [boolean], draft: [value: string] }>()
 
-const draft = ref(props.value)
+const unglue = (s: string) => s.replace(/\u00a0/g, ' ')
+const draft = ref(nb(props.value))
 const field = useTemplateRef<HTMLTextAreaElement>('field')
 let editing = false
 watch(() => props.value, (v) => {
-  if (!editing) draft.value = v
+  if (!editing) draft.value = nb(v)
 })
-watch(draft, v => emit('draft', v))
+watch(draft, v => emit('draft', unglue(v)))
 
 function onFocus() {
   editing = true
+  // Same length, so the caret stays where the tap put it
+  const el = field.value
+  if (el && draft.value !== unglue(draft.value)) {
+    const [from, to] = [el.selectionStart, el.selectionEnd]
+    draft.value = unglue(draft.value)
+    void nextTick(() => el.setSelectionRange(from, to))
+  }
   emit('focus', true)
 }
 function onBlur() {
   if (editing) {
     const t = draft.value.replace(/\s+/g, ' ').trim()
-    if (!t && props.required) draft.value = props.value
+    if (!t && props.required) draft.value = nb(props.value)
     else {
-      draft.value = t
+      draft.value = nb(t)
       if (t !== props.value) emit('save', t)
     }
   }
@@ -45,7 +55,7 @@ function onKey(e: KeyboardEvent) {
   } else if (e.key === 'Escape') {
     e.stopPropagation()
     editing = false
-    draft.value = props.value
+    draft.value = nb(props.value)
     field.value?.blur()
   }
 }

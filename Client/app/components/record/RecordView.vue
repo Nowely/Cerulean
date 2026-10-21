@@ -13,6 +13,7 @@ import { usePeek } from '~/composables/usePeek'
 import { useScreen } from '~/composables/useScreen'
 import { usePropSheets } from '~/composables/usePropSheets'
 import { formatAdded } from '~/domain/dates'
+import { nb } from '~/domain/text'
 import { hasValue, isNorm, propList, TYPE_ICONS, TYPE_NAMES } from '~/domain/props'
 import RecordMark from '../common/RecordMark.vue'
 import TitleField from '../common/TitleField.vue'
@@ -174,7 +175,7 @@ function openPlace() {
           class="min-w-0 flex-1 text-title text-highlighted"
           :class="[{ 'text-dimmed line-through': rec.done }, container === 'preview' ? 'lg:text-xl' : '']"
         >
-          {{ rec.text }}
+          {{ nb(rec.text) }}
         </h1>
         <span
           v-if="full && $slots.menu"

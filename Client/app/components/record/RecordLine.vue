@@ -6,7 +6,7 @@ import type { Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { formatDue, formatDueBrief, isOverdue } from '~/domain/dates'
-import { splitMatch } from '~/domain/text'
+import { nb, splitMatch } from '~/domain/text'
 import RecordMark from '../common/RecordMark.vue'
 
 const props = withDefaults(defineProps<{
@@ -63,7 +63,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
         :class="{ 'text-dimmed line-through': rec.done }"
       >
         <template v-if="parts.mid">{{ parts.pre }}<mark class="rounded-[3px] bg-accent-soft font-semibold text-highlighted">{{ parts.mid }}</mark>{{ parts.post }}</template>
-        <template v-else>{{ rec.text }}</template>
+        <template v-else>{{ nb(rec.text) }}</template>
       </span>
       <span
         v-if="hasLine2"

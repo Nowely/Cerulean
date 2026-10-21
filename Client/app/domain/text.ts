@@ -33,7 +33,7 @@ export function lowerFirst(s: string): string {
  * title turns it back into a plain space (`\s` takes it), so the stored text never holds it.
  */
 export function nb(s: string): string {
-  return s.replace(/(^|[\s(«„"])([вксуоиаВКСУОИА]) (?=\S)/g, '$1$2 ')
+  return s.replace(/(?<=^|[\s(«„"])([вксуоиаВКСУОИА]) (?=\S)/g, '$1 ')
 }
 
 /** Lower case without ё, same length as the input (safe for index math) */

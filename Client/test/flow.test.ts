@@ -16,6 +16,10 @@ describe('one-letter words stay with the next one (v23, F9)', () => {
     expect(nb('В субботу «в кино»')).toBe('В субботу «в кино»')
   })
 
+  it('glues two short words in a row', () => {
+    expect(nb('Ключи а в сумке').replace(/\s/g, m => m === ' ' ? ' ' : '_')).toBe('Ключи а_в_сумке')
+  })
+
   it('leaves longer words, a word at the end and other letters alone', () => {
     expect(nb('Позвонить во вторник')).toBe('Позвонить во вторник')
     expect(nb('План Б и')).toBe('План Б и')

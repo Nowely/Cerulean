@@ -6,6 +6,7 @@ import { computed } from 'vue'
 import { useRouter } from '#imports'
 import type { Entry } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { nb } from '~/domain/text'
 import { useJournalStore, type Choice } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
 import PlaceChips from './PlaceChips.vue'
@@ -17,7 +18,7 @@ const ui = useUiStore()
 const router = useRouter()
 
 const rec = computed(() => props.entry.recordIds?.[0] ? data.records[props.entry.recordIds[0]] : undefined)
-const subject = computed(() => rec.value?.text ? rec.value.text.charAt(0).toLowerCase() + rec.value.text.slice(1) : props.entry.text)
+const subject = computed(() => nb(rec.value?.text ? rec.value.text.charAt(0).toLowerCase() + rec.value.text.slice(1) : props.entry.text))
 
 function choose(c: Choice) {
   const page = journal.choose(props.entry.id, c)
