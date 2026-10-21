@@ -324,7 +324,7 @@ defineExpose({
         <span
           ref="mirror"
           class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words text-input leading-5.5"
-          :class="mode === 'record' ? 'py-2.25 pr-1 pl-3' : 'py-2.25 pr-1 pl-1'"
+          :class="mode === 'record' ? 'py-1.75 pr-1 pl-3' : 'py-1.75 pr-1 pl-1'"
           aria-hidden="true"
         >{{ text }}&#8203;</span>
         <textarea
@@ -337,7 +337,7 @@ defineExpose({
           :placeholder="hint"
           :aria-label="mode === 'record' ? 'Новый подпункт' : 'Новая запись'"
           class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent text-input leading-5.5 text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
-          :class="mode === 'record' ? 'py-2.25 pr-1 pl-3' : 'py-2.25 pr-1 pl-1'"
+          :class="mode === 'record' ? 'py-1.75 pr-1 pl-3' : 'py-1.75 pr-1 pl-1'"
           @keydown="onKey"
           @focus="emit('focus', true)"
           @blur="emit('focus', false)"
