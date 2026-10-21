@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<{
   intro?: boolean
 }>(), { pageId: undefined, recordId: undefined, placeholder: undefined, intro: false })
 
-const emit = defineEmits<{ sent: [entry: Entry | null], focus: [boolean] }>()
+const emit = defineEmits<{ sent: [entry: Entry | null], focus: [boolean], failed: [reason: 'quota' | 'error'] }>()
 
 const data = useDataStore()
 const journal = useJournalStore()
@@ -177,9 +177,25 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
+/**
+ * The last send from here, until the browser has kept it: when it refuses (out of space), the send is taken
+ * back, its text returns to the field aimed the same way and the screen docks «Не сохранилось…» (v22, G2)
+ */
+let lastSend: { text: string, aim: 'auto' | Id, ids: () => Id[], entryId?: Id } | null = null
+watch(() => data.writeFailed, (f) => {
+  const s = lastSend
+  if (!f || !s || !s.ids().some(id => f.ids.includes(id))) return
+  lastSend = null
+  if (s.entryId) journal.undo(s.entryId)
+  else data.purgeRecords(s.ids())
+  setText(s.text, s.aim)
+  emit('failed', f.reason)
+})
+
 async function submit() {
   const t = text.value.trim()
   if (!t) return
+  data.clearWriteFailed()
   const aimed = dest.value
   speech.stop()
   text.value = ''
@@ -198,14 +214,18 @@ async function submit() {
   if (props.mode === 'page' && target && target.id === props.pageId) {
     const p = target
     const drafts = p.kind === 'inbox' ? [{ text: capitalize(t), due: null, values: {} }] : draftsFor(t, p, Date.now())
-    for (const d of [...drafts].reverse()) data.addRecord({ pageId: p.id, text: d.text, due: d.due, values: d.values, via: 'manual' })
+    const ids = [...drafts].reverse().map(d => data.addRecord({ pageId: p.id, text: d.text, due: d.due, values: d.values, via: 'manual' }).id)
+    lastSend = { text: t, aim: aimed, ids: () => ids }
     emit('sent', null)
     return
   }
   // Anywhere else: the screen docks the receipt, Уточнение or found card above this composer
   await journal.send(t, aimed, {
     today: props.mode === 'today' && aimed === 'auto',
-    onStart: e => emit('sent', e)
+    onStart: (e) => {
+      lastSend = { text: t, aim: aimed, entryId: e.id, ids: () => data.entries.find(x => x.id === e.id)?.recordIds ?? [] }
+      emit('sent', e)
+    }
   })
 }
 
@@ -229,7 +249,8 @@ watch(() => ui.refill, (r) => {
 defineExpose({
   focus: () => field.value?.focus(),
   blur: () => field.value?.blur(),
-  setText
+  setText,
+  submit
 })
 </script>
 

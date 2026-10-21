@@ -228,10 +228,22 @@ export default [
       window.__storageFull = true
     })
     await send(p, 'купить батарейки')
-    const failed = await store(p, data => data.writeFailed && { ...data.writeFailed, sent: Object.values(data.records).find(r => /батарейки/i.test(r.text))?.id })
+    await p.waitForTimeout(500)
+    const failed = await store(p, data => data.writeFailed)
     expect(failed, 'writeFailed is not set')
     expect(failed.reason === 'quota', `writeFailed.reason is ${failed.reason}`)
-    expect(failed.ids.includes(failed.sent), 'writeFailed does not name the record')
     expect(!(await store(p, data => data.storageError)), 'a full disk reads as storage unavailable')
+    // The writing loop: the card, the text back in the field, nothing that claims it was saved
+    expect(await shows(p.getByRole('alert').filter({ hasText: 'Не сохранилось. В браузере кончилось место, текст вернулся в поле.' })), 'no «Не сохранилось» card')
+    expect(await p.getByRole('textbox', { name: 'Новая запись' }).inputValue() === 'купить батарейки', 'the text is not back in the field')
+    expect(!(await store(p, data => Object.values(data.records).some(r => /батарейки/i.test(r.text) && !r.deletedAt))), 'the refused record is still shown')
+    expect(!(await shows(p.getByText(/записи? → /))), 'a receipt still claims it was saved')
+    // «Повторить» once there is room again
+    await p.evaluate(() => {
+      window.__storageFull = false
+    })
+    await p.getByRole('button', { name: 'Повторить' }).click()
+    await p.waitForTimeout(600)
+    expect(await store(p, data => Object.values(data.records).some(r => /батарейки/i.test(r.text) && !r.deletedAt)), '«Повторить» did not write it')
   } }
 ]
