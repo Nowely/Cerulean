@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // One page picker for «Ещё…», «Переместить», «Не туда» and the composer chip: a sheet on a phone; on desktop a
-// popover at the button that opened it (a dialog when nothing anchors it). Without a query: the top row (Авто or
-// «Эта страница»), «Похоже на», «Открыто недавно», every section with its pages, «Системные», each page once
-// (domain/picker.ts). With a query: «Найдено». It ends with «Новая страница «…»» unless that page exists.
+// popover at the button that opened it (a dialog when nothing anchors it). Without a query: the top rows («Эта
+// страница», Авто), the page's «Шаблоны» (v24), «Похоже на», «Открыто недавно», every section with its pages,
+// «Системные», each page once (domain/picker.ts). With a query: the templates it finds, then «Найдено». It ends with
+// «Новая страница «…»» unless that page exists.
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -39,11 +40,13 @@ const reference = computed(() => {
   let last = el.getBoundingClientRect()
   return { getBoundingClientRect: () => el.isConnected ? (last = el.getBoundingClientRect()) : last }
 })
-const WIDTH = 380
+/** A page's composer chip opens it 420px wide right above itself (v24 desktop, D1) */
+const chipOfPage = computed(() => !!ui.picker?.auto && !!ui.picker.thisPage)
+const width = computed(() => chipOfPage.value ? 420 : 380)
 /** Under the button from its left edge when that fits in the column, else its right edge lines up with the button's (a row action) */
 function alignAt(el: HTMLElement) {
   const box = (el.closest('main') ?? document.body).getBoundingClientRect()
-  return el.getBoundingClientRect().left + WIDTH <= box.right - 16 ? 'start' as const : 'end' as const
+  return el.getBoundingClientRect().left + width.value <= box.right - 16 ? 'start' as const : 'end' as const
 }
 const container = computed(() => {
   if (anchor.value && reference.value) {
@@ -52,7 +55,7 @@ const container = computed(() => {
       props: {
         reference: reference.value,
         content: {
-          'side': 'bottom' as const,
+          'side': chipOfPage.value ? 'top' as const : 'bottom' as const,
           'align': alignAt(anchor.value),
           'sideOffset': 6,
           'collisionPadding': 16,
@@ -63,7 +66,7 @@ const container = computed(() => {
             field.value?.inputRef?.focus()
           }
         },
-        ui: { content: 'w-95' }
+        ui: { content: chipOfPage.value ? 'w-105' : 'w-95' }
       }
     }
   }
@@ -84,7 +87,19 @@ const groups = computed<PickGroup[]>(() => pickerGroups({
   current: ui.picker?.current
 }))
 
-const nothing = computed(() => !!q.value.trim() && !groups.value.length)
+/** The page's record templates (v24, item 6): under «Шаблоны» after the top rows; a query finds them by name */
+const templates = computed(() => {
+  const list = ui.picker?.templates?.list ?? []
+  const query = fold(q.value.trim())
+  return query ? list.filter(t => fold(t.name).includes(query)) : list
+})
+function pickTemplate(id: string) {
+  const run = ui.picker?.templates?.run
+  ui.picker = null
+  run?.(id)
+}
+
+const nothing = computed(() => !!q.value.trim() && !groups.value.length && !templates.value.length)
 const newName = computed(() => q.value.trim() ? capitalize(q.value) : ui.picker?.newName || '')
 const exists = computed(() => !!newName.value && choosable.value.some(p => fold(p.title.trim()) === fold(newName.value)))
 const thisPage = computed(() => ui.picker?.thisPage ? data.pages[ui.picker.thisPage] : undefined)
@@ -168,6 +183,27 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
             v-if="!q.trim() && (ui.picker?.auto || thisPage)"
             class="pt-1"
           >
+            <!-- «Эта страница · Задачи ✓» first, then Авто (v24, item 6) -->
+            <li v-if="thisPage">
+              <button
+                type="button"
+                :class="row"
+                @click="pick(thisPage.id)"
+              >
+                <PageTile
+                  :glyph="thisPage.glyph"
+                  :color="pageColor(thisPage)"
+                  tint
+                />
+                <span class="min-w-0 flex-1 truncate text-highlighted">Эта страница</span>
+                <span class="max-w-40 shrink-0 truncate text-meta text-toned">{{ thisPage.title || 'Без названия' }}</span>
+                <UIcon
+                  v-if="ui.picker?.chosen === thisPage.id"
+                  name="i-lucide-check"
+                  class="size-4.5 shrink-0 text-accent"
+                />
+              </button>
+            </li>
             <li v-if="ui.picker?.auto">
               <button
                 type="button"
@@ -188,26 +224,42 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
                 />
               </button>
             </li>
-            <li v-if="thisPage">
-              <button
-                type="button"
-                :class="row"
-                @click="pick(thisPage.id)"
-              >
-                <PageTile
-                  :glyph="thisPage.glyph"
-                  :color="pageColor(thisPage)"
-                  tint
-                />
-                <span class="min-w-0 flex-1 truncate text-highlighted">Эта страница</span>
-                <UIcon
-                  v-if="ui.picker?.chosen === thisPage.id"
-                  name="i-lucide-check"
-                  class="size-4.5 text-accent"
-                />
-              </button>
-            </li>
           </ul>
+          <section
+            v-if="templates.length"
+            aria-label="Шаблоны"
+          >
+            <h3
+              class="pb-1 text-cap text-toned"
+              :class="anchor ? 'px-2 pt-2.5' : 'px-3 pt-4.5 lg:pt-3'"
+            >
+              Шаблоны
+            </h3>
+            <ul>
+              <li
+                v-for="t in templates"
+                :key="t.id"
+              >
+                <button
+                  type="button"
+                  :class="row"
+                  @click="pickTemplate(t.id)"
+                >
+                  <UIcon
+                    name="cer:stamp"
+                    class="size-4.5 shrink-0 text-toned"
+                  />
+                  <span class="min-w-0 flex-1 truncate text-highlighted">{{ t.name }}</span>
+                  <span class="max-w-48 shrink-0 truncate text-meta text-toned">{{ t.brings }}</span>
+                  <UIcon
+                    v-if="ui.picker?.templates?.chosen === t.id"
+                    name="i-lucide-check"
+                    class="size-4.5 shrink-0 text-accent"
+                  />
+                </button>
+              </li>
+            </ul>
+          </section>
           <section
             v-for="g in groups"
             :key="g.label"

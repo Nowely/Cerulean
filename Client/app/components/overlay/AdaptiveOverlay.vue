@@ -21,11 +21,13 @@ const props = withDefaults(defineProps<{
   width?: string
   dialog?: boolean
   align?: 'start' | 'end'
+  /** Desktop: the popover's side of its button; a composer's chip opens it above (v24) */
+  side?: 'top' | 'bottom'
   /** The subtitle is a line under the title on a phone too («Свойство» / «Покупки»), not on its right */
   stacked?: boolean
   /** A question that waits for a choice («Загрузить копию»): an `alertdialog` */
   alert?: boolean
-}>(), { subtitle: undefined, width: undefined, align: 'end' })
+}>(), { subtitle: undefined, width: undefined, align: 'end', side: undefined })
 // `closed`: the overlay is gone and focus is back, so the next one can open (a sheet that leads to another)
 const emit = defineEmits<{ closed: [] }>()
 const open = defineModel<boolean>('open', { default: false })
@@ -95,7 +97,7 @@ function openNow() {
   <LazyUPopover
     v-else-if="isDesktop && later.ready.value"
     v-model:open="open"
-    :content="{ align, sideOffset: 6, collisionPadding: 12, onCloseAutoFocus: () => emit('closed') }"
+    :content="{ side, align, sideOffset: 6, collisionPadding: 12, onCloseAutoFocus: () => emit('closed') }"
   >
     <slot name="trigger" />
     <template #content>
