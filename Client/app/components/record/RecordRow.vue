@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// A record on its page. Mobile: swipe left for «Переместить» and «Удалить».
-// Desktop: the same actions appear on hover after the row's values, and a right click opens all of them.
+// A record on its page. Mobile: swipe left for «Переместить» and «Удалить»; a long press lifts the row (the list
+// carries it) and letting go without moving opens its «⋯» sheet. Desktop: the same actions appear on hover after
+// the row's values, a right click opens all of them, and a ⋮⋮ handle in the left gutter drags the row.
 // The row is one Tab stop, its text: ↑/↓ between rows, Space ticks, Enter opens, Delete deletes,
 // Shift+F10 opens «⋯», Alt+↑/↓ moves the row. The right side shows properties, never when it was made (v22).
 import { computed, onMounted, ref, useTemplateRef, type FunctionalComponent } from 'vue'
@@ -17,6 +18,7 @@ import { formatDue, isOverdue } from '~/domain/dates'
 import { formatValue } from '~/domain/props'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
+import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 
 const props = withDefaults(defineProps<{
   rec: Rec
@@ -29,7 +31,13 @@ const props = withDefaults(defineProps<{
   wrap?: boolean
   /** Written while the page is open: the row comes into view when it appears */
   reveal?: boolean
-}>(), { readonly: false, selected: false, wrap: false, reveal: false })
+  /** Under a calendar's selected day: the day goes without saying, so «Срок» shows only its time */
+  day?: boolean
+  /** Carried by a drag: the list draws the lift around the row, and the swipe and hover glyphs keep still */
+  lifted?: boolean
+  /** Desktop: the ⋮⋮ handle's bindings (`useDragSort().handle`) */
+  grip?: Record<string, unknown>
+}>(), { readonly: false, selected: false, wrap: false, reveal: false, day: false, lifted: false, grip: undefined })
 
 const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'], shift: [by: -1 | 1] }>()
 
@@ -73,7 +81,11 @@ const right = computed(() => {
   const out: { key: string, text: string, tone?: 'warn' | 'low', icon?: string }[] = []
   for (const key of shown) {
     if (key === 'due') {
-      if (props.rec.due) out.push({ key, text: late.value ? `было ${formatDue(props.rec.due, now.value)}` : formatDue(props.rec.due, now.value), tone: late.value ? 'warn' : undefined })
+      const due = props.rec.due
+      if (!due) continue
+      if (late.value) out.push({ key, text: `было ${formatDue(due, now.value)}`, tone: 'warn' })
+      else if (!props.day) out.push({ key, text: formatDue(due, now.value) })
+      else if (due.time) out.push({ key, text: due.time })
       continue
     }
     if (key === 'note') continue
@@ -100,7 +112,7 @@ const stock = computed(() => {
   const value = props.rec.values[prop.id]
   if (typeof value !== 'number') return null
   const norm = props.rec.values[prop.normProp!]
-  return { prop, value, low: typeof norm === 'number' && value < norm }
+  return { prop, value, norm: typeof norm === 'number' ? norm : null, low: typeof norm === 'number' && value < norm }
 })
 
 const notePreview = computed(() => (props.view?.shown ?? []).includes('note') ? props.rec.note.split('\n')[0] : '')
@@ -121,6 +133,13 @@ const menu = computed(() => [
     { label: 'Удалить', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => actions.remove([props.rec.id]) }
   ]
 ])
+
+/** The same actions as the phone's «⋯» sheet, opened by a long press that lets go without moving */
+const sheet = computed<MenuItem[][]>(() => menu.value.map(g => g.map(i => ({ label: i.label, icon: i.icon, danger: 'color' in i, onSelect: i.onSelect }))))
+defineExpose({ openMenu })
+
+/** ⋮⋮: two columns of three dots */
+const GRIP = [[9, 6], [15, 6], [9, 12], [15, 12], [9, 18], [15, 18]] as const
 
 // Keys on the row's text, its one Tab stop
 function onKey(e: KeyboardEvent) {
@@ -191,7 +210,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         ref="el"
         class="group/row relative mx-1 flex min-h-11 items-center rounded-chip pr-3 lg:mx-0 lg:min-h-10 lg:pr-1.5"
         :class="[
-          selected ? 'bg-sel' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
+          selected ? 'bg-sel' : lifted ? '' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
           { 'fresh-tint': fresh },
           swipe.dragging.value ? '' : 'transition-[padding] duration-200 ease-out-soft',
           // The browser keeps vertical scroll and leaves the sideways drag to the swipe (no pointercancel)
@@ -199,17 +218,50 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         ]"
         :style="swipe.offset.value ? { paddingRight: `${12 - swipe.offset.value}px` } : undefined"
         @pointerdown="!readonly && swipe.onStart($event)"
-        @pointermove="!readonly && swipe.onMove($event)"
+        @pointermove="!readonly && !lifted && swipe.onMove($event)"
         @pointerup="swipe.onEnd()"
         @pointercancel="swipe.onEnd()"
         @click.capture="swipe.swallowClick"
       >
+        <!-- Desktop: the ⋮⋮ handle in the gutter left of the row, on hover and keyboard focus, so the text never moves -->
+        <component
+          :is="later.ready.value ? LazyUTooltip : Bare"
+          v-if="grip && isDesktop && !readonly"
+          text="Перетащить"
+        >
+          <span
+            v-bind="grip"
+            class="absolute top-1/2 -left-6.5 h-8 w-6 -translate-y-1/2 items-center justify-center rounded-item"
+            :class="lifted ? 'flex text-toned' : 'hidden text-dimmed group-hover/row:flex group-focus-within/row:flex hover:bg-hover hover:text-highlighted'"
+            aria-hidden="true"
+          >
+            <svg
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <circle
+                v-for="(c, i) in GRIP"
+                :key="i"
+                :cx="c[0]"
+                :cy="c[1]"
+                r="1.5"
+              />
+            </svg>
+          </span>
+        </component>
+        <!-- Запасы (MobileStock): no tick, the text on the gutter and the norm under it -->
         <RecordMark
+          v-if="!stock"
           :rec="rec"
           :page="page"
           :tabbable="readonly"
           class="lg:size-9"
           @toggle="data.toggleDone(rec.id)"
+        />
+        <span
+          v-else
+          class="w-3 shrink-0 lg:w-2"
         />
         <button
           type="button"
@@ -226,6 +278,16 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
             v-if="notePreview"
             class="truncate text-caption font-normal text-toned"
           >{{ notePreview }}</span>
+          <span
+            v-if="stock && (stock.low || stock.norm !== null)"
+            class="flex items-center gap-1 text-13 text-toned"
+          >
+            <UIcon
+              v-if="stock.low"
+              name="i-lucide-arrow-down"
+              class="size-3.5"
+            />{{ [stock.low ? 'мало' : '', stock.norm !== null ? `норма ${stock.norm}` : ''].filter(Boolean).join(' · ') }}
+          </span>
         </button>
 
         <span class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums">
@@ -250,20 +312,11 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         <!-- Запасы: the number against its norm, with a stepper -->
         <span
           v-if="stock"
-          class="ml-1 flex shrink-0 items-center gap-0.5"
+          class="ml-1 flex shrink-0 items-center gap-1.5"
         >
-          <span
-            v-if="stock.low"
-            class="mr-1 flex items-center gap-1 text-caption font-normal text-toned"
-          >
-            <UIcon
-              name="i-lucide-trending-down"
-              class="size-3.5"
-            />мало
-          </span>
           <button
             type="button"
-            class="hit-44 relative flex size-8 cursor-pointer items-center justify-center rounded-chip border border-default bg-default text-highlighted active:bg-pressed"
+            class="hit-44 relative flex size-8 cursor-pointer items-center justify-center rounded-[9px] border border-default bg-default text-highlighted active:bg-pressed"
             :aria-label="`Меньше: ${rec.text}`"
             @click="step(-1)"
           >
@@ -278,7 +331,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
           >{{ stock.value }}</span>
           <button
             type="button"
-            class="hit-44 relative flex size-8 cursor-pointer items-center justify-center rounded-chip border border-default bg-default text-highlighted active:bg-pressed"
+            class="hit-44 relative flex size-8 cursor-pointer items-center justify-center rounded-[9px] border border-default bg-default text-highlighted active:bg-pressed"
             :aria-label="`Больше: ${rec.text}`"
             @click="step(1)"
           >
@@ -291,7 +344,7 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
 
         <!-- Desktop: the actions on hover, after the values; on touch they live in the swipe and in «⋯» -->
         <span
-          v-if="!readonly && isDesktop"
+          v-if="!readonly && isDesktop && !lifted"
           class="ml-1 hidden shrink-0 items-center gap-0.5 group-hover/row:flex group-focus-within/row:flex"
         >
           <component
@@ -325,13 +378,13 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
         </span>
         <component
           :is="later.ready.value ? LazyUDropdownMenu : Bare"
-          v-if="!readonly"
+          v-if="!readonly && isDesktop"
           v-model:open="menuOpen"
           :items="menu"
           :content="{ align: 'end' }"
         >
           <component
-            :is="later.ready.value && isDesktop ? LazyUTooltip : Bare"
+            :is="later.ready.value ? LazyUTooltip : Bare"
             text="Все действия"
           >
             <UButton
@@ -341,11 +394,28 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
               size="sm"
               tabindex="-1"
               :aria-label="`Действия: ${rec.text}`"
-              class="sr-only lg:not-sr-only lg:opacity-0 lg:group-hover/row:opacity-100 lg:group-focus-within/row:opacity-100 lg:aria-expanded:opacity-100"
+              class="opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 aria-expanded:opacity-100"
               @click="!later.ready.value && openMenu()"
             />
           </component>
         </component>
+        <!-- Phone: «⋯» is a sheet, opened by a long press that lets go without moving, and by screen readers -->
+        <template v-else-if="!readonly">
+          <button
+            type="button"
+            class="sr-only"
+            tabindex="-1"
+            :aria-label="`Действия: ${rec.text}`"
+            @click="openMenu()"
+          />
+          <ActionMenu
+            v-model:open="menuOpen"
+            :items="sheet"
+            :title="rec.text"
+            :label="`Действия: ${rec.text}`"
+            bare
+          />
+        </template>
       </div>
     </component>
 

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { formatDue, formatDueLong, formatDay, formatAdded } from '~/domain/dates'
+import { dayAim, formatDue, formatDueLong, formatDay, formatAdded } from '~/domain/dates'
 import { cleanRecordText, dropPrefix, isQuestion, isSearch, parseDue, parseQty, splitItems, splitParts } from '~/domain/parse'
 import { plural, lowerFirst, genitive } from '~/domain/text'
 import { demo } from '~/domain/seed'
 import { pageBadge, pageSubline, pageSummary, recordSummary, summaryText } from '~/domain/summary'
 import { classify, guessOption } from '~/domain/rules'
 import { answer, lastAdded, recent } from '~/domain/search'
-import { applyView, noValueLabel } from '~/domain/views'
+import { applyView, noValueLabel, onDay } from '~/domain/views'
 import { canCreate, convertValues, formatValue, nextColor, optionColor, orderFromListed, propKeys, propList, readDate, readNumber } from '~/domain/props'
 import { PAGE_COLORS } from '~/domain/types'
 import type { PropDef } from '~/domain/types'
@@ -35,6 +35,18 @@ describe('dates', () => {
     expect(formatDueLong({ date: '2027-05-18' }, NOW)).toBe('18 мая 2027 · через 7 месяцев')
     expect(formatDay(NOW, NOW)).toBe('Сегодня, 19 октября')
     expect(formatAdded('chat', new Date(2026, 9, 19, 8, 40).getTime(), NOW)).toBe('с Главной · сегодня, 8:40')
+  })
+
+  it('names the calendar\'s selected day for the composer, and an undated send lands on it (v22, G6)', () => {
+    expect(['2026-10-19', '2026-10-20', '2026-10-25', '2026-11-05', '2027-01-04'].map(d => `Запись на ${dayAim(d, NOW)}`))
+      .toEqual(['Запись на сегодня', 'Запись на завтра', 'Запись на вс, 25 окт', 'Запись на чт, 5 ноя', 'Запись на пн, 4 янв 2027'])
+    const tasks = liveDemo().pages.find(p => p.title === 'Задачи')!
+    const drafts = onDay(draftsFor('купить подарок; позвонить маме завтра в 10', tasks, NOW), '2026-10-25')
+    expect(drafts.map(d => [d.text, d.due])).toEqual([
+      ['Купить подарок', { date: '2026-10-25' }],
+      ['Позвонить маме', { date: '2026-10-20', time: '10:00' }]
+    ])
+    expect(onDay(drafts, null)).toBe(drafts)
   })
 })
 

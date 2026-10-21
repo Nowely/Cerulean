@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import type { PropDef } from '~/domain/types'
+import { applyView } from '~/domain/views'
 
 vi.mock('~/domain/model', async (orig) => {
   const real = await orig<typeof import('~/domain/model')>()
@@ -364,5 +365,75 @@ describe('properties (v22 item 30)', () => {
     done.undo()
     expect(JSON.parse(JSON.stringify(page()))).toEqual(before)
     expect(data.propUsage(id, [left.id, norm.id])).toBe(n)
+  })
+})
+
+describe('drag and the shop loop (v22, Josh #3, N9)', () => {
+  async function shop() {
+    const { data } = await fresh({ demo: true })
+    const page = () => data.livePages.find(p => p.title === 'Покупки')!
+    const view = () => page().views[0]!
+    const groups = () => applyView(page(), data.recordsOf(page().id), view(), Date.now())
+    const texts = (key: string) => groups().find(g => g.key === key)!.records.map(r => r.text)
+    const rec = (text: string) => Object.values(data.records).find(r => r.text === text && !r.deletedAt)!
+    const dept = page().props.find(p => p.name === 'Отдел')!
+    const option = (name: string) => dept.options!.find(o => o.name === name)!.id
+    return { data, page, view, groups, texts, rec, dept, option }
+  }
+
+  it('a drop into another group sets its value, and «Отменить» puts the record back', async () => {
+    const { data, page, view, groups, texts, rec, dept, option } = await shop()
+    const before = groups().map(g => [g.label, g.records.map(r => r.text)])
+    const veg = option('Овощи и фрукты')
+    const done = data.placeRecord(page().id, view().id, groups(), rec('Яйца').id, veg, 1)!
+    expect(done.into?.label).toBe('Овощи и фрукты')
+    expect(rec('Яйца').values[dept.id]).toBe(veg)
+    expect(texts(veg)).toEqual(['Бананы', 'Яйца'])
+    done.undo()
+    expect(rec('Яйца').values[dept.id]).toBe(option('Молочное'))
+    expect(groups().map(g => [g.label, g.records.map(r => r.text)])).toEqual(before)
+  })
+
+  it('a move within a group only reorders; a sorted view turns «Вручную» and undoes that too', async () => {
+    const { data, page, view, groups, texts, rec, option } = await shop()
+    const dairy = option('Молочное')
+    const done = data.placeRecord(page().id, view().id, groups(), rec('Яйца').id, dairy, 0)!
+    expect(done.into).toBeNull()
+    expect(done.manual).toBe(false)
+    expect(texts(dairy)[0]).toBe('Яйца')
+    data.updatePage(page().id, { views: page().views.map((v, i) => i ? v : { ...v, sort: 'name' as const }) })
+    const sorted = texts(dairy)
+    const again = data.placeRecord(page().id, view().id, groups(), rec('Сыр').id, dairy, 0)!
+    expect(again.manual).toBe(true)
+    expect(view().sort).toBe('manual')
+    expect(texts(dairy)[0]).toBe('Сыр')
+    again.undo()
+    expect(view().sort).toBe('name')
+    expect(texts(dairy)).toEqual(sorted)
+  })
+
+  it('a group by date takes no rows from another group', async () => {
+    const { data } = await fresh({ demo: true })
+    const tasks = data.livePages.find(p => p.title === 'Задачи')!
+    const view = { ...tasks.views[0]!, groupBy: 'due' as const }
+    data.updatePage(tasks.id, { views: [view, ...tasks.views.slice(1)] })
+    const groups = applyView(tasks, data.recordsOf(tasks.id), view, Date.now())
+    expect(groups.length).toBeGreaterThan(1)
+    expect(data.placeRecord(tasks.id, view.id, groups, groups[0]!.records[0]!.id, groups[1]!.key, 0)).toBeNull()
+  })
+
+  it('«Очистить купленное» sends the bought records to Корзина, and «Отменить» brings them back', async () => {
+    const { data, page, rec } = await shop()
+    const bought = page().views.find(v => v.name === 'Куплено')!
+    const ids = ['Кофе в зёрнах', 'Помидоры'].map(t => rec(t).id)
+    const done = data.clearDone(page().id, bought.id)
+    expect(done.count).toBe(2)
+    expect(ids.every(id => data.records[id]!.deletedAt)).toBe(true)
+    expect(data.trash.flatMap(t => t.kind === 'record' ? [t.rec.text] : [])).toEqual(expect.arrayContaining(['Кофе в зёрнах', 'Помидоры']))
+    // What is still to buy stays
+    expect(rec('Молоко').deletedAt).toBeNull()
+    done.undo()
+    expect(ids.every(id => !data.records[id]!.deletedAt)).toBe(true)
+    expect(data.recordsOf(page().id).filter(r => r.done).map(r => r.text).sort()).toEqual(['Кофе в зёрнах', 'Помидоры'])
   })
 })

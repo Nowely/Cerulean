@@ -186,12 +186,12 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                 <span
                   v-if="item.checked !== undefined"
                   class="flex h-6 w-10 shrink-0 items-center rounded-full p-0.5 transition-colors"
-                  :class="item.checked ? 'bg-accent' : 'bg-trk'"
+                  :class="item.checked ? 'bg-accent' : 'bg-trk ring ring-line2 ring-inset'"
                   aria-hidden="true"
                 >
                   <span
                     class="size-5 rounded-full bg-knob shadow-seg transition-transform"
-                    :class="item.checked ? 'translate-x-4' : 'ring-[1.5px] ring-ring ring-inset'"
+                    :class="item.checked ? 'translate-x-4' : 'shadow-none ring-[1.5px] ring-ring ring-inset'"
                   />
                 </span>
               </button>
