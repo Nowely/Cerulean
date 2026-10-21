@@ -20,12 +20,25 @@
     font-feature-settings: "liga" 0;
   }
 
+  /* The composer's field (v24, item 12): the words as typed, a picked name as the body's chip sitting on the 22px line */
+  .field-text {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    outline: none;
+  }
+
+  .field-text p {
+    margin: 0;
+  }
+
   /* What ProseMirror needs (Tiptap's own injected CSS is off: it set break-spaces, which wrapped lines earlier) */
-  .body-text [contenteditable="false"] {
+  .body-text [contenteditable="false"],
+  .field-text [contenteditable="false"] {
     white-space: normal;
   }
 
-  .body-text img.ProseMirror-separator {
+  .body-text img.ProseMirror-separator,
+  .field-text img.ProseMirror-separator {
     display: inline !important;
     width: 0 !important;
     height: 0 !important;
@@ -142,7 +155,8 @@
   }
 
   /* A mention: the glyph of the page the thing lives in and its name, never taller than the line */
-  .body-text .mention {
+  .body-text .mention,
+  .field-text .mention {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -168,21 +182,30 @@
   }
 
   .body-text .mention:active,
-  .body-text .mention.ProseMirror-selectednode {
+  .body-text .mention.ProseMirror-selectednode,
+  .field-text .mention.ProseMirror-selectednode {
     background: var(--chip-elev-pressed);
   }
 
-  .body-text .mention > .mention-name {
+  .body-text .mention > .mention-name,
+  .field-text .mention > .mention-name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .body-text .mention > .mention-glyph {
+  .body-text .mention > .mention-glyph,
+  .field-text .mention > .mention-glyph {
     width: 14px;
     height: 14px;
     flex-shrink: 0;
     color: var(--muted);
+  }
+
+  /* In the composer the chip sits on the field's 22px line, not a step below as in a 24px body line */
+  .field-text .mention {
+    margin: 0 1px;
+    cursor: default;
   }
 
   /* The faint placeholder of an empty body: «Заметка», «Заметка к странице» */
