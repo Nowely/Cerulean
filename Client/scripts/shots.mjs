@@ -165,7 +165,7 @@ const scenarios = [
     await field.blur()
     await settle(p, 600)
   } },
-  { name: 'MobileSettings', device: MOBILE, run: p => open(p, '/settings') },
+  { name: 'MobileSettings', device: MOBILE, run: p => keyed(p, '/settings') },
   { name: 'MobileTrash', device: MOBILE, run: p => open(p, '/settings/trash') },
   { name: 'MobileTrashClear', device: MOBILE, run: async (p) => {
     await open(p, '/settings/trash')
@@ -357,7 +357,7 @@ const scenarios = [
     await p.getByRole('combobox', { name: 'Найти' }).fill('мол')
     await settle(p)
   } },
-  { name: 'Settings', device: DESKTOP, run: p => open(p, '/settings') },
+  { name: 'Settings', device: DESKTOP, run: p => keyed(p, '/settings') },
   { name: 'Connect', device: DESKTOP, run: p => openConnection(p, 'Другой') },
 
   // v22
@@ -417,7 +417,7 @@ const scenarios = [
   } },
   { name: 'SettingsNoStore', device: DESKTOP, run: async (p) => {
     await breakStorage(p)
-    await open(p, '/settings')
+    await keyed(p, '/settings')
   } },
   { name: 'SettingsImport', device: DESKTOP, run: p => importSheet(p) },
   { name: 'PageTwoTabs', device: DESKTOP, run: p => twoTabs(p) },
@@ -546,6 +546,14 @@ const OPENAI = '**/api.openai.com/**'
  * A key saved while OpenAI is out of reach: the app keeps it and treats the network as gone.
  * Rules go off so that the entry reaches the model, as in the mockups.
  */
+/** A screen with the mockup's working key: «OpenAI · sk-…7Qa2», «Работает» (Settings, MobileSettings) */
+async function keyed(page, path) {
+  await page.route(OPENAI, route => route.abort('internetdisconnected'))
+  await open(page, path)
+  await data(page, d => d.setSettings({ provider: 'openai', apiKey: 'sk-demo-0000000000000000000000000000000000007Qa2', keyState: 'ok' }))
+  await settle(page, 300)
+}
+
 async function addKey(page) {
   await page.route(OPENAI, route => route.abort('internetdisconnected'))
   await open(page, '/settings')
@@ -593,7 +601,7 @@ const keeping = (page, persisted) => page.addInitScript((value) => {
 
 /** «Загрузить копию» with a copy of this demo plus one page and two records */
 async function importSheet(page) {
-  await open(page, '/settings')
+  await keyed(page, '/settings')
   const text = await data(page, (d) => {
     const s = JSON.parse(JSON.stringify(d.snapshot()))
     const books = s.pages.find(x => x.title === 'Книги')
@@ -613,8 +621,7 @@ async function twoTabs(page) {
   await openRecord(page, 'Яйца')
   const other = await page.context().newPage()
   await other.goto(page.url())
-  await other.waitForSelector('main')
-  await settle(other, 500)
+  await other.getByRole('textbox', { name: 'Текст записи' }).waitFor()
   await data(other, d => d.updateRecord(Object.values(d.records).find(r => r.text === 'Яйца').id, { text: 'Яйца С0' }))
   await other.close()
   await settle(page, 800)

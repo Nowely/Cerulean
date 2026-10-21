@@ -202,25 +202,8 @@ export default [
     await other.close()
   } },
   // 29: the record open here waits with «Запись изменили в другой вкладке» · «Обновить»
-  { id: 'v22-29-record', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    const id = await store(p, data => Object.values(data.records).find(r => r.text === 'Яйца').id)
-    await p.goto(new URL(`/r/${id}`, p.url()).href)
-    await p.waitForSelector('main')
-    const other = await p.context().newPage()
-    await other.goto(p.url())
-    await other.waitForSelector('main')
-    await other.waitForTimeout(500)
-    await store(other, (data, rid) => data.updateRecord(rid, { text: 'Яйца С0' }), id)
-    const line = p.getByText('Запись изменили в другой вкладке')
-    expect(await shows(line), 'no «Запись изменили в другой вкладке»')
-    expect(await p.getByRole('textbox', { name: 'Текст записи' }).inputValue() === 'Яйца', 'the record changed before «Обновить»')
-    await p.getByRole('button', { name: 'Обновить' }).click()
-    await p.waitForTimeout(300)
-    expect(await p.getByRole('textbox', { name: 'Текст записи' }).inputValue() === 'Яйца С0', '«Обновить» did not bring the change')
-    expect(!(await line.count()), 'the line stayed after «Обновить»')
-    await other.close()
-  } },
+  { id: 'v22-29-record', device: MOBILE, run: p => recordWaits(p) },
+  { id: 'v22-29-record-desk', device: DESKTOP, run: p => recordWaits(p) },
   // 9 (storage side): a refused write is reported to the writing loop; the card itself belongs to the writing loop
   { id: 'v22-9-save-failed', device: MOBILE, run: async (p) => {
     await fillStorage(p)
@@ -248,3 +231,24 @@ export default [
     expect(await store(p, data => Object.values(data.records).some(r => /батарейки/i.test(r.text) && !r.deletedAt)), '«Повторить» did not write it')
   } }
 ]
+
+/** 29: the record open here waits with «Запись изменили в другой вкладке» · «Обновить» */
+async function recordWaits(p) {
+  await open(p, '/')
+  const id = await store(p, data => Object.values(data.records).find(r => r.text === 'Яйца').id)
+  await p.goto(new URL(`/r/${id}`, p.url()).href)
+  await p.waitForSelector('main')
+  const other = await p.context().newPage()
+  await other.goto(p.url())
+  // The other tab writes only once its record is on screen (its data is loaded)
+  await other.getByRole('textbox', { name: 'Текст записи' }).waitFor()
+  await store(other, (data, rid) => data.updateRecord(rid, { text: 'Яйца С0' }), id)
+  const line = p.getByText('Запись изменили в другой вкладке')
+  expect(await shows(line), 'no «Запись изменили в другой вкладке»')
+  expect(await p.getByRole('textbox', { name: 'Текст записи' }).inputValue() === 'Яйца', 'the record changed before «Обновить»')
+  await p.getByRole('button', { name: 'Обновить' }).click()
+  await p.waitForTimeout(300)
+  expect(await p.getByRole('textbox', { name: 'Текст записи' }).inputValue() === 'Яйца С0', '«Обновить» did not bring the change')
+  expect(!(await line.count()), 'the line stayed after «Обновить»')
+  await other.close()
+}

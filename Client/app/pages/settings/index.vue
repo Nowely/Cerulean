@@ -40,11 +40,11 @@ const keyEditor = useTemplateRef<InstanceType<typeof ConnectionEditor>>('keyEdit
 const key = computed(() => data.settings.apiKey)
 const service = computed(() => PROVIDERS[data.settings.provider].name)
 const keyStatus = computed(() => {
-  if (!key.value) return { text: 'Без ключа работают только простые правила', tone: undefined, icon: '' }
-  if (data.settings.keyState === 'bad') return { text: 'Не работает: проверь ключ и модель', tone: 'warn' as const, icon: 'i-lucide-circle-alert' }
+  if (!key.value) return { text: 'Без ключа работают только простые правила', tone: undefined, dot: undefined }
+  if (data.settings.keyState === 'bad') return { text: 'Не работает: проверь ключ и модель', tone: 'warn' as const, dot: 'warn' as const }
   // «openai/gpt-6-luna» reads as «gpt-6-luna»: the service is already on the row
-  if (data.settings.keyState === 'ok') return { text: `Работает · ${modelOf(data.settings).split('/').pop()}`, tone: undefined, icon: 'i-lucide-check' }
-  return { text: 'Ещё не проверено · не попадает в экспорт', tone: undefined, icon: '' }
+  if (data.settings.keyState === 'ok') return { text: `Работает · ${modelOf(data.settings).split('/').pop()}`, tone: undefined, dot: 'ok' as const }
+  return { text: 'Ещё не проверено · не попадает в экспорт', tone: undefined, dot: 'faint' as const }
 })
 
 async function check() {
@@ -166,8 +166,9 @@ onMounted(() => {
       <TitleHeader title="Настройки" />
     </template>
 
-    <div class="mx-auto w-full pb-8 lg:max-w-196 lg:px-8 lg:pb-16">
-      <h1 class="px-5 pb-1 text-28 font-semibold tracking-[-.015em] text-highlighted lg:hidden">
+    <!-- Desktop: the rows' buttons sit in the raised chip fill, as on Settings in the mockup -->
+    <div class="mx-auto w-full pb-8 lg:max-w-196 lg:px-8 lg:pb-16 lg:raised">
+      <h1 class="px-4 pt-1 text-title text-highlighted lg:hidden">
         Настройки
       </h1>
       <StoreWarning
@@ -177,7 +178,7 @@ onMounted(() => {
       />
       <div
         v-else
-        class="flex items-center gap-2.5 px-5 pt-2 pb-1 text-sm text-default lg:gap-2 lg:px-0 lg:pt-0 lg:text-sm lg:text-toned"
+        class="flex items-center gap-2 px-4 pt-1.5 pb-0.5 text-sm text-toned lg:px-0 lg:pt-0 lg:pb-0"
         role="status"
       >
         <span
@@ -191,53 +192,40 @@ onMounted(() => {
       <section aria-labelledby="s-auto">
         <h2
           id="s-auto"
-          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
+          class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
         >
           Авто
         </h2>
+        <!-- Desktop: line 2 is the real state with its dot (S10); «Без ключа…» only without a key -->
         <SettingRow
           label="Подключение"
           icon="i-lucide-key-round"
           :hint="keyStatus.text"
           :hint-tone="keyStatus.tone"
-          desk-hint="Без ключа работают только простые правила"
+          :dot="key ? keyStatus.dot : undefined"
           :value="key ? `${service} · ${maskKey(key)}` : 'Добавить'"
           :value-wraps="!!key"
           opens
           @open="keyEditor?.open()"
         >
-          <div class="flex flex-col items-end gap-1.5">
-            <div class="flex items-center gap-2">
-              <span
-                v-if="key"
-                class="inline-flex h-9 items-center rounded-chip border border-default bg-default px-3 text-sm tracking-wide text-highlighted"
-              >{{ service }} · {{ maskKey(key) }}</span>
-              <UButton
-                :color="key ? 'neutral' : 'primary'"
-                :variant="key ? 'outline' : 'solid'"
-                @click="keyEditor?.open()"
-              >
-                {{ key ? 'Изменить' : 'Добавить ключ' }}
-              </UButton>
-            </div>
-            <p
+          <div class="flex items-center gap-3">
+            <span
               v-if="key"
-              class="flex items-center gap-1.5 text-13"
-              :class="keyStatus.tone === 'warn' ? 'text-warn-ink' : keyStatus.icon ? 'text-ok' : 'text-toned'"
+              class="text-sm tracking-wide text-default"
+            >{{ service }} · {{ maskKey(key) }}</span>
+            <UButton
+              :class="{ 'text-accent-ink': !key }"
+              @click="keyEditor?.open()"
             >
-              <UIcon
-                v-if="keyStatus.icon"
-                :name="keyStatus.icon"
-                class="size-3.5"
-              />{{ keyStatus.text }}
-            </p>
+              {{ key ? 'Изменить' : 'Добавить ключ' }}
+            </UButton>
           </div>
         </SettingRow>
         <SettingRow
           v-if="key && !data.settings.modelId && data.settings.provider !== 'custom'"
           label="Модель"
-          icon="i-lucide-split"
-          desk-hint="Точная медленнее, зато лучше с непонятными записями"
+          icon="i-lucide-gauge"
+          hint="Точная медленнее, зато лучше с непонятными записями"
           below
         >
           <SegmentedControl
@@ -260,18 +248,17 @@ onMounted(() => {
         <SettingRow
           label="Описания для Авто"
           icon="i-lucide-lightbulb"
-          hint="Что класть на каждую страницу"
-          desk-hint="По описанию записи попадают на нужную страницу"
-          :value="`${described}`"
+          hint="По описанию решается, куда положить запись"
+          :value="`${described} из ${userPages.length}`"
           opens
           @open="router.push('/settings/descriptions')"
         >
           <UButton
             variant="ghost"
-            trailing-icon="i-lucide-chevron-down"
+            trailing-icon="i-lucide-chevron-right"
             :aria-expanded="descOpen"
             aria-controls="desc-table"
-            :ui="{ trailingIcon: descOpen ? 'rotate-180' : '' }"
+            :ui="{ trailingIcon: `size-4 text-dimmed transition-transform ${descOpen ? 'rotate-90' : ''}` }"
             class="text-15"
             @click="descOpen = !descOpen"
           >
@@ -295,7 +282,7 @@ onMounted(() => {
       <section aria-labelledby="s-look">
         <h2
           id="s-look"
-          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
+          class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
         >
           Оформление
         </h2>
@@ -314,7 +301,7 @@ onMounted(() => {
         <SettingRow
           label="Компактные строки"
           icon="i-lucide-rows-3"
-          hint="На Главной только названия страниц, без сводки"
+          hint="На Главной только названия страниц"
         >
           <USwitch
             v-model="compactRows"
@@ -331,7 +318,7 @@ onMounted(() => {
       >
         <h2
           id="s-data"
-          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
+          class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
         >
           Данные
         </h2>
@@ -359,6 +346,7 @@ onMounted(() => {
             </p>
             <UButton
               v-else
+              class="text-accent-ink"
               @click="persist"
             >
               Включить
@@ -376,14 +364,17 @@ onMounted(() => {
           @open="copying = true"
         >
           <div class="flex gap-2">
+            <!-- While nothing is kept, saving a copy is the way out: both in accent words, no fill (SettingsNoStore) -->
             <UButton
-              :color="data.storageError ? 'primary' : 'neutral'"
-              :variant="data.storageError ? 'solid' : 'outline'"
+              :class="{ 'text-accent-ink': data.storageError }"
               @click="saveCopy('json')"
             >
               JSON
             </UButton>
-            <UButton @click="saveCopy('md')">
+            <UButton
+              :class="{ 'text-accent-ink': data.storageError }"
+              @click="saveCopy('md')"
+            >
               Markdown
             </UButton>
           </div>

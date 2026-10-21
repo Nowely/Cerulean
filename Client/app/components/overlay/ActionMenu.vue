@@ -79,12 +79,13 @@ const afterClose = () => setTimeout(() => setTimeout(run))
   <LazyUDropdownMenu
     v-if="isDesktop && later.ready.value"
     v-model:open="open"
-    :items="[
-      ...(labelled ? [[{ type: 'label' as const, label: [title, caption].filter(Boolean).join(' · ') }]] : []),
-      ...items.map(g => g.map(i => i.checked === undefined
+    :items="items.map((g, gi) => [
+      // The head belongs to the first group: no line between it and the first items (ListTabMenu)
+      ...(labelled && !gi ? [{ type: 'label' as const, label: title ?? label, slot: 'head' as const }] : []),
+      ...g.map(i => i.checked === undefined
         ? { label: i.label, icon: i.icon, color: i.danger ? 'error' as const : undefined, onSelect: () => select(i), value: i.value, description: i.hint, disabled: i.disabled }
-        : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) }))
-    ]"
+        : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) })
+    ])"
     :content="{ align: align ?? 'end', onCloseAutoFocus: afterClose }"
   >
     <slot :open="open">
@@ -93,6 +94,12 @@ const afterClose = () => setTimeout(() => setTimeout(run))
         tone="muted"
       />
     </slot>
+    <template #head-label>
+      <span class="font-medium text-highlighted">{{ title ?? label }}</span><span
+        v-if="caption"
+        class="text-toned"
+      > · {{ caption }}</span>
+    </template>
     <template #item-trailing="{ item }">
       <span
         v-if="(item as { value?: string }).value"

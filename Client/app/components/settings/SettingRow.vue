@@ -11,6 +11,8 @@ withDefaults(defineProps<{
   /** Desktop hint when it differs from the phone one */
   deskHint?: string
   hintTone?: 'warn'
+  /** Desktop: a state dot before the hint («● Работает · gpt-6-luna»); faint while not yet checked */
+  dot?: 'ok' | 'warn' | 'faint'
   /** Phone: the value at the right end of the line */
   value?: string
   /** Phone: an accent value is what a tap does («Включить», «Сейчас») */
@@ -24,7 +26,7 @@ withDefaults(defineProps<{
   /** Phone: the control goes under the name at full width (segmented choices) */
   below?: boolean
   tone?: 'warn'
-}>(), { hint: undefined, deskHint: undefined, hintTone: undefined, value: undefined, valueTone: undefined, tone: undefined })
+}>(), { hint: undefined, deskHint: undefined, hintTone: undefined, dot: undefined, value: undefined, valueTone: undefined, tone: undefined })
 defineEmits<{ open: [] }>()
 const { isDesktop } = useScreen()
 </script>
@@ -44,9 +46,14 @@ const { isDesktop } = useScreen()
       <p
         v-if="deskHint ?? hint"
         class="mt-0.5 text-sm leading-snug"
-        :class="hintTone === 'warn' && !deskHint ? 'text-warn-ink' : 'text-toned'"
+        :class="[hintTone === 'warn' && !deskHint ? 'text-warn-ink' : 'text-toned', dot ? 'flex items-center gap-2' : '']"
       >
-        {{ deskHint ?? hint }}
+        <span
+          v-if="dot"
+          class="size-2 shrink-0 rounded-full"
+          :class="{ ok: 'bg-ok', warn: 'bg-warn', faint: 'bg-faint' }[dot]"
+          aria-hidden="true"
+        />{{ deskHint ?? hint }}
       </p>
     </div>
     <slot />
@@ -57,13 +64,13 @@ const { isDesktop } = useScreen()
     <component
       :is="opens ? 'button' : 'div'"
       :type="opens ? 'button' : undefined"
-      class="flex min-h-13 w-full items-center gap-3 px-5 py-2 text-left"
+      class="flex min-h-12 w-full items-center gap-3 px-4 py-1.5 text-left"
       :class="[opens ? 'cursor-pointer active:bg-pressed' : '', tone === 'warn' ? 'text-warn-ink' : 'text-highlighted']"
       @click="opens && $emit('open')"
     >
       <UIcon
         :name="icon"
-        class="size-5 shrink-0"
+        class="size-4.5 shrink-0"
         :class="tone === 'warn' ? '' : 'text-toned'"
       />
       <span
@@ -97,7 +104,7 @@ const { isDesktop } = useScreen()
     </component>
     <div
       v-if="below && !opens"
-      class="pr-5 pb-2.5 pl-13"
+      class="pr-4 pb-2.5 pl-11.5"
     >
       <slot />
     </div>

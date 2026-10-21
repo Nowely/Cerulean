@@ -25,7 +25,7 @@ watch(open, (v) => {
 
 const here = computed(() => sizeText(measure({ pages: Object.values(data.pages), records: Object.values(data.records) })))
 const there = computed(() => props.file ? sizeText(measure(props.file.snap)) : '')
-const size = computed(() => isDesktop.value ? 'lg' : 'xl')
+const MERGE = 'Страницы с тем же названием объединятся, одинаковые записи не задвоятся'
 
 function add() {
   if (!props.file) return
@@ -52,8 +52,8 @@ async function replace() {
     :title="step === 'confirm' ? 'Заменить всё?' : 'Загрузить копию'"
     dialog
   >
-    <div class="flex flex-col gap-2 px-3 pt-1 lg:px-2">
-      <p class="pb-2 text-15 leading-normal text-toned lg:text-sm">
+    <div class="flex flex-col gap-2 px-3 pt-1 lg:gap-0 lg:px-2">
+      <p class="pb-2 text-15 leading-normal text-toned lg:pb-0 lg:text-default">
         <template v-if="step === 'choose'">
           В файле {{ file?.name }} {{ there }}. Здесь сейчас {{ here }}.
         </template>
@@ -61,46 +61,93 @@ async function replace() {
           Здесь удалятся {{ here }}, вместо них будут данные из файла. Перед этим сохранится копия того, что есть сейчас.
         </template>
       </p>
-      <template v-if="step === 'choose'">
-        <UButton
-          color="primary"
-          variant="solid"
-          :size="size"
-          block
-          @click="add"
+      <!-- Desktop: one row, the weighty way on the left in words (Settings «Загрузить копию») -->
+      <template v-if="isDesktop">
+        <p
+          v-if="step === 'choose'"
+          class="pt-2 text-13 text-toned"
         >
-          Добавить к текущим
-        </UButton>
-        <p class="mx-1 -mt-0.5 mb-2 text-center text-13 text-toned">
-          Страницы с тем же названием объединятся, одинаковые записи не задвоятся
+          {{ MERGE }}
         </p>
+        <div class="flex items-center gap-2 pt-4">
+          <UButton
+            v-if="step === 'choose'"
+            color="error"
+            variant="ghost"
+            class="-ml-3 h-9 text-sm"
+            @click="step = 'confirm'"
+          >
+            Заменить всё
+          </UButton>
+          <span class="flex-1" />
+          <UButton
+            class="h-9 text-sm"
+            @click="open = false"
+          >
+            Отмена
+          </UButton>
+          <UButton
+            v-if="step === 'choose'"
+            color="primary"
+            variant="solid"
+            class="h-9 text-sm"
+            @click="add"
+          >
+            Добавить к текущим
+          </UButton>
+          <UButton
+            v-else
+            color="error"
+            variant="solid"
+            class="h-9 text-sm"
+            @click="replace"
+          >
+            Заменить
+          </UButton>
+        </div>
+      </template>
+      <template v-else>
+        <template v-if="step === 'choose'">
+          <UButton
+            color="primary"
+            variant="solid"
+            size="xl"
+            block
+            @click="add"
+          >
+            Добавить к текущим
+          </UButton>
+          <p class="mx-1 -mt-0.5 mb-2 text-center text-13 text-toned">
+            {{ MERGE }}
+          </p>
+          <UButton
+            color="error"
+            variant="outline"
+            size="xl"
+            block
+            @click="step = 'confirm'"
+          >
+            Заменить всё
+          </UButton>
+        </template>
         <UButton
+          v-else
           color="error"
-          variant="outline"
-          :size="size"
+          variant="solid"
+          size="xl"
           block
-          @click="step = 'confirm'"
+          @click="replace"
         >
-          Заменить всё
+          Заменить
+        </UButton>
+        <UButton
+          size="xl"
+          block
+          @click="open = false"
+        >
+          Отмена
         </UButton>
       </template>
-      <UButton
-        v-else
-        color="error"
-        variant="solid"
-        :size="size"
-        block
-        @click="replace"
-      >
-        Заменить
-      </UButton>
-      <UButton
-        :size="size"
-        block
-        @click="open = false"
-      >
-        Отмена
-      </UButton>
     </div>
   </AdaptiveOverlay>
 </template>
