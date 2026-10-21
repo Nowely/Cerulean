@@ -42,11 +42,13 @@ export function defaultViews(hasDone: boolean): ViewDef[] {
 }
 
 export const DEPARTMENTS = ['Хлеб и выпечка', 'Молочное', 'Овощи и фрукты', 'Мясо и рыба', 'Бакалея', 'Бытовая химия', 'Прочее']
+/** Option dots of the departments in the property editor, as the mockups colour them */
+const DEPARTMENT_COLORS: PageColor[] = ['yellow', 'blue', 'green', 'pink', 'brown', 'purple', 'gray']
 
 export function shoppingProps(): PropDef[] {
   return [
     { id: uid('f'), name: 'Количество', type: 'text' },
-    { id: uid('f'), name: 'Отдел', type: 'select', options: DEPARTMENTS.map(name => ({ id: uid('o'), name })) }
+    { id: uid('f'), name: 'Отдел', type: 'select', options: DEPARTMENTS.map((name, i) => ({ id: uid('o'), name, color: DEPARTMENT_COLORS[i] })) }
   ]
 }
 

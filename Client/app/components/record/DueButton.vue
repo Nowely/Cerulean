@@ -56,6 +56,9 @@ function time(t: string) {
   const date = props.rec.due?.date ?? days.value[0]!.key
   set(props.rec.due?.time === t ? { date } : { date, time: t })
 }
+
+/** Срок just picked in «+ Свойство» opens its sheet at once */
+defineExpose({ show: () => open.value = true })
 </script>
 
 <template>

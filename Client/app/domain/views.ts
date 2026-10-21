@@ -1,7 +1,7 @@
 // A view is a saved way to look at a page: which records, in what order, grouped how
 import type { FilterRule, GroupBy, Page, PropDef, Rec, ViewDef } from './types'
 import { addDays, dayKey } from './dates'
-import { fold } from './text'
+import { fold, ofProp } from './text'
 
 export interface Group {
   key: string
@@ -49,15 +49,18 @@ export function sortRecords(records: Rec[], sort: ViewDef['sort']): Rec[] {
   return list.sort(byOrder)
 }
 
-/** Groups by a «Выбор» property follow the order of its options; records without a value go last */
+/** «Без отдела», «Без статуса»: the group of records without a value of a «Выбор» */
+export const noValueLabel = (prop: PropDef) => `Без ${ofProp(prop.name)}`
+
+/** Groups by a «Выбор» property follow the order of its options; records without a value come first («Без отдела») */
 function groupBySelect(records: Rec[], prop: PropDef): Group[] {
   const groups: Group[] = (prop.options ?? []).map(o => ({ key: o.id, label: o.name, records: [] }))
-  const rest: Group = { key: 'none', label: `Без свойства «${prop.name}»`, records: [] }
+  const rest: Group = { key: 'none', label: noValueLabel(prop), records: [] }
   for (const r of records) {
     const g = groups.find(x => x.key === r.values[prop.id]) ?? rest
     g.records.push(r)
   }
-  return [...groups, rest].filter(g => g.records.length)
+  return [rest, ...groups].filter(g => g.records.length)
 }
 
 /** «Просрочено», «Сегодня», «Завтра», «На неделе», «Позже», «Без срока» */

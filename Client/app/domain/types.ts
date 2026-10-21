@@ -5,6 +5,11 @@ export type Id = string
 export const PAGE_COLORS = ['green', 'blue', 'brown', 'yellow', 'pink', 'purple', 'gray', 'teal'] as const
 export type PageColor = typeof PAGE_COLORS[number]
 
+/** Names read by screen readers in the colour pickers */
+export const COLOR_NAMES: Record<PageColor, string> = {
+  green: 'Зелёный', blue: 'Синий', brown: 'Коричневый', yellow: 'Жёлтый', pink: 'Розовый', purple: 'Фиолетовый', gray: 'Серый', teal: 'Бирюзовый'
+}
+
 /** A date with an optional time, both local. Stored as text so it never shifts with time zones. */
 export interface Due {
   date: string // YYYY-MM-DD
@@ -16,6 +21,8 @@ export type PropType = 'text' | 'number' | 'select' | 'date' | 'relation'
 export interface PropOption {
   id: Id
   name: string
+  /** Its dot in the property editor and the value sheet; older data has none and reads one by position */
+  color?: PageColor
 }
 
 export interface PropDef {
@@ -23,11 +30,16 @@ export interface PropDef {
   name: string
   type: PropType
   options?: PropOption[]
+  /** A «Выбор» changed to another type keeps its options here, so going back keeps their ids and colours */
+  stash?: PropOption[]
   /** For a number: the number property it is compared with («Осталось» below «Норма» shows «мало») */
   normProp?: Id
   /** Unit shown after a number («шт», «л») */
   unit?: string
 }
+
+/** The built-in properties every page has: Срок (`rec.due`) and Заметка (`rec.note`) */
+export type BuiltinProp = 'due' | 'note'
 
 /** What «Как показывать» offers: exactly these four */
 export type Layout = 'list' | 'board' | 'table' | 'calendar'
@@ -75,6 +87,8 @@ export interface Page {
   /** «Описание для Авто»: what goes here; Авто reads it when filing */
   description: string
   props: PropDef[]
+  /** The order of «Свойства»: property ids with 'due' and 'note' among them. Without it the page's own come first */
+  propOrder?: (Id | BuiltinProp)[]
   views: ViewDef[]
   /** Position in Избранное, or null */
   favorite: number | null

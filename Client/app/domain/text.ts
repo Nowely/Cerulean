@@ -62,9 +62,24 @@ export function splitMatch(text: string, query: string): { pre: string, mid: str
 export function genitive(word: string): string {
   const w = lowerFirst(word.trim())
   if (/[бвгджзклмнпрстфхцчшщ]$/.test(w)) return `${w}а`
-  if (/ь$/.test(w)) return `${w.slice(0, -1)}я`
+  // Feminine -ость, -ль and a soft sign after a hissing sound: «сложности», «цели»; the rest is masculine: «календаря»
+  if (/(сть|ль|[жчшщ]ь)$/.test(w)) return `${w.slice(0, -1)}и`
+  if (/[ьй]$/.test(w)) return `${w.slice(0, -1)}я`
+  if (/мя$/.test(w)) return `${w.slice(0, -1)}ени`
   if (/[гкхжчшщ]а$/.test(w)) return `${w.slice(0, -1)}и`
   if (/а$/.test(w)) return `${w.slice(0, -1)}ы`
   if (/я$/.test(w)) return `${w.slice(0, -1)}и`
+  if (/о$/.test(w)) return `${w.slice(0, -1)}а`
   return w
+}
+
+/**
+ * A property after «без»: «Без отдела», «1 запись без статуса». A name the genitive can't handle well (several
+ * words, an adjective, a plural, a verb like «Осталось», a vowel ending) stays as it is, in quotes: «Без «Тип связи»».
+ */
+export function ofProp(name: string): string {
+  const n = name.trim()
+  if (!n) return 'значения'
+  if (/\s/.test(n) || /(ое|ее|ый|ий|ой|ая|яя|ые|ие|сь|ся)$/i.test(n) || /[еиуыэюё]$/i.test(n)) return `«${n}»`
+  return genitive(n)
 }

@@ -87,7 +87,7 @@ export function demo(now = Date.now()): Dataset {
     id: uid('f'),
     name: 'Статус',
     type: 'select',
-    options: ['В процессе', 'Достигнута', 'Отложена'].map(name => ({ id: uid('o'), name }))
+    options: ([['В процессе', 'blue'], ['Достигнута', 'green'], ['Отложена', 'gray']] as const).map(([name, color]) => ({ id: uid('o'), name, color }))
   }
   const goals = newPage({
     title: 'Цели',

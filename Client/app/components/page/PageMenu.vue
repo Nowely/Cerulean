@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// «⋯» of a page: Переименовать, Значок и цвет, Избранное, Описание для Авто, section, view settings, copy, delete.
+// «⋯» of a page: Переименовать, Значок и цвет, Избранное, Описание для Авто, section, view settings, «Свойства», copy, delete.
 // From Главная «Переименовать» and «Значок и цвет» open the page with its title or icon picker ready.
 import { computed, defineAsyncComponent, ref } from 'vue'
 import { useRouter } from '#imports'
@@ -7,7 +7,9 @@ import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useNotify } from '~/composables/useNotify'
+import { usePropSheets } from '~/composables/usePropSheets'
 import { toMarkdown } from '~/domain/export'
+import { propList } from '~/domain/props'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import SectionSheet from './SectionSheet.vue'
 import PageTile from '../common/PageTile.vue'
@@ -26,6 +28,7 @@ const data = useDataStore()
 const ui = useUiStore()
 const router = useRouter()
 const notify = useNotify()
+const propSheets = usePropSheets()
 
 const section = computed(() => props.page.sectionId ? data.sections[props.page.sectionId] : undefined)
 const system = computed(() => props.page.kind === 'inbox')
@@ -76,6 +79,8 @@ const items = computed<MenuItem[][]>(() => {
     first.push({ label: 'Переместить в секцию', icon: 'i-lucide-arrow-right', value: section.value?.name ?? 'Мои страницы', onSelect: () => moving.value = true })
   }
   if (props.page.kind !== 'today' && !props.home) first.push({ label: 'Настроить вид', icon: 'i-lucide-sliders-horizontal', onSelect: () => emit('settings') })
+  // Their number counts Срок and Заметка too, so it matches the rows of the list
+  if (props.page.kind === 'page') first.push({ label: 'Свойства', icon: 'i-lucide-list', value: String(propList(props.page).length), onSelect: () => propSheets.list(props.page.id) })
   first.push({ label: 'Скопировать как текст', icon: 'i-lucide-copy', onSelect: copy })
   return system.value ? [first] : [first, [{ label: 'Удалить', icon: 'i-lucide-trash-2', danger: true, onSelect: remove }]]
 })
