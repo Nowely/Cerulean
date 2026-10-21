@@ -228,6 +228,14 @@ const scenarios = [
   } },
   { name: 'MobileImport', device: MOBILE, run: p => importSheet(p) },
   { name: 'MobileTwoTabs', device: MOBILE, run: p => twoTabs(p) },
+  { name: 'MobileAskDocked', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await send(p, 'подарок Лене на новоселье')
+  } },
+  { name: 'MobileDup', device: MOBILE, run: async (p) => {
+    await openHome(p)
+    await send(p, 'молоко')
+  } },
   { name: 'MobileTabMenu', device: MOBILE, run: async (p) => {
     await openPage(p, 'Покупки')
     await p.getByRole('tab', { name: 'Купить' }).click()
@@ -421,6 +429,17 @@ const scenarios = [
   } },
   { name: 'SettingsImport', device: DESKTOP, run: p => importSheet(p) },
   { name: 'PageTwoTabs', device: DESKTOP, run: p => twoTabs(p) },
+  { name: 'HomeDup', device: DESKTOP, run: async (p) => {
+    await openHome(p)
+    await send(p, 'молоко')
+  } },
+  { name: 'HomeLearn', device: DESKTOP, run: async (p) => {
+    await openHome(p)
+    await send(p, 'подарок Лене на новоселье')
+    // Picked by hand from the Уточнение: the receipt offers «Запомнить»
+    await p.getByRole('button', { name: /^Задачи/ }).last().click()
+    await settle(p, 600)
+  } },
   { name: 'ListProps', device: DESKTOP, run: p => pageProps(p) },
   { name: 'ListPropEdit', device: DESKTOP, run: async (p) => {
     await pageProps(p)

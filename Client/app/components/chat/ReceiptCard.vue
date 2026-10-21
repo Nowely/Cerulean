@@ -244,17 +244,20 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
           />
           <span class="min-w-0 flex-1 truncate">
             {{ title }} → <b class="font-medium text-highlighted">{{ several ? places.map(p => p.title || 'Без названия').join(', ') : page?.title || 'Без названия' }}</b>
-            <span
-              v-if="entry.moved"
-              class="text-dimmed"
-            > · перемещено</span>
           </span>
+          <!-- Desktop: the head is a link to the page in the panel, no chevron (Home); a folded line keeps it -->
           <UIcon
             v-if="line || !several"
             name="i-lucide-chevron-right"
             class="size-4 shrink-0 text-dimmed"
+            :class="line ? '' : 'lg:hidden'"
           />
         </button>
+        <!-- A state, said quietly before «Не туда» -->
+        <span
+          v-if="entry.moved"
+          class="shrink-0 px-1 text-13 text-toned"
+        >перемещено</span>
         <button
           v-if="wrongShown"
           type="button"
