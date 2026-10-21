@@ -83,7 +83,7 @@ export default [
     const line = await p.getByText(/^Это поиск, поэтому ничего не записано/).boundingBox()
     expect(line.x + line.width <= x.x, 'the × covers the line')
   } },
-  // 10: the page menu: Переименовать, Добавить в избранное, Описание для Авто, Значок и цвет…; no section caption
+  // 10: the page menu: Переименовать, Добавить в избранное, Что сюда класть (v23), Значок и цвет…; no section caption
   { id: 'r3-10-page-menu', device: MOBILE, run: async (p) => {
     await open(p, '/')
     await page(p, 'Покупки')
@@ -91,7 +91,7 @@ export default [
     const sheet = p.getByRole('dialog')
     expect(await shows(sheet.getByText('Переименовать')), 'no menu')
     const labels = await sheet.locator('button, [role="menuitem"]').evaluateAll(all => all.map(b => b.innerText.split('\n')[0].trim()).filter(Boolean))
-    const want = ['Переименовать', 'Добавить в избранное', 'Описание для Авто', 'Значок и цвет', 'Переместить в секцию']
+    const want = ['Переименовать', 'Добавить в избранное', 'Что сюда класть', 'Значок и цвет', 'Переместить в секцию']
     const at = want.map(w => labels.findIndex(l => l.startsWith(w) || (w === 'Добавить в избранное' && l.startsWith('Убрать из избранного'))))
     expect(at.every((i, k) => i >= 0 && (k === 0 || i > at[k - 1])), `the order is ${labels.join(', ')}`)
     expect(!(await sheet.getByText(/секция «/).count()), 'the header names the section')

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// The slot left of a record: a working checkbox (pages with «Готово» and all subitems),
-// a 6px ring dot (pages without «Готово»), or the record's own glyph (its coloured tile only on its own page)
+// The slot left of a record: a working checkbox (pages with «Сделано» and all subitems),
+// a 6px ring dot (pages without «Сделано»), or the record's own glyph (its neutral tile only on its own page, v23)
 import { computed } from 'vue'
 import type { Page, Rec } from '~/domain/types'
 import { isListPage } from '~/domain/auto'
@@ -60,7 +60,7 @@ const box = computed(() => props.area === 'row' ? 'size-11' : 'size-10 lg:size-9
       ><path d="M20 6 9 17l-5-5" /></svg>
     </span>
   </button>
-  <!-- A record with its own page: its tile is the page's, 30 on a phone and 36 on desktop, with no hit box around it -->
+  <!-- A record with its own page: its neutral tile, 30 on a phone and 36 on desktop, with no hit box around it -->
   <span
     v-else
     class="flex shrink-0 items-center justify-center"
@@ -70,7 +70,6 @@ const box = computed(() => props.area === 'row' ? 'size-11' : 'size-10 lg:size-9
     <PageTile
       v-if="kind === 'tile'"
       :glyph="rec.glyph"
-      :color="rec.color ?? page?.color"
       :size="size === 'lg' ? 'page' : 18"
       :tile="size === 'lg'"
     />

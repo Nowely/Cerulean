@@ -88,13 +88,13 @@ const NOTES = {
   // It leads to Настройки, so it carries «›» like «в Журнале ›» (HomeRulesOnly)
   key: { icon: 'cer:auto', text: 'Разложено по простым правилам: ключ не принят.', action: 'Проверить ключ', go: true }
 } as const
-/** A page chosen by hand: «Запомнить» writes the line into its «Описание для Авто», «Отменить» takes it out */
+/** A page chosen by hand: «Запомнить» writes the line into its «Что сюда класть», «Отменить» takes it out */
 const learn = computed(() => {
   const e = props.entry
   if (!e.learn || !page.value || page.value.kind !== 'page' || several.value) return null
   const name = page.value.title || 'Без названия'
   return e.learned
-    ? { icon: 'i-lucide-bookmark', text: `Запомнено в описании «${name}».`, action: 'Отменить' }
+    ? { icon: 'i-lucide-bookmark', text: `Запомнено: такое класть в «${name}».`, action: 'Отменить' }
     : { icon: 'i-lucide-bookmark', text: `Запомнить: такое класть в «${name}».`, action: 'Запомнить' }
 })
 const note = computed(() => props.entry.note && !props.entry.moved ? NOTES[props.entry.note] : learn.value)

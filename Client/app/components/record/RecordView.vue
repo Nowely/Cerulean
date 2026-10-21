@@ -43,7 +43,7 @@ const editable = computed(() => full.value || props.edit)
 const page = computed(() => data.pages[props.rec.pageId])
 const parent = computed(() => props.rec.parentId ? data.records[props.rec.parentId] : undefined)
 const subs = computed(() => data.subitemsOf(props.rec.id))
-// Open subitems first; the done ones fold into «3 готово ›». One ticked while the record is open stays in its
+// Open subitems first; the done ones fold into «3 сделано ›». One ticked while the record is open stays in its
 // place, struck through, until the record is opened again
 const openedAt = ref(Date.now())
 watch(() => props.rec.id, () => openedAt.value = Date.now())
@@ -403,7 +403,7 @@ function openPlace() {
       />
     </section>
 
-    <!-- Подпункты always have «Готово» -->
+    <!-- Подпункты always have the checkbox -->
     <section
       v-if="subs.length || full"
       class="lg:mt-2"
@@ -438,7 +438,7 @@ function openPlace() {
         :aria-expanded="doneShown"
         @click="doneShown = !doneShown"
       >
-        {{ doneSubs.length }} готово<UIcon
+        {{ doneSubs.length }} сделано<UIcon
           name="i-lucide-chevron-right"
           class="size-3.5 text-dimmed transition-transform"
           :class="{ 'rotate-90': doneShown }"

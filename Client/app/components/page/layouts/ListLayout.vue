@@ -12,9 +12,11 @@ import { useNow } from '~/composables/useNow'
 import { useNotify } from '~/composables/useNotify'
 import { LIFTED, useDragSort } from '~/composables/useDragSort'
 import { applyView, type Group } from '~/domain/views'
+import { optionOf } from '~/domain/props'
 import { isListPage } from '~/domain/auto'
 import { count, RECORD_FORMS } from '~/domain/text'
 import RecordRow from '../../record/RecordRow.vue'
+import OptionPill from '../../common/OptionPill.vue'
 
 const props = defineProps<{
   page: Page
@@ -59,11 +61,16 @@ const shown = computed(() => {
     .filter(g => g.records.length)
 })
 const hidden = computed(() => total.value - shown.value.reduce((n, g) => n + g.records.length, 0))
+/** An ungrouped view of ticked records names itself above its rows: «Сделано» (v23); Покупки keeps its own words */
+const doneCaption = computed(() => !isListPage(props.page) && total.value > 0 && groups.value.length === 1 && !groups.value[0]!.label
+  && props.view.filter.some(r => r.field === 'done' && r.value === true))
 
 // ---------- moving a row ----------
 
 /** The «Выбор» property the view groups by: dropping into its group sets the value */
 const groupProp = computed(() => props.page.props.find(p => p.id === props.view.groupBy && p.type === 'select'))
+/** A group of an option has its pill as the caption (v23); «Без отдела» stays a plain caption */
+const pillOf = (g: Group) => optionOf(groupProp.value, g.key === 'none' ? null : g.key)
 
 /** Puts a row at `index` of a group as the list shows it; a new group or a new sort order says so with «Отменить» */
 function place(id: Id, to: string, index: number) {
@@ -124,6 +131,12 @@ function clearDone() {
 
 <template>
   <div ref="root">
+    <h3
+      v-if="doneCaption"
+      class="flex min-h-9 items-center px-4 pt-3 text-cap leading-6 text-toned lg:px-2.5 lg:pb-1 lg:leading-5"
+    >
+      Сделано
+    </h3>
     <section
       v-for="g in shown"
       :key="g.key"
@@ -137,11 +150,21 @@ function clearDone() {
         <button
           type="button"
           class="flex min-h-9 w-full cursor-pointer items-center gap-1 px-4 pt-3 text-left text-cap leading-6 lg:px-2.5 lg:pb-1 lg:leading-5"
-          :class="g.tone === 'warn' ? 'text-warn-ink' : drag.joining.value === g.key ? 'text-accent-ink' : 'text-toned hover:text-highlighted'"
+          :class="g.tone === 'warn' ? 'text-warn-ink' : drag.joining.value === g.key && !pillOf(g) ? 'text-accent-ink' : 'text-toned hover:text-highlighted'"
           :aria-expanded="!folded.has(g.key)"
           @click="toggleFold(g.key)"
         >
-          {{ g.label }}
+          <!-- As a drop target the pill keeps its colours and takes the accent ring -->
+          <OptionPill
+            v-if="pillOf(g)"
+            :name="g.label"
+            :color="pillOf(g)!.color"
+            :ring="drag.joining.value === g.key"
+            class="mr-0.5"
+          />
+          <template v-else>
+            {{ g.label }}
+          </template>
           <span
             v-if="folded.has(g.key)"
             class="font-normal text-dimmed tabular-nums"
@@ -210,7 +233,7 @@ function clearDone() {
       class="mx-1.5 mt-1 flex h-11 cursor-pointer items-center rounded-item px-2.5 text-base text-accent-ink hover:bg-muted active:bg-pressed lg:mx-0 lg:h-9 lg:text-15"
       @click="clearDone"
     >
-      {{ isListPage(page) ? 'Очистить купленное' : 'Очистить готовое' }}
+      {{ isListPage(page) ? 'Очистить купленное' : 'Очистить сделанное' }}
     </button>
     <slot
       v-if="!total"

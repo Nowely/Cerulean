@@ -99,6 +99,13 @@ export function optionColor(options: PropOption[], option: PropOption): PageColo
   return PAGE_COLORS[i % PAGE_COLORS.length]!
 }
 
+/** A «Выбор» value as its pill (v23, «Везде»): the option's name and colour, or null for no value or another type */
+export function optionOf(prop: PropDef | undefined, value: Value | undefined): { name: string, color: PageColor } | null {
+  if (prop?.type !== 'select' || !hasValue(value)) return null
+  const option = prop.options?.find(o => o.id === value)
+  return option ? { name: option.name, color: optionColor(prop.options!, option) } : null
+}
+
 /** «+ Вариант» takes the first colour no option has yet, then goes round again */
 export function nextColor(options: PropOption[]): PageColor {
   const used = new Set(options.map(o => o.color))

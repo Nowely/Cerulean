@@ -11,7 +11,7 @@ import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/facto
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
 import { learn } from '~/domain/rules'
 import { doneIn, dropPlace, topOrder, type Group } from '~/domain/views'
-import { applyTemplate, TEMPLATES } from '~/domain/templates'
+import { applyTemplate, readPage, TEMPLATES } from '~/domain/templates'
 import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
 import { uid } from '~/domain/ids'
 
@@ -279,7 +279,7 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function take(kind: Kind, id: Id, value: Page | Rec | Section | Entry | undefined) {
-    if (kind === 'pages') into(pages.value, id, value as Page | undefined)
+    if (kind === 'pages') into(pages.value, id, value && readPage(value as Page))
     else if (kind === 'sections') into(sections.value, id, value as Section | undefined)
     else if (kind === 'records') {
       const rec = value as Rec | undefined
@@ -326,7 +326,8 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function apply(data: Dataset) {
-    pages.value = Object.fromEntries(data.pages.map(p => [p.id, p]))
+    // Stored pages read as today's shape, with no step over the data (v23: «Готово» → «Сделано»)
+    pages.value = Object.fromEntries(data.pages.map(p => [p.id, readPage(p)]))
     records.value = Object.fromEntries(data.records.map(r => [r.id, r]))
     sections.value = Object.fromEntries(data.sections.map(s => [s.id, s]))
     entries.value = [...data.entries].sort((a, b) => a.at - b.at)
@@ -399,7 +400,7 @@ export const useDataStore = defineStore('data', () => {
     return pages.value[page.id]!
   }
 
-  /** A page made from a starter (icon, description, views, «Готово»); without a section it lands in «Мои страницы» */
+  /** A page made from a starter (icon, «Что сюда класть», views, the checkbox); without a section it lands in «Мои страницы» */
   function createFromTemplate(key: TemplateKey, init: Partial<Page> = {}): Page {
     const page = createPage({ title: '', ...init })
     updatePage(page.id, applyTemplate(page, key))

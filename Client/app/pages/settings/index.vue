@@ -194,7 +194,7 @@ onMounted(() => {
           id="s-auto"
           class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
         >
-          Авто
+          Раскладка
         </h2>
         <!-- Desktop: line 2 is the real state with its dot (S10); «Без ключа…» only without a key -->
         <SettingRow
@@ -246,9 +246,9 @@ onMounted(() => {
           />
         </SettingRow>
         <SettingRow
-          label="Описания для Авто"
+          label="Что класть на страницы"
           icon="i-lucide-lightbulb"
-          hint="По описанию решается, куда положить запись"
+          hint="По этим словам решается, куда положить запись"
           :value="`${described} из ${userPages.length}`"
           opens
           @open="router.push('/settings/descriptions')"

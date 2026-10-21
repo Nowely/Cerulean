@@ -8,8 +8,10 @@ import { classify, guessOption, pageNamed, placeOptions } from '~/domain/rules'
 import { addQty, duplicateOf, duplicateWords } from '~/domain/merge'
 import { answer, lastAdded, recent } from '~/domain/search'
 import { applyView, noValueLabel, onDay } from '~/domain/views'
-import { canCreate, convertValues, formatValue, nextColor, optionColor, orderFromListed, propKeys, propList, readDate, readNumber } from '~/domain/props'
-import { PAGE_COLORS } from '~/domain/types'
+import { canCreate, convertValues, formatValue, nextColor, optionColor, optionOf, orderFromListed, propKeys, propList, readDate, readNumber } from '~/domain/props'
+import { findGlyphs, pageColor } from '~/domain/look'
+import { applyTemplate, DONE_VIEW, listView, readPage, TEMPLATES } from '~/domain/templates'
+import { GLYPH_WORDS, GLYPHS, PAGE_COLORS } from '~/domain/types'
 import type { PropDef } from '~/domain/types'
 import { draftsFor } from '~/domain/auto'
 import { toMarkdown, parseSnapshot, toJSON } from '~/domain/export'
@@ -359,5 +361,49 @@ describe('properties (v22 item 30)', () => {
     const loose = recs.map(r => r.text === 'Хлеб' ? { ...r, values: { ...r.values, [dept.id]: null } } : r)
     expect(applyView(shop, loose, view, NOW).map(g => g.label)).toEqual(['Без отдела', 'Молочное', 'Овощи и фрукты', 'Бытовая химия'])
     expect(applyView(shop, recs, view, NOW)[0]!.label).toBe('Хлеб и выпечка')
+  })
+})
+
+describe('v23 look: option pills, page colours, icons, «Сделано»', () => {
+  it('a «Выбор» value reads as its pill: name and colour, older options by position', () => {
+    const prop: PropDef = { id: 'p', name: 'Статус', type: 'select', options: [{ id: 'a', name: 'Надо', color: 'pink' }, { id: 'b', name: 'В процессе' }] }
+    expect(optionOf(prop, 'a')).toEqual({ name: 'Надо', color: 'pink' })
+    expect(optionOf(prop, 'b')).toEqual({ name: 'В процессе', color: PAGE_COLORS[1] })
+    expect(optionOf(prop, null)).toBeNull()
+    expect(optionOf(prop, 'gone')).toBeNull()
+    expect(optionOf({ id: 'q', name: 'Количество', type: 'text' }, 'a')).toBeNull()
+  })
+
+  it('a page has no colour until one is chosen; the old grey and system pages read as none', () => {
+    const d = liveDemo()
+    const colored = d.pages.filter(p => pageColor(p)).map(p => [p.title, pageColor(p)])
+    expect(colored).toEqual([['Покупки', 'green'], ['Книги', 'purple']])
+    expect(pageColor({ kind: 'page', color: 'gray' })).toBeNull()
+    expect(pageColor({ kind: 'page', color: 'teal' })).toBe('teal')
+    expect(pageColor({ kind: 'inbox', color: 'blue' })).toBeNull()
+    for (const t of TEMPLATES) expect(applyTemplate(d.pages.find(p => p.title === 'Идеи')!, t.key)).not.toHaveProperty('color')
+  })
+
+  it('«Значок и цвет» offers 35 icons that Russian words find', () => {
+    expect(GLYPH_WORDS).toHaveLength(35)
+    for (const [g] of GLYPH_WORDS) expect(GLYPHS[g]).toBeTruthy()
+    expect(findGlyphs('')).toHaveLength(35)
+    expect(findGlyphs('маш').map(x => x.name)).toEqual(['Машина'])
+    expect(findGlyphs('  Дом ').map(x => x.glyph)).toEqual(['home'])
+    expect(findGlyphs('ремонт').map(x => x.glyph)).toEqual(['home', 'car', 'tool'])
+    expect(findGlyphs('елка')).toEqual([])
+    expect(findGlyphs('учеба').map(x => x.glyph)).toEqual(['book', 'study'])
+  })
+
+  it('the done view is «Сделано»; a stored «Готово» reads so with no step over the data', () => {
+    expect(TEMPLATES.find(t => t.key === 'todo')!.views([]).map(v => v.name)).toEqual(['Список', 'Календарь', DONE_VIEW])
+    expect(liveDemo().pages.flatMap(p => p.views.map(v => v.name))).not.toContain('Готово')
+    const page = liveDemo().pages.find(p => p.title === 'Цели')!
+    const old = { ...page, views: [listView('Список'), listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })] }
+    expect(readPage(old).views.map(v => v.name)).toEqual(['Список', 'Сделано'])
+    expect(readPage(page)).toBe(page)
+    // A view the user named «Готово» with other rules keeps its name
+    const own = { ...page, views: [listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }, { field: 'due', op: 'notEmpty' }] })] }
+    expect(readPage(own).views[0]!.name).toBe('Готово')
   })
 })

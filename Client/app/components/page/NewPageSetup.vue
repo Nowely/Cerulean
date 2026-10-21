@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// A new page explains itself: its section, templates and «Что сюда класть?» (Описание для Авто). How to show it
+// A new page explains itself: its section, templates and «Что сюда класть?» (the words Авто files by). How to show it
 // lives in «Настроить вид». All of it goes away after the first record.
 import { computed, ref } from 'vue'
 import type { Page } from '~/domain/types'
@@ -50,7 +50,6 @@ const description = computed({
         :key="t.key"
         :label="t.name"
         :glyph="t.glyph"
-        :color="t.color"
         :selected="page.template === t.key"
         @click="data.updatePage(page.id, applyTemplate(page, t.key))"
       />
@@ -67,7 +66,7 @@ const description = computed({
       />
     </label>
     <p class="mt-1.5 text-13 leading-snug text-toned">
-      Описание для Авто: по нему сюда попадут подходящие записи.
+      По этим словам сюда попадут подходящие записи.
     </p>
   </div>
 </template>

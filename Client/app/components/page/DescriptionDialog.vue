@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// «Описание для Авто»: what goes on this page, read by Авто like a short instruction
+// «Что сюда класть»: the words that tell Авто what goes on this page, read like a short instruction (v23: never «описание»)
 import { ref, watch } from 'vue'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -23,7 +23,7 @@ function save() {
 <template>
   <AdaptiveOverlay
     v-model:open="open"
-    :title="`Описание: ${page.title || 'Без названия'}`"
+    :title="`Что сюда класть: ${page.title || 'Без названия'}`"
     dialog
   >
     <form
@@ -36,10 +36,10 @@ function save() {
         autoresize
         autofocus
         placeholder="Например: еда, напитки, бытовая химия"
-        aria-label="Описание для Авто"
+        aria-label="Что сюда класть"
       />
       <p class="text-13 leading-snug text-toned">
-        По описанию решается, куда положить запись. Пиши, что сюда класть, можно с примерами.
+        По этим словам решается, куда положить запись. Пиши, что сюда класть, можно с примерами.
       </p>
       <div class="flex justify-end gap-2">
         <UButton

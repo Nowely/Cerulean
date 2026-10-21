@@ -39,8 +39,8 @@ const groupBy = computed({
 
 const shop = computed(() => props.page.template === 'shop')
 const filters = computed(() => [
-  { label: shop.value ? 'Не куплено' : 'Не готово', value: 'open' },
-  { label: shop.value ? 'Куплено' : 'Готово', value: 'done' },
+  { label: shop.value ? 'Не куплено' : 'Не сделано', value: 'open' },
+  { label: shop.value ? 'Куплено' : 'Сделано', value: 'done' },
   { label: 'Все', value: 'all' }
 ])
 const doneFilter = computed({

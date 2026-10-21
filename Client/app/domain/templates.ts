@@ -8,7 +8,6 @@ export interface Template {
   key: TemplateKey
   name: string
   glyph: Glyph
-  color: PageColor
   description: string
   hasDone: boolean
   noun: Page['noun']
@@ -32,13 +31,25 @@ export function listView(name: string, patch: Partial<ViewDef> = {}): ViewDef {
   return { id: uid('v'), name, layout: 'list', filter: [], groupBy: null, sort: 'manual', shown: ['due'], ...patch }
 }
 
-/** «Список» shows what is left, «Готово» what is done; a page without «Готово» shows everything */
+/** The view of finished records (v23, one meaning per word: «Готово» is only a button now) */
+export const DONE_VIEW = 'Сделано'
+const doneView = () => listView(DONE_VIEW, { filter: [{ field: 'done', op: 'is', value: true }] })
+
+/** «Список» shows what is left, «Сделано» what is done; a page without a checkbox shows everything */
 export function defaultViews(hasDone: boolean): ViewDef[] {
   if (!hasDone) return [listView('Список')]
-  return [
-    listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
-    listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
-  ]
+  return [listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }), doneView()]
+}
+
+const isOldDone = (v: ViewDef) => v.name === 'Готово' && v.filter.length === 1 && v.filter[0]!.field === 'done' && v.filter[0]!.value === true
+
+/**
+ * A stored page as v23 reads it, with no step over the data: the done view a starter named «Готово» reads as
+ * «Сделано» (a view the user named so, with other rules, keeps its name). The same object when nothing changes
+ */
+export function readPage(page: Page): Page {
+  if (!page.views?.some(isOldDone) || page.views.some(v => v.name === DONE_VIEW)) return page
+  return { ...page, views: page.views.map(v => isOldDone(v) ? { ...v, name: DONE_VIEW } : v) }
 }
 
 export const DEPARTMENTS = ['Хлеб и выпечка', 'Молочное', 'Овощи и фрукты', 'Мясо и рыба', 'Бакалея', 'Бытовая химия', 'Прочее']
@@ -52,13 +63,12 @@ export function shoppingProps(): PropDef[] {
   ]
 }
 
-/** The four starters, in the same order on first run and on a new page */
+/** The four starters, in the same order on first run and on a new page. A starter sets no colour (v23): a page is «Без цвета» until one is chosen */
 export const TEMPLATES: Template[] = [
   {
     key: 'shop',
     name: 'Покупки',
     glyph: 'basket',
-    color: 'green',
     description: 'что купить: еда, бытовое',
     hasDone: true,
     noun: ['купить', 'купить', 'купить'],
@@ -76,21 +86,20 @@ export const TEMPLATES: Template[] = [
     key: 'todo',
     name: 'Задачи',
     glyph: 'check',
-    color: 'blue',
     description: 'дела и сроки',
     hasDone: true,
     noun: ['дело', 'дела', 'дел'],
     props: () => [],
     views: () => [
       listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
-      listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
+      listView('Календарь', { layout: 'calendar', filter: [{ field: 'done', op: 'is', value: false }] }),
+      doneView()
     ]
   },
   {
     key: 'goal',
     name: 'Цели',
     glyph: 'target',
-    color: 'pink',
     description: 'цели с подпунктами',
     hasDone: true,
     noun: ['цель', 'цели', 'целей'],
@@ -101,7 +110,6 @@ export const TEMPLATES: Template[] = [
     key: 'note',
     name: 'Идеи',
     glyph: 'bulb',
-    color: 'yellow',
     description: 'мысли, ссылки, черновики',
     hasDone: false,
     noun: ['идея', 'идеи', 'идей'],
@@ -122,7 +130,6 @@ export function applyTemplate(page: Page, key: TemplateKey): Partial<Page> {
     template: key,
     title: page.title.trim() ? page.title : t.name,
     glyph: t.glyph,
-    color: t.color,
     description: page.description.trim() ? page.description : t.description,
     hasDone: t.hasDone,
     noun: t.noun,

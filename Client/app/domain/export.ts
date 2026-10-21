@@ -4,6 +4,7 @@ import type { Learned } from './rules'
 import { formatDue } from './dates'
 import { count, normalize, PAGE_FORMS, RECORD_FORMS } from './text'
 import { uid } from './ids'
+import { readPage } from './templates'
 
 export interface Snapshot {
   app: 'cerulean'
@@ -81,7 +82,8 @@ export function parseSnapshot(text: string): Snapshot {
     app: 'cerulean',
     version: 1,
     exportedAt: s.exportedAt ?? 0,
-    pages: s.pages,
+    // An older copy reads as today's shape (v23: «Готово» → «Сделано»)
+    pages: s.pages.map(readPage),
     records: s.records,
     sections: s.sections ?? [],
     entries: s.entries ?? [],

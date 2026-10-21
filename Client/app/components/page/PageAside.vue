@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Desktop, right of a page: one quiet row «С Главной · 2 записи сегодня ›» that opens Журнал, and the Описание для Авто
+// Desktop, right of a page: one quiet row «С Главной · 2 записи сегодня ›» that opens Журнал, and «Что сюда класть»
 import { computed, ref } from 'vue'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -46,7 +46,7 @@ function save() {
     </NuxtLink>
     <template v-if="page.kind === 'page'">
       <h2 class="px-2.5 pt-4 pb-1.5 text-cap text-toned">
-        Описание для Авто
+        Что сюда класть
       </h2>
       <form
         v-if="editing"
@@ -58,7 +58,7 @@ function save() {
           :rows="3"
           autoresize
           autofocus
-          aria-label="Описание для Авто"
+          aria-label="Что сюда класть"
         />
         <div class="flex justify-end gap-2">
           <UButton

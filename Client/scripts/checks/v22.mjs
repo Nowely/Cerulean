@@ -74,7 +74,7 @@ export default [
     expect(await shows(p.getByRole('menuitem', { name: /Удалить вид/ })), 'a right-click on «Запасы» opened no view menu')
     expect(await shows(p.getByRole('menuitem', { name: /Новый вид/ })), 'the view menu has no «Новый вид»')
   } },
-  // 4: «open five pages with «Готово» and Главная with two pages: no tip appears»
+  // 4: «open five pages with «Сделано» (v22: «Готово») and Главная with two pages: no tip appears»
   { id: 'v22-4-no-tips', device: MOBILE, run: async (p) => {
     const tip = /смахни|смахнуть|удерживай|подержи|наведи|подсказка|совет:/i
     await open(p, '/')

@@ -6,7 +6,7 @@
 // Shift+F10 opens «⋯», Alt+↑/↓ moves the row. The right side shows properties, never when it was made (v22).
 import { computed, nextTick, onMounted, ref, useTemplateRef, type FunctionalComponent } from 'vue'
 import { LazyUContextMenu, LazyUDropdownMenu, LazyUTooltip } from '#components'
-import type { Id, Page, Rec, ViewDef } from '~/domain/types'
+import type { Id, Page, PageColor, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import { useNow } from '~/composables/useNow'
@@ -15,9 +15,10 @@ import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useLater } from '~/composables/useLater'
 import { formatDue, isOverdue } from '~/domain/dates'
-import { formatValue } from '~/domain/props'
+import { formatValue, optionOf } from '~/domain/props'
 import RecordMark from '../common/RecordMark.vue'
 import ChipButton from '../common/ChipButton.vue'
+import OptionPill from '../common/OptionPill.vue'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 
 const props = withDefaults(defineProps<{
@@ -75,10 +76,10 @@ const asking = computed(() => inbox.value && props.rec.tags.includes('clarify') 
 /** Waiting for the network: a state on the right, not a tag */
 const waiting = computed(() => inbox.value && props.rec.tags.includes('offline'))
 
-/** «Справа в строке»: the view's chosen properties, empty ones hidden */
+/** «Справа в строке»: the view's chosen properties, empty ones hidden; a «Выбор» value is its pill (v23) */
 const right = computed(() => {
   const shown = props.view?.shown ?? ['due']
-  const out: { key: string, text: string, tone?: 'warn' | 'low', icon?: string }[] = []
+  const out: { key: string, text: string, tone?: 'warn' | 'low', icon?: string, color?: PageColor }[] = []
   for (const key of shown) {
     if (key === 'due') {
       const due = props.rec.due
@@ -93,8 +94,9 @@ const right = computed(() => {
     const value = props.rec.values[key]
     if (!prop || value === null || value === undefined || value === '') continue
     if (prop.type === 'select') {
-      const name = prop.options?.find(o => o.id === value)?.name
-      if (name) out.push({ key, text: name })
+      // The property the rows are grouped by is the caption already
+      const pill = key === props.view?.groupBy ? null : optionOf(prop, value)
+      if (pill) out.push({ key, text: pill.name, color: pill.color })
     } else if (prop.type === 'number' && prop.normProp) {
       continue // shown as a stepper
     } else if (prop.type === 'date' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -319,11 +321,21 @@ const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 2).map(id 
             class="size-4"
             aria-label="есть заметка"
           />
-          <span
+          <template
             v-for="r in right"
             :key="r.key"
-            :class="r.tone === 'warn' ? 'text-warn-ink' : ''"
-          >{{ r.text }}</span>
+          >
+            <OptionPill
+              v-if="r.color"
+              :name="r.text"
+              :color="r.color"
+              class="max-w-36"
+            />
+            <span
+              v-else
+              :class="r.tone === 'warn' ? 'text-warn-ink' : ''"
+            >{{ r.text }}</span>
+          </template>
         </span>
 
         <!-- Запасы: the number against its norm, with a stepper -->

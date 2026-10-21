@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// «Свойство»: the name, the type and for a «Выбор» its options (a colour dot, the name in place, × to delete,
-// a long press to reorder). A saved property changes at once, like «Настроить вид»: renaming, colours, order
+// «Свойство»: the name, the type and for a «Выбор» its options (each the pill it is on a row with its name typed
+// inside, v23; a tap opens its 8 colours; × to delete, a long press to reorder). A saved property changes at once, like «Настроить вид»: renaming, colours, order
 // and adding are quiet; deleting an option and a type change that drops values toast with «Отменить», and
 // deleting a property asks first, here in the sheet, only when records have values. A new property is a draft
 // until «Создать», which waits for a name and, for a «Выбор», a named option (B12).
@@ -76,6 +76,12 @@ async function addOption() {
 
 const colorFor = ref<Id | null>(null)
 const dot = (o: PropOption) => optionColor(options.value, o)
+/** A tap on the pill or the row around it: the caret goes in and the colours open under it */
+function editOption(o: PropOption) {
+  colorFor.value = o.id
+  const field = document.getElementById(`opt-${o.id}`)
+  if (field !== document.activeElement) field?.focus()
+}
 function setColor(o: PropOption, color: PageColor) {
   setOptions(options.value.map(x => x.id === o.id ? { ...x, color } : x))
   colorFor.value = null
@@ -241,29 +247,34 @@ defineExpose({ tidy, removeProp })
           class="rounded-chip"
           :class="LIFTED"
         >
-          <div class="flex min-h-12 items-center border-b border-default">
-            <button
-              type="button"
-              class="relative flex h-11 w-8.5 shrink-0 cursor-pointer items-center pl-1.5 before:absolute before:inset-y-0 before:-left-2 before:right-0"
-              :aria-label="`Цвет варианта «${o.name || 'Новый вариант'}»`"
-              :aria-expanded="colorFor === o.id"
-              @click="colorFor = colorFor === o.id ? null : o.id"
+          <div class="flex min-h-12 items-center border-b border-default lg:min-h-10">
+            <!-- The option reads as on a row: its pill, the name typed inside; like a title edited in place, the caret is
+                 the only sign of editing. A hidden copy of the name sizes the pill -->
+            <span
+              class="flex min-w-0 flex-1 cursor-text items-center self-stretch pl-0.5"
+              @click="editOption(o)"
             >
               <span
-                class="size-3.5 rounded-full"
-                :style="{ background: `var(--c-${dot(o)})` }"
-              />
-            </button>
-            <input
-              :id="`opt-${o.id}`"
-              :value="optionNames[o.id] ?? o.name"
-              class="-ml-1.5 h-10 min-w-0 flex-1 rounded-item bg-transparent px-1.5 text-input text-highlighted caret-accent outline-none placeholder:text-dimmed focus:bg-hover"
-              placeholder="Новый вариант"
-              autocomplete="off"
-              aria-label="Название варианта"
-              @input="e => onOptionName(o, (e.target as HTMLInputElement).value)"
-              @keydown.enter.prevent="(e) => (e.target as HTMLInputElement).blur()"
-            >
+                class="inline-grid h-(--text-opt--line-height) max-w-full min-w-0 rounded-opt text-opt"
+                :style="{ background: `var(--b-${dot(o)})`, color: `var(--c-${dot(o)}-ink)` }"
+              >
+                <span
+                  class="invisible col-start-1 row-start-1 overflow-hidden px-2 whitespace-pre"
+                  aria-hidden="true"
+                >{{ `${(optionNames[o.id] ?? o.name) || 'Новый вариант'} ` }}</span>
+                <input
+                  :id="`opt-${o.id}`"
+                  :value="optionNames[o.id] ?? o.name"
+                  class="col-start-1 row-start-1 w-0 min-w-full rounded-opt bg-transparent px-2 caret-current outline-none placeholder:text-dimmed"
+                  placeholder="Новый вариант"
+                  autocomplete="off"
+                  aria-label="Название варианта"
+                  :aria-expanded="colorFor === o.id"
+                  @input="e => onOptionName(o, (e.target as HTMLInputElement).value)"
+                  @keydown.enter.prevent="(e) => (e.target as HTMLInputElement).blur()"
+                >
+              </span>
+            </span>
             <button
               type="button"
               class="-mr-3 flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-chip text-dimmed hover:bg-muted active:bg-pressed aria-disabled:cursor-default aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
