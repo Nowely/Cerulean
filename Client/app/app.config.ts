@@ -251,22 +251,6 @@ export default {
         content: 'bg-inverted text-canvas ring-0 shadow-none rounded-badge h-6 px-2 text-xs'
       }
     },
-    // The toast is inverted (ink on the canvas colour), sits above the composer and carries one action
-    toast: {
-      slots: {
-        root: 'bg-inverted ring-0 shadow-float rounded-card py-1 ps-4 pe-1 items-center gap-1',
-        wrapper: 'min-w-0',
-        title: 'text-sm font-normal text-canvas truncate',
-        description: 'text-13 text-canvas/80',
-        actions: 'shrink-0 gap-0',
-        close: 'text-canvas/80'
-      }
-    },
-    toaster: {
-      slots: {
-        viewport: 'sm:w-96'
-      }
-    },
     kbd: {
       base: 'rounded-badge font-sans normal-case',
       variants: {

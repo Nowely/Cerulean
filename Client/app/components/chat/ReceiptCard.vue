@@ -9,15 +9,19 @@
 // to different pages («2 записи → Покупки, Задачи», each row names its page and has its own «→», no «Не туда»).
 // A series gives each row its «→» too. Notes say why Авто filed it the plain way, with the one action that helps
 // («Повторить», «Проверить ключ»); a question written down lists «Похожее в записях».
+// v22: a row repeating an open record on its page says «уже есть в списке, 2 л» with «Объединить» (G3); after a page
+// was chosen by hand the note offers «Запомнить» (U5). Both change the card in place, with no notice.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from '#imports'
-import type { Entry, Page, Rec } from '~/domain/types'
+import type { Entry, Id, Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore, type Choice } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
 import { usePeek } from '~/composables/usePeek'
 import { useScreen } from '~/composables/useScreen'
+import { useNotify } from '~/composables/useNotify'
 import { count, RECORD_FORMS } from '~/domain/text'
+import { duplicateWords } from '~/domain/merge'
 import PageTile from '../common/PageTile.vue'
 import DueButton from '../record/DueButton.vue'
 import PlaceChips from './PlaceChips.vue'
@@ -44,11 +48,21 @@ const ui = useUiStore()
 const router = useRouter()
 const { peek } = usePeek()
 const { isDesktop } = useScreen()
+const notify = useNotify()
 
 const sends = computed(() => props.series?.length ? props.series : [props.entry])
 const page = computed<Page | undefined>(() => props.entry.pageId ? data.pages[props.entry.pageId] : undefined)
 const recsOf = (e: Entry) => (e.recordIds ?? []).map(id => data.records[id]).filter((r): r is Rec => !!r && !r.deletedAt)
-const records = computed(() => sends.value.flatMap(recsOf))
+/** A row per record of the sends; a record merged away shows the one it went into (`merged`) */
+interface Row { key: Id, rec: Rec, entry: Entry, merged: boolean }
+const rowsOf = (e: Entry): Row[] => (e.recordIds ?? []).flatMap((id): Row[] => {
+  const r = data.records[id]
+  if (r && !r.deletedAt) return [{ key: id, rec: r, entry: e, merged: false }]
+  const into = e.merged?.[id] ? data.records[e.merged[id]] : undefined
+  return into && !into.deletedAt ? [{ key: id, rec: into, entry: e, merged: true }] : []
+})
+const rows = computed(() => sends.value.flatMap(rowsOf))
+const records = computed(() => rows.value.map(x => x.rec))
 const lastIds = computed(() => new Set(props.entry.recordIds ?? []))
 const fresh = computed(() => journal.fresh.has(props.entry.id))
 const offline = computed(() => props.entry.kind === 'offline')
@@ -71,17 +85,42 @@ const NOTES = {
   slow: { icon: 'i-lucide-clock', text: 'ИИ не ответил, запись ждёт во Входящих.', action: 'Повторить' },
   key: { icon: 'cer:auto', text: 'Разложено по простым правилам: ключ не принят.', action: 'Проверить ключ' }
 } as const
-const note = computed(() => props.entry.note && !props.entry.moved ? NOTES[props.entry.note] : null)
-function onNote() {
-  if (props.entry.note === 'slow') void journal.retry(props.entry.id)
-  else void router.push('/settings?key')
+/** A page chosen by hand: «Запомнить» writes the line into its «Описание для Авто», «Отменить» takes it out */
+const learn = computed(() => {
+  const e = props.entry
+  if (!e.learn || !page.value || page.value.kind !== 'page' || several.value) return null
+  const name = page.value.title || 'Без названия'
+  return e.learned
+    ? { icon: 'i-lucide-bookmark', text: `Запомнено в описании «${name}».`, action: 'Отменить' }
+    : { icon: 'i-lucide-bookmark', text: `Запомнить: такое класть в «${name}».`, action: 'Запомнить' }
+})
+const note = computed(() => props.entry.note && !props.entry.moved ? NOTES[props.entry.note] : learn.value)
+async function onNote() {
+  const e = props.entry
+  if (!e.note || e.moved) return e.learned ? journal.forget(e.id) : journal.remember(e.id)
+  if (e.note === 'key') return void router.push('/settings?key')
+  await journal.retry(e.id)
+  // The record still waits in Входящие; the card stays and the notice says the second try failed too
+  if (e.note === 'slow') notify('ИИ снова не ответил', undefined, undefined, { keepCard: true })
+}
+
+/** «Объединить» is offered while the receipt is fresh, or docked above the composer */
+const offerMerge = computed(() => (fresh.value || props.docked) && !offline.value)
+function duplicate(row: Row) {
+  if (row.merged || !offerMerge.value) return null
+  const dup = journal.duplicateFor(row.entry.id, row.rec.id)
+  return dup ? duplicateWords(dup, data.pages[dup.pageId]) : null
 }
 const made = computed(() => sends.value.some(e => e.made) && !props.entry.moved)
 const resumed = computed(() => !!props.entry.resumed && !props.entry.moved)
 
 /** Line 2 of a record row: its page when the rows went to several pages, a state, or nothing (a date is its own button) */
-function subOf(r: Rec, i: number): string {
+function subOf(row: Row, i: number): string {
+  const r = row.rec
   if (offline.value) return 'ждёт сети'
+  if (row.merged) return 'объединено с записью в списке'
+  const dup = duplicate(row)
+  if (dup) return dup.sub
   if (several.value) return [data.pages[r.pageId]?.title || 'Без названия', r.tags.includes('clarify') ? 'уточнить' : ''].filter(Boolean).join(' · ')
   if (made.value && i === 0) return 'новая страница из шаблона'
   if (resumed.value) return 'разобрано, когда появилась сеть'
@@ -237,10 +276,10 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
       <template v-if="!line">
         <ul>
           <li
-            v-for="(r, i) in records"
-            :key="r.id"
+            v-for="(row, i) in rows"
+            :key="row.key"
             class="flex min-h-11 items-center gap-3 pr-1.5 pl-3"
-            :class="{ 'bg-fresh': joined && fresh && lastIds.has(r.id) }"
+            :class="{ 'bg-fresh': joined && fresh && lastIds.has(row.key) }"
           >
             <span
               class="flex w-4.5 shrink-0 justify-center"
@@ -248,7 +287,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
             >
               <PageTile
                 v-if="several"
-                :glyph="data.pages[r.pageId]?.glyph"
+                :glyph="data.pages[row.rec.pageId]?.glyph"
               />
               <span
                 v-else
@@ -259,41 +298,50 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
               <button
                 type="button"
                 class="min-w-0 cursor-pointer truncate text-left text-15 text-highlighted"
-                :class="{ 'text-dimmed line-through': r.done }"
-                @click="peek({ kind: 'record', id: r.id })"
+                :class="{ 'text-dimmed line-through': row.rec.done }"
+                @click="peek({ kind: 'record', id: row.rec.id })"
               >
-                {{ r.text }}
+                {{ row.rec.text }}
               </button>
               <span
-                v-if="subOf(r, i) || (isDesktop && r.due && !r.done)"
+                v-if="subOf(row, i) || (isDesktop && row.rec.due && !row.rec.done)"
                 class="flex min-w-0 items-center gap-1.5 text-13 text-toned"
               >
                 <span
-                  v-if="subOf(r, i)"
+                  v-if="subOf(row, i)"
                   class="truncate"
-                >{{ subOf(r, i) }}</span>
+                >{{ subOf(row, i) }}</span>
                 <DueButton
-                  v-if="isDesktop && r.due && !r.done && !offline"
-                  :rec="r"
+                  v-if="isDesktop && row.rec.due && !row.rec.done && !offline"
+                  :rec="row.rec"
                   variant="line"
                 />
               </span>
             </div>
             <span
-              v-if="!isDesktop && r.due && !r.done && !offline"
+              v-if="!isDesktop && row.rec.due && !row.rec.done && !offline"
               class="ml-2 shrink-0"
             >
               <DueButton
-                :rec="r"
+                :rec="row.rec"
                 variant="row"
               />
             </span>
             <button
-              v-if="rowMoves && !offline"
+              v-if="duplicate(row)"
+              type="button"
+              class="mr-1.5 flex h-11 shrink-0 cursor-pointer items-center rounded-item px-3 text-13 font-medium lg:mr-0.5 text-accent-ink hover:bg-btn active:bg-btn-pressed"
+              :aria-label="duplicate(row)!.label"
+              @click="journal.merge(row.entry.id, row.rec.id)"
+            >
+              Объединить
+            </button>
+            <button
+              v-else-if="rowMoves && !offline && !row.merged"
               type="button"
               class="hit-44 relative flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-item text-toned hover:bg-btn hover:text-highlighted active:bg-btn-pressed"
-              :aria-label="`Переместить «${r.text}»`"
-              @click="moveRow(r)"
+              :aria-label="`Переместить «${row.rec.text}»`"
+              @click="moveRow(row.rec)"
             >
               <UIcon
                 name="i-lucide-arrow-right"
@@ -334,7 +382,8 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-1
             v-for="s in similar"
             :key="s.id"
             type="button"
-            class="flex min-h-9 w-full cursor-pointer items-center gap-3 pr-3 pl-3 text-left active:bg-pressed"
+            class="flex min-h-9 w-full cursor-pointer items-center gap-3 pr-3 pl-3 text-left hover:bg-btn active:bg-pressed"
+            :aria-label="isDesktop ? `Открыть «${s.text}» справа` : undefined"
             @click="peek({ kind: 'record', id: s.id })"
           >
             <PageTile

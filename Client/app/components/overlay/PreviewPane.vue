@@ -8,6 +8,7 @@ import { useDataStore } from '~/stores/data'
 import PageView from '../page/PageView.vue'
 import RecordView from '../record/RecordView.vue'
 import PageTile from '../common/PageTile.vue'
+import NoticeSlot from '../shell/NoticeSlot.vue'
 
 const props = defineProps<{ target: Target | null, variant: 'sheet' | 'panel' }>()
 const data = useDataStore()
@@ -131,6 +132,12 @@ function openFull() {
             Этого больше нет: удалено или перемещено в корзину.
           </p>
         </div>
+        <!-- A notice raised in the preview (a row deleted) shows at the sheet's foot -->
+        <NoticeSlot
+          place="sheet"
+          :active="open"
+          class="shrink-0"
+        />
       </div>
     </template>
   </UDrawer>

@@ -2,10 +2,15 @@
 // One overlay, two containers: a bottom sheet on a phone; on desktop a popover next to its button,
 // or a dialog when nothing on screen anchors it (opened from a menu). Until the overlay code is in
 // (useLater) the trigger stands on its own; a tap opens the overlay once it is.
+// A notice raised while it is open shows at the sheet's foot; over a desktop dialog it stays above the composer and
+// rises over the scrim, and a click on it leaves the dialog open.
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
+import { useNoticeLift } from '~/composables/useNotify'
+import { useUiStore } from '~/stores/ui'
+import NoticeSlot from '../shell/NoticeSlot.vue'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   title: string
   /** What the overlay is about, under the title («Срок» of «Позвонить стоматологу») */
   subtitle?: string
@@ -20,6 +25,8 @@ const emit = defineEmits<{ closed: [] }>()
 const open = defineModel<boolean>('open', { default: false })
 const { isDesktop } = useScreen()
 const later = useLater()
+const ui = useUiStore()
+const notice = useNoticeLift(() => open.value && isDesktop.value && props.dialog)
 
 function openNow() {
   open.value = true
@@ -33,9 +40,16 @@ function openNow() {
     v-model:open="open"
     :title="title"
     :ui="{ content: 'max-w-md' }"
-    :content="{ onCloseAutoFocus: () => emit('closed') }"
+    :content="{ onCloseAutoFocus: () => emit('closed'), onPointerDownOutside: notice.keep, onFocusOutside: notice.keep }"
   >
     <template #content>
+      <!-- The notice above the composer is hidden from screen readers while the dialog is open: say it here too -->
+      <p
+        class="sr-only"
+        role="status"
+      >
+        {{ ui.notice?.title }}
+      </p>
       <div class="flex max-h-[70dvh] flex-col">
         <div class="flex shrink-0 items-center gap-2 pt-3 pr-2 pl-5">
           <div class="min-w-0 flex-1">
@@ -160,6 +174,11 @@ function openNow() {
           <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-[max(env(safe-area-inset-bottom),1rem)]">
             <slot />
           </div>
+          <NoticeSlot
+            place="sheet"
+            :active="open"
+            class="shrink-0"
+          />
         </div>
       </template>
     </LazyUDrawer>

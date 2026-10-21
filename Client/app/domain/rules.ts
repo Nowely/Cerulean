@@ -153,6 +153,22 @@ export function classify(text: string, pages: Page[], learned: Learned = {}, rec
   return { pageId: confident ? best.pageId : null, guesses, newName: confident || taken ? null : named }
 }
 
+/** The page that already has this name, in any case */
+export function pageNamed(name: string | null | undefined, pages: Page[]): Page | undefined {
+  const n = fold(name?.trim() ?? '')
+  return n ? pages.find(p => p.kind === 'page' && !p.deletedAt && fold(p.title.trim()) === n) : undefined
+}
+
+/**
+ * What an Уточнение offers besides «Ещё…»: the guesses, and «Новая страница «X»» only while no page is called X.
+ * When X exists, that page is offered after the guesses instead (v22, N23).
+ */
+export function placeOptions(guesses: Id[], newName: string | null | undefined, pages: Page[]): { pageIds: Id[], newName: string | null } {
+  const named = pageNamed(newName, pages)
+  if (!named) return { pageIds: guesses, newName: newName?.trim() || null }
+  return { pageIds: guesses.includes(named.id) ? guesses : [...guesses, named.id], newName: null }
+}
+
 /** Which starter a kind of line belongs to: calls, payments and visits are Задачи, thoughts are Идеи */
 const TOPIC_TEMPLATE: Partial<Record<Topic, TemplateKey>> = {
   shop: 'shop',

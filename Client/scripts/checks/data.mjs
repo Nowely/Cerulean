@@ -129,7 +129,7 @@ export default [
     await row.click()
     expect(/^cerulean-.*\.json$/.test((await download).suggestedFilename()), 'the copy is not a JSON file')
     expect(!(await p.getByRole('button', { name: /^Сохранить копию/ }).count()), 'the row stayed after saving')
-    expect(!(await p.locator('[data-sonner-toast], li[role="status"]').count()), 'saving a copy toasted')
+    expect(!(await p.locator('[data-notice]').count()), 'saving a copy toasted')
     await store(p, (data, at) => data.setSettings({ copiedAt: at }), Date.now() - 40 * DAY)
     await p.getByRole('button', { name: 'Не сейчас' }).click()
     expect(!(await p.getByRole('button', { name: /^Сохранить копию/ }).count()), '× did not hide the row')

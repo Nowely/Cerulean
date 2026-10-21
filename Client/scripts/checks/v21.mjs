@@ -33,7 +33,7 @@ export default [
     await p.waitForTimeout(300)
     await send(p, 'позвонить маме')
     expect(await p.getByText(/1 запись → Задачи/).count(), 'no docked receipt «1 запись → Задачи»')
-    expect(!(await p.locator('[data-sonner-toast], li[role="status"]').count()), 'a toast showed')
+    expect(!(await p.locator('[data-notice]').count()), 'a toast showed')
   } },
   { id: 'v21-7', device: MOBILE, run: async (p) => {
     await open(p, '/')
