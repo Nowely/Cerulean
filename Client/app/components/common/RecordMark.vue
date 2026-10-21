@@ -57,17 +57,18 @@ const box = computed(() => props.area === 'row' ? 'size-11' : 'size-10 lg:size-9
       ><path d="M20 6 9 17l-5-5" /></svg>
     </span>
   </button>
+  <!-- A record with its own page: its tile is the page's, 30 on a phone and 36 on desktop, with no hit box around it -->
   <span
     v-else
     class="flex shrink-0 items-center justify-center"
-    :class="box"
+    :class="kind === 'tile' && size === 'lg' ? '' : box"
     aria-hidden="true"
   >
     <PageTile
       v-if="kind === 'tile'"
       :glyph="rec.glyph"
       :color="rec.color ?? page?.color"
-      :size="size === 'lg' ? 36 : 18"
+      :size="size === 'lg' ? 'page' : 18"
       :tile="size === 'lg'"
     />
     <span

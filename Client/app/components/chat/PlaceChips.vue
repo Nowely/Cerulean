@@ -69,6 +69,7 @@ function more() {
     />
     <ChipButton
       label="Ещё…"
+      icon="i-lucide-ellipsis"
       @click="more"
     />
     <ChipButton

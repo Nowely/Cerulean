@@ -237,7 +237,7 @@ export function demo(now = Date.now()): Dataset {
     newEntry({ at: at(8, 40), text: 'молоко, яйца, сыр', kind: 'routed', pageId: products.id, recordIds: [milk.id, eggs.id, cheese.id] }),
     newEntry({ at: at(8, 52), text: 'позвонить стоматологу сегодня в 10', kind: 'routed', pageId: tasks.id, recordIds: [dentist.id] }),
     newEntry({ at: at(9, 2), text: 'подарок маме на др', kind: 'ask', pageId: inbox!.id, recordIds: [gift.id], newName: 'Подарки' }),
-    newEntry({ at: at(9, 5), text: 'когда менять фильтр воды?', kind: 'found', hits: [filter.id] }),
+    newEntry({ at: at(9, 5), text: 'найти фильтр воды', kind: 'found', hits: [filter.id] }),
     newEntry({ at: at(9, 10), text: 'хлеб', kind: 'routed', pageId: products.id, recordIds: [bread.id] })
   ]
 

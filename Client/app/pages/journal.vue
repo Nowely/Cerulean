@@ -84,7 +84,7 @@ watch(() => data.entries.length, toBottom)
     </template>
 
     <div class="mx-auto flex min-h-full w-full flex-col px-4 pt-1 pb-3 lg:max-w-160 lg:px-0">
-      <h1 class="px-1 pb-1 text-28 font-semibold tracking-[-.015em] text-highlighted lg:hidden">
+      <h1 class="px-1 pb-1 text-title text-highlighted lg:hidden">
         Журнал
       </h1>
       <span class="flex-1" />
@@ -100,9 +100,10 @@ watch(() => data.entries.length, toBottom)
           Здесь журнал всего, что записано
         </h2>
         <p class="text-sm leading-normal text-toned">
-          Пиши как в заметках. Записи разложатся по страницам, а здесь останется квитанция: что создано и где. Если место неясно, запись подождёт во Входящих с меткой «уточнить».
+          Пиши как в заметках. Записи разложатся по страницам, а здесь останется, что создано и где. Если место неясно, запись подождёт во Входящих с меткой «уточнить».
         </p>
-        <div class="flex flex-wrap gap-1.5">
+        <!-- Examples sit sunk into the page, as chips on a page background do -->
+        <div class="sunk flex flex-wrap gap-1.5">
           <ChipButton
             v-for="x in EXAMPLES"
             :key="x"

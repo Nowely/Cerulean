@@ -77,8 +77,8 @@ const title = computed(() => count(records.value.length || (props.entry.recordId
 /** The pages the rows are on, in row order: more than one makes the receipt a list for several pages */
 const places = computed(() => [...new Set(records.value.map(r => r.pageId))].map(id => data.pages[id]).filter((p): p is Page => !!p))
 const several = computed(() => places.value.length > 1)
-/** A split send or a series: every row has its own «→» */
-const rowMoves = computed(() => sends.value.some(e => e.split) || joined.value)
+/** Several rows (a list, a split send, a series): every row has its own «→» (MobileSent, MobileSeries) */
+const rowMoves = computed(() => rows.value.length > 1 || sends.value.some(e => e.split) || joined.value)
 const wrongShown = computed(() => !offline.value && !several.value && !sends.value.some(e => e.split))
 const similar = computed(() => (props.entry.similar ?? []).map(id => data.records[id]).filter((r): r is Rec => !!r && !r.deletedAt))
 const NOTES = {

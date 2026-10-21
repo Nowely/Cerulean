@@ -1,5 +1,8 @@
 <script setup lang="ts">
-// While Авто decides: «Разбирается…» and the words as sent with a small spinner, never grey bars (v22, N6)
+// While Авто decides: «Разбирается…» and the words as sent with a small spinner, never grey bars (v22, N6).
+// The words read as the row will: first letter capitalised (MobilePending)
+import { capitalize } from '~/domain/text'
+
 defineProps<{ text: string, float?: boolean }>()
 </script>
 
@@ -20,7 +23,7 @@ defineProps<{ text: string, float?: boolean }>()
         name="i-lucide-loader-circle"
         class="size-4.5 shrink-0 text-dimmed motion-safe:animate-spin"
       />
-      <span class="min-w-0 flex-1 truncate text-15 text-highlighted">{{ text }}</span>
+      <span class="min-w-0 flex-1 truncate text-15 text-highlighted">{{ capitalize(text) }}</span>
     </div>
   </div>
 </template>

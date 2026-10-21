@@ -30,7 +30,7 @@ const text = computed(() => {
   if (props.variant === 'prop') return late.value ? `было ${formatDue(due, now.value)}` : formatDueLong(due, now.value).split(' · ')[0]!
   return late.value ? `было ${formatDue(due, now.value)}` : formatDue(due, now.value)
 })
-/** «· через 7 месяцев» stays muted after the date on the record page */
+/** «· через 7 месяцев» after the date on the record page (muted on desktop) */
 const after = computed(() => {
   if (props.variant !== 'prop' || !props.rec.due || late.value) return ''
   return formatDueLong(props.rec.due, now.value).split(' · ')[1] ?? ''
@@ -70,14 +70,16 @@ defineExpose({ show: () => open.value = true })
     align="start"
   >
     <template #trigger>
+      <!-- The record page on a phone reads «25 октября · через 6 дней» in plain accent words, no glyph (MobileLinked) -->
       <button
         type="button"
-        class="group/due inline-flex min-w-0 shrink-0 cursor-pointer items-center gap-1 text-left font-medium disabled:cursor-default"
+        class="group/due inline-flex min-w-0 shrink-0 cursor-pointer items-center gap-1 text-left disabled:cursor-default"
         :class="[
-          late ? 'text-warn-ink' : rec.due ? 'text-accent-ink' : 'font-normal text-toned',
+          late ? 'text-warn-ink' : rec.due ? 'text-accent-ink' : 'text-toned',
           variant === 'row' ? 'hit-44 relative -mr-1.5 h-7 rounded-badge px-1.5 text-13 active:bg-pressed' : '',
           variant === 'line' ? '-mx-1 h-5.5 rounded-badge px-1 text-13 hover:bg-hover' : '',
-          variant === 'prop' ? '-mx-1.5 min-h-10 rounded-item px-1.5 text-base hover:bg-muted lg:text-15' : ''
+          variant === 'prop' ? '-mx-1.5 min-h-10 rounded-item px-1.5 text-base hover:bg-muted lg:text-15' : '',
+          !rec.due ? '' : variant === 'prop' ? 'lg:font-medium' : 'font-medium'
         ]"
         :disabled="readonly"
         :aria-label="rec.due ? `Срок: ${text}. Изменить` : 'Добавить срок'"
@@ -87,12 +89,12 @@ defineExpose({ show: () => open.value = true })
           v-if="rec.due"
           name="i-lucide-clock-3"
           class="shrink-0"
-          :class="variant === 'prop' ? 'size-3.5' : 'size-3'"
+          :class="variant === 'prop' ? 'hidden size-3.5 lg:block' : 'size-3'"
         />
         <span class="truncate">{{ text }}</span>
         <span
           v-if="after"
-          class="truncate font-normal text-toned"
+          class="truncate font-normal lg:text-toned"
         >&nbsp;· {{ after }}</span>
       </button>
     </template>

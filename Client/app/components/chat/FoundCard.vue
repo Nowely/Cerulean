@@ -24,8 +24,13 @@ const hits = computed(() => (props.entry.hits ?? []).map(id => data.records[id])
         name="i-lucide-search"
         class="mt-0.5 size-4 shrink-0"
       />
-      <span v-if="hits.length">Похоже на вопрос, поэтому пока ничего не записано. Вот что нашлось:</span>
-      <span v-else>Похоже на вопрос, поэтому пока ничего не записано. Ничего похожего не нашлось.</span>
+      <span>Это поиск, поэтому ничего не записано.{{ hits.length ? ' Вот что нашлось:' : '' }}</span>
+    </p>
+    <p
+      v-if="!hits.length"
+      class="px-3 pb-2.25 pl-9 text-meta text-dimmed"
+    >
+      Ничего похожего в записях нет.
     </p>
     <ul>
       <li

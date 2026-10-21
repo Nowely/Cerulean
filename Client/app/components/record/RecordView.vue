@@ -147,12 +147,15 @@ function openPlace() {
       class="px-4 pt-1 lg:px-0"
       :class="container === 'preview' ? 'lg:px-4' : 'lg:pt-0.5'"
     >
-      <div class="flex items-center gap-2 lg:gap-3">
+      <div
+        class="flex items-center lg:gap-3"
+        :class="rec.glyph ? 'gap-2.5' : 'gap-2'"
+      >
         <RecordMark
           :rec="rec"
           :page="page"
           size="lg"
-          class="-ml-2.5"
+          :class="rec.glyph ? '' : '-ml-2.5'"
           @toggle="data.toggleDone(rec.id)"
         />
         <TitleField

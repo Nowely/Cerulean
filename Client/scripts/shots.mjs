@@ -149,6 +149,8 @@ const scenarios = [
   { name: 'MobileOffline', device: MOBILE, run: async (p) => {
     await addKey(p)
     await open(p, '/journal')
+    await p.context().setOffline(true)
+    await settle(p, 300)
     await p.getByRole('textbox', { name: 'Новая запись' }).fill('батарейки для пульта')
     await p.keyboard.press('Enter')
     await settle(p, 600)
@@ -160,7 +162,7 @@ const scenarios = [
     await p.route(OPENAI, () => {})
     await open(p, '/')
     const field = p.getByRole('textbox', { name: 'Новая запись' })
-    await field.fill('батарейки для пульта')
+    await field.fill('кефир и сметана')
     await p.keyboard.press('Enter')
     await field.blur()
     await settle(p, 600)
