@@ -585,14 +585,30 @@ async function homeMenu(page, item) {
 
 /** Seven pages made without a section, newest first in «Недавнее» */
 async function recentPages(page) {
+  // Seven pages without a section, oldest first, each with what the mockup shows under it; made through «Новая
+  // страница» and «Назад» (a typed title survives the way back), Отпуск from the Задачи template
   await openHome(page)
-  for (const title of ['Английский', 'Фильмы', 'Отпуск в июле: билеты, жильё', 'Рецепты', 'Подарки', 'Ремонт', 'Велосипед'].reverse()) {
+  const lines = {
+    'Велосипед': ['поменять цепь'], 'Ремонт': ['выбрать плитку'], 'Английский': ['урок во вторник'], 'Фильмы': ['дюна, вторая часть'],
+    'Отпуск в июле: билеты, жильё и страховка': ['купить билеты', 'забронировать жильё'], 'Рецепты': ['шакшука'], 'Подарки': ['маме на день рождения']
+  }
+  for (const title of Object.keys(lines)) {
+    if (title.startsWith('Отпуск')) {
+      await data(page, (d, t) => d.createFromTemplate('todo', { title: t, sectionId: null }), title)
+      continue
+    }
     await homeMenu(page, 'Новая страница')
     await page.waitForURL(/\/p\//)
     await page.getByRole('textbox', { name: 'Название страницы' }).fill(title)
     await page.goBack()
     await page.waitForURL(u => new URL(u).pathname === '/')
   }
+  await data(page, (d, all) => {
+    for (const [title, texts] of Object.entries(all)) {
+      const pg = Object.values(d.pages).find(x => x.title === title && !x.deletedAt)
+      texts.forEach(text => d.addRecord({ pageId: pg.id, text, addedAt: Date.now() - 3600000 }))
+    }
+  }, lines)
   await settle(page, 400)
 }
 

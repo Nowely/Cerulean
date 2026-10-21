@@ -213,8 +213,11 @@ function choose(rec: Rec, choice: Id | 'more' | 'new') {
   actions.place(rec, { pageId: choice })
 }
 
-// A page made by an accidental «+» and left untouched goes away on leaving it
+// A page made by an accidental «+» and left untouched goes away on leaving it. A title still being typed is kept:
+// this runs before the field's own blur would save it, so «Назад» right after typing kept nothing
 onBeforeUnmount(() => {
+  const typed = titleDraft.value.replace(/\s+/g, ' ').trim()
+  if (full.value && data.pages[props.page.id] && typed && typed !== props.page.title) data.updatePage(props.page.id, { title: typed })
   const p = data.pages[props.page.id]
   if (full.value && p && p.kind === 'page' && !p.title.trim() && !p.description.trim() && !p.glyph && !data.liveRecords.some(r => r.pageId === p.id)) {
     data.purgePages([p.id])
