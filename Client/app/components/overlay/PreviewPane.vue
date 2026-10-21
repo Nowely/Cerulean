@@ -49,6 +49,7 @@ function openFull() {
       </span>
       <UButton
         v-if="!gone"
+        icon="i-lucide-square-arrow-out-up-right"
         @click="openFull"
       >
         Открыть

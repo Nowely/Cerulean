@@ -16,6 +16,19 @@ const DESKTOP = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 }
 /** @type {{ name: string, device: object, run: (page: import('playwright').Page) => Promise<void> }[]} */
 const scenarios = [
   { name: 'MobileHome', device: MOBILE, run: p => openHome(p) },
+  { name: 'MobileMany', device: MOBILE, run: async (p) => {
+    // A long Главная: a third section «Работа» under Личное (the v18 test of 30 pages, cut to what a screen holds)
+    await openHome(p)
+    await data(p, (d) => {
+      const work = d.createSection('Работа')
+      const pages = [['Проект Атлас', 'todo', ['собрать требования', 'согласовать макеты']], ['Созвоны', 'todo', ['созвон с подрядчиком в 15:00']], ['Отчёты', null, ['отчёт за сентябрь']]]
+      pages.forEach(([title, template, recs], i) => {
+        const pg = template ? d.createFromTemplate(template, { title, sectionId: work.id, order: i }) : d.createPage({ title, sectionId: work.id, order: i })
+        recs.forEach(text => d.addRecord({ pageId: pg.id, text, addedAt: Date.now() - 86400000 }))
+      })
+    })
+    await settle(p, 400)
+  } },
   { name: 'MobileCompact', device: MOBILE, run: async (p) => {
     await openHome(p)
     await homeMenu(p, 'Компактные строки')
@@ -154,6 +167,25 @@ const scenarios = [
     await p.getByRole('textbox', { name: 'Новая запись' }).fill('батарейки для пульта')
     await p.keyboard.press('Enter')
     await settle(p, 600)
+  } },
+  { name: 'MobileOnline', device: MOBILE, run: async (p) => {
+    // Sent offline, filed by the model once the network is back: «разобрано, когда появилась сеть»
+    let online = false
+    await p.route('**/fake-ai/v1/**', async (route) => {
+      if (!online) return route.abort('internetdisconnected')
+      const id = await data(p, d => d.livePages.find(x => x.title === 'Покупки').id)
+      const answer = { kind: 'record', pageId: id, items: [{ text: 'батарейки для пульта', date: null, time: null, qty: null, option: null }], guesses: [], newPageName: null }
+      return route.fulfill({ json: { id: 'x', object: 'chat.completion', created: 0, model: 'test', choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify(answer) } }] } })
+    })
+    await open(p, '/journal')
+    await data(p, (d, base) => d.setSettings({ provider: 'custom', baseUrl: base, modelId: 'test', apiKey: 'sk-test', keyState: 'ok', rulesFirst: false }), `${BASE}/fake-ai/v1`)
+    await p.context().setOffline(true)
+    await settle(p, 300)
+    await send(p, 'батарейки для пульта')
+    online = true
+    await p.context().setOffline(false)
+    // After the 15 s of «Отменить», as the mockup shows it
+    await settle(p, 16500)
   } },
   { name: 'MobilePending', device: MOBILE, run: async (p) => {
     await addKey(p)
@@ -356,6 +388,23 @@ const scenarios = [
     await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
     await settle(p, 400)
   } },
+  { name: 'PaletteNone', device: DESKTOP, run: async (p) => {
+    await open(p, '/journal')
+    await p.keyboard.press('Control+k')
+    await settle(p, 400)
+    const dialog = p.getByRole('dialog', { name: 'Поиск' })
+    await dialog.getByRole('combobox').filter({ hasText: 'Все секции' }).click()
+    await p.getByRole('option', { name: 'Дом' }).click()
+    await settle(p, 300)
+    await dialog.getByRole('combobox', { name: 'Найти' }).fill('гараж')
+    await settle(p, 400)
+  } },
+  { name: 'PagePeek', device: DESKTOP, run: async (p) => {
+    await openPage(p, 'Полумарафон к маю')
+    await p.getByRole('button', { name: /Атомные привычки/ }).first().click()
+    await settle(p, 600)
+  } },
+  { name: 'Sidebar', device: DESKTOP, clip: { x: 0, y: 0, width: 260, height: 900 }, run: p => openPage(p, 'Покупки') },
   { name: 'Palette', device: DESKTOP, run: async (p) => {
     await open(p, '/journal')
     await p.keyboard.press('Control+k')
@@ -708,7 +757,7 @@ for (const s of scenarios.filter(s => !filter || filter.split(',').some(f => s.n
     }))
     try {
       await s.run(page)
-      await page.screenshot({ path: `${OUT}/${s.name}-${scheme}.png` })
+      await page.screenshot({ path: `${OUT}/${s.name}-${scheme}.png`, clip: s.clip })
       console.log(`✓ ${s.name}-${scheme}${errors.length ? `  (${errors.length} console errors: ${errors[0]})` : ''}`)
     } catch (e) {
       failed.push(`${s.name}-${scheme}`)
