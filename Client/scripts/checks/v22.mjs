@@ -45,8 +45,9 @@ export default [
   // 8: an expanded series receipt gives each row its own «→»
   { id: 'v22-8-series-rows', device: MOBILE, run: async (p) => {
     await open(p, '/')
-    await send(p, 'молоко')
-    await send(p, 'яблоки')
+    // Not on Покупки yet: a duplicate row offers «Объединить» in place of its «→» (item 25)
+    await send(p, 'сметана')
+    await send(p, 'творог')
     await p.getByText(/2 записи → Покупки/).first().click()
     await p.waitForTimeout(400)
     expect(await p.getByRole('button', { name: /^Переместить «/ }).count() >= 2, 'the rows have no «→» of their own')
