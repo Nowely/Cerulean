@@ -1,9 +1,10 @@
 // Everything the user has, in memory, written through to IndexedDB on every change
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import type { Entry, Id, Page, PropDef, PropType, Rec, Section, Settings, TemplateKey } from '~/domain/types'
+import type { BodyDoc, Entry, Id, Page, PropDef, PropType, Rec, Section, Settings, TemplateKey } from '~/domain/types'
 import type { Learned } from '~/domain/rules'
 import type { Hit } from '~/domain/search'
+import { bodyOf, isEmptyDoc, mentionIds, mentionReason, unmention, type BodyOwner } from '~/domain/body'
 import { KINDS, plain, Storage, type Kind, type Touched } from '~/db/idb'
 import { TabSync, type Change } from '~/db/sync'
 import { mergeSnapshot, type Snapshot } from '~/domain/export'
@@ -35,6 +36,14 @@ export interface Added {
   /** Pages here as they were before they took properties from the file */
   before: Page[]
   learned: Learned
+}
+
+/** A row of «Связано» and why it is there: see `relatedOf` */
+export interface Related {
+  hit: Hit
+  why: 'text' | 'quote' | 'hand'
+  /** `quote`: the sentence of the other body that mentions this record */
+  quote?: string
 }
 
 /** Fields that can change in another tab without anything to show on the record's page */
@@ -124,38 +133,78 @@ export const useDataStore = defineStore('data', () => {
   const recordsOf = (pageId: Id) => byPage.value.get(pageId) ?? []
   const subitemsOf = (recId: Id) => byParent.value.get(recId) ?? []
 
-  /** Records that link to a record, by the record they link to */
-  const backlinks = computed(() => {
-    const map = new Map<Id, Rec[]>()
-    for (const r of liveRecords.value) {
-      for (const id of r.links ?? []) {
-        const list = map.get(id) ?? []
-        list.push(r)
-        map.set(id, list)
-      }
+  /** Who links to a thing, by the thing: hand links (`links`) and mentions in a body (`mentions`, of records and pages) */
+  const incoming = computed(() => {
+    const hand = new Map<Id, Rec[]>()
+    const text = new Map<Id, Hit[]>()
+    const add = <T>(map: Map<Id, T[]>, id: Id, x: T) => {
+      const list = map.get(id) ?? []
+      list.push(x)
+      map.set(id, list)
     }
-    return map
+    for (const r of liveRecords.value) {
+      for (const id of r.links ?? []) add(hand, id, r)
+      for (const id of r.mentions ?? []) add(text, id, { kind: 'record', rec: r })
+    }
+    for (const p of livePages.value) for (const id of p.mentions ?? []) add(text, id, { kind: 'page', page: p })
+    return { hand, text }
   })
 
-  /** «Связано» of a record: what it links to, then what links to it; live things only, each once */
-  function linksOf(recId: Id): Hit[] {
-    const out: Hit[] = []
+  /** The live name of what a mention points at (the name it had when it was made, once that is gone for good) */
+  function nameOf(id: Id, label?: string): string {
+    const rec = records.value[id]
+    if (rec) return rec.text
+    const page = pages.value[id]
+    if (page) return page.title || 'Без названия'
+    return label ?? ''
+  }
+
+  function hitOf(id: Id): Hit | null {
+    const rec = records.value[id]
+    const page = pages.value[id]
+    if (rec && !rec.deletedAt && liveIds.value.has(rec.pageId)) return { kind: 'record', rec }
+    if (page && !page.deletedAt) return { kind: 'page', page }
+    return null
+  }
+
+  const idOfHit = (h: Hit) => h.kind === 'page' ? h.page.id : h.rec.id
+
+  /**
+   * «Связано» of a record and why each row is there (v23): `text` its own body mentions the thing («Покупки · в тексте»),
+   * `quote` the thing's body mentions this record (the sentence around the mention), `hand` a link made in «Связать».
+   * What it mentions and links to first, then what mentions it and links to it; live things only, each once, a mention
+   * winning over a hand link to the same thing
+   */
+  function relatedOf(recId: Id): Related[] {
+    const rec = records.value[recId]
+    const out: Related[] = []
     const seen = new Set<Id>([recId])
-    for (const id of records.value[recId]?.links ?? []) {
-      if (seen.has(id)) continue
-      const rec = records.value[id]
-      const page = pages.value[id]
-      if (rec && !rec.deletedAt && liveIds.value.has(rec.pageId)) out.push({ kind: 'record', rec })
-      else if (page && !page.deletedAt) out.push({ kind: 'page', page })
-      else continue
-      seen.add(id)
+    const fromText = incoming.value.text.get(recId) ?? []
+    const quote = (h: Hit) => mentionReason(bodyOf(h.kind === 'page' ? h.page : h.rec), recId, nameOf)
+    const push = (hit: Hit | null | undefined, why: Related['why']) => {
+      if (!hit || seen.has(idOfHit(hit))) return
+      seen.add(idOfHit(hit))
+      out.push(why === 'quote' ? { hit, why, quote: quote(hit) } : { hit, why })
     }
-    for (const rec of backlinks.value.get(recId) ?? []) {
-      if (seen.has(rec.id)) continue
-      out.push({ kind: 'record', rec })
-      seen.add(rec.id)
+    for (const id of rec?.mentions ?? []) push(hitOf(id), 'text')
+    for (const id of rec?.links ?? []) {
+      const back = fromText.find(h => idOfHit(h) === id)
+      push(back ?? hitOf(id), back ? 'quote' : 'hand')
     }
+    for (const h of fromText) push(h, 'quote')
+    for (const r of incoming.value.hand.get(recId) ?? []) push({ kind: 'record', rec: r }, 'hand')
     return out
+  }
+
+  /** «Связано» of a record: what it mentions or links to, then what mentions it or links to it */
+  function linksOf(recId: Id): Hit[] {
+    return relatedOf(recId).map(x => x.hit)
+  }
+
+  /** Whether `a` and `b` are linked by a mention in either body (as against only by hand) */
+  function mentioned(a: Id, b: Id): boolean {
+    const holds = (x: Id, y: Id) => (records.value[x]?.mentions ?? pages.value[x]?.mentions ?? []).includes(y)
+    return holds(a, b) || holds(b, a)
   }
 
   const inbox = computed(() => livePages.value.find(p => p.kind === 'inbox')!)
@@ -599,11 +648,41 @@ export const useDataStore = defineStore('data', () => {
     save('records', rec)
   }
 
-  /** Links a record to a record or a page, or undoes the link from whichever side holds it */
+  /**
+   * A body's new content (v23). Empty, it is stored as none (a page note then stops being drawn); the mentions in it are
+   * read out for «Связано», and the plain note from before v23 is left behind
+   */
+  function setBody(owner: BodyOwner, doc: BodyDoc | null) {
+    const body = isEmptyDoc(doc) ? null : doc
+    const mentions = mentionIds(body).filter(id => id !== owner.id)
+    if (owner.kind === 'record') updateRecord(owner.id, { body, mentions, note: '' })
+    else updatePage(owner.id, { body, mentions })
+  }
+
+  /** The mentions of `targetId` in the body of `holderId` become plain words */
+  function unmentionIn(holderId: Id, targetId: Id) {
+    const rec = records.value[holderId]
+    const holder = rec ?? pages.value[holderId]
+    const body = bodyOf(holder)
+    if (!holder?.mentions?.includes(targetId) || !body) return
+    setBody({ kind: rec ? 'record' : 'page', id: holderId }, unmention(body, targetId, nameOf))
+  }
+
+  /**
+   * Links a record to a record or a page, or undoes the link from whichever side holds it. A link a mention made is
+   * undone by turning the mention back into words (v23, Q3), and a hand link to the same thing goes with it
+   */
   function toggleLink(recId: Id, targetId: Id) {
     const rec = records.value[recId]
     if (!rec || recId === targetId) return
     const other = records.value[targetId]
+    if (mentioned(recId, targetId)) {
+      unmentionIn(recId, targetId)
+      unmentionIn(targetId, recId)
+      if (rec.links?.includes(targetId)) updateRecord(recId, { links: rec.links.filter(id => id !== targetId) })
+      if (other?.links?.includes(recId)) updateRecord(targetId, { links: other.links.filter(id => id !== recId) })
+      return
+    }
     if (rec.links?.includes(targetId)) updateRecord(recId, { links: rec.links.filter(id => id !== targetId) })
     else if (other?.links?.includes(recId)) updateRecord(targetId, { links: other.links.filter(id => id !== recId) })
     else updateRecord(recId, { links: [...(rec.links ?? []), targetId] })
@@ -902,7 +981,7 @@ export const useDataStore = defineStore('data', () => {
   return {
     pages, records, sections, entries, settings, learned, ready, storageError, writeFailed, persisted, waiting,
     livePages, liveRecords, inbox, clarify, sectionList, recentlyMade, favorites, trash, recent,
-    recordsOf, subitemsOf, linksOf, placeOf,
+    recordsOf, subitemsOf, linksOf, relatedOf, mentioned, nameOf, placeOf, setBody,
     init, setSettings, toggleFolded, clearWriteFailed, persist, hold, release, takeWaiting,
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     propUsage, addProp, updateProp, moveProp, removeOption, retypeProp, removeProp,

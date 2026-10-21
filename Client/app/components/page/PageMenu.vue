@@ -36,7 +36,7 @@ const describing = ref(false)
 const moving = ref(false)
 
 async function copy() {
-  const text = toMarkdown([props.page], data.liveRecords.filter(r => r.pageId === props.page.id), [], Date.now())
+  const text = toMarkdown([props.page], data.liveRecords.filter(r => r.pageId === props.page.id), [], Date.now(), data.nameOf)
   try {
     await navigator.clipboard.writeText(text.replace(/^# Cerulean\n\n/, ''))
     notify('Страница скопирована как текст', undefined, 3000)

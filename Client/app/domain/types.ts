@@ -38,7 +38,7 @@ export interface PropDef {
   unit?: string
 }
 
-/** The built-in properties every page has: Срок (`rec.due`) and Заметка (`rec.note`) */
+/** The built-in properties every page has: Срок (`rec.due`) and Заметка (the body, `rec.body`) */
 export type BuiltinProp = 'due' | 'note'
 
 /** What «Как показывать» offers: exactly these four */
@@ -70,6 +70,28 @@ export interface ViewDef {
   named?: boolean
 }
 
+/** A mark in a body: bold, italic (drawn oblique) or a link */
+export interface BodyMark {
+  type: string
+  attrs?: { href?: string, [k: string]: unknown }
+}
+
+/**
+ * A node of a body (v23): the editor's JSON. Only what a body holds: doc, paragraph, heading (level 2), bulletList,
+ * orderedList, listItem, blockquote, horizontalRule, text and mention (`attrs.id`, `attrs.label` the name it had)
+ */
+export interface BodyNode {
+  type: string
+  attrs?: Record<string, unknown>
+  content?: BodyNode[]
+  text?: string
+  marks?: BodyMark[]
+}
+
+export interface BodyDoc extends BodyNode {
+  type: 'doc'
+}
+
 export type PageKind = 'page' | 'inbox' | 'today'
 
 export type TemplateKey = 'shop' | 'todo' | 'goal' | 'note'
@@ -86,6 +108,10 @@ export interface Page {
   hasDone: boolean
   /** «Описание для Авто»: what goes here; Авто reads it when filing */
   description: string
+  /** «Заметка к странице» (v23): the page's body, drawn between the title block and the view tabs; null or absent: none */
+  body?: BodyDoc | null
+  /** Records and pages the body mentions, read out of it on every change (they show in «Связано» of each) */
+  mentions?: Id[]
   props: PropDef[]
   /** The order of «Свойства»: property ids with 'due' and 'note' among them. Without it the page's own come first */
   propOrder?: (Id | BuiltinProp)[]
@@ -117,7 +143,12 @@ export interface Rec {
   doneAt?: number
   /** Last tick or untick: a row ticked while its page is open stays in place until the page is opened again */
   tickedAt?: number
+  /** The plain «Заметка» from before v23: read as a one-paragraph body until the body is first written, then '' */
   note: string
+  /** The body (v23): the editor's JSON; null or absent: empty (or the old `note`) */
+  body?: BodyDoc | null
+  /** Records and pages the body mentions, read out of it on every change: «Связано» on both sides, apart from `links` */
+  mentions?: Id[]
   values: Record<Id, string | number | null>
   due: Due | null
   /** A record with its own icon shows its tile instead of the checkbox or dot */
@@ -126,7 +157,7 @@ export interface Rec {
   tags: Tag[]
   /** Pages Авто would offer for a record tagged «уточнить» */
   guesses?: Id[]
-  /** «Связано»: records and pages this one is linked to. A link reads both ways: the other side lists it too */
+  /** «Связано»: records and pages this one is linked to by hand. A link reads both ways: the other side lists it too */
   links?: Id[]
   via: 'chat' | 'manual'
   addedAt: number

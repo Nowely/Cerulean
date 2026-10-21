@@ -2,6 +2,7 @@
 import type { Due, FilterRule, GroupBy, Page, PropDef, Rec, ViewDef } from './types'
 import { addDays, dayKey } from './dates'
 import { fold, ofProp } from './text'
+import { searchText } from './body'
 
 export interface Group {
   key: string
@@ -145,8 +146,8 @@ export function groupOptions(page: Page): { value: GroupBy, label: string }[] {
   ]
 }
 
-/** Search inside one page: text and note */
+/** Search inside one page: text and body */
 export function matchesQuery(rec: Rec, q: string): boolean {
   const f = fold(q.trim())
-  return !f || fold(rec.text).includes(f) || fold(rec.note).includes(f)
+  return !f || fold(rec.text).includes(f) || fold(searchText(rec)).includes(f)
 }
