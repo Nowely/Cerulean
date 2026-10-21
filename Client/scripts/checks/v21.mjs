@@ -88,7 +88,8 @@ export default [
     await p.keyboard.type('xyz')
     await p.keyboard.press('Escape')
     await p.waitForTimeout(300)
-    expect(await title.inputValue() === 'Идеи и мысли', 'Esc did not put the old title back')
+    // v23 (F9): at rest «и» is glued to the next word with a no-break space
+    expect((await title.inputValue()).replace(/\u00a0/g, ' ') === 'Идеи и мысли', 'Esc did not put the old title back')
   } },
   { id: 'v21-10', device: MOBILE, run: async (p) => {
     await open(p, '/')
