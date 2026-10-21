@@ -2,6 +2,7 @@
 // Usage: pnpm dev, then `pnpm shots [filter,filter2]` (SHOTS_URL, SHOTS_OUT to override).
 // Every shot starts from a fresh browser profile with the demo data and the clock at 19 Oct 2026, 9:14,
 // the moment the mockups show; light and dark come from the system preference.
+import { readdirSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import { chromium } from 'playwright'
 
@@ -773,6 +774,13 @@ async function pageProps(page) {
 }
 
 await mkdir(OUT, { recursive: true })
+// Scenarios of later iterations live in scripts/shots/*.mjs, one module per slice, so parallel work never edits the
+// same lines: each default-exports (helpers) => scenarios
+const helpers = { MOBILE, DESKTOP, NOW, DAY, settle, open, openHome, homeMenu, send, fold, dismissKeyCard, openConnection, keyed, addKey, openPage, pageTab, data, breakStorage, fillStorage, keeping, twoTabs, longList, openRecord, pageProps }
+for (const file of readdirSync(new URL('./shots/', import.meta.url)).filter(f => f.endsWith('.mjs')).sort()) {
+  scenarios.push(...(await import(new URL(`./shots/${file}`, import.meta.url).href)).default(helpers))
+}
+
 const browser = await chromium.launch({ executablePath: process.env.SHOTS_CHROMIUM ?? undefined })
 const failed = []
 for (const s of scenarios.filter(s => !filter || filter.split(',').some(f => s.name.toLowerCase().includes(f.toLowerCase())))) {
