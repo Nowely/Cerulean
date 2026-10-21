@@ -1,5 +1,6 @@
-// v22 delta: the «Check:» lines of the writing loop and pages already built in this PR (items 6–10, 13, 15, 22, 24,
-// 31, 33, 34). Data (27–29, 9) is in data.mjs, properties (30) in props.mjs.
+// v22 delta: the «Check:» lines of Josh's points and the writing loop and pages (items 1, 4–10, 13, 15, 22, 24, 31, 33,
+// 34). Data (27–29, 9) is in data.mjs, properties (30) in props.mjs, the writing loop's notices in writing.mjs,
+// navigation in nav.mjs.
 import { DESKTOP, MOBILE, expect, open, pageOf, send, shows, store } from './lib.mjs'
 
 const NOW = new Date('2026-10-19T09:14:00+03:00')
@@ -10,7 +11,71 @@ const openPage = async (p, title) => {
   await p.waitForTimeout(400)
 }
 
+/** Rows of the page on screen that end above the composer */
+const rowsInView = p => p.evaluate(() => {
+  const form = [...document.querySelectorAll('form')].find(f => f.querySelector('[aria-label="Новая запись"]'))
+  const top = form.getBoundingClientRect().top
+  return [...document.querySelectorAll('main li')].filter((li) => {
+    const r = li.getBoundingClientRect()
+    return li.querySelector('[role="checkbox"]') && r.top >= 0 && r.bottom <= top + 1
+  }).length
+})
+
 export default [
+  // 1: «Покупки at 390×844 with four groups shows at least 11 rows above the composer without scrolling»
+  { id: 'v22-1-density', device: MOBILE, run: async (p) => {
+    await p.clock.install({ time: NOW })
+    await open(p, '/')
+    // The long list of MobileLong: 24 open records in five groups
+    await store(p, (data) => {
+      const pg = data.livePages.find(x => x.title === 'Покупки')
+      const dept = pg.props.find(x => x.name === 'Отдел')
+      const opt = n => dept.options.find(o => o.name === n).id
+      const rows = [['Батон', 'Хлеб и выпечка'], ['Лаваш', 'Хлеб и выпечка'], ['Кефир', 'Молочное'], ['Сметана', 'Молочное'], ['Творог', 'Молочное'], ['Йогурт', 'Молочное'],
+        ['Огурцы', 'Овощи и фрукты'], ['Картошка', 'Овощи и фрукты'], ['Лук', 'Овощи и фрукты'], ['Яблоки', 'Овощи и фрукты'], ['Гречка', 'Бакалея'], ['Рис', 'Бакалея']]
+      rows.forEach(([text, group], i) => data.addRecord({ pageId: pg.id, text, order: 100 + i, addedAt: Date.now() - 3600000, values: { [dept.id]: opt(group) } }))
+    })
+    await openPage(p, 'Покупки')
+    const n = await rowsInView(p)
+    expect(n >= 11, `${n} rows above the composer`)
+    const row = await p.locator('main li').filter({ has: p.getByRole('checkbox') }).first().boundingBox()
+    expect(Math.round(row.height) === 44, `a row is ${row.height} px`)
+  } },
+  // 4: «open five pages with «Готово» and Главная with two pages: no tip appears»
+  { id: 'v22-4-no-tips', device: MOBILE, run: async (p) => {
+    const tip = /смахни|смахнуть|удерживай|подержи|наведи|подсказка|совет:/i
+    await open(p, '/')
+    for (const t of ['Покупки', 'Дела по дому', 'Задачи', 'Цели', 'Идеи']) {
+      await openPage(p, t)
+      expect(!tip.test(await p.evaluate(() => document.body.innerText)), `a tip on ${t}`)
+      await p.goBack()
+      await p.waitForTimeout(300)
+    }
+  } },
+  // 4, day one: Главная with two pages made from templates
+  { id: 'v22-4-no-tips-day-one', device: MOBILE, run: async (p) => {
+    const tip = /смахни|смахнуть|удерживай|подержи|наведи|подсказка|совет:/i
+    await open(p, '/', false)
+    // One from a template (the templates then step aside), one made by hand
+    await p.getByRole('button', { name: /^Покупки/ }).first().click()
+    await p.waitForTimeout(600)
+    await store(p, data => data.createPage({ title: 'Задачи' }))
+    await p.reload()
+    await p.waitForSelector('main')
+    await p.waitForTimeout(600)
+    expect(await store(p, data => data.livePages.filter(x => x.kind === 'page').length) === 2, 'not two pages')
+    expect(!tip.test(await p.evaluate(() => document.body.innerText)), 'a tip on Главная with two pages')
+  } },
+  // 5: «on Покупки send «молоко 2 л»: the row shows «2 л» at once and no «только что»» (кефир: Молоко is in the demo)
+  { id: 'v22-5-props-not-time', device: MOBILE, run: async (p) => {
+    await p.clock.install({ time: NOW })
+    await open(p, '/')
+    await openPage(p, 'Покупки')
+    await send(p, 'кефир 1 л')
+    const row = p.locator('main li').filter({ hasText: 'Кефир' }).first()
+    expect(await shows(row.getByText('1 л', { exact: true })), 'the row does not show «1 л»')
+    expect(!(await p.getByText(/только что/).count()), '«только что» on screen')
+  } },
   // 6: «tick «Молоко» on «Купить»: it stays in place, struck through; tap again: back»
   { id: 'v22-6-tick-stays', device: MOBILE, run: async (p) => {
     await open(p, '/')
