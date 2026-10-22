@@ -140,6 +140,9 @@ const scenarios = [
     await p.getByRole('dialog').getByRole('button', { name: /^Авто/ }).click()
     await settle(p, 300)
     await send(p, 'позвонить маме')
+    // A finger leaves no focus ring on the chip the sheet handed focus back to
+    await p.evaluate(() => document.activeElement?.blur())
+    await settle(p, 200)
   } },
   { name: 'MobileVoice', device: MOBILE, run: async (p) => {
     await hearing(p)

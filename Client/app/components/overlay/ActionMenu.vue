@@ -41,7 +41,7 @@ defineProps<{
   labelled?: boolean
   /** Desktop: which edge of the trigger the dropdown lines up with; «⋯» buttons sit at a row's end */
   align?: 'start' | 'end'
-  /** Phone: a hairline between the groups (Входящие's other guesses above «Переместить…»); other sheets run on */
+  /** Phone: hairlines between the groups (Входящие's other guesses, «Удалить вид», Главная's menu); other sheets run on */
   divided?: boolean
   /** Desktop: 260 wide, for rows that are page names (Входящие's other guesses) */
   wide?: boolean
@@ -169,14 +169,18 @@ const afterClose = () => setTimeout(() => setTimeout(run))
               class="shrink-0 text-13 text-toned"
             >{{ caption }}</span>
           </div>
-          <div class="flex flex-col p-2">
+          <!-- The first row follows the head straight away (canvas 62, `.shh`) -->
+          <div
+            class="flex flex-col px-2 pb-2"
+            :class="{ 'pt-2': headless }"
+          >
             <template
               v-for="(group, gi) in items"
               :key="gi"
             >
               <div
                 v-if="gi > 0 && divided"
-                class="mx-3 my-1 border-t border-default"
+                class="mx-3 my-1.5 border-t border-default"
               />
               <button
                 v-for="item in group"

@@ -67,7 +67,9 @@ function more() {
       :color="p.color"
       @click="emit('choose', { pageId: p.id })"
     />
+    <!-- Day one, with nothing to guess: the starters not made yet and «Новая страница…», no «Ещё…» (spec, Question card) -->
     <ChipButton
+      v-if="!starters.length"
       label="Ещё…"
       icon="i-lucide-ellipsis"
       @click="more"

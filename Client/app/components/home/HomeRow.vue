@@ -94,8 +94,8 @@ function click(e: MouseEvent) {
   >
     <a
       :href="to"
-      class="flex min-w-0 flex-1 select-none items-center gap-3 rounded-card px-2 text-left [-webkit-touch-callout:none] active:bg-pressed lg:rounded-chip"
-      :class="compact ? 'min-h-8' : 'min-h-12 py-0.75'"
+      class="flex min-w-0 flex-1 select-none items-center gap-3 rounded-card px-2 text-left [-webkit-touch-callout:none] active:bg-pressed lg:rounded-chip lg:px-3"
+      :class="compact ? 'min-h-8' : 'min-h-12 py-0.75 lg:min-h-13'"
       @click="click"
       @pointerdown="down"
       @pointerup="up"
@@ -122,7 +122,7 @@ function click(e: MouseEvent) {
           <span
             class="min-w-0 truncate"
             :class="[
-              compact ? 'text-15 leading-5 text-highlighted' : 'text-base leading-5.5 font-medium text-highlighted lg:text-sm lg:leading-5',
+              compact ? 'text-15 leading-5 text-highlighted lg:text-sm' : 'text-base leading-5.5 font-medium text-highlighted lg:text-sm lg:leading-5',
               { 'text-dimmed': page && !page.title }
             ]"
           >{{ name }}</span>
@@ -135,7 +135,7 @@ function click(e: MouseEvent) {
         <span
           v-if="!compact && (summary.lead || summary.names)"
           ref="summaryEl"
-          class="flex min-w-0 text-sm leading-4.75 text-toned lg:text-13 lg:leading-4.5"
+          class="flex min-w-0 text-sm leading-4.75 text-toned lg:leading-5"
         >
           <span
             v-if="summaryLine !== null"

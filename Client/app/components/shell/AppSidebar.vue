@@ -110,7 +110,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
 
       <NuxtLink
         :to="`/p/${data.inbox.id}`"
-        class="side-row mt-3"
+        class="side-row mt-2"
         :aria-current="isCurrent(`/p/${data.inbox.id}`) ? 'page' : undefined"
       >
         <PageTile
@@ -275,7 +275,7 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
                 :class="{ '-rotate-90': s.collapsed }"
               />
             </button>
-            <span class="flex opacity-0 group-hover/head:opacity-100 group-focus-within/head:opacity-100 has-aria-expanded:opacity-100">
+            <span class="flex h-6 items-center opacity-0 group-hover/head:opacity-100 group-focus-within/head:opacity-100 has-aria-expanded:opacity-100">
               <SectionMenu
                 :section="s"
                 @rename="startRename(s)"
@@ -329,8 +329,13 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
 <style scoped>
 @reference "~/assets/css/main.css";
 
+/* Rows 36 high; the glyph sits in a 24px box, so names start 40px in (canvas 62, `.sb-nv`) */
 .side-row {
-  @apply relative flex min-h-9 w-full cursor-pointer items-center gap-2.5 rounded-item py-1 pr-2 pl-2.5 text-left text-sm text-default hover:bg-side-hover hover:text-highlighted active:bg-pressed;
+  @apply relative flex min-h-9 w-full cursor-pointer items-center gap-2.5 rounded-item py-1 pr-2 pl-1.5 text-left text-sm text-default hover:bg-side-hover hover:text-highlighted active:bg-pressed;
+}
+
+.side-row > :first-child {
+  @apply mx-1;
 }
 
 .side-row[aria-current="page"] {
@@ -346,12 +351,13 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
   @apply size-4 shrink-0 text-toned;
 }
 
+/* A section's caption: 24 high, 16 above it; its «⋯» overflows the line rather than growing it */
 .side-head {
-  @apply mt-3 flex items-center gap-0.5;
+  @apply mt-4 flex h-6 items-center gap-0.5;
 }
 
 .side-head-btn {
-  @apply flex h-7 min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-item px-2.5 text-left text-cap text-toned hover:text-highlighted;
+  @apply flex h-6 min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-item px-2.5 text-left text-cap text-toned hover:text-highlighted;
 }
 
 .side-chev {

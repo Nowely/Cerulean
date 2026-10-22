@@ -120,6 +120,7 @@ watch(() => props.views.map(v => v.name).join(), () => nextTick(measure))
         :caption="LAYOUT_NAMES[v.layout].toLowerCase()"
         label="Меню вида"
         labelled
+        divided
         align="start"
       >
         <button
