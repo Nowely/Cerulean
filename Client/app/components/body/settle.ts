@@ -33,7 +33,7 @@ export function settleEdges(scroller: HTMLElement, caret: { top: number, bottom:
     const r = el.getBoundingClientRect()
     if (r.height > 0 && r.height <= 120 && r.bottom > box.top - box.height && r.top < box.bottom + box.height) units.push({ top: r.top, bottom: r.bottom })
   })
-  const cut = (d: number, edge: number) => units.filter(u => u.top - d < edge - 1 && u.bottom - d > edge + 1).length
+  const cut = (d: number, edge: number) => units.filter(u => u.top - d < edge - 0.5 && u.bottom - d > edge + 0.5).length
   const cost = (d: number) => cut(d, box.top) + cut(d, box.bottom)
   // How far it may go: within the scroll, and the caret's line never leaves the view
   let lo = -scroller.scrollTop
