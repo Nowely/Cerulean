@@ -233,7 +233,7 @@ function openPlace() {
         <dd class="flex min-w-0 flex-1 items-center gap-2.5">
           <span
             v-if="!glance"
-            class="h-1.5 w-40 overflow-hidden rounded-full bg-trk"
+            class="h-1.5 w-40 min-w-0 overflow-hidden rounded-full bg-trk"
             role="img"
             :aria-label="`${done} из ${subs.length}`"
           >
@@ -242,7 +242,7 @@ function openPlace() {
               :style="{ width: `${(done / subs.length) * 100}%` }"
             />
           </span>
-          <span class="text-highlighted tabular-nums">{{ done }} из {{ subs.length }}</span>
+          <span class="shrink-0 text-highlighted tabular-nums">{{ done }} из {{ subs.length }}</span>
         </dd>
       </div>
       <div

@@ -24,8 +24,20 @@ const route = useRoute()
 const now = useNow()
 const find = useFind()
 
+/** A record page marks its page's row, or the row of the record it belongs to when that has one (in Избранное) */
+const current = computed(() => {
+  const id = /^\/r\/([^/]+)$/.exec(route.path)?.[1]
+  let rec = id ? data.records[id] : undefined
+  while (rec) {
+    const own = rec.id
+    if (data.favorites.some(f => f.kind === 'record' && f.rec.id === own)) return `/r/${own}`
+    if (!rec.parentId) return `/p/${rec.pageId}`
+    rec = data.records[rec.parentId]
+  }
+  return route.path
+})
 // While Найти is open it is the one current row (PaletteNone)
-const isCurrent = (path: string) => !find.isOpen.value && route.path === path
+const isCurrent = (path: string) => !find.isOpen.value && current.value === path
 const onHome = computed(() => route.path === '/')
 const folded = (key: string) => data.settings.folded.includes(key)
 const pagesOf = (s: Section) => data.livePages.filter(p => p.sectionId === s.id)

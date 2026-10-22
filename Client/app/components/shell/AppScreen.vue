@@ -99,8 +99,8 @@ defineExpose({ scroller })
     </div>
     <div
       v-if="$slots.dock"
-      class="relative shrink-0 px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] lg:px-8 lg:pb-5"
-      :class="{ 'z-3 -mt-1.5': dockLine, 'max-lg:[[data-keyboard]_&]:pb-2': !hard }"
+      class="relative shrink-0 px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] max-lg:[[data-keyboard]_&]:pb-2 lg:px-8 lg:pb-5"
+      :class="{ 'z-3 -mt-1.5': dockLine }"
     >
       <div
         v-if="dockLine && cover"

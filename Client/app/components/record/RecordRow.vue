@@ -304,61 +304,64 @@ const inboxMenu = computed<MenuItem[][]>(() => [
           v-else
           class="w-2.5 shrink-0 lg:w-2"
         />
-        <button
-          ref="text"
-          type="button"
-          data-row-text
-          class="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center gap-px rounded-item py-1 pr-1 pl-0.5 text-left lg:min-h-10"
-          @click="emit('open')"
-          @keydown="onKey"
-        >
-          <span
-            class="text-record"
-            :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
-          >{{ nb(rec.text) }}</span>
-          <span
-            v-if="stock && (stock.low || stock.norm !== null)"
-            class="flex items-center gap-1 text-13 text-toned"
+        <!-- The name and its values. On a phone, values that would leave the name under 8rem go to line 2 -->
+        <div class="flex min-w-0 flex-1 items-center gap-x-1.5 max-lg:flex-wrap">
+          <button
+            ref="text"
+            type="button"
+            data-row-text
+            class="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center gap-px rounded-item py-1 pr-1 pl-0.5 text-left max-lg:basis-32 lg:min-h-10"
+            @click="emit('open')"
+            @keydown="onKey"
           >
-            <UIcon
-              v-if="stock.low"
-              name="i-lucide-arrow-down"
-              class="size-3.5"
-            />{{ [stock.low ? 'мало' : '', stock.norm !== null ? `норма ${stock.norm}` : ''].filter(Boolean).join(' · ') }}
-          </span>
-        </button>
-
-        <span
-          v-if="waiting || subs.length || noteGlyph || right.length"
-          class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums"
-        >
-          <span v-if="waiting">ждёт сети</span>
-          <span
-            v-if="subs.length"
-            :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
-          >{{ subsDone }}/{{ subs.length }}</span>
-          <UIcon
-            v-if="noteGlyph"
-            name="i-lucide-file-text"
-            class="size-4"
-            aria-label="есть заметка"
-          />
-          <template
-            v-for="r in right"
-            :key="r.key"
-          >
-            <OptionPill
-              v-if="r.color"
-              :name="r.text"
-              :color="r.color"
-              class="max-w-36"
-            />
             <span
-              v-else
-              :class="r.tone === 'warn' ? 'text-warn' : ''"
-            >{{ r.text }}</span>
-          </template>
-        </span>
+              class="text-record"
+              :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
+            >{{ nb(rec.text) }}</span>
+            <span
+              v-if="stock && (stock.low || stock.norm !== null)"
+              class="flex items-center gap-1 text-13 text-toned"
+            >
+              <UIcon
+                v-if="stock.low"
+                name="i-lucide-arrow-down"
+                class="size-3.5"
+              />{{ [stock.low ? 'мало' : '', stock.norm !== null ? `норма ${stock.norm}` : ''].filter(Boolean).join(' · ') }}
+            </span>
+          </button>
+
+          <span
+            v-if="waiting || subs.length || noteGlyph || right.length"
+            class="flex shrink-0 items-center gap-2.5 pl-0.5 text-meta text-toned tabular-nums max-lg:min-h-7"
+          >
+            <span v-if="waiting">ждёт сети</span>
+            <span
+              v-if="subs.length"
+              :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
+            >{{ subsDone }}/{{ subs.length }}</span>
+            <UIcon
+              v-if="noteGlyph"
+              name="i-lucide-file-text"
+              class="size-4"
+              aria-label="есть заметка"
+            />
+            <template
+              v-for="r in right"
+              :key="r.key"
+            >
+              <OptionPill
+                v-if="r.color"
+                :name="r.text"
+                :color="r.color"
+                class="max-w-36"
+              />
+              <span
+                v-else
+                :class="r.tone === 'warn' ? 'text-warn' : ''"
+              >{{ r.text }}</span>
+            </template>
+          </span>
+        </div>
 
         <!-- Запасы: the number against its norm, with a stepper -->
         <span

@@ -1,5 +1,6 @@
 // Clean edges while a body has focus on a phone (v23, F6): the header and the bar are opaque, so the scroll settles
-// where neither edge cuts a line of text or a row, and the caret's line stays in view. A small nudge, never a jump.
+// where neither edge cuts a line of text or a row, and the caret's line stays in view. It takes the nearest such stop,
+// whatever the keyboard's height; the title may go under the header for it (the header then names the record).
 
 interface Unit {
   top: number
@@ -21,7 +22,7 @@ function lines(root: Element, out: Unit[]) {
   })
 }
 
-const ROWS = 'li, h1, h2, dt, dd, p, button, textarea, input, [role="status"], [data-settle]'
+const ROWS = 'li, h1, h2, dt, dd, p, button, textarea, input, [role="status"], [role="img"], svg, [data-settle]'
 
 export function settleEdges(scroller: HTMLElement, caret: { top: number, bottom: number } | null) {
   const box = scroller.getBoundingClientRect()
@@ -30,23 +31,30 @@ export function settleEdges(scroller: HTMLElement, caret: { top: number, bottom:
   scroller.querySelectorAll(ROWS).forEach((el) => {
     if (el.closest('.body-text')) return
     const r = el.getBoundingClientRect()
-    if (r.height > 0 && r.height <= 120 && r.bottom > box.top - 120 && r.top < box.bottom + 120) units.push({ top: r.top, bottom: r.bottom })
+    if (r.height > 0 && r.height <= 120 && r.bottom > box.top - box.height && r.top < box.bottom + box.height) units.push({ top: r.top, bottom: r.bottom })
   })
-  const cuts = (d: number, edge: number) => units.some(u => u.top - d < edge - 1 && u.bottom - d > edge + 1)
-  const max = scroller.scrollHeight - scroller.clientHeight
-  const fits = (d: number) => {
-    const at = scroller.scrollTop + d
-    if (at < 0 || at > max) return false
-    if (caret && (caret.top - d < box.top || caret.bottom - d > box.bottom)) return false
-    return !cuts(d, box.top) && !cuts(d, box.bottom)
+  const cut = (d: number, edge: number) => units.filter(u => u.top - d < edge - 1 && u.bottom - d > edge + 1).length
+  const cost = (d: number) => cut(d, box.top) + cut(d, box.bottom)
+  // How far it may go: within the scroll, and the caret's line never leaves the view
+  let lo = -scroller.scrollTop
+  let hi = scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop
+  if (caret) {
+    lo = Math.max(lo, Math.ceil(caret.bottom - box.bottom))
+    hi = Math.min(hi, Math.floor(caret.top - box.top))
   }
-  if (fits(0)) return
-  for (let k = 1; k <= 40; k++) {
+  let best = 0
+  let least = cost(0)
+  // The nearest clean stop, further on first; with none, the stop that cuts the fewest
+  for (let k = 1; least && k <= Math.max(-lo, hi); k++) {
     for (const d of [k, -k]) {
-      if (fits(d)) {
-        scroller.scrollTop += d
-        return
+      if (d < lo || d > hi) continue
+      const c = cost(d)
+      if (c < least) {
+        best = d
+        least = c
+        if (!c) break
       }
     }
   }
+  if (best) scroller.scrollTop += best
 }

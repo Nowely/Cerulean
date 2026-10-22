@@ -97,10 +97,11 @@ async function withKeyboard(p) {
     } })
   })
 }
-const keyboardUp = p => p.evaluate(() => {
-  window.__keyboardTop = 557
+/** The keys start at `top` (557 is the picture's keyboard, 286 high) */
+const keyboardUp = (p, top = 557) => p.evaluate((t) => {
+  window.__keyboardTop = t
   window.visualViewport.dispatchEvent(new Event('resize'))
-})
+}, top)
 
 /** Text lines and rows cut by the top or bottom edge of the scroll area holding the body */
 const cutRows = p => editorOf(p).evaluate((ed) => {
@@ -115,7 +116,7 @@ const cutRows = p => editorOf(p).evaluate((ed) => {
     const lh = parseFloat(getComputedStyle(el).lineHeight)
     for (let y = r.top; y < r.bottom - 1; y += lh) check(y, y + lh, `a line of «${el.textContent.slice(0, 20)}»`)
   })
-  scroller.querySelectorAll('li, h2, button, [role="checkbox"]').forEach((el) => {
+  scroller.querySelectorAll('li, h1, h2, dt, dd, button, textarea, svg, [role="checkbox"], [role="img"]').forEach((el) => {
     if (el.closest('.body-text')) return
     const r = el.getBoundingClientRect()
     if (r.height > 0 && r.height < 120) check(r.top, r.bottom, `«${el.textContent.trim().slice(0, 20)}»`)
@@ -372,26 +373,41 @@ export default [
     expect(!back.includes('Проверить, что ни одно не треснуло'), '«Отменить» left the subitem')
   } })),
 
-  // 7: «focus the last bullet of Яйца with the keyboard up → no half row shows between «Связано» and the bar»
-  // (the header naming the record is the flow slice's)
+  // 7: «focus the last bullet of Яйца with the keyboard up → no half row shows between «Связано» and the bar; the header
+  // reads «‹ Покупки · Яйца»», at the picture's keyboard and at every other height
   { id: 'e-7-edges', device: MOBILE, run: async (p) => {
     await withKeyboard(p)
     await openRecord(p, 'Яйца')
     const fades = () => editorOf(p).evaluate(el => ['data-fade-top', 'data-fade-bottom'].filter(a => el.closest('.scroll-fade')?.hasAttribute(a)).length)
+    const header = () => p.evaluate(() => [...document.querySelectorAll('header span[aria-hidden="true"]')]
+      .filter(s => s.classList.contains('absolute') && !s.classList.contains('invisible') && s.offsetParent)
+      .map(s => s.textContent.replace(/\s+/g, ' ').trim()).join(' | '))
     await caretAfter(p, 'шакшука в субботу')
-    await keyboardUp(p)
-    await p.waitForTimeout(700)
-    let cut = await cutRows(p)
-    expect(!cut.length, `cut at the edges: ${cut.join('; ')}`)
-    expect(!(await fades()), 'the edges still fade while editing')
-    const caret = await p.evaluate(() => getSelection().getRangeAt(0).getBoundingClientRect().bottom)
-    const top = (await bar(p).boundingBox()).y
-    expect(caret <= top, 'the caret\'s line is under the bar')
+    // The picture's keyboard first, then every height a keyboard can have (with and without its suggestion row)
+    const failed = []
+    for (const top of [557, 440, 460, 480, 500, 508, 520, 540, 580, 600]) {
+      await keyboardUp(p, top)
+      await p.waitForTimeout(700)
+      const cut = await cutRows(p)
+      if (cut.length) failed.push(`keys at ${top}: ${cut.join('; ')}`)
+      const caret = await p.evaluate(() => getSelection().getRangeAt(0).getBoundingClientRect())
+      const box = await bar(p).boundingBox()
+      if (caret.bottom > box.y) failed.push(`keys at ${top}: the caret's line is under the bar`)
+      if (top !== 557) continue
+      const gap = Math.round(top - box.y - box.height)
+      if (gap !== 8) failed.push(`the bar sits ${gap} over the keys, not 8`)
+      const named = await header()
+      if (named !== 'Яйца') failed.push(`the header reads «${named}», not the record`)
+      if (await fades()) failed.push('the edges still fade while editing')
+    }
+    expect(!failed.length, failed.join(' / '))
     // A line further up, then the ring's toast over the bar
+    await keyboardUp(p)
+    await p.waitForTimeout(500)
     await select(p, 'Проверить, что ни одно не треснуло')
     await bar(p).getByRole('button', { name: 'Сделать подпунктом' }).click()
     await p.waitForTimeout(900)
-    cut = await cutRows(p)
+    const cut = await cutRows(p)
     expect(!cut.length, `cut at the edges after the ring: ${cut.join('; ')}`)
   } },
 

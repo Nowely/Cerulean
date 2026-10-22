@@ -248,15 +248,22 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
           :aria-expanded="oneLine ? false : undefined"
           @click="openHead"
         >
-          <UIcon
-            v-if="several"
-            name="cer:auto"
-            class="size-4.5 shrink-0 text-toned"
-          />
-          <PageTile
-            v-else
-            :glyph="page?.glyph"
-          />
+          <!-- A 14px glyph on the rows' 18px column (spec: 14 in receipts) -->
+          <span
+            class="flex w-4.5 shrink-0 justify-center"
+            aria-hidden="true"
+          >
+            <UIcon
+              v-if="several"
+              name="cer:auto"
+              class="size-3.5 text-toned"
+            />
+            <PageTile
+              v-else
+              :glyph="page?.glyph"
+              :size="14"
+            />
+          </span>
           <span class="min-w-0 flex-1 truncate">
             {{ title }} → <b class="font-medium text-highlighted">{{ several ? places.map(p => p.title || 'Без названия').join(', ') : page?.title || 'Без названия' }}</b>
           </span>
@@ -307,6 +314,7 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
               <PageTile
                 v-if="several"
                 :glyph="data.pages[row.rec.pageId]?.glyph"
+                :size="14"
               />
               <span
                 v-else
@@ -416,7 +424,10 @@ const quiet = 'flex h-8 shrink-0 cursor-pointer items-center rounded-item text-s
                 class="flex w-4.5 shrink-0 justify-center"
                 aria-hidden="true"
               >
-                <PageTile :glyph="data.pages[s.pageId]?.glyph" />
+                <PageTile
+                  :glyph="data.pages[s.pageId]?.glyph"
+                  :size="14"
+                />
               </span>
               <button
                 type="button"

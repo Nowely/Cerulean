@@ -80,11 +80,11 @@ defineExpose({ show: () => open.value = true })
       <!-- The record page on a phone reads «25 октября · через 6 дней» in plain accent words, no glyph (MobileLinked) -->
       <button
         type="button"
-        class="group/due inline-flex min-w-0 shrink-0 cursor-pointer items-center gap-1 text-left"
+        class="group/due inline-flex min-w-0 cursor-pointer items-center gap-1 text-left"
         :class="[
           late ? 'text-warn' : rec.due ? 'text-accent-ink' : 'text-toned',
-          variant === 'row' ? 'hit-44 relative -mr-1.5 h-7 rounded-badge px-1.5 text-13 active:bg-pressed' : '',
-          variant === 'line' ? '-mx-1 h-5.5 rounded-badge px-1 text-13 hover:bg-hover' : '',
+          variant === 'row' ? 'hit-44 relative -mr-1.5 h-7 shrink-0 rounded-badge px-1.5 text-13 active:bg-pressed' : '',
+          variant === 'line' ? '-mx-1 h-5.5 shrink-0 rounded-badge px-1 text-13 hover:bg-hover' : '',
           variant === 'prop' ? '-mx-1.5 min-h-10 rounded-item px-1.5 text-base hover:bg-muted lg:text-15' : '',
           !rec.due ? '' : variant === 'prop' ? 'lg:font-medium' : 'font-medium'
         ]"
@@ -97,7 +97,8 @@ defineExpose({ show: () => open.value = true })
           class="shrink-0"
           :class="variant === 'prop' ? 'hidden size-3.5 lg:block' : 'size-3'"
         />
-        <span class="truncate">{{ text }}</span>
+        <!-- On a narrow phone the date stays whole and «через 6 дней» gives way -->
+        <span :class="after ? 'shrink-0' : 'truncate'">{{ text }}</span>
         <!-- The button's gap is the space before «·» -->
         <span
           v-if="after"
