@@ -142,8 +142,8 @@ const ctx = computed<LineContext>(() => ({
   day: day.value
 }))
 
-/** The rules' reading, at once on every key */
-const rules = computed(() => readLine(title.value, note.value, ctx.value))
+/** The rules' reading, at once on every key; the word being typed is not a detail word yet (item 8) */
+const rules = computed(() => readLine(title.value, note.value, { ...ctx.value, live: true }))
 
 // ---------- the model reads after a pause in typing (items 21–23) ----------
 
@@ -226,6 +226,8 @@ const marks = computed(() => date.value?.spans ?? [])
 /** An example until the first record exists anywhere (with a model, one that holds two records), then the action's name */
 const anyRecord = computed(() => data.liveRecords.length > 0)
 const placeholder = computed(() => props.mode !== 'home' ? '' : anyRecord.value ? 'Новая запись' : modelOn.value ? 'Купить хлеб и позвонить маме завтра' : 'Позвонить маме в 10')
+/** Open on a page the title line names the action, so «Заметка» is never the card's first words (item 12) */
+const openPlaceholder = computed(() => placeholder.value || 'Новая запись')
 const hasWords = computed(() => !!title.value.trim())
 
 // ---------- open and close ----------
@@ -392,7 +394,8 @@ function send(stay = true) {
     const shown = noteBy.value === 'model' || !d0.note
     drafts = [{ ...d0, text: shown ? d0.text : typedTitle(t), note: note.value.trim(), due: due.value ?? d0.due, pageId: chipPage.value, by: place.value?.by ?? 'auto' }]
   } else {
-    drafts = ready ? m! : rules.value.drafts
+    // On send every word is finished: «… и по» is read with «по» as a detail word
+    drafts = ready ? m! : readLine(title.value, note.value, ctx.value).drafts
   }
   if (!drafts.length) return
   const tpl = template.value
@@ -537,7 +540,7 @@ function titleKey(e: KeyboardEvent) {
         v-model="title"
         v-model:links="links"
         label="Запись"
-        :placeholder="placeholder"
+        :placeholder="openPlaceholder"
         mentions
         field-class="px-2.5 py-0.5"
         text-class="text-17 leading-6"

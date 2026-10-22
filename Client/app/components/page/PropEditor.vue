@@ -40,9 +40,6 @@ const kind = computed({
 })
 const options = computed(() => kind.value === 'select' ? (saved.value ? saved.value.options ?? [] : draft.options) : [])
 const named = computed(() => options.value.filter(o => o.name.trim()))
-/** Shown for a «Выбор» without a named option, and when the last one of a saved «Выбор» was tapped to delete */
-const keepTried = ref(false)
-const needOption = computed(() => kind.value === 'select' && (!named.value.length || (keepTried.value && named.value.length === 1)))
 const ready = computed(() => canCreate(draft))
 
 // Names are typed into drafts; a saved property takes a name at once unless it is empty, so an emptied name comes back
@@ -69,7 +66,6 @@ function onOptionName(o: PropOption, v: string) {
 async function addOption() {
   const o: PropOption = { id: uid('o'), name: '', color: nextColor(options.value) }
   setOptions([...options.value, o])
-  keepTried.value = false
   await nextTick()
   document.getElementById(`opt-${o.id}`)?.focus()
 }
@@ -87,15 +83,12 @@ function setColor(o: PropOption, color: PageColor) {
   colorFor.value = null
 }
 
-/** The last named option of a saved «Выбор» stays: an empty one would offer an empty menu (B12) */
+/** The last named option of a saved «Выбор» stays: an empty one would offer an empty menu (B12). Its × is dimmed */
 const keeps = (o: PropOption) => !isNew.value && named.value.length === 1 && !!o.name.trim()
 
 function removeOption(o: PropOption) {
   colorFor.value = null
-  if (keeps(o)) {
-    keepTried.value = true
-    return
-  }
+  if (keeps(o)) return
   if (isNew.value || !o.name.trim()) {
     setOptions(options.value.filter(x => x.id !== o.id))
     return
@@ -117,9 +110,10 @@ const drag = useDragSort({
 
 function retype(t: PropType) {
   colorFor.value = null
-  keepTried.value = false
   if (isNew.value) {
     draft.type = t
+    // «Выбор» opens on an empty option with the caret in it; «Создать» waits for a name and one option (acceptance 1)
+    if (t === 'select' && !draft.options.length) void addOption()
     return
   }
   const done = data.retypeProp(props.page.id, props.propId!, t)
@@ -229,12 +223,6 @@ defineExpose({ tidy, removeProp })
     <template v-if="kind === 'select'">
       <p class="px-1 pt-4 pb-0.5 text-cap text-toned">
         Варианты
-      </p>
-      <p
-        v-if="needOption"
-        class="px-1 pb-1.5 text-13 text-toned"
-      >
-        Нужен хотя бы один вариант
       </p>
       <ul
         v-bind="drag.group('options')"

@@ -196,25 +196,33 @@ const PARTS = /\s*(?:(?<!\d),|,(?!\d)|;|\n)\s*/
  * (main flow, item 8): «молоко 2,5%, большую пачку» is one record
  */
 const DETAIL = /^(?:\d|(?:без|для|на|по|из|большую|большой|маленькую|маленький|побольше|поменьше|если)(?:\s|$))/i
+/** While typing, the word being typed is not a detail word until a space ends it: «… и по» may still become «поз» */
+const DETAIL_TYPED = /^(?:\d|(?:без|для|на|по|из|большую|большой|маленькую|маленький|побольше|поменьше|если)\s)/i
 
-function joinDetails(parts: string[], glue: string): string[] {
+/** `typing`: the last part is the one being typed, so its first word counts only once finished (acceptance 1) */
+function joinDetails(parts: string[], glue: string, typing = false): string[] {
   const out: string[] = []
-  for (const p of parts) {
-    if (out.length && DETAIL.test(p)) out[out.length - 1] += glue + p
+  parts.forEach((p, i) => {
+    const detail = typing && i === parts.length - 1 ? DETAIL_TYPED : DETAIL
+    if (out.length && detail.test(p)) out[out.length - 1] += glue + p
     else out.push(p)
-  }
+  })
   return out
 }
 
-/** «сыр, позвонить бабушке» → two parts; a line without a separator is one part */
-export function splitParts(text: string): string[] {
-  return joinDetails(text.split(PARTS).map(s => s.trim()).filter(Boolean), ', ')
+/** The text is still being typed: its last word is unfinished until a space follows it */
+const typing = (text: string, live: boolean) => live && !/\s$/.test(text)
+
+/** «сыр, позвонить бабушке» → two parts; a line without a separator is one part. `live`: the field's preview while typing */
+export function splitParts(text: string, live = false): string[] {
+  return joinDetails(text.split(PARTS).map(s => s.trim()).filter(Boolean), ', ', typing(text, live))
 }
 
 /** «купить молоко, яйца и сыр» → three lines; on pages that hold lists of things «и» splits too */
-export function splitItems(text: string): string[] {
-  return splitParts(text.replace(LIST_VERB, ''))
-    .flatMap(part => joinDetails(part.split(/\s+и\s+/i).map(s => s.trim()).filter(Boolean), ' и '))
+export function splitItems(text: string, live = false): string[] {
+  const parts = splitParts(text.replace(LIST_VERB, ''), live)
+  return parts
+    .flatMap((part, i) => joinDetails(part.split(/\s+и\s+/i).map(s => s.trim()).filter(Boolean), ' и ', typing(text, live) && i === parts.length - 1))
     .map(capitalize)
 }
 

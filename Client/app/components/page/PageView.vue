@@ -14,13 +14,14 @@ import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import { usePropSheets } from '~/composables/usePropSheets'
 import { useNotify } from '~/composables/useNotify'
-import { pageSubline, dueToday, dueThisWeek, overdue } from '~/domain/summary'
-import { collectLead, collected, collects, onlyCollects, togglePicked } from '~/domain/collect'
+import { dueToday, dueThisWeek, overdue } from '~/domain/summary'
+import { collected, collects, onlyCollects, togglePicked } from '~/domain/collect'
 import { useCollecting } from '~/composables/useCollecting'
-import { dayKey, weekday } from '~/domain/dates'
+import { weekday } from '~/domain/dates'
 import { bodyOf, docText } from '~/domain/body'
 import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView, nameForLayout } from '~/domain/templates'
+import { readLine } from '~/domain/auto'
 import { pageNamed } from '~/domain/rules'
 import { pageColor } from '~/domain/look'
 import { nb } from '~/domain/text'
@@ -68,11 +69,15 @@ const gathers = computed(() => props.page.views.some(collects))
 const textual = computed(() => full.value && props.page.kind === 'page' && !hasOwn.value && !props.page.template && !props.page.glyph && !gathers.value)
 const bodyText = computed(() => docText(bodyOf(props.page)).trim())
 const undecided = computed(() => textual.value && !bodyText.value)
-/** The line under the title; on a collecting view «7 дел со всех страниц» and its one warn word, «1 просрочено» (v24) */
-const subline = computed(() => collecting.value
-  ? collectLead(props.page, view.value, collectedAll.value.length)
-  : pageSubline(props.page, records.value, now.value, data.liveRecords))
-const sublineLate = computed(() => collecting.value ? overdue(collectedAll.value, now.value).length : 0)
+/**
+ * Under the title only the warn word «1 просрочено» (main flow, acceptance 1): no count and no source line. The list
+ * shows itself, and the count is on Главная's card
+ */
+const late = computed(() => {
+  if (collecting.value) return overdue(collectedAll.value, now.value).length
+  if (today.value) return overdue(dueToday(data.liveRecords, now.value), now.value).length
+  return overdue(records.value, now.value).length
+})
 
 // A new page named like one there is says so under its title (v22, G3): «Открыть» goes to that page, and this one,
 // still empty, goes away
@@ -373,14 +378,25 @@ const note = useTemplateRef<InstanceType<typeof PageNote>>('note')
 const openView = computed(() => !view.value.filter.some(r => r.field === 'done' && r.value === true))
 const canAdd = computed(() => full.value && !glance.value && !query.value.trim() && (today.value || (layout.value === 'list' && !collecting.value && openView.value && !textual.value)))
 /** On the page, at the end of its list; on Сегодня into Задачи, due today, so it shows where it was written */
+/**
+ * «+ Новая запись» reads the line as the field does (acceptance 1): the date becomes Срок, a quantity the quantity, a
+ * thing to buy gets its department, and a list splits. The place is always this page; on Сегодня, Задачи with today
+ */
 function addHere(text: string) {
-  if (today.value) {
-    const todo = data.livePages.find(p => p.kind === 'page' && p.template === 'todo' && !onlyCollects(p)) ?? data.inbox
-    data.addRecord({ pageId: todo.id, text, due: { date: dayKey(Date.now()) } })
-    return
-  }
-  const order = data.recordsOf(props.page.id).reduce((m, r) => Math.max(m, r.order), -1) + 1
-  data.addRecord({ pageId: props.page.id, text, order })
+  const to = today.value ? data.livePages.find(p => p.kind === 'page' && p.template === 'todo' && !onlyCollects(p)) ?? data.inbox : props.page
+  const now = Date.now()
+  const { drafts } = readLine(text, '', {
+    pages: [to, ...journal.targets().filter(p => p.id !== to.id)],
+    inboxId: data.inbox.id,
+    learned: data.learned,
+    recent: data.recent,
+    now,
+    place: { pageId: to.id, by: 'page' },
+    today: today.value
+  })
+  // At the end of the list, in the order typed
+  let order = data.recordsOf(to.id).reduce((m, r) => Math.max(m, r.order), -1) + 1
+  for (const d of drafts) data.addRecord({ pageId: to.id, text: d.text, due: d.due, values: d.values, order: order++, addedAt: now })
 }
 
 defineExpose({
@@ -478,12 +494,10 @@ defineExpose({
         </button>
       </p>
       <p
-        v-else-if="subline || sublineLate"
-        class="mt-0.5 text-meta text-toned lg:mt-1.5 lg:text-sm"
+        v-else-if="late"
+        class="mt-0.5 text-meta font-medium text-warn lg:mt-1.5 lg:text-sm"
       >
-        {{ subline }}<template v-if="sublineLate">
-          · <span class="font-medium text-warn">{{ sublineLate }} просрочено</span>
-        </template>
+        {{ late }} просрочено
       </p>
     </div>
 

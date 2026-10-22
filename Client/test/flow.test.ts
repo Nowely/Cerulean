@@ -83,6 +83,15 @@ describe('the field without a model (main flow, items 4–8)', () => {
     expect(read('Сыр, позвонить бабушке', ctx()).map(d => [d[0], d[1]])).toEqual([['Сыр', 'Покупки'], ['Позвонить бабушке', 'Задачи']])
   })
 
+  it('does not read the word being typed as a detail word, and reads every word on send (acceptance 1)', () => {
+    const { ctx } = day()
+    const rows = (t: string) => read(t, ctx({ live: true })).map(d => d[0])
+    expect(['Купить молоко и п', 'Купить молоко и по', 'Купить молоко и поз'].map(rows)).toEqual([['Молоко', 'П'], ['Молоко', 'По'], ['Молоко', 'Поз']])
+    // A space finishes the word; the send counts every word
+    expect(rows('Купить молоко и по ')).toHaveLength(1)
+    expect(read('Купить молоко и по', ctx())).toHaveLength(1)
+  })
+
   it('moves only the row whose chip was tapped, and keeps that pick for the same title (item 8)', () => {
     const { by, ctx } = day()
     const ideas = by('Идеи')
@@ -116,6 +125,14 @@ describe('the field with a model (main flow, items 23–25)', () => {
       ['Молоко', '2,5%, большую пачку', shop.id, null],
       ['Позвонить маме', '', todo.id, { date: TOMORROW, time: '10:00' }]
     ])
+  })
+
+  it('guesses the department when the model gives none, as the rules would (acceptance 1, G)', () => {
+    const { by, ctx } = day()
+    const shop = by('Покупки')
+    const dept = shop.props.find(p => p.type === 'select')!
+    const [milk] = readModel({ kind: 'record', items: [item('Молоко', shop.id)] }, 'Купить молоко', '', ctx())
+    expect(dept.options!.find(o => o.id === milk!.values[dept.id])?.name).toBe('Молочное')
   })
 
   it('sends what it is unsure of to Входящие, and one record to the place picked by hand (items 23, 25)', () => {
@@ -165,6 +182,13 @@ describe('Главная\'s cards (main flow, item 17)', () => {
     })
     expect(cardLine(today, [], NOW, records)).toMatchObject({ line: '19:00 забрать посылку, оплатить интернет', open: 2, late: 0 })
     expect(cardLine(shop, of(shop), NOW, records)).toMatchObject({ line: 'порошок для стирки, кофе, сыр, яйца, хлеб, молоко', open: 6 })
+  })
+
+  it('keeps the typed order inside one send (acceptance 1)', () => {
+    const { shop } = week()
+    // As the field files a send: one time for all, the first typed on top of the page
+    const sent = ['Молоко', 'Хлеб', 'Яйца'].map((text, i) => newRecord({ pageId: shop.id, text, addedAt: NOW + 1000, order: i - 3, via: 'chat' }))
+    expect(cardLine(shop, [...sent].reverse(), NOW, sent).line).toBe('молоко, хлеб, яйца')
   })
 
   it('drops a ticked record, and the dot goes once the page is opened', () => {

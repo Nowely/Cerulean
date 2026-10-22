@@ -116,6 +116,14 @@ function newProp() {
   afterPick = () => propSheets.create(pageId, { from: 'record', onBack: p => p && void reveal(p.id) })
   picking.value = false
 }
+/** Nothing of the page's to add: the tap opens «Новое свойство» at once, with no sheet that says so (acceptance 1) */
+function openPicker(open: boolean) {
+  if (open && !addable.value.length) {
+    propSheets.create(props.rec.pageId, { from: 'record', onBack: p => p && void reveal(p.id) })
+    return
+  }
+  picking.value = open
+}
 function picked() {
   const run = afterPick
   afterPick = null
@@ -279,11 +287,13 @@ function openPlace() {
         <!-- «+ Свойство»: only what the record does not show yet, and «Новое свойство…» (B12); on the full page the
              shared add row (main flow, item 13) -->
         <AdaptiveOverlay
-          v-model:open="picking"
+          v-if="addable.length || page?.kind === 'page'"
+          :open="picking"
           title="Добавить свойство"
           :subtitle="rec.text"
           width="w-72"
           align="start"
+          @update:open="openPicker"
           @closed="picked"
         >
           <template #trigger>
@@ -320,14 +330,11 @@ function openPlace() {
               <span class="min-w-0 flex-1 truncate text-highlighted">{{ p.name }}</span>
               <span class="shrink-0 text-sm text-toned">{{ TYPE_NAMES[p.type] }}</span>
             </button>
-            <p
-              v-if="!addable.length"
-              class="px-3 pt-1 pb-2.5 text-sm text-toned"
-            >
-              Все свойства страницы уже есть у записи.
-            </p>
             <template v-if="page?.kind === 'page'">
-              <div class="mx-3 my-1.5 border-t border-default" />
+              <div
+                v-if="addable.length"
+                class="mx-3 my-1.5 border-t border-default"
+              />
               <button
                 type="button"
                 class="flex min-h-12.5 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base text-highlighted hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"

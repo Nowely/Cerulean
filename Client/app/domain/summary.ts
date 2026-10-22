@@ -219,16 +219,20 @@ function dayWord(date: string, now: number): string {
   return Math.abs(diff) <= 6 ? SHORT_DAYS[d.getDay()]! : `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`
 }
 
-/** Dated records by day, a timed one before the untimed of its day; then the rest, newest first */
+/**
+ * Dated records by day, a timed one before the untimed of its day; then the rest, newest first. Records of one send
+ * share their time and keep the order they were typed in, which is the page's order (acceptance 1)
+ */
 function cardOrder(records: Rec[]): Rec[] {
   const key = (due: Due) => {
     const [h, m] = (due.time ?? '').split(':').map(Number)
     return `${due.date} ${String(due.time ? h! * 60 + m! : 1500).padStart(4, '0')}`
   }
+  const newest = (a: Rec, b: Rec) => b.addedAt - a.addedAt || a.order - b.order
   return [...records].sort((a, b) => {
-    if (a.due && b.due) return key(a.due) < key(b.due) ? -1 : key(a.due) > key(b.due) ? 1 : b.addedAt - a.addedAt
+    if (a.due && b.due) return key(a.due) < key(b.due) ? -1 : key(a.due) > key(b.due) ? 1 : newest(a, b)
     if (a.due || b.due) return a.due ? -1 : 1
-    return b.addedAt - a.addedAt
+    return newest(a, b)
   })
 }
 

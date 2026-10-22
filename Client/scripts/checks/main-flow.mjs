@@ -86,6 +86,15 @@ async function home(p) {
 const recs = (p, page) => store(p, (data, name) => data.liveRecords
   .filter(r => !name || data.pages[r.pageId]?.title === name)
   .map(r => ({ text: r.text, page: data.pages[r.pageId]?.title, due: r.due, done: r.done, note: (r.body?.content ?? []).map(b => (b.content ?? []).map(c => c.text ?? '').join('')).join('\n'), parent: r.parentId })), page)
+/** A record's department and quantity, by its title */
+const valuesOf = (p, name) => store(p, (data, t) => {
+  const r = data.liveRecords.find(x => x.text === t)
+  if (!r) return null
+  const props = data.pages[r.pageId].props
+  const dept = props.find(q => q.type === 'select')
+  const qty = props.find(q => q.name === 'Количество')
+  return { dept: dept?.options?.find(o => o.id === r.values[dept.id])?.name ?? null, qty: qty ? r.values[qty.id] ?? null : null }
+}, name)
 const caretAtEnd = p => p.evaluate(() => {
   const s = getSelection()
   return !!s && s.isCollapsed && s.anchorNode && (s.anchorNode.nodeType === 3 ? s.anchorOffset === s.anchorNode.textContent.length : s.anchorOffset === s.anchorNode.childNodes.length || !s.anchorNode.nextSibling)
@@ -164,6 +173,17 @@ export default [
       expect(await pill(p).isVisible(), `${name} has no field`)
       await home(p)
     }
+    // After a few records: nothing between the title and the tabs (acceptance 1)
+    await write(p, 'Купить молоко')
+    await write(p, 'Оплатить интернет сегодня')
+    await tapFree(p)
+    await goPage(p, 'Покупки')
+    const shop = await pageWords(p)
+    expect(!/^Покупки \d/.test(shop) && !shop.includes('купить ·'), `Покупки shows «${shop}»`)
+    await home(p)
+    await goPage(p, 'Сегодня')
+    const today = await pageWords(p)
+    expect(!/^Сегодня \d/.test(today) && !today.includes('со всех страниц'), `Сегодня shows «${today}»`)
   } },
 
   // 3. The field, closed
@@ -302,6 +322,15 @@ export default [
     await p.keyboard.press('Enter')
     await p.waitForTimeout(250)
     expect((await recs(p, 'Покупки')).length === 4, 'not one more record')
+    // Letter by letter: once two rows show after «и п», they stay while the word is typed (acceptance 1)
+    await typeTitle(p, 'Купить молоко и п')
+    const counts = [await rows().count()]
+    for (const ch of 'озвонить') {
+      await p.keyboard.type(ch)
+      await p.waitForTimeout(60)
+      counts.push(await rows().count())
+    }
+    expect(counts.every(n => n === 2), `rows while typing: ${counts.join('')}`)
     await typeTitle(p, 'Сыр, позвонить бабушке')
     shown = (await rows().allInnerTexts()).map(t => t.replace(/\s+/g, ' ').trim())
     expect(JSON.stringify(shown) === JSON.stringify(['Сыр Покупки', 'Позвонить бабушке Задачи']), `rows: ${shown}`)
@@ -386,7 +415,29 @@ export default [
     await p.locator('main textarea[aria-label="Название страницы"]').click()
     await p.waitForTimeout(200)
     expect((await recs(p)).length === n, 'an empty record was made')
-    expect(!(await p.locator('[data-field="open"]').isVisible()) || true, '')
+    // One reading with the field (acceptance 1): the department, the quantity, the date
+    await home(p)
+    await goPage(p, 'Покупки')
+    await p.locator('[data-add-row]').click()
+    for (const l of ['Батон', 'Молоко 2 л']) {
+      await p.keyboard.type(l)
+      await p.keyboard.press('Enter')
+      await p.waitForTimeout(200)
+    }
+    await p.keyboard.press('Escape')
+    const bread = await valuesOf(p, 'Батон')
+    const milk = await valuesOf(p, 'Молоко')
+    expect(bread?.dept === 'Хлеб и выпечка', `Батон: ${JSON.stringify(bread)}`)
+    expect(milk?.dept === 'Молочное' && milk.qty === '2 л', `Молоко: ${JSON.stringify(milk)}`)
+    await home(p)
+    await goPage(p, 'Задачи')
+    await p.locator('[data-add-row]').click()
+    await p.keyboard.type('Позвонить маме завтра в 10')
+    await p.keyboard.press('Enter')
+    await p.keyboard.press('Escape')
+    await p.waitForTimeout(200)
+    const call = (await recs(p, 'Задачи')).find(r => r.text === 'Позвонить маме')
+    expect(call?.due?.time === '10:00', `Задачи: ${JSON.stringify(await recs(p, 'Задачи'))}`)
   } },
 
   // 12. The field on a page stays on that page; a row shows its text's first line
@@ -397,6 +448,11 @@ export default [
     await tapFree(p)
     await goPage(p, 'Покупки')
     expect(await text(closedChip(p)) === 'Покупки' && await text(pillText(p)) === '', `closed field: ${await text(pill(p))}`)
+    // Open, the title line names the action over «Заметка» (acceptance 1)
+    await openField(p)
+    const hint = await title(p).getAttribute('aria-placeholder') ?? await title(p).getAttribute('placeholder')
+    const [t, n] = [await title(p).boundingBox(), await note(p).boundingBox()]
+    expect(hint === 'Новая запись' && (await text(form(p))).startsWith('Новая запись') && n.y > t.y, `the open field reads «${await text(form(p))}»`)
     await write(p, 'Сыр')
     const row = p.locator('[data-rows] .group\\/row').filter({ hasText: 'Сыр' })
     expect(await row.count() === 1 && await row.evaluate(e => e.className.includes('fresh-tint')), 'no tinted «Сыр»')
@@ -437,6 +493,29 @@ export default [
     await p.waitForTimeout(400)
     expect(await shows(p.locator('main [data-placeholder="Заметка"]')), 'no faint «Заметка»')
     expect(!(await screenText(p)).includes('Подпунктов пока нет'), '«Подпунктов пока нет…» shows')
+    // «+ Свойство» says nothing about itself (acceptance 1): a record that has every property of its page (Отдел,
+    // Количество, Срок) opens «Новое свойство» at once, and «Выбор» starts on an empty option with the caret
+    await p.goto(`${BASE}/`)
+    await p.waitForSelector('[data-home]')
+    await write(p, 'Купить сыр 300 г завтра')
+    const id = await store(p, data => data.liveRecords.find(r => r.text === 'Сыр').id)
+    await p.goto(`${BASE}/r/${id}`)
+    await p.waitForSelector('main')
+    await p.waitForTimeout(400)
+    await p.locator('main [data-add-row]').filter({ hasText: 'Свойство' }).click()
+    await p.waitForTimeout(500)
+    const sheet = p.getByRole('dialog')
+    expect(await shows(sheet.getByRole('textbox', { name: 'Название', exact: true })), 'no «Новое свойство» at once')
+    await sheet.getByRole('radio', { name: 'Выбор' }).click()
+    await p.waitForTimeout(200)
+    expect(await p.evaluate(() => document.activeElement?.getAttribute('aria-label')) === 'Название варианта', 'no caret in an empty option')
+    const words = await sheet.innerText()
+    expect(!words.includes('Нужен хотя бы один вариант') && !words.includes('Все свойства'), `the sheet explains itself: ${words}`)
+    const create = sheet.getByRole('button', { name: 'Создать' })
+    await p.keyboard.type('Твёрдый')
+    expect(await create.isDisabled(), '«Создать» works without a name')
+    await sheet.getByRole('textbox', { name: 'Название', exact: true }).fill('Сорт')
+    expect(await create.isEnabled(), '«Создать» stays off with a name and an option')
   } },
 
   // 14. Writing the text: the editing bar with «H»; a list item
@@ -547,7 +626,8 @@ export default [
     expect((await text(today.locator('[data-open]'))).endsWith('2') && await text(today.locator('[data-line]')) === '19:00 забрать посылку, оплатить интернет', `Сегодня: ${await text(today)}`)
     const shop = card(p, 'Покупки')
     expect((await text(shop.locator('[data-open]'))).endsWith('6'), `Покупки: ${await text(shop)}`)
-    for (const n of ['молоко', 'хлеб', 'яйца', 'сыр', 'кофе', 'порошок для стирки']) expect((await text(shop.locator('[data-line]'))).includes(n), `no «${n}» on Покупки`)
+    // Inside one send, the typed order (acceptance 1)
+    expect(await text(shop.locator('[data-line]')) === 'молоко, хлеб, яйца, сыр, кофе, порошок для стирки', `Покупки: ${await text(shop.locator('[data-line]'))}`)
     await goPage(p, 'Покупки')
     await p.getByRole('checkbox', { name: 'Отметить «Молоко»' }).click()
     await p.waitForTimeout(300)

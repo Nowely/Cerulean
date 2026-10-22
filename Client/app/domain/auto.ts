@@ -60,8 +60,8 @@ export interface Part extends RuleResult {
  * stays with the list it is in; a part about something no page holds («подарок Лене») goes to Входящие.
  * Null when the send goes to one place as a whole.
  */
-export function splitRoute(text: string, pages: Page[], learned: Learned, recent: Id[]): Part[] | null {
-  const texts = splitParts(text)
+export function splitRoute(text: string, pages: Page[], learned: Learned, recent: Id[], live = false): Part[] | null {
+  const texts = splitParts(text, live)
   if (texts.length < 2) return null
   const parts: Part[] = texts.map(t => ({ text: t, ...classify(t, pages, learned, recent) }))
   const clue = (p: Part) => p.pageId ?? (textTopics(p.text).length ? 'inbox' : null)
@@ -87,9 +87,9 @@ export interface Draft {
 }
 
 /** The lines a send becomes on a page: on a list of things «и» splits too */
-function linesFor(text: string, page: Page): string[] {
+function linesFor(text: string, page: Page, live = false): string[] {
   // «покупки: хлеб» is a routing prefix on a list page too: the page says it, the record does not
-  return isListPage(page) ? splitItems(dropPrefix(text)) : splitParts(dropPrefix(text))
+  return isListPage(page) ? splitItems(dropPrefix(text), live) : splitParts(dropPrefix(text), live)
 }
 
 /** One line as a record on a page: its date (unless `dates` is off), the quantity and the department */
@@ -152,6 +152,8 @@ export interface LineContext {
   today?: boolean
   /** A record with no date of its own gets this day: a collecting view's first day, a calendar's selected day */
   day?: string | null
+  /** The preview while typing: the word being typed is not read as a detail word yet (acceptance 1). Off on send */
+  live?: boolean
 }
 
 /** A date read in the field: where its words were typed (to tint them), the words, and the date */
@@ -191,6 +193,8 @@ function todoPage(pages: Page[]): Page | undefined {
 export function readLine(title: string, note: string, ctx: LineContext): LineRead {
   const text = title.trim()
   if (!text) return { drafts: [], date: null }
+  // A space after the last word finishes it: the reading below sees the trimmed text, so it is told here
+  const live = !!ctx.live && !/\s$/.test(title)
   const date = fieldDate(title, ctx.now, ctx.noDate)
   const dates = !dropped(title, date, ctx.now)
   const page = (id: Id | null | undefined) => id ? ctx.pages.find(p => p.id === id) : undefined
@@ -203,15 +207,16 @@ export function readLine(title: string, note: string, ctx: LineContext): LineRea
 
   const chosen = page(ctx.place?.pageId)
   if (chosen) {
-    for (const line of linesFor(text, chosen)) put(line, chosen, ctx.place!.by)
+    for (const line of linesFor(text, chosen, live)) put(line, chosen, ctx.place!.by)
   } else {
-    const parts = splitRoute(text, ctx.pages, ctx.learned, ctx.recent) ?? [{ text, ...classify(text, ctx.pages, ctx.learned, ctx.recent) }]
+    const parts = splitRoute(text, ctx.pages, ctx.learned, ctx.recent, live) ?? [{ text, ...classify(text, ctx.pages, ctx.learned, ctx.recent) }]
     for (const part of parts) {
       let to = page(part.pageId)
       // Unsure, but dated: a to-do (Задачи); anything else unsure waits in Входящие, and nothing asks
       if (!to && dates && parseDue(part.text, ctx.now).due) to = todoPage(ctx.pages)
       to ??= inbox
-      const lines = linesFor(part.text, to)
+      // The last part ends the text: only it can hold the word being typed
+      const lines = linesFor(part.text, to, live && part === parts[parts.length - 1])
       for (const line of lines) {
         // A line of a list that clearly belongs elsewhere goes there: «молоко и позвонить маме» is Покупки and Задачи
         const own = lines.length > 1 ? page(classify(line, ctx.pages, ctx.learned, ctx.recent).pageId) : undefined
@@ -276,6 +281,12 @@ function fromModel(item: ModelItem, page: Page): Draft | null {
       const o = prop.options?.find(x => fold(x.name) === fold(item.option!))
       if (o) values[prop.id] = o.id
     }
+  }
+  // No department from the model: the rules guess it, so a model never files worse than the rules
+  const select = page.props.find(p => p.type === 'select' && isListPage(page))
+  if (select && !values[select.id]) {
+    const option = guessOption(item.text, select)
+    if (option) values[select.id] = option
   }
   const date = item.date && /^\d{4}-\d{2}-\d{2}$/.test(item.date) ? item.date : null
   const time = item.time && /^\d{1,2}:\d{2}$/.test(item.time) ? item.time.replace(/^0(\d)/, '$1') : undefined
