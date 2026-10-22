@@ -45,6 +45,8 @@ defineProps<{
   divided?: boolean
   /** Desktop: 260 wide, for rows that are page names (Входящие's other guesses) */
   wide?: boolean
+  /** Desktop: a width of its own (the record «⋯» is 372, so «Переместить на другую страницу · Задачи» fits a line) */
+  width?: string
 }>()
 
 const { isDesktop } = useScreen()
@@ -100,7 +102,7 @@ const afterClose = () => setTimeout(() => setTimeout(run))
         : { label: i.label, icon: i.icon, type: 'checkbox' as const, checked: i.checked, onSelect: () => select(i) })
     ])"
     :content="{ align: align ?? 'end', onCloseAutoFocus: afterClose }"
-    :ui="wide ? { content: 'w-65' } : undefined"
+    :ui="width ? { content: width } : wide ? { content: 'w-65' } : undefined"
   >
     <slot :open="open">
       <DotsButton
@@ -215,14 +217,15 @@ const afterClose = () => setTimeout(() => setTimeout(run))
                   <span class="truncate">{{ item.label }}</span>
                   <span class="text-13 text-toned">{{ item.hint }}</span>
                 </span>
+                <!-- A long name with a value wraps to a second line, so the value («Задачи») stays whole -->
                 <span
                   v-else
-                  class="truncate"
-                  :class="item.value ? 'shrink-0' : 'min-w-0 flex-1'"
+                  class="min-w-0 flex-1"
+                  :class="item.value ? 'py-1.5 leading-5.5' : 'truncate'"
                 >{{ item.label }}</span>
                 <span
                   v-if="item.value"
-                  class="min-w-0 flex-1 truncate text-right text-meta text-toned"
+                  class="max-w-[45%] shrink-0 truncate text-right text-meta text-toned"
                 >{{ item.value }}</span>
                 <span
                   v-if="item.checked !== undefined"

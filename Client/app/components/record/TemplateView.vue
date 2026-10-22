@@ -80,7 +80,7 @@ async function move(i: number, by: -1 | 1, text: string) {
           <slot name="menu" />
         </span>
       </div>
-      <p class="mt-0.5 text-meta text-toned">
+      <p class="mt-0.5 text-sm text-toned">
         Шаблон для новых записей
       </p>
     </div>

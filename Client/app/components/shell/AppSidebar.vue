@@ -41,7 +41,12 @@ const recentShown = computed(() => recentOpen.value ? recent.value : recent.valu
  * «просрочено»; without it each page that holds one says it (v22, N3)
  */
 const todayShown = computed(() => !folded('favorites') && data.favorites.some(f => f.kind === 'page' && f.page.kind === 'today'))
-const badgeOf = (p: Page): Badge | null => onHome.value ? null : pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords, { late: !todayShown.value || p.kind === 'today' })
+const badgeOf = (p: Page): Badge | null => {
+  if (onHome.value) return null
+  const b = pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords, { late: !todayShown.value || p.kind === 'today' })
+  // What is written on the open page is seen as it lands: no «новых» dot beside it
+  return b?.tone === 'new' && route.path === `/p/${p.id}` ? null : b
+}
 const recBadge = (r: Rec): Badge | null => onHome.value ? null : recordBadge(data.subitemsOf(r.id), now.value, { late: !todayShown.value })
 
 // «Переименовать» from a section's «⋯»: the name becomes a field in place

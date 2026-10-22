@@ -501,7 +501,7 @@ const emptyText = computed(() => {
         class="mt-0.5 text-meta text-toned lg:mt-1.5 lg:text-sm"
       >
         {{ subline }}<template v-if="sublineLate">
-          · <span class="font-medium text-warn-ink">{{ sublineLate }} просрочено</span>
+          · <span class="font-medium text-warn">{{ sublineLate }} просрочено</span>
         </template>
       </p>
     </div>
@@ -662,7 +662,7 @@ const emptyText = computed(() => {
         >
           <h3
             class="px-4 pt-3 text-cap leading-6 lg:px-2.5 lg:pt-4 lg:pb-1 lg:leading-5"
-            :class="g.tone === 'warn' ? 'text-warn-ink' : 'text-toned'"
+            :class="g.tone === 'warn' ? 'text-warn' : 'text-toned'"
           >
             {{ g.label }}
           </h3>

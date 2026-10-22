@@ -65,7 +65,7 @@ const hasNote = computed(() => (props.note ?? !!props.end) && !isEmptyDoc(bodyOf
     <button
       type="button"
       class="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col items-start justify-center gap-px rounded-item py-1 pr-1.5 text-left"
-      :class="[density === 'card' ? 'text-15' : 'pl-0.5 text-record leading-[1.3]', selected ? 'bg-elevated' : '']"
+      :class="[density === 'card' ? 'text-15' : 'pl-0.5 text-record leading-[1.3]', selected ? 'bg-elevated' : '', { 'lg:py-1.25': aside }]"
       @click="emit('open')"
     >
       <span
@@ -78,7 +78,7 @@ const hasNote = computed(() => (props.note ?? !!props.end) && !isEmptyDoc(bodyOf
       <span
         v-if="hasLine2"
         class="max-w-full truncate text-caption font-normal"
-        :class="late && !brief && !reason && !end && !aside ?'text-warn-ink' : 'text-toned'"
+        :class="[late && !brief && !reason && !end && !aside ? 'text-warn' : 'text-toned', { 'lg:text-13': aside }]"
       >
         <template v-if="reason">{{ place && where ? `${where} · ${reason}` : reason }}</template>
         <template v-else>

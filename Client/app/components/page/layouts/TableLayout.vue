@@ -82,7 +82,7 @@ function cell(rec: Rec, key: string): { text: string, warn?: boolean, color?: Pa
           v-for="c in cols"
           :key="c.key"
           class="py-1.5 pr-3 text-meta"
-          :class="cell(r, c.key).warn ? 'text-warn-ink' : 'text-toned'"
+          :class="cell(r, c.key).warn ? 'text-warn' : 'text-toned'"
         >
           <OptionPill
             v-if="cell(r, c.key).color"
@@ -137,7 +137,7 @@ function cell(rec: Rec, key: string): { text: string, warn?: boolean, color?: Pa
             </dt>
             <dd
               class="min-w-0 truncate"
-              :class="cell(r, c.key).warn ? 'text-warn-ink' : 'text-highlighted'"
+              :class="cell(r, c.key).warn ? 'text-warn' : 'text-highlighted'"
             >
               <OptionPill
                 v-if="cell(r, c.key).color"

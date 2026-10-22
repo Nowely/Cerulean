@@ -18,11 +18,21 @@ const scroller = useTemplateRef<HTMLElement>('scroller')
 const { arrivedState, measure: measureEnds } = useScroll(scroller)
 // The ends move without a scroll too: the dock grows (a receipt docks, the keys come up) or rows come and go. useScroll
 // only looks again on a scroll, so a list that fitted kept «at the bottom» and lost its fade
+// A chat (Журнал) read at its end stays at its end while the dock grows (the «@» row, a docked card), as a feed does
+let atEnd = true
+const endOf = (el: HTMLElement) => el.scrollTop + el.clientHeight >= el.scrollHeight - 2
 let resized: ResizeObserver | null = null
 watch(scroller, (el) => {
   resized?.disconnect()
   if (!el) return
-  resized = new ResizeObserver(() => measureEnds())
+  atEnd = endOf(el)
+  el.addEventListener('scroll', () => {
+    atEnd = endOf(el)
+  }, { passive: true })
+  resized = new ResizeObserver(() => {
+    if (props.chat && atEnd) el.scrollTop = el.scrollHeight
+    measureEnds()
+  })
   resized.observe(el)
   for (const child of el.children) resized.observe(child)
 }, { immediate: true, flush: 'post' })

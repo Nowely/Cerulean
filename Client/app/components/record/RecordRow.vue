@@ -355,7 +355,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
             />
             <span
               v-else
-              :class="r.tone === 'warn' ? 'text-warn-ink' : ''"
+              :class="r.tone === 'warn' ? 'text-warn' : ''"
             >{{ r.text }}</span>
           </template>
         </span>

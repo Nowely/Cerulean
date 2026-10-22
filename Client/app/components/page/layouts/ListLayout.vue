@@ -150,7 +150,7 @@ function clearDone() {
         <button
           type="button"
           class="flex min-h-9 w-full cursor-pointer items-center gap-1 px-4 pt-3 text-left text-cap leading-6 lg:px-2.5 lg:pb-1 lg:leading-5"
-          :class="g.tone === 'warn' ? 'text-warn-ink' : drag.joining.value === g.key && !pillOf(g) ? 'text-accent-ink' : 'text-toned hover:text-highlighted'"
+          :class="g.tone === 'warn' ? 'text-warn' : drag.joining.value === g.key && !pillOf(g) ? 'text-accent-ink' : 'text-toned hover:text-highlighted'"
           :aria-expanded="!folded.has(g.key)"
           @click="toggleFold(g.key)"
         >

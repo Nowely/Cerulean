@@ -66,7 +66,7 @@ defineExpose({ show: () => open.value = true })
   <span
     v-if="readonly"
     class="truncate"
-    :class="late ? 'text-warn-ink' : rec.due ? 'text-highlighted' : 'text-toned'"
+    :class="late ? 'text-warn' : rec.due ? 'text-highlighted' : 'text-toned'"
   >{{ rec.due ? text : 'Без срока' }}</span>
   <AdaptiveOverlay
     v-else
@@ -82,7 +82,7 @@ defineExpose({ show: () => open.value = true })
         type="button"
         class="group/due inline-flex min-w-0 shrink-0 cursor-pointer items-center gap-1 text-left"
         :class="[
-          late ? 'text-warn-ink' : rec.due ? 'text-accent-ink' : 'text-toned',
+          late ? 'text-warn' : rec.due ? 'text-accent-ink' : 'text-toned',
           variant === 'row' ? 'hit-44 relative -mr-1.5 h-7 rounded-badge px-1.5 text-13 active:bg-pressed' : '',
           variant === 'line' ? '-mx-1 h-5.5 rounded-badge px-1 text-13 hover:bg-hover' : '',
           variant === 'prop' ? '-mx-1.5 min-h-10 rounded-item px-1.5 text-base hover:bg-muted lg:text-15' : '',

@@ -196,7 +196,7 @@ const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
             <span
               v-if="subOf(r)"
               class="text-13"
-              :class="subOf(r)!.late ? 'text-warn-ink' : 'text-toned'"
+              :class="subOf(r)!.late ? 'text-warn' : 'text-toned'"
             >{{ subOf(r)!.text }}</span>
             <span
               v-if="valuesOf(r).length"

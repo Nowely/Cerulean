@@ -377,7 +377,7 @@ export default [
   { id: 'c24-21-one-warn', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
     const look = await p.evaluate(() => {
-      const warn = document.querySelector('main p .text-warn-ink')
+      const warn = document.querySelector('main p .text-warn')
       const row = document.querySelector('[data-collect-row]')
       const home = row.querySelector('button.flex-col').children[1]
       const end = row.querySelector('button.flex-col + span')
@@ -393,7 +393,7 @@ export default [
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(500)
     const late = p.getByText('было вчера').first()
-    expect(await late.evaluate(el => el.classList.contains('text-warn-ink')), 'Задачи\'s «было вчера» is not warn')
+    expect(await late.evaluate(el => el.classList.contains('text-warn')), 'Задачи\'s «было вчера» is not warn')
   } },
   // 23: «На неделе → «Настроить вид» → «Сортировка · По сроку», not changeable. Long-press a row: its menu opens and
   // nothing lifts»

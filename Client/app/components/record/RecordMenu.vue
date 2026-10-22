@@ -51,5 +51,6 @@ const items = computed<MenuItem[][]>(() => [
     :title="rec.text"
     :caption="place"
     label="Действия с записью"
+    width="w-93"
   />
 </template>
