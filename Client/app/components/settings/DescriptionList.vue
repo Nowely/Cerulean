@@ -4,12 +4,14 @@
 import { computed, ref } from 'vue'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { onlyCollects } from '~/domain/collect'
 import PageTile from '../common/PageTile.vue'
 import DescriptionDialog from '../page/DescriptionDialog.vue'
 
 defineProps<{ variant: 'list' | 'table' }>()
 const data = useDataStore()
-const pages = computed(() => data.livePages.filter(p => p.kind === 'page').sort((a, b) => a.title.localeCompare(b.title, 'ru')))
+// Not a page that only collects: nothing is filed there by words (v24 fixes, 16)
+const pages = computed(() => data.livePages.filter(p => p.kind === 'page' && !onlyCollects(p)).sort((a, b) => a.title.localeCompare(b.title, 'ru')))
 const editing = ref<Page | null>(null)
 const open = computed({
   get: () => !!editing.value,

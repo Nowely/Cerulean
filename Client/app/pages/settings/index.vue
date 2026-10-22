@@ -24,6 +24,7 @@ import ConnectionEditor from '~/components/settings/ConnectionEditor.vue'
 import DescriptionList from '~/components/settings/DescriptionList.vue'
 import ImportSheet from '~/components/settings/ImportSheet.vue'
 import StoreWarning from '~/components/home/StoreWarning.vue'
+import { onlyCollects } from '~/domain/collect'
 
 useHead({ title: 'Настройки · Cerulean' })
 
@@ -85,7 +86,8 @@ const rulesFirst = computed({
   get: () => data.settings.rulesFirst,
   set: (v: boolean) => data.setSettings({ rulesFirst: v })
 })
-const userPages = computed(() => data.livePages.filter(p => p.kind === 'page'))
+// A page that only collects files nothing by words, so it has no «Что сюда класть» (v24 fixes, 16)
+const userPages = computed(() => data.livePages.filter(p => p.kind === 'page' && !onlyCollects(p)))
 const described = computed(() => userPages.value.filter(p => p.description).length)
 const descOpen = ref(false)
 

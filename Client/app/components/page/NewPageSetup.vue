@@ -5,8 +5,9 @@
 import { computed, ref } from 'vue'
 import type { Page, TemplateKey } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
-import { applyTemplate, TEMPLATES } from '~/domain/templates'
+import { applyTemplate, STARTERS } from '~/domain/templates'
 import { glyphFor } from '~/domain/look'
+import { onlyCollects } from '~/domain/collect'
 import ChipButton from '../common/ChipButton.vue'
 import SectionSheet from './SectionSheet.vue'
 
@@ -22,10 +23,10 @@ const description = computed({
 })
 
 /**
- * «Начать с шаблона»: the starters in the first-run order (v24 item 11 adds «На неделе» as the fifth). Each wears its
- * family's next glyph when the first is taken (`glyphFor`: Сегодня wears the calendar), on the chip and on the page
+ * «Начать с шаблона»: the starters in the first-run order, «На неделе» fifth (v24 item 11). Each wears its family's
+ * next glyph when the first is taken (`glyphFor`: Сегодня wears the calendar), on the chip and on the page
  */
-const starters = computed(() => TEMPLATES.map(t => ({ key: t.key, name: t.name, glyph: glyphFor(t.glyph, data.livePages, props.page.id) })))
+const starters = computed(() => STARTERS.map(t => ({ key: t.key, name: t.name, glyph: glyphFor(t.glyph, data.livePages, props.page.id) })))
 function pick(s: { key: TemplateKey, glyph: Page['glyph'] }) {
   data.updatePage(props.page.id, { ...applyTemplate(props.page, s.key), glyph: s.glyph })
 }
@@ -77,19 +78,22 @@ function pick(s: { key: TemplateKey, glyph: Page['glyph'] }) {
       />
     </div>
 
-    <label class="mt-4.5 block lg:mt-5">
-      <span class="mb-1.5 block text-sm font-medium text-highlighted">Что сюда класть?</span>
-      <UInput
-        v-model="description"
-        placeholder="Слова через запятую"
-        class="w-full"
-        size="lg"
-        @focus="emit('focus', true)"
-        @blur="emit('focus', false)"
-      />
-    </label>
-    <p class="mt-1.5 text-13 leading-snug text-toned">
-      Записи с этими словами Авто положит сюда.
-    </p>
+    <!-- A page that only collects files nothing by words: no «Что сюда класть?» (v24, item 11) -->
+    <template v-if="!onlyCollects(page)">
+      <label class="mt-4.5 block lg:mt-5">
+        <span class="mb-1.5 block text-sm font-medium text-highlighted">Что сюда класть?</span>
+        <UInput
+          v-model="description"
+          placeholder="Слова через запятую"
+          class="w-full"
+          size="lg"
+          @focus="emit('focus', true)"
+          @blur="emit('focus', false)"
+        />
+      </label>
+      <p class="mt-1.5 text-13 leading-snug text-toned">
+        Записи с этими словами Авто положит сюда.
+      </p>
+    </template>
   </div>
 </template>

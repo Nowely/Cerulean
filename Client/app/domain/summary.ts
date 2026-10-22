@@ -3,6 +3,7 @@ import type { Page, Rec } from './types'
 import { addDays, dayKey, formatDueBrief } from './dates'
 import { count, lowerFirst, plural } from './text'
 import { filterRecords, sortRecords } from './views'
+import { collectLead, collected, firstCollects } from './collect'
 
 export interface Summary {
   /** Counter or sentence: «6 купить», «3 из 6», «Всё сделано» */
@@ -10,6 +11,12 @@ export interface Summary {
   /** First records, lower case: «хлеб, молоко, сыр». Truncates on screen, `more` stays visible. */
   names: string
   more: number
+  /**
+   * The names on offer one by one and how many there are in all (v24 fixes, 9): Главная fits whole names to its
+   * column (`fitNames`), so «+N» counts what it leaves out
+   */
+  list?: string[]
+  total?: number
 }
 
 export interface Badge {
@@ -28,8 +35,9 @@ function nameOf(rec: Rec, page: Page): string {
   return page.titles ? `«${rec.text}»` : lowerFirst(rec.text)
 }
 
-function names(records: Rec[], page: Page, k = 3): Pick<Summary, 'names' | 'more'> {
-  return { names: records.slice(0, k).map(r => nameOf(r, page)).join(', '), more: Math.max(0, records.length - k) }
+function names(records: Rec[], page: Page, k = 3): Pick<Summary, 'names' | 'more' | 'list' | 'total'> {
+  const list = records.slice(0, k).map(r => nameOf(r, page))
+  return { names: list.join(', '), more: Math.max(0, records.length - k), list, total: records.length }
 }
 
 export function overdue(records: Rec[], now: number): Rec[] {
@@ -79,12 +87,21 @@ export function lowStock(page: Page, records: Rec[]): Rec[] {
   }))
 }
 
-/** Records of a page are its top-level, live records; `today` is every live record for «Сегодня» */
+/**
+ * Records of a page are its top-level, live records; `today` is every live record, for «Сегодня» and for a page whose
+ * first view collects (v24: its summary is made of what it collects)
+ */
 export function pageSummary(page: Page, records: Rec[], now: number, today: Rec[] = []): Summary {
   if (page.kind === 'today') {
     const due = dueToday(today, now)
     if (!due.length) return { lead: 'Пока ничего на сегодня', names: '', more: 0 }
-    return { lead: `${count(due.length, DEAL)} со всех страниц`, names: '', more: 0 }
+    // The formula of every row, what needs action first (v24 fixes, 10); «со всех страниц» stays on the page's own line
+    return { lead: count(due.length, DEAL), ...names(byAction(due, now), page) }
+  }
+  if (firstCollects(page)) {
+    const rows = collected(page.views[0]!, today, now)
+    if (!rows.length) return { lead: 'Нет записей', names: '', more: 0 }
+    return { lead: count(rows.length, page.noun), ...names(byAction(rows, now), page) }
   }
   if (page.kind === 'inbox') {
     const left = open(records)
@@ -125,6 +142,8 @@ export function summaryText(s: Summary): string {
  * `late: false`: Сегодня is on screen and says «просрочено» for every page, so this one leaves it out
  */
 export function pageBadge(page: Page, records: Rec[], now: number, today: Rec[] = [], opts: { late?: boolean } = {}): Badge | null {
+  // A collecting page never raises the overdue signal: that stays with Сегодня or the source page (v24)
+  if (firstCollects(page)) return null
   const late = opts.late === false ? 0 : overdue(page.kind === 'today' ? today : records, now).length
   if (late) return { text: `${late} просрочено`, tone: 'warn' }
   const ask = records.filter(r => !r.done && r.tags.includes('clarify')).length
@@ -152,6 +171,11 @@ export function pageSubline(page: Page, records: Rec[], now: number, today: Rec[
   if (page.kind === 'inbox') {
     const ask = records.filter(r => !r.done && r.tags.includes('clarify')).length
     return ask ? `${ask} уточнить` : 'Всё разложено'
+  }
+  if (firstCollects(page)) {
+    const rows = collected(page.views[0]!, today, now)
+    const late = overdue(rows, now).length
+    return [collectLead(page, page.views[0]!, rows.length), late ? `${late} просрочено` : ''].filter(Boolean).join(' · ')
   }
   if (!records.length) return ''
   if (!page.hasDone) return count(records.length, page.noun)

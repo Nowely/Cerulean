@@ -2,7 +2,7 @@
 import type { BodyDoc, BodyNode, Entry, Id, Page, PropDef, Rec, Section } from './types'
 import { addDays, dayKey, keyToDate } from './dates'
 import { newEntry, newPage, newRecord, newSection, systemPages } from './factory'
-import { listView, shoppingProps } from './templates'
+import { listView, shoppingProps, WEEK_STARTER } from './templates'
 import { uid } from './ids'
 import { mentionIds } from './body'
 
@@ -223,7 +223,8 @@ export function demo(now = Date.now()): Dataset {
     ['10 км без остановки', true, null],
     ['Пробежка 6 км', false, { date: date(0), time: '19:00' }],
     ['Записаться на забег', false, { date: addDays(day, 13) }],
-    ['Длинная пробежка 14 км', false, null]
+    // One demo world (v24 fixes, 11): the long run is сб, 24 окт in every state
+    ['Длинная пробежка 14 км', false, { date: date(5) }]
   ] as const) {
     add(goals, text, { parentId: marathon.id, done, due: due ? { ...due } : null, addedAt: at(9, 31, -7) })
   }
@@ -238,7 +239,7 @@ export function demo(now = Date.now()): Dataset {
   library.links = [yearOfBooks.id]
   marathon.links = [habits.id]
   const filter = add(chores, 'Поменять фильтр воды', { due: { date: date(2) }, addedAt: at(18, 0, -2) })
-  const master = add(chores, 'Вызвать мастера', { ...chat(20, 40, -1) })
+  const master = add(chores, 'Вызвать мастера', { ...chat(20, 40, -1), due: { date: date(4) } })
 
   // Входящие: two records Авто could not place
   const gift = add(inbox!, 'Подарок маме на др', { ...chat(9, 2), tags: ['clarify'], guesses: [tasks.id, ideas.id, chores.id] })
@@ -270,7 +271,22 @@ export function demo(now = Date.now()): Dataset {
     newEntry({ at: at(9, 10), text: 'хлеб', kind: 'routed', pageId: products.id, recordIds: [bread.id] })
   ]
 
-  const pages = [inbox!, today!, products, chores, tasks, goals, ideas, books, dacha]
+  // На неделе (v24): made from the starter, in Избранное after Полумарафон к маю; its one view collects from every
+  // page «Просрочено · На неделе · не сделано», so it holds nothing itself
+  const week = newPage({
+    title: WEEK_STARTER.name,
+    glyph: WEEK_STARTER.glyph,
+    template: 'week',
+    hasDone: true,
+    noun: WEEK_STARTER.noun,
+    views: WEEK_STARTER.views([]),
+    favorite: 2,
+    createdAt: at(9, 0, -10),
+    openedAt: at(9, 0, -10),
+    seenAt: at(9, 0, -10)
+  }, now)
+
+  const pages = [inbox!, today!, products, chores, tasks, goals, ideas, books, dacha, week]
   return { pages, records, sections: [home, personal], entries }
 }
 

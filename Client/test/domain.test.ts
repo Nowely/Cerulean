@@ -108,7 +108,9 @@ describe('demo summaries match the spec', () => {
     expect(line('Цели')).toBe('2 цели · полумарафон к маю, 24 книги за год')
     expect(line('Книги')).toBe('1 книга · «Атомные привычки»')
     expect(line('Входящие')).toBe('подарок маме на др, посмотреть тот сериал')
-    expect(line('Сегодня')).toBe('3 дела со всех страниц')
+    // v24 fixes, 10: Сегодня's row has the formula of every row; «со всех страниц» stays on the page's own line
+    expect(line('Сегодня')).toBe('3 дела · оплатить интернет, позвонить стоматологу, пробежка 6 км')
+    expect(line('На неделе')).toBe('7 дел · оплатить интернет, позвонить стоматологу, пробежка 6 км +4')
     const marathon = d.records.find(r => r.text === 'Полумарафон к маю')!
     expect(summaryText(recordSummary(d.records.filter(r => r.parentId === marathon.id), NOW))).toBe('3 из 6 · дальше пробежка 6 км, 19:00')
   })

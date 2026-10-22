@@ -384,7 +384,8 @@ export default [
     await onlyButtons(p, 'Готово', 'Задачи')
     await p.getByRole('button', { name: 'Настроить вид' }).click()
     await p.waitForTimeout(500)
-    const filter = p.getByRole('dialog').locator('label', { hasText: 'Фильтр' })
+    // v24 item 8: «Фильтр» is a row that names the filter and opens it
+    const filter = p.getByRole('dialog').getByRole('button', { name: /^Фильтр/ })
     expect((await filter.innerText()).includes('Сделано'), '«Настроить вид» does not say «Фильтр · Сделано»')
     await onlyButtons(p, 'Готово', '«Настроить вид» on «Сделано»')
     await p.keyboard.press('Escape')

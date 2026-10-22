@@ -1,5 +1,5 @@
 // A view is a saved way to look at a page: which records, in what order, grouped how
-import type { Due, FilterRule, GroupBy, Page, PropDef, Rec, ViewDef } from './types'
+import type { Due, DueChip, FilterRule, GroupBy, Page, PropDef, Rec, ViewDef } from './types'
 import { addDays, dayKey } from './dates'
 import { fold, ofProp } from './text'
 import { searchText } from './body'
@@ -24,13 +24,38 @@ function matches(rec: Rec, rule: FilterRule): boolean {
   return value === rule.value
 }
 
+/** «На неделе» as a filter chip (v24 fixes, item 11): today and the six days after it, so never an overdue record */
+export function inWeek(due: Due | null | undefined, now: number): boolean {
+  const today = dayKey(now)
+  return !!due && due.date >= today && due.date <= addDays(today, 6)
+}
+
+function matchesDue(rec: Rec, chip: DueChip, now: number): boolean {
+  const d = rec.due?.date
+  if (chip === 'none') return !d
+  if (!d) return false
+  if (chip === 'late') return !rec.done && d < dayKey(now)
+  if (chip === 'today') return d === dayKey(now)
+  return inWeek(rec.due, now)
+}
+
+/**
+ * The «Фильтр» chips of a view (v24), the same on its own records and on what it collects: a record passes when it
+ * matches any picked «Срок» chip (none picked is «Любой»), and with «Ждут уточнения» only when tagged «уточнить»
+ */
+export function matchesChips(rec: Rec, view: ViewDef, now: number): boolean {
+  const dues = view.dues ?? []
+  if (dues.length && !dues.some(c => matchesDue(rec, c, now))) return false
+  return !view.asking || rec.tags.includes('clarify')
+}
+
 /**
  * `since`: rows ticked or unticked after this moment (the page was opened) stay where they were, struck through,
  * until the page is opened again; a tick never makes a row vanish under the finger (v22, U2). Only the views the row
  * belonged to before the tick keep it: a row ticked on «Купить» never shows up on «Запасы»
  */
-export function filterRecords(records: Rec[], view: ViewDef, since = Number.POSITIVE_INFINITY): Rec[] {
-  const fits = (r: Rec) => view.filter.every(rule => matches(r, rule))
+export function filterRecords(records: Rec[], view: ViewDef, since = Number.POSITIVE_INFINITY, now = Date.now()): Rec[] {
+  const fits = (r: Rec) => view.filter.every(rule => matches(r, rule)) && matchesChips(r, view, now)
   return records.filter(r => fits(r) || ((r.tickedAt ?? 0) >= since && fits({ ...r, done: !r.done })))
 }
 
@@ -96,7 +121,7 @@ export function groupRecords(records: Rec[], groupBy: GroupBy, page: Page, now: 
 
 /** Records of a view in display order, grouped. Groups have an empty label when the view is not grouped. */
 export function applyView(page: Page, records: Rec[], view: ViewDef, now: number, since?: number): Group[] {
-  return groupRecords(sortRecords(filterRecords(records, view, since), view.sort), view.groupBy, page, now)
+  return groupRecords(sortRecords(filterRecords(records, view, since, now), view.sort), view.groupBy, page, now)
 }
 
 export function viewCount(page: Page, records: Rec[], view: ViewDef | undefined): number {

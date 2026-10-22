@@ -51,12 +51,12 @@ const TITLE_TOPICS: [RegExp, Topic][] = ([
   ['(задач|дела|дел$)', 'todo']
 ] as const).map(([re, topic]) => [new RegExp(`(^|[^а-я])${re}`), topic])
 
-const TEMPLATE_TOPIC = { shop: 'shop', todo: 'todo', goal: 'goal', note: 'note' } as const
+const TEMPLATE_TOPIC: Partial<Record<TemplateKey, Topic>> = { shop: 'shop', todo: 'todo', goal: 'goal', note: 'note' }
 
 export function pageTopic(page: Page): Topic | null {
   const title = fold(page.title)
   for (const [re, topic] of TITLE_TOPICS) if (re.test(title)) return topic
-  return page.template ? TEMPLATE_TOPIC[page.template] : null
+  return page.template ? TEMPLATE_TOPIC[page.template] ?? null : null
 }
 
 /** A name in quotes is a title, not a topic: «прочитать «Мастер и Маргарита»» is about a book, not a repair man */

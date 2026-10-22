@@ -52,8 +52,11 @@ onBeforeUnmount(() => window.removeEventListener('resize', measure))
 const pad = {
   dock: 'pb-2 lg:pb-2.5',
   bare: 'pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] lg:pb-5',
-  sheet: 'px-3 pt-2 pb-[max(env(safe-area-inset-bottom),1rem)]'
+  // A sheet's notice sits on its 22pt bottom, never over a row (v24 fixes, 17)
+  sheet: 'px-3 pt-2 pb-[max(env(safe-area-inset-bottom),1.375rem)]'
 }
+/** The sheet fades its scroll area above the notice while it shows */
+defineExpose({ showing: computed(() => !!notice.value) })
 </script>
 
 <template>

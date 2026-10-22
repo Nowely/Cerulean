@@ -319,6 +319,11 @@
   mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
 }
 
+/* A sheet's scroll area ends above the notice at its foot with a 24pt fade, so the notice never lies on a row */
+@utility fade-foot {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+}
+
 @utility no-scrollbar {
   scrollbar-width: none;
 

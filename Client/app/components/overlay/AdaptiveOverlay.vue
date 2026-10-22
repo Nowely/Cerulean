@@ -7,7 +7,7 @@
 // One sheet pattern (v23, F18): no ×. A sheet has its grabber and closes by a tap outside, a swipe down or Esc; a
 // popover or dialog by a click outside or Esc. `#close` is for the rare header button that does something else
 // («Готово» of the property editor).
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
 import { useNoticeLift } from '~/composables/useNotify'
@@ -27,7 +27,14 @@ const props = withDefaults(defineProps<{
   stacked?: boolean
   /** A question that waits for a choice («Загрузить копию»): an `alertdialog` */
   alert?: boolean
-}>(), { subtitle: undefined, width: undefined, align: 'end', side: undefined })
+  /** Desktop: the element the popover stands at instead of its trigger (the page «⋯» it was opened from) */
+  anchor?: HTMLElement | null
+  /**
+   * Desktop: a second level of the same popover («Фильтр» in «Настроить вид», v24 D5): ‹ before the title, and Esc
+   * goes back here instead of closing; a click outside still closes both levels
+   */
+  back?: () => void
+}>(), { subtitle: undefined, width: undefined, align: 'end', side: undefined, anchor: undefined, back: undefined })
 // `closed`: the overlay is gone and focus is back, so the next one can open (a sheet that leads to another)
 const emit = defineEmits<{ closed: [] }>()
 const open = defineModel<boolean>('open', { default: false })
@@ -42,6 +49,15 @@ function openNow() {
   open.value = true
   void later.load()
 }
+
+const reference = computed(() => props.anchor?.isConnected ? props.anchor : undefined)
+function onEscape(e: KeyboardEvent) {
+  if (!props.back) return
+  e.preventDefault()
+  props.back()
+}
+/** While a notice shows at a sheet's foot, the scroll area ends above it with a 24pt fade (v24 fixes, 17) */
+const sheetNotice = useTemplateRef<{ showing: boolean }>('sheetNotice')
 </script>
 
 <template>
@@ -97,15 +113,28 @@ function openNow() {
   <LazyUPopover
     v-else-if="isDesktop && later.ready.value"
     v-model:open="open"
-    :content="{ side, align, sideOffset: 6, collisionPadding: 12, onCloseAutoFocus: () => emit('closed') }"
+    :reference="reference"
+    :content="{ side, align, sideOffset: 6, collisionPadding: 12, onCloseAutoFocus: () => emit('closed'), onEscapeKeyDown: onEscape }"
   >
     <slot name="trigger" />
     <template #content>
       <div
-        class="flex max-h-[min(36rem,var(--reka-popover-content-available-height))] flex-col overflow-hidden"
+        class="flex max-h-[min(42rem,var(--reka-popover-content-available-height))] flex-col overflow-hidden"
         :class="width ?? 'w-96'"
       >
-        <div class="flex shrink-0 items-start gap-2 pt-2.5 pr-4 pl-4">
+        <div
+          class="flex shrink-0 items-start gap-2 pt-2.5 pr-4"
+          :class="back ? 'pl-2' : 'pl-4'"
+        >
+          <UButton
+            v-if="back"
+            icon="i-lucide-chevron-left"
+            variant="ghost"
+            square
+            aria-label="Назад"
+            class="mt-1.5 shrink-0 text-toned"
+            @click="back"
+          />
           <div class="min-w-0 flex-1 py-1">
             <h2 class="truncate text-15 font-semibold text-highlighted">
               {{ title }}
@@ -172,10 +201,14 @@ function openNow() {
             </template>
             <slot name="close" />
           </div>
-          <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-[max(env(safe-area-inset-bottom),1rem)]">
+          <div
+            class="min-h-0 flex-1 overflow-y-auto px-2"
+            :class="sheetNotice?.showing ? 'fade-foot pb-6' : 'pb-[max(env(safe-area-inset-bottom),1rem)]'"
+          >
             <slot />
           </div>
           <NoticeSlot
+            ref="sheetNotice"
             place="sheet"
             :active="open"
             class="shrink-0"
