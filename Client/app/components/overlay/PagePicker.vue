@@ -23,7 +23,10 @@ const field = useTemplateRef<{ inputRef?: HTMLInputElement | null }>('field')
 const open = computed({
   get: () => !!ui.picker,
   set: (v) => {
-    if (!v) ui.picker = null
+    if (v) return
+    const closed = ui.picker?.onClose
+    ui.picker = null
+    closed?.()
   }
 })
 watch(open, (v) => {
@@ -74,15 +77,23 @@ const container = computed(() => {
 const choosable = computed(() => pickable(data.livePages))
 const sectionName = (p: Page) => p.kind === 'inbox' ? '' : p.sectionId ? data.sections[p.sectionId]?.name ?? '' : 'Мои страницы'
 
+/** «Откуда записи» (v24): the pages picked so far, on top and checked, in the order they were picked */
+const multi = computed(() => ui.picker?.multi)
+const picked = computed(() => {
+  const m = multi.value
+  if (!m) return []
+  const skip = new Set(m.skip ?? [])
+  return m.picked().map(id => data.pages[id]).filter((p): p is Page => !!p && !skip.has(p.id) && choosable.value.includes(p))
+})
 /** Every page once: «Эта страница» on top stands for itself, the page the records are on keeps its section */
 const groups = computed<PickGroup[]>(() => pickerGroups({
   pages: data.livePages,
   sections: data.sectionList,
   query: q.value,
-  guesses: ui.picker?.guesses,
-  skip: ui.picker?.thisPage ? [ui.picker.thisPage] : [],
+  guesses: multi.value ? undefined : ui.picker?.guesses,
+  skip: multi.value ? [...picked.value.map(p => p.id), ...(multi.value.skip ?? [])] : ui.picker?.thisPage ? [ui.picker.thisPage] : [],
   current: ui.picker?.current
-}))
+}).map(g => multi.value && g.label === 'Найдено' ? { ...g, pages: g.pages.filter(p => !multi.value!.skip?.includes(p.id)) } : g))
 
 const nothing = computed(() => !!q.value.trim() && !groups.value.length)
 const newName = computed(() => q.value.trim() ? capitalize(q.value) : ui.picker?.newName || '')
@@ -90,6 +101,8 @@ const exists = computed(() => !!newName.value && choosable.value.some(p => fold(
 const thisPage = computed(() => ui.picker?.thisPage ? data.pages[ui.picker.thisPage] : undefined)
 
 function pick(pageId: string) {
+  // «Откуда записи»: a tap adds or removes the page, and the picker stays
+  if (multi.value) return multi.value.toggle(pageId)
   const run = ui.picker?.run
   const here = pageId === ui.picker?.current
   ui.picker = null
@@ -208,6 +221,35 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
               </button>
             </li>
           </ul>
+          <ul
+            v-if="!q.trim() && picked.length"
+            class="pt-1"
+            aria-label="Выбраны"
+          >
+            <li
+              v-for="p in picked"
+              :key="p.id"
+            >
+              <button
+                type="button"
+                class="text-highlighted"
+                :class="row"
+                aria-pressed="true"
+                @click="pick(p.id)"
+              >
+                <PageTile
+                  :glyph="p.glyph"
+                  :color="pageColor(p)"
+                  tint
+                />
+                <span class="min-w-0 flex-1 truncate">{{ p.title || 'Без названия' }}</span>
+                <UIcon
+                  name="i-lucide-check"
+                  class="size-4.5 text-accent"
+                />
+              </button>
+            </li>
+          </ul>
           <section
             v-for="g in groups"
             :key="g.label"
@@ -229,6 +271,7 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
                   class="text-highlighted"
                   :class="row"
                   :aria-current="p.id === ui.picker?.current || undefined"
+                  :aria-pressed="multi ? multi.picked().includes(p.id) : undefined"
                   @click="pick(p.id)"
                 >
                   <PageTile
@@ -238,7 +281,7 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
                   />
                   <span class="min-w-0 flex-1 truncate">{{ p.title || 'Без названия' }}</span>
                   <UIcon
-                    v-if="p.id === ui.picker?.current || p.id === ui.picker?.chosen"
+                    v-if="p.id === ui.picker?.current || p.id === ui.picker?.chosen || multi?.picked().includes(p.id)"
                     name="i-lucide-check"
                     class="size-4.5 text-accent"
                   />
@@ -258,7 +301,7 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
             Ничего не нашлось
           </p>
           <button
-            v-if="!exists"
+            v-if="!exists && !multi"
             type="button"
             class="mt-1 text-accent-ink"
             :class="row"

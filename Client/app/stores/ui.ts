@@ -26,6 +26,13 @@ export interface Picker {
   chosen?: Id
   /** Desktop: the button it opens at, as a popover (without one, a dialog). By default the one that was just pressed */
   anchor?: HTMLElement | null
+  /**
+   * «Откуда записи» (v24): several pages at once. A tap adds or removes a page and the picker stays; the picked ones
+   * are on top, checked. No guesses, no «Новая страница»; `skip` is left out (a page not offered to itself)
+   */
+  multi?: { picked: () => Id[], toggle: (id: Id) => void, skip?: Id[] }
+  /** Runs once the picker is closed, whatever closed it (the sheet that opened it comes back) */
+  onClose?: () => void
   run: (choice: PageChoice) => void
 }
 
