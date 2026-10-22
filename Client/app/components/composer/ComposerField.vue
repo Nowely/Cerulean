@@ -48,12 +48,18 @@ onMounted(() => {
   })
 })
 // The editor mounts unseen under the plain field and takes the focus (caret at the end) before the plain field goes
+let tries = 0
 function takeOver() {
   const ed = inner.value
   if (!ed || ready.value) return
-  // Tiptap makes its view once mounted: until then the plain field keeps the keys
-  if (!ed.el()) return void requestAnimationFrame(takeOver)
-  if (document.activeElement === area.value) ed.focus()
+  // Tiptap makes its view once mounted and puts it in the page a tick later; a view not in the page cannot take the focus.
+  // Until it can, the plain field keeps the keys
+  const el = ed.el()
+  if (!el?.isConnected) return void requestAnimationFrame(takeOver)
+  if (document.activeElement === area.value) {
+    ed.focus()
+    if (document.activeElement !== el && ++tries < 30) return void requestAnimationFrame(takeOver)
+  }
   ready.value = true
 }
 watch(inner, takeOver, { flush: 'post' })
