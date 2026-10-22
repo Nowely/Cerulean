@@ -357,6 +357,75 @@ export default [
     expect(!(await p.locator('main [data-row-text]', { hasText: METERS }).count()), '«Отменить» left the row')
     expect(await shows(p.locator('main').getByText(/^2 дела/)), 'the header does not read «2 дела» after «Отменить»')
   } })),
+  // v24 acceptance, outside the Check lines (1): ↶ in the editing bar, or Ctrl Z, right after the ring undoes the whole of
+  // it as «Отменить» does: the sentence back once, the row gone, the notice closed. ↶ again never cuts the words a second
+  // time, nor after «Отменить»
+  ...[['phone', MOBILE, 'bar'], ['desktop', DESKTOP, 'bar'], ['desktop-keys', DESKTOP, 'keys']].map(([name, device, how]) => ({ id: `p24-15-undo-${name}`, device, run: async (p) => {
+    await openPage(p, 'Дела по дому')
+    const undo = async () => {
+      const button = bar(p).getByRole('button', { name: 'Отменить ввод' })
+      // With nothing left to undo ↶ is off, and a tap does nothing
+      if (how === 'keys') await p.keyboard.press('Control+z')
+      else if (await button.isEnabled()) await button.click()
+      await p.waitForTimeout(600)
+    }
+    const whole = async (when) => {
+      const first = await note(p).locator('p').first().innerText()
+      expect(first.startsWith(`${KEYS} ${METERS}.`) && first.split(METERS).length === 2, `${when}, the note's first paragraph reads «${first}»`)
+      expect(!(await store(p, (data, x) => data.liveRecords.some(r => r.text === x), METERS)), `${when}, the record stays`)
+    }
+    for (const round of ['↶', '«Отменить»']) {
+      await select(p, METERS)
+      await bar(p).getByRole('button', { name: 'Сделать записью' }).click()
+      await p.waitForTimeout(700)
+      expect(await store(p, (data, x) => data.liveRecords.some(r => r.text === x), METERS), 'the ring made no record')
+      if (round === '↶') {
+        expect(await bar(p).getByRole('button', { name: 'Отменить ввод' }).isEnabled(), '↶ is off right after the ring')
+        await undo()
+        await whole('after ↶')
+        expect(!(await toast(p, 'Строка стала записью').count()), 'the notice stays after ↶')
+        expect(!(await p.locator('main [data-row-text]', { hasText: METERS }).count()), 'the row stays after ↶')
+        expect(await inNote(p), 'the body lost the caret after ↶')
+      } else {
+        await toast(p, 'Строка стала записью').getByRole('button', { name: 'Отменить' }).click()
+        await p.waitForTimeout(600)
+        await whole('after «Отменить»')
+        await note(p).click()
+        await p.waitForTimeout(200)
+      }
+      await undo()
+      await undo()
+      await whole(`after ${round} and ↶ twice more`)
+    }
+  } })),
+  // The same on a record: ↶ right after «Сделать подпунктом» takes the subitem away and puts the words back
+  { id: 'p24-15-undo-sub', device: MOBILE, run: async (p) => {
+    await open(p, '/')
+    const egg = await store(p, data => data.liveRecords.find(r => r.text === 'Яйца').id)
+    await open(p, `/r/${egg}`)
+    const ed = p.locator('.ProseMirror').first()
+    await ed.waitFor({ timeout: 10000 })
+    const words = 'Проверить, что ни одно не треснуло.'
+    await ed.getByText('треснуло', { exact: false }).first().click()
+    await ed.evaluate((root, t) => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const i = n.data.indexOf(t)
+        if (i >= 0) return getSelection().setBaseAndExtent(n, i, n, i + t.length)
+      }
+    }, words)
+    await p.waitForTimeout(300)
+    const subs = () => store(p, (data, rid) => data.subitemsOf(rid).map(x => x.text), egg)
+    const count = (await subs()).length
+    await bar(p).getByRole('button', { name: 'Сделать подпунктом' }).click()
+    await p.waitForTimeout(600)
+    expect((await subs()).length === count + 1, 'the ring made no subitem')
+    await bar(p).getByRole('button', { name: 'Отменить ввод' }).click()
+    await p.waitForTimeout(600)
+    const text = await ed.innerText()
+    expect(text.split('треснуло').length === 2 && text.includes(`подойдут С1. ${words}`), `after ↶ the text reads «${text.slice(0, 100)}»`)
+    expect((await subs()).length === count, 'the subitem stays after ↶')
+  } },
   // «On Яйца the ring's label is still «Сделать подпунктом»»
   { id: 'p24-15-egg', device: MOBILE, run: async (p) => {
     await open(p, '/')
@@ -426,6 +495,8 @@ export default [
     const [a, l, more] = [await sheet.boundingBox(), await line.boundingBox(), await p.getByRole('button', { name: 'Действия со страницей' }).first().boundingBox()]
     expect(Math.abs(a.x - l.x) <= 12 && (a.y >= l.y + l.height - 2 || a.y + a.height <= l.y + 2), `the popover is at ${a.x},${a.y}, the line at ${l.x},${l.y}`)
     expect(Math.abs(a.x + a.width - (more.x + more.width)) > 24, 'the popover sits at «⋯»')
+    // 420 wide, as from the view bar and the «⋯»
+    expect(Math.round(a.width) === 420, `the popover is ${a.width} wide`)
     expect(!(await sheet.getByRole('button', { name: /^Закрыть/ }).count()), 'the popover has ×')
     await p.keyboard.press('Escape')
     await afterDoska(p, line)

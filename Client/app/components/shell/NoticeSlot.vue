@@ -63,6 +63,7 @@ defineExpose({ showing: computed(() => !!notice.value) })
   <div
     ref="box"
     role="status"
+    :data-notice-slot="place"
   >
     <Teleport
       to="body"

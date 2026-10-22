@@ -44,6 +44,8 @@ export interface BodyHooks {
   onEscape: () => boolean
   /** Ctrl K: the link field with a selection, «Найти» without one */
   onModK: () => boolean
+  /** Ctrl Z right after «Сделать записью» or «Сделать подпунктом»: the whole of it, before the editor's own undo */
+  onUndo: () => boolean
 }
 
 const PUNCT = /^[,.;:!?…)»]$/
@@ -157,6 +159,7 @@ export function bodyExtensions(hooks: BodyHooks) {
       return {
         'Escape': () => hooks.onEscape(),
         'Mod-k': () => hooks.onModK(),
+        'Mod-z': () => hooks.onUndo(),
         'Backspace': ({ editor }) => {
           if (editor.commands.undoInputRule()) return true
           const { selection } = editor.state

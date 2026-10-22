@@ -416,6 +416,9 @@ export default [
     const sheet = p.getByRole('dialog')
     expect(await shows(sheet.getByRole('button', { name: 'Открыть' })), 'the row\'s menu did not open')
     expect(await sheet.getByRole('heading').first().innerText().then(plain) === 'Поменять фильтр воды', 'the menu is not the row\'s')
+    // Item 28's words, as every record menu says them
+    const rows = await sheet.getByRole('button').evaluateAll(bs => bs.map(b => b.innerText.replace(/\s+/g, ' ').trim()))
+    expect(rows.includes('Переместить на другую страницу') && !rows.includes('Переместить'), `the row's menu reads ${rows.join(' / ')}`)
   } },
   // 23: «Задачи → «Настроить вид»: «Заметка» is on, and Вернуть книгу в библиотеку shows the note glyph. Switch it
   // off and the glyph goes. Задачи's own «Сортировка» stays «Вручную»»
@@ -595,10 +598,15 @@ export default [
     expect(!(await p.getByRole('dialog').count()), 'a click outside does not close both levels')
   } },
   // D8: «На неделе → «Настроить вид» → «Эта страница», then «Все страницы»: the notice shows above the composer, not
-  // inside the popover. Close the popover: the notice stays, and «Отменить» works»
-  { id: 'c24-d8-notice', device: DESKTOP, run: async (p) => {
+  // inside the popover. Close the popover: the notice stays, and «Отменить» works». Opened from the page «⋯» and from the
+  // view bar's own button, which stands lower: the popover never covers the notice
+  ...[['menu', 'the page «⋯»'], ['bar', 'the view bar']].map(([key, from]) => ({ id: key === 'menu' ? 'c24-d8-notice' : 'c24-d8-notice-bar', device: DESKTOP, run: async (p) => {
     await openPage(p, 'На неделе')
-    await pageMenu(p, 'Настроить вид')
+    if (key === 'menu') await pageMenu(p, 'Настроить вид')
+    else {
+      await p.getByRole('button', { name: 'Настроить вид', exact: true }).filter({ visible: true }).first().click()
+      await p.waitForTimeout(900)
+    }
     await p.getByRole('radio', { name: 'Эта страница' }).click()
     await p.waitForTimeout(400)
     await p.getByRole('radio', { name: 'Все страницы' }).click()
@@ -612,11 +620,18 @@ export default [
       return { above: n.bottom <= form.top + 1, right: Math.abs(n.right - form.right) < 4 }
     })
     expect(where.above && where.right, `the notice is not above the composer at its right: ${JSON.stringify(where)}`)
+    // Whole in view: nothing over its middle or its corners
+    const covered = await p.evaluate(() => {
+      const n = document.querySelector('[data-notice]').getBoundingClientRect()
+      return [[n.left + n.width / 2, n.top + n.height / 2], [n.left + 4, n.top + 4], [n.right - 4, n.top + 4], [n.left + 4, n.bottom - 4], [n.right - 4, n.bottom - 4]]
+        .filter(([x, y]) => !document.elementFromPoint(x, y)?.closest('[data-notice]')).length
+    })
+    expect(!covered, `opened from ${from}, the popover covers the notice (${covered} of 5 points)`)
     await p.keyboard.press('Escape')
     await p.waitForTimeout(600)
     expect(await shows(notice), 'the notice went with the popover')
     await notice.getByRole('button', { name: 'Отменить' }).click()
     await p.waitForTimeout(500)
     expect((await weekView(p)).from === 'self', '«Отменить» does not take «Все страницы» back')
-  } }
+  } }))
 ]

@@ -6,8 +6,9 @@
 // rises over the scrim, and a click on it leaves the dialog open.
 // One sheet pattern (v23, F18): no ×. A sheet has its grabber and closes by a tap outside, a swipe down or Esc; a
 // popover or dialog by a click outside or Esc. `#close` is for the rare header button that does something else
-// («Готово» of the property editor).
-import { computed, useTemplateRef } from 'vue'
+// («Готово» of the property editor). A popover that opens downwards stops short of the notice's room over the composer,
+// so a notice its choice raises shows whole there, never under it (v24 D8).
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
 import { useNoticeLift } from '~/composables/useNotify'
@@ -51,6 +52,19 @@ function openNow() {
 }
 
 const reference = computed(() => props.anchor?.isConnected ? props.anchor : undefined)
+
+/** A notice over the composer: 44 high, its 10 under it and 6 between it and the popover */
+const NOTICE_ROOM = 60
+const padding = ref<number | { top: number, right: number, bottom: number, left: number }>(12)
+watch(open, (on) => {
+  if (!on || !isDesktop.value || props.side === 'top') return
+  let room = 0
+  document.querySelectorAll('[data-notice-slot="dock"]').forEach((el) => {
+    const r = el.getBoundingClientRect()
+    if (r.width) room = Math.max(room, window.innerHeight - r.bottom + NOTICE_ROOM)
+  })
+  padding.value = room > 12 ? { top: 12, right: 12, bottom: room, left: 12 } : 12
+})
 function onEscape(e: KeyboardEvent) {
   if (!props.back) return
   e.preventDefault()
@@ -114,7 +128,7 @@ const sheetNotice = useTemplateRef<{ showing: boolean }>('sheetNotice')
     v-else-if="isDesktop && later.ready.value"
     v-model:open="open"
     :reference="reference"
-    :content="{ side, align, sideOffset: 6, collisionPadding: 12, onCloseAutoFocus: () => emit('closed'), onEscapeKeyDown: onEscape }"
+    :content="{ side, align, sideOffset: 6, collisionPadding: padding, onCloseAutoFocus: () => emit('closed'), onEscapeKeyDown: onEscape }"
   >
     <slot name="trigger" />
     <template #content>

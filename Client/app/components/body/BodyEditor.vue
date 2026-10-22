@@ -6,6 +6,7 @@
 import { computed, inject, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 import type { Editor, Range } from '@tiptap/core'
+import type { Node as PMNode } from '@tiptap/pm/model'
 import { TextSelection } from '@tiptap/pm/state'
 import { exitSuggestion, type SuggestionProps } from '@tiptap/suggestion'
 import type { BodyDoc } from '~/domain/types'
@@ -92,13 +93,32 @@ watch(() => props.doc, (doc) => {
   stored = text
   const ed = editor.value
   if (!ed || ed.isDestroyed) return
-  const { from, to } = ed.state.selection
-  ed.commands.setContent(doc ?? '', { emitUpdate: false })
-  if (ed.isFocused) {
-    const end = ed.state.doc.content.size
-    ed.commands.setTextSelection({ from: Math.min(from, end), to: Math.min(to, end) })
-  }
+  takeIn(ed, doc ?? null)
 })
+
+/**
+ * A change from elsewhere («В заметку», another tab) replaces only what differs, so ↶ takes back just that and the caret
+ * maps across it. `history: false` keeps it out of the editor's undo (the words a cut's «Отменить» puts back)
+ */
+function takeIn(ed: Editor, doc: BodyDoc | null, history = true) {
+  const { state } = ed
+  let next: PMNode
+  try {
+    next = doc ? state.schema.nodeFromJSON(doc) : state.schema.topNodeType.createAndFill()!
+  } catch {
+    ed.chain().setMeta('addToHistory', history).setContent(doc ?? '', { emitUpdate: false }).run()
+    return
+  }
+  const start = state.doc.content.findDiffStart(next.content)
+  if (start === null) return
+  let { a, b } = state.doc.content.findDiffEnd(next.content)!
+  const overlap = start - Math.min(a, b)
+  if (overlap > 0) {
+    a += overlap
+    b += overlap
+  }
+  ed.view.dispatch(state.tr.replace(start, a, next.slice(start, b)).setMeta('addToHistory', history).setMeta('preventUpdate', true))
+}
 
 // ---------- the editor ----------
 
@@ -172,6 +192,7 @@ const editor = useEditor({
       done()
       return true
     },
+    onUndo: () => undoCut(),
     onModK: () => {
       const ed = editor.value
       if (!ed) return false
@@ -222,7 +243,7 @@ function refresh() {
   if (!ed || !mine()) return
   const sel = ed.state.selection
   body.state.value = {
-    canUndo: ed.can().undo(),
+    canUndo: ed.can().undo() || cutLive(),
     selected: !sel.empty && sel instanceof TextSelection,
     kind: kindAt(ed),
     bold: ed.isActive('bold'),
@@ -357,6 +378,8 @@ function cutSelection(): { text: string, before: BodyDoc } | null {
     }
   }
   tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(caret, tr.doc.content.size))))
+  // Not a step of the editor's undo: the words went to a row, and only the cut's own undo brings them back with it gone
+  tr.setMeta('addToHistory', false)
   ed.view.dispatch(tr)
   pending = true
   flush()
@@ -381,18 +404,44 @@ function toSub() {
   if (page) ui.firstView = page.id
   // The new row scrolls into view as it mounts; the edges settle after that
   void nextTick(settleSoon)
-  notify(rec ? 'Строка стала подпунктом' : 'Строка стала записью', {
-    label: 'Отменить',
-    run: () => {
-      data.purgeRecords([made.id])
-      data.setBody(owner, cut.before)
+  const undo = () => {
+    lastCut = null
+    data.purgeRecords([made.id])
+    // The words come back outside the editor's undo, as they left: ↶ never cuts them again with no row to hold them
+    const ed = editor.value
+    if (ed && !ed.isDestroyed) {
+      takeIn(ed, cut.before, false)
+      stored = JSON.stringify(cut.before)
     }
-  })
+    data.setBody(owner, cut.before)
+  }
+  const id = notify(rec ? 'Строка стала подпунктом' : 'Строка стала записью', { label: 'Отменить', run: undo })
+  lastCut = {
+    doc: editor.value!.state.doc,
+    undo: () => {
+      if (ui.notice?.id === id) ui.notice = null
+      undo()
+    }
+  }
+  refresh()
+}
+
+/** The last cut, while the text is as the cut left it: ↶ and Ctrl Z then undo it whole, as the notice's «Отменить» */
+let lastCut: { doc: PMNode, undo: () => void } | null = null
+const cutLive = () => !!lastCut && !!editor.value && editor.value.state.doc.eq(lastCut.doc)
+
+function undoCut() {
+  if (!cutLive()) return false
+  lastCut!.undo()
+  return true
 }
 
 const actions: BodyActions = {
   done: () => done(),
-  undo: () => editor.value?.chain().focus().undo().run(),
+  undo: () => {
+    if (!undoCut()) editor.value?.chain().focus().undo().run()
+    else editor.value?.commands.focus()
+  },
   toggle: kind => applyKind(kind),
   mark: m => editor.value?.chain().focus()[m === 'bold' ? 'toggleBold' : 'toggleItalic']().run(),
   mention: () => startMention(),

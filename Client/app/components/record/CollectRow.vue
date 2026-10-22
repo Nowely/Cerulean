@@ -28,7 +28,7 @@ const fresh = computed(() => Date.now() - props.rec.addedAt < 5000 && !props.rec
 const items = computed<MenuItem[][]>(() => [
   [
     { label: 'Открыть', icon: 'i-lucide-arrow-up-right', onSelect: () => emit('open') },
-    ...(props.rec.parentId ? [] : [{ label: 'Переместить', icon: 'i-lucide-folder-input', onSelect: () => actions.move([props.rec.id]) }]),
+    ...(props.rec.parentId ? [] : [{ label: 'Переместить на другую страницу', icon: 'i-lucide-folder-input', onSelect: () => actions.move([props.rec.id]) }]),
     { label: props.rec.favorite === null ? 'Добавить в избранное' : 'Убрать из избранного', icon: 'i-lucide-star', onSelect: () => actions.favorite(props.rec) },
     { label: 'Скопировать текст', icon: 'i-lucide-copy', onSelect: () => actions.copy(props.rec) }
   ],
