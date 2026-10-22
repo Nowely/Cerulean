@@ -13,6 +13,7 @@ import { bodyOf, docText, firstWords } from '~/domain/body'
 import { FOCUS_PROXY_ID } from '~/composables/useCreatePage'
 import { propList } from '~/domain/props'
 import { pageColor } from '~/domain/look'
+import { onlyCollects } from '~/domain/collect'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import SectionSheet from './SectionSheet.vue'
 import PageTile from '../common/PageTile.vue'
@@ -86,8 +87,9 @@ const items = computed<MenuItem[][]>(() => {
     }
   ]
   if (own) {
-    // The words Авто files by (v23: never «описание»), in muted on the right
-    first.push({ label: 'Что сюда класть', icon: 'i-lucide-lightbulb', value: props.page.description || 'не задано', onSelect: () => describing.value = true })
+    // The words Авто files by (v23: never «описание»), in muted on the right; not on a page that only collects, where
+    // nothing is filed by words (v24 fixes, 16)
+    if (!onlyCollects(props.page)) first.push({ label: 'Что сюда класть', icon: 'i-lucide-lightbulb', value: props.page.description || 'не задано', onSelect: () => describing.value = true })
     first.push({ label: 'Заметка к странице', icon: 'i-cer-note', value: noteWords.value || undefined, onSelect: note })
     first.push({ label: 'Значок и цвет', icon: 'i-lucide-palette', onSelect: () => edit('glyph') })
     first.push({ label: 'Переместить в секцию', icon: 'i-lucide-arrow-right', value: section.value?.name ?? 'Мои страницы', onSelect: () => moving.value = true })

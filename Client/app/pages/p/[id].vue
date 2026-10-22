@@ -16,6 +16,7 @@ import PageTile from '~/components/common/PageTile.vue'
 import ComposerDock from '~/components/composer/ComposerDock.vue'
 import EditingBar from '~/components/body/EditingBar.vue'
 import { useBodyEditing } from '~/composables/useBodyEditing'
+import { onlyCollects } from '~/domain/collect'
 
 const route = useRoute()
 const data = useDataStore()
@@ -155,9 +156,9 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
         На главную
       </UButton>
     </div>
-    <!-- Входящие and Сегодня have nothing to put there (PagesInbox, PagesWeek) -->
+    <!-- Входящие and Сегодня have nothing to put there (PagesInbox, PagesWeek), nor a page that only collects (v24) -->
     <PageAside
-      v-if="isDesktop && live && page && page.kind === 'page' && !peek.target.value && !view?.wide"
+      v-if="isDesktop && live && page && page.kind === 'page' && !onlyCollects(page) && !peek.target.value && !view?.wide"
       :page="page"
     />
   </div>

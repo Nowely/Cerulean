@@ -4,7 +4,8 @@
 import { computed, ref } from 'vue'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
-import { applyTemplate, TEMPLATES } from '~/domain/templates'
+import { applyTemplate, STARTERS } from '~/domain/templates'
+import { onlyCollects } from '~/domain/collect'
 import ChipButton from '../common/ChipButton.vue'
 import SectionSheet from './SectionSheet.vue'
 
@@ -46,7 +47,7 @@ const description = computed({
     </p>
     <div class="mt-2 flex flex-wrap gap-1.5">
       <ChipButton
-        v-for="t in TEMPLATES"
+        v-for="t in STARTERS"
         :key="t.key"
         :label="t.name"
         :glyph="t.glyph"
@@ -55,18 +56,21 @@ const description = computed({
       />
     </div>
 
-    <label class="mt-5 block">
-      <span class="mb-1.5 block text-sm font-medium text-highlighted">Что сюда класть?</span>
-      <UInput
-        v-model="description"
-        placeholder="Например: подарки и идеи подарков"
-        class="w-full"
-        @focus="emit('focus', true)"
-        @blur="emit('focus', false)"
-      />
-    </label>
-    <p class="mt-1.5 text-13 leading-snug text-toned">
-      По этим словам сюда попадут подходящие записи.
-    </p>
+    <!-- A page that only collects files nothing by words: no «Что сюда класть?» (v24, item 11) -->
+    <template v-if="!onlyCollects(page)">
+      <label class="mt-5 block">
+        <span class="mb-1.5 block text-sm font-medium text-highlighted">Что сюда класть?</span>
+        <UInput
+          v-model="description"
+          placeholder="Например: подарки и идеи подарков"
+          class="w-full"
+          @focus="emit('focus', true)"
+          @blur="emit('focus', false)"
+        />
+      </label>
+      <p class="mt-1.5 text-13 leading-snug text-toned">
+        По этим словам сюда попадут подходящие записи.
+      </p>
+    </template>
   </div>
 </template>
