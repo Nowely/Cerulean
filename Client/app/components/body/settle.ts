@@ -1,6 +1,8 @@
 // Clean edges while a body has focus on a phone (v23, F6): the header and the bar are opaque, so the scroll settles
 // where neither edge cuts a line of text or a row, and the caret's line stays in view. It takes the nearest such stop,
-// whatever the keyboard's height; the title may go under the header for it (the header then names the record).
+// whatever the keyboard's height; the title may go under the header for it (the header then names the record). When no
+// stop in the caret's range is clean (a long note, the caret near its top), the caret wins: the stop keeps the header's
+// edge clean, and the dock's opaque surface covers the line its own edge would cut (AppScreen, as for v24 item 14).
 
 interface Unit {
   top: number
@@ -34,7 +36,8 @@ export function settleEdges(scroller: HTMLElement, caret: { top: number, bottom:
     if (r.height > 0 && r.height <= 120 && r.bottom > box.top - box.height && r.top < box.bottom + box.height) units.push({ top: r.top, bottom: r.bottom })
   })
   const cut = (d: number, edge: number) => units.filter(u => u.top - d < edge - 0.5 && u.bottom - d > edge + 0.5).length
-  const cost = (d: number) => cut(d, box.top) + cut(d, box.bottom)
+  // A cut under the header weighs most: the dock can cover its own edge, the header cannot
+  const cost = (d: number) => 100 * cut(d, box.top) + cut(d, box.bottom)
   // How far it may go: within the scroll, and the caret's line never leaves the view
   let lo = -scroller.scrollTop
   let hi = scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop
@@ -44,7 +47,7 @@ export function settleEdges(scroller: HTMLElement, caret: { top: number, bottom:
   }
   let best = 0
   let least = cost(0)
-  // The nearest clean stop, further on first; with none, the stop that cuts the fewest
+  // The nearest clean stop, further on first; with none, the stop that cuts the fewest, the header's edge first
   for (let k = 1; least && k <= Math.max(-lo, hi); k++) {
     for (const d of [k, -k]) {
       if (d < lo || d > hi) continue

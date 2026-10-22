@@ -124,6 +124,33 @@ const cutRows = p => editorOf(p).evaluate((ed) => {
   return cut
 })
 
+/** Ink the header or the dock cuts: text lines (their own boxes) and glyphs; the dock's edge is its cover's top when it has one */
+const inkCuts = p => p.evaluate(() => {
+  const ed = document.activeElement?.closest('.ProseMirror.body-text')
+  const scroller = ed.closest('.overflow-y-auto')
+  const box = scroller.getBoundingClientRect()
+  const cover = document.querySelector('[data-dock-cover]')
+  const bottom = cover ? Math.min(box.bottom, cover.getBoundingClientRect().top) : box.bottom
+  const cut = []
+  const check = (q, what) => {
+    for (const edge of [box.top, bottom]) if (q.top < edge - 1 && q.bottom > edge + 1) cut.push(`${what} ${Math.round(q.top)}–${Math.round(q.bottom)} over ${Math.round(edge)}`)
+  }
+  const range = document.createRange()
+  const walker = document.createTreeWalker(scroller, NodeFilter.SHOW_TEXT)
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!n.nodeValue.trim() || n.parentElement.closest('.sr-only, [aria-hidden="true"]')) continue
+    range.selectNodeContents(n)
+    for (const q of range.getClientRects()) if (q.height > 2 && q.width > 0) check(q, `«${n.nodeValue.trim().slice(0, 16)}»`)
+  }
+  scroller.querySelectorAll('svg, [role="checkbox"]').forEach((el) => {
+    const q = el.getBoundingClientRect()
+    if (q.height > 2 && q.width > 0) check(q, 'a glyph')
+  })
+  const caret = getSelection().getRangeAt(0).getBoundingClientRect()
+  if (caret.bottom > bottom + 1 || caret.top < box.top - 1) cut.push(`the caret's line ${Math.round(caret.top)}–${Math.round(caret.bottom)} is not in view`)
+  return cut
+})
+
 // ---------- checks ----------
 
 export default [
@@ -409,6 +436,36 @@ export default [
     await p.waitForTimeout(900)
     const cut = await cutRows(p)
     expect(!cut.length, `cut at the edges after the ring: ${cut.join('; ')}`)
+  } },
+
+  // 7, after the re-check of PR #15: a long page note with the caret on its first line or in its middle has no clean stop
+  // that keeps the caret in view; the caret wins, the header's edge stays clean and the dock covers the line its edge cuts
+  { id: 'e-7-long-note', device: MOBILE, run: async (p) => {
+    await withKeyboard(p)
+    await openPage(p, 'Дела по дому')
+    const note = p.locator('.page-note .ProseMirror.body-text')
+    await note.waitFor({ timeout: 10000 })
+    // The note is folded to four lines: open it whole first
+    await p.locator('.page-note').getByRole('button', { name: /^Ещё/ }).click()
+    await p.waitForTimeout(300)
+    await note.getByText('весны', { exact: false }).first().click()
+    await p.keyboard.press('End')
+    for (const t of ['Летом поливать цветы на балконе каждый вечер, а зимой раз в неделю, если не забыть.', 'Пароль от домофона 2580, у соседей сверху запасной ключ от кладовки.', 'Счётчики воды поверить до марта, телефон управляющей компании в квитанции.', 'Ёлочные игрушки на антресоли в синей коробке, гирлянды отдельно в пакете.']) {
+      await p.keyboard.press('Enter')
+      await p.keyboard.type(t)
+    }
+    const failed = []
+    for (const [where, text, home] of [['line 1', 'Ключи от щитка', true], ['the middle', 'электрик через управляющую', false]]) {
+      await note.getByText(text, { exact: false }).first().click()
+      await p.keyboard.press(home ? 'Home' : 'End')
+      for (const top of [557, 440, 450, 460, 470, 480, 490, 500, 510, 520, 530, 540, 550, 560, 570, 580, 590, 600]) {
+        await keyboardUp(p, top)
+        await p.waitForTimeout(600)
+        const cut = await inkCuts(p)
+        if (cut.length) failed.push(`caret on ${where}, keys at ${top}: ${cut.join('; ')}`)
+      }
+    }
+    expect(!failed.length, failed.join(' / '))
   } },
 
   // 8: «in «Вернуть книгу в библиотеку» type «Сначала дочитать @» → chips «24 книги за г…», «Атомные при…», «Ещё…»; type
