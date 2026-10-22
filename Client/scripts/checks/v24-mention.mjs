@@ -189,7 +189,7 @@ export default [
     if (!(await opt.count())) return
     await opt.last().click()
     await p.waitForTimeout(300)
-    await p.getByRole('textbox', { name: /Новая запись|Новый подпункт|Заметка/ }).last().click()
+    await p.getByRole('textbox', { name: /Новый абзац|Новый подпункт/ }).last().click()
     await typeIn(p, 'к омлету взять ещё @сы')
     expect((await rowChips(p)).some(c => c.name === 'Сыр'), '«В заметку» does not offer «Сыр»')
   } },
