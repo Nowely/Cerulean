@@ -11,6 +11,7 @@ import { exitSuggestion, type SuggestionProps } from '@tiptap/suggestion'
 import type { BodyDoc } from '~/domain/types'
 import { closeUp, isEmptyDoc, mentionOptions, subText, type BodyOwner, type MentionTarget } from '~/domain/body'
 import { useDataStore } from '~/stores/data'
+import { useUiStore } from '~/stores/ui'
 import { useFind } from '~/composables/useFind'
 import { useNotify } from '~/composables/useNotify'
 import { useScreen } from '~/composables/useScreen'
@@ -33,6 +34,7 @@ const emit = defineEmits<{ focus: [boolean] }>()
 
 const surface = inject(BODY_SURFACE, 'main')
 const data = useDataStore()
+const ui = useUiStore()
 const find = useFind()
 const notify = useNotify()
 const { isDesktop } = useScreen()
@@ -311,25 +313,24 @@ function cancelLink() {
 }
 
 /**
- * «Сделать подпунктом» (v23, A6, S1): the selected words leave the line and become the record's last subitem; the line
- * closes up (a whole sentence takes its full stop, no space before punctuation, a line left empty goes) and the caret
- * stays where the words were. The toast takes it all back
+ * The selected words leave their line (v23, A6, S1): the line closes up (a whole sentence takes its full stop, no space
+ * before punctuation, a line left empty goes) and the caret stays where the words were. Returns the words as a row
+ * names them and the body before the cut, for the undo; null when nothing is selected
  */
-function toSub() {
+function cutSelection(): { text: string, before: BodyDoc } | null {
   const ed = editor.value
-  const rec = props.owner.kind === 'record' ? data.records[props.owner.id] : undefined
-  if (!ed || !rec) return
+  if (!ed) return null
   const { state } = ed
   const sel = state.selection
   const $from = sel.$from
-  if (sel.empty || !$from.parent.isTextblock) return
+  if (sel.empty || !$from.parent.isTextblock) return null
   const start = $from.start()
   const end = $from.end()
   const from = sel.from
   const to = Math.min(sel.to, end)
   const words = state.doc.textBetween(from, to, ' ', n => n.type.name === 'mention' ? data.nameOf(String(n.attrs.id), n.attrs.label) : '')
   const text = subText(words)
-  if (!text) return
+  if (!text) return null
   const leaf = () => '￼'
   const c = closeUp(state.doc.textBetween(start, from, '', leaf), state.doc.textBetween(to, end, '', leaf))
   pending = true
@@ -359,15 +360,32 @@ function toSub() {
   ed.view.dispatch(tr)
   pending = true
   flush()
-  const sub = data.addRecord({ pageId: rec.pageId, parentId: rec.id, text })
+  return { text, before }
+}
+
+/**
+ * The ring of the selection face. On a record «Сделать подпунктом» (v23): the words become the record's last subitem.
+ * On a page note «Сделать записью» (v24, И9): they become the newest record of the page, in its first view, with no
+ * group and no date (reading dates is Авто's job). Both are medium: the toast puts the words back and takes the row away
+ */
+function toSub() {
+  const owner = { ...props.owner }
+  const rec = owner.kind === 'record' ? data.records[owner.id] : undefined
+  const page = owner.kind === 'page' ? data.pages[owner.id] : undefined
+  if (!rec && !page) return
+  const cut = cutSelection()
+  if (!cut) return
+  const made = rec
+    ? data.addRecord({ pageId: rec.pageId, parentId: rec.id, text: cut.text })
+    : data.addRecord({ pageId: owner.id, text: cut.text })
+  if (page) ui.firstView = page.id
   // The new row scrolls into view as it mounts; the edges settle after that
   void nextTick(settleSoon)
-  const owner = { ...props.owner }
-  notify('Строка стала подпунктом', {
+  notify(rec ? 'Строка стала подпунктом' : 'Строка стала записью', {
     label: 'Отменить',
     run: () => {
-      data.purgeRecords([sub.id])
-      data.setBody(owner, before)
+      data.purgeRecords([made.id])
+      data.setBody(owner, cut.before)
     }
   })
 }
@@ -393,7 +411,8 @@ const session: BodySession = {
   owner: { ...props.owner },
   surface,
   root: null as unknown as HTMLElement,
-  canSub: props.owner.kind === 'record',
+  canSub: true,
+  subLabel: props.owner.kind === 'record' ? 'Сделать подпунктом' : 'Сделать записью',
   actions
 }
 

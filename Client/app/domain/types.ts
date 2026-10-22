@@ -249,8 +249,8 @@ export type ConnectionField = 'provider' | 'apiKey' | 'baseUrl' | 'modelId' | 'k
 export type KeepingField = 'copiedAt' | 'copyHiddenAt' | 'startedAt' | 'persistAsked'
 
 /**
- * Page glyphs in Lucide's stroke. The first 35 are what «Значок и цвет» offers (v23, M10); the last ones are
- * kept so older pages still draw (Входящие's tray, and icons the picker offered before v23)
+ * Page glyphs in Lucide's stroke. The first 36 are what «Значок и цвет» offers (v23, M10; v24 adds the week); the last
+ * ones are kept so older pages still draw (Входящие's tray, and icons the picker offered before v23)
  */
 export const GLYPHS = {
   basket: 'i-lucide-shopping-basket',
@@ -262,6 +262,8 @@ export const GLYPHS = {
   book: 'i-lucide-book',
   gift: 'i-lucide-gift',
   cal: 'i-lucide-calendar',
+  // The calendar family's second glyph (v24 fixes, 13): Lucide's calendar with one row of three dots (app/assets/icons)
+  calweek: 'cer:calendar-week',
   doc: 'i-lucide-file-text',
   bag: 'i-lucide-shopping-bag',
   car: 'i-lucide-car',
@@ -315,6 +317,7 @@ export const GLYPH_WORDS: [Glyph, string][] = [
   ['book', 'Книга чтение учёба'],
   ['gift', 'Подарок праздник день рождения'],
   ['cal', 'Календарь дата встреча'],
+  ['calweek', 'Неделя календарь план расписание'],
   ['doc', 'Документ заметка текст файл'],
   ['bag', 'Сумка магазин покупки одежда'],
   ['car', 'Машина авто дорога ремонт'],

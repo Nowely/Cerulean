@@ -1,10 +1,12 @@
 <script setup lang="ts">
-// A new page explains itself: its section, templates and «Что сюда класть?» (the words Авто files by). How to show it
-// lives in «Настроить вид». All of it goes away after the first record.
+// A new page explains itself: its section (the one it was made from: «Секция · Дом ⌄» from Дом's «⋯»), the manual of
+// an empty page (the default slot), the starters and «Что сюда класть?» (the words Авто files by). All of it goes away
+// after the first record.
 import { computed, ref } from 'vue'
-import type { Page } from '~/domain/types'
+import type { Page, TemplateKey } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { applyTemplate, TEMPLATES } from '~/domain/templates'
+import { glyphFor } from '~/domain/look'
 import ChipButton from '../common/ChipButton.vue'
 import SectionSheet from './SectionSheet.vue'
 
@@ -18,55 +20,76 @@ const description = computed({
   get: () => props.page.description,
   set: v => data.updatePage(props.page.id, { description: v })
 })
+
+/**
+ * «Начать с шаблона»: the starters in the first-run order (v24 item 11 adds «На неделе» as the fifth). Each wears its
+ * family's next glyph when the first is taken (`glyphFor`: Сегодня wears the calendar), on the chip and on the page
+ */
+const starters = computed(() => TEMPLATES.map(t => ({ key: t.key, name: t.name, glyph: glyphFor(t.glyph, data.livePages, props.page.id) })))
+function pick(s: { key: TemplateKey, glyph: Page['glyph'] }) {
+  data.updatePage(props.page.id, { ...applyTemplate(props.page, s.key), glyph: s.glyph })
+}
 </script>
 
 <template>
-  <div class="px-5 lg:px-0">
-    <div class="mt-2 flex min-h-11 items-center text-base lg:min-h-9 lg:text-sm">
-      <span class="w-27 shrink-0 text-toned lg:w-36">Секция</span>
-      <button
-        type="button"
-        class="flex h-9 min-w-0 cursor-pointer items-center gap-1.5 rounded-item px-2 text-highlighted -mx-2 hover:bg-muted active:bg-pressed"
-        aria-haspopup="dialog"
-        @click="choosing = true"
-      >
-        <span class="truncate">{{ sectionName }}</span>
-        <UIcon
-          name="i-lucide-chevron-down"
-          class="size-4 shrink-0 text-toned"
-        />
-      </button>
-    </div>
+  <div class="px-4 lg:px-0">
+    <!-- «Секция»: a sheet on a phone, a menu at this row on desktop -->
     <SectionSheet
       v-model:open="choosing"
       :page="page"
-    />
-    <p class="mt-4 text-cap text-toned">
+      menu
+    >
+      <button
+        type="button"
+        class="-mx-2 mt-0.5 flex min-h-10 w-fit max-w-full cursor-pointer items-center gap-1.5 rounded-item px-2 text-15 text-highlighted hover:bg-hover active:bg-pressed aria-expanded:bg-hover lg:mt-4.25"
+        :aria-label="`Секция: ${sectionName}. Выбрать другую`"
+        :aria-expanded="choosing"
+      >
+        <span class="w-26 shrink-0 text-left text-toned lg:w-24">Секция</span>
+        <span class="truncate">{{ sectionName }}</span>
+        <UIcon
+          name="i-lucide-chevron-down"
+          class="size-3.25 shrink-0 text-faint"
+        />
+      </button>
+    </SectionSheet>
+
+    <slot />
+
+    <p class="pt-3.5 text-cap leading-6 text-toned lg:pt-4 lg:pb-1.5 lg:leading-5">
       Начать с шаблона
     </p>
-    <div class="mt-2 flex flex-wrap gap-1.5">
+    <!-- Raised in dark (chip-elev), not recessed; on desktop in light the filter chip's 1px line edge -->
+    <div
+      class="flex flex-wrap gap-1.5 dark:raised lg:gap-2"
+      role="group"
+      aria-label="Начать с шаблона"
+    >
       <ChipButton
-        v-for="t in TEMPLATES"
-        :key="t.key"
-        :label="t.name"
-        :glyph="t.glyph"
-        :selected="page.template === t.key"
-        @click="data.updatePage(page.id, applyTemplate(page, t.key))"
+        v-for="s in starters"
+        :key="s.key"
+        :label="s.name"
+        :glyph="s.glyph"
+        :selected="page.template === s.key"
+        :class="page.template === s.key ? '' : 'lg:ring lg:ring-inset lg:ring-default lg:dark:ring-0'"
+        :aria-pressed="page.template === s.key"
+        @click="pick(s)"
       />
     </div>
 
-    <label class="mt-5 block">
+    <label class="mt-4.5 block lg:mt-5">
       <span class="mb-1.5 block text-sm font-medium text-highlighted">Что сюда класть?</span>
       <UInput
         v-model="description"
-        placeholder="Например: подарки и идеи подарков"
+        placeholder="Слова через запятую"
         class="w-full"
+        size="lg"
         @focus="emit('focus', true)"
         @blur="emit('focus', false)"
       />
     </label>
     <p class="mt-1.5 text-13 leading-snug text-toned">
-      По этим словам сюда попадут подходящие записи.
+      Записи с этими словами Авто положит сюда.
     </p>
   </div>
 </template>

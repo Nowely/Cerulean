@@ -84,7 +84,8 @@ export default [
     expect(await shows(sheet), 'no sheet «Значок и цвет»')
     expect(await sheet.getByText('Идеи', { exact: true }).count(), 'the sheet does not name the page')
     const icons = sheet.getByRole('group', { name: 'Значок' }).getByRole('button')
-    expect(await icons.count() === 35, `${await icons.count()} icons, not 35`)
+    // v24 fixes (13) added the week to the calendar: 36
+    expect(await icons.count() === 36, `${await icons.count()} icons, not 36`)
     const sizes = await icons.first().boundingBox()
     expect(sizes.height >= 48, `icon buttons are ${sizes.height} high`)
     const row = await icons.evaluateAll(els => els.slice(0, 7).map(e => Math.round(e.getBoundingClientRect().top)))
@@ -340,7 +341,8 @@ export default [
     await p.getByRole('dialog').getByRole('button', { name: 'Новая страница' }).click()
     await p.waitForURL(/\/p\//)
     expect(await shows(p.getByText('Что сюда класть?')), 'no «Что сюда класть?» on a new page')
-    expect(await p.getByText('По этим словам сюда попадут подходящие записи.').count(), 'no helper line on a new page')
+    // v24 fixes (4) reworded the helper line
+    expect(await p.getByText('Записи с этими словами Авто положит сюда.').count(), 'no helper line on a new page')
     await noDescription(p, 'a new page')
     // The picker of the composer: Авто «разложится по страницам» with nothing typed
     await open(p, '/')

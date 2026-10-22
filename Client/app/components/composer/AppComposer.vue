@@ -92,6 +92,8 @@ watch(speech.error, (e) => {
 const page = computed(() => props.pageId ? data.pages[props.pageId] : undefined)
 const destPage = computed(() => dest.value === 'auto' ? undefined : data.pages[dest.value])
 const untitled = computed(() => props.mode === 'page' && page.value && !page.value.title.trim() && dest.value === page.value.id)
+/** A page with no records yet, aimed at itself (v24): «Первая запись», named or not; its manual has no hint line */
+const firstRecord = computed(() => props.mode === 'page' && page.value?.kind === 'page' && dest.value === page.value.id && !data.recordsOf(page.value.id).length)
 
 // The live decision of Авто, a beat behind the typing so nothing flickers
 const typed = refDebounced(text, 180)
@@ -168,7 +170,7 @@ const hint = computed(() => props.placeholder ?? (
       : onCalendar.value
         ? `Запись на ${dayAim(onCalendar.value, now.value)}`
         : props.mode === 'page'
-          ? (untitled.value && !data.recordsOf(props.pageId!).length ? 'Первая запись' : 'Новая запись')
+          ? (firstRecord.value ? 'Первая запись' : 'Новая запись')
           : 'Хлеб, позвонить в 10…'
 ))
 

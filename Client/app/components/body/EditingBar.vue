@@ -1,9 +1,10 @@
 <script setup lang="ts">
 // The editing bar (v23, A3, S1, F2, F7, M1): it takes the composer's slot while a body has focus, the same 44px pill
 // (`elev`, 1px `line`, `line2` in dark) at the same width. Faces: the caret (↶ · Заголовок · Список · Нумерованный ·
-// Цитата · @ · Готово), a selection (↶ · Ж · К · Ссылка · @ · ○ on a record · Готово), «@» (up to three whole chips and
-// «Ещё…», which opens «Связать» to mention) and the address field of «Ссылка». Its buttons never take the focus from
-// the text. Desktop: 36px round tools, 18px glyphs, tooltips that name the keys.
+// Цитата · @ · Готово), a selection (↶ · Ж · К · Ссылка · @ · ○ · Готово; the ring makes a subitem on a record and a
+// record on a page note), «@» (up to three whole chips and «Ещё…», which opens «Связать» to mention) and the address
+// field of «Ссылка». Its buttons never take the focus from the text. Desktop: 36px round tools, 18px glyphs, tooltips
+// that name the keys.
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import type { Hit } from '~/domain/search'
 import type { MentionTarget } from '~/domain/body'
@@ -250,15 +251,15 @@ function more(h: Hit) {
         </button>
       </BarTip>
 
-      <!-- «Сделать подпунктом»: the product's empty checkbox ring, on a record only -->
+      <!-- The product's empty checkbox ring: «Сделать подпунктом» on a record, «Сделать записью» on a page note (v24) -->
       <BarTip
         v-if="face === 'select' && s?.canSub"
-        label="Сделать подпунктом"
+        :label="s.subLabel"
       >
         <button
           type="button"
           class="ebt"
-          aria-label="Сделать подпунктом"
+          :aria-label="s.subLabel"
           @click="act?.toSub()"
         >
           <span

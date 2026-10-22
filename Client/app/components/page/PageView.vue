@@ -10,8 +10,10 @@ import { useJournalStore } from '~/stores/journal'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
+import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import { usePropSheets } from '~/composables/usePropSheets'
+import { useNotify } from '~/composables/useNotify'
 import { pageSubline, dueToday, dueThisWeek } from '~/domain/summary'
 import { weekday } from '~/domain/dates'
 import { groupByDue, matchesQuery } from '~/domain/views'
@@ -34,6 +36,7 @@ const TableLayout = defineAsyncComponent(() => import('./layouts/TableLayout.vue
 const CalendarLayout = defineAsyncComponent(() => import('./layouts/CalendarLayout.vue'))
 const ViewSettings = defineAsyncComponent(() => import('./ViewSettings.vue'))
 const NewPageSetup = defineAsyncComponent(() => import('./NewPageSetup.vue'))
+const PageManual = defineAsyncComponent(() => import('./PageManual.vue'))
 
 const props = withDefaults(defineProps<{ page: Page, container?: 'full' | 'preview' | 'glance' }>(), { container: 'full' })
 const emit = defineEmits<{ editing: [boolean] }>()
@@ -41,15 +44,22 @@ const emit = defineEmits<{ editing: [boolean] }>()
 const data = useDataStore()
 const journal = useJournalStore()
 const actions = useRecordActions()
+const notify = useNotify()
 const ui = useUiStore()
 const now = useNow()
 const router = useRouter()
 const peek = usePeek()
+const { isDesktop } = useScreen()
 
 const full = computed(() => props.container === 'full')
 const records = computed(() => data.recordsOf(props.page.id))
 const today = computed(() => props.page.kind === 'today')
 const setup = computed(() => full.value && props.page.kind === 'page' && !records.value.length && !data.liveRecords.some(r => r.pageId === props.page.id))
+/**
+ * A page with no records is its own manual (v24, И9, И13): never on a record, Сегодня, Входящие or in a preview, and
+ * (item 7) never on a page whose views collect records
+ */
+const manual = computed(() => setup.value)
 const subline = computed(() => pageSubline(props.page, records.value, now.value, data.liveRecords))
 
 // A new page named like one there is says so under its title (v22, G3): «Открыть» goes to that page, and this one,
@@ -132,11 +142,22 @@ function settingsClosed() {
   afterSettings = null
   run?.()
 }
+/** «Удалить вид» in «Настроить вид»: the tabs take it with «Отменить»; an empty page has no tabs, so it goes the same way here */
+function removeView() {
+  settingsOpen.value = false
+  if (tabs.value) return tabs.value.remove(view.value)
+  const before = props.page.views
+  const gone = view.value
+  if (before.length < 2) return
+  data.updatePage(props.page.id, { views: before.filter(v => v.id !== gone.id) })
+  viewId.value = null
+  notify(`Вид «${gone.name}» удалён`, { label: 'Отменить', run: () => data.updatePage(props.page.id, { views: before }) })
+}
 /** Board and table want the whole width of the main column on desktop */
 const wide = computed(() => view.value.layout === 'board' || view.value.layout === 'table')
 /** What the header names once the title block has scrolled under it (v23, B2, F14): the open tab too, as the tabs went with it */
 const heading = computed(() => nb(`${props.page.title || 'Без названия'}${!today.value && !setup.value && views.value.length > 1 ? ` · ${view.value.name}` : ''}`))
-defineExpose({ openSettings: () => settingsOpen.value = true, toggleSearch: () => toggleSearch(), wide, heading })
+defineExpose({ openSettings: () => settingsOpen.value = true, toggleSearch: () => toggleSearch(), wide, heading, setup })
 
 // Search inside the page
 const searching = ref(false)
@@ -197,6 +218,12 @@ watch(() => ui.openGlyph, (id) => {
 watch(glyphOpen, (v) => {
   if (!v) glyphAnchor.value = null
 })
+// «Сделать записью» on the note (v24): the new record is the newest of the first view, so that view shows
+watch(() => ui.firstView, (id) => {
+  if (!full.value || id !== props.page.id) return
+  ui.firstView = null
+  viewId.value = null
+}, { immediate: true })
 
 function openRecord(rec: Rec) {
   if (full.value) void router.push(`/r/${rec.id}`)
@@ -231,6 +258,8 @@ const emptyText = computed(() => {
   if (done?.value === false && records.value.length) return 'Всё сделано.'
   if (props.page.kind === 'inbox') return 'Всё разложено. Сюда попадает то, что не удалось разложить'
   if (!full.value) return 'Нет записей'
+  // Beside the manual no hint: the composer's «Первая запись» says it (v24 fixes, 4)
+  if (manual.value) return ''
   if (!records.value.length && titleFocused.value) return 'Назови страницу, потом пиши внизу.'
   return 'Пиши внизу: первая запись появится здесь.'
 })
@@ -246,8 +275,9 @@ const emptyText = computed(() => {
       class="px-4 pt-1 lg:px-0"
       :class="!full ? 'lg:px-4' : 'lg:pt-px'"
     >
+      <!-- A phone has «Добавить значок» above the title; desktop a dashed tile in the glyph's place (v24 fixes desktop, 4) -->
       <GlyphPicker
-        v-if="full && setup && !page.glyph"
+        v-if="full && setup && !page.glyph && !isDesktop"
         v-model:open="glyphOpen"
         :glyph="page.glyph"
         :color="pageColor(page)"
@@ -264,7 +294,7 @@ const emptyText = computed(() => {
       </GlyphPicker>
       <div class="flex items-center gap-2.5 lg:gap-3.5">
         <GlyphPicker
-          v-if="full && (page.glyph || !setup) && page.kind === 'page'"
+          v-if="full && (page.glyph || !setup || isDesktop) && page.kind === 'page'"
           v-model:open="glyphOpen"
           :glyph="page.glyph"
           :color="pageColor(page)"
@@ -272,7 +302,19 @@ const emptyText = computed(() => {
           :anchor="glyphAnchor"
           @change="p => data.updatePage(page.id, p)"
         >
+          <UTooltip
+            v-if="setup && !page.glyph"
+            text="Добавить значок"
+          >
+            <button
+              type="button"
+              class="size-9 shrink-0 cursor-pointer rounded-tile border-[1.5px] border-dashed border-ring hover:bg-hover"
+              aria-label="Добавить значок"
+              aria-haspopup="dialog"
+            />
+          </UTooltip>
           <button
+            v-else
             type="button"
             class="flex shrink-0 cursor-pointer rounded-tile-md lg:rounded-tile-lg"
             aria-label="Значок страницы"
@@ -350,7 +392,24 @@ const emptyText = computed(() => {
       v-if="setup"
       :page="page"
       @focus="v => emit('editing', v)"
-    />
+    >
+      <!-- «Как показывать» opens «Настроить вид» of the first view at its line; the tabs are not there yet -->
+      <PageManual
+        v-if="manual"
+        v-model:settings="settingsOpen"
+        :page="page"
+        @how="viewId = null"
+        @closed="settingsClosed"
+      >
+        <ViewSettings
+          :page="page"
+          :view="view"
+          @remove="removeView"
+          @add="addView"
+          @new-prop="newProp"
+        />
+      </PageManual>
+    </NewPageSetup>
 
     <!-- Views: underlined tabs; search and «Настроить вид» on the right. A page with no records yet has none:
          views come from «⋯ → Настроить вид» -->
@@ -415,7 +474,7 @@ const emptyText = computed(() => {
         <ViewSettings
           :page="page"
           :view="view"
-          @remove="settingsOpen = false; tabs?.remove(view)"
+          @remove="removeView"
           @add="addView"
           @new-prop="newProp"
         />
@@ -504,7 +563,10 @@ const emptyText = computed(() => {
           @choose="choose"
         >
           <template #empty>
-            <p class="px-5 py-6 text-meta text-toned lg:px-2.5">
+            <p
+              v-if="emptyText"
+              class="px-5 py-6 text-meta text-toned lg:px-2.5"
+            >
               {{ emptyText }}
             </p>
           </template>

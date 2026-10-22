@@ -155,9 +155,9 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
         На главную
       </UButton>
     </div>
-    <!-- Входящие and Сегодня have nothing to put there (PagesInbox, PagesWeek) -->
+    <!-- Входящие and Сегодня have nothing to put there (PagesInbox, PagesWeek); a new page asks «Что сюда класть?» itself (PagesEmpty) -->
     <PageAside
-      v-if="isDesktop && live && page && page.kind === 'page' && !peek.target.value && !view?.wide"
+      v-if="isDesktop && live && page && page.kind === 'page' && !peek.target.value && !view?.wide && !view?.setup"
       :page="page"
     />
   </div>
