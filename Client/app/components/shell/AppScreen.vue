@@ -4,6 +4,8 @@
 // While a body on it has focus the edges are hard (v23, F6): no fade, the header and the bar's dock opaque.
 // While the dock shows the guess line or the «@» row (v24, item 14) the list ends at a hard edge above it: the dock's top
 // padding is open, so the list runs on under it to the guess line, and the dock's surface covers whatever that edge would cut.
+// With the keys up the dock sits 8 above them, as the composer is drawn there; the editing bar keeps v23's place, where the
+// body's edges were set to settle on whole rows.
 import { computed, nextTick, onBeforeUnmount, provide, ref, useTemplateRef, watch } from 'vue'
 import { useScroll } from '@vueuse/core'
 import NoticeSlot from './NoticeSlot.vue'
@@ -76,8 +78,8 @@ defineExpose({ scroller })
     </div>
     <div
       v-if="$slots.dock"
-      class="relative shrink-0 px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] max-lg:[[data-keyboard]_&]:pb-2 lg:px-8 lg:pb-5"
-      :class="{ 'z-3 -mt-1.5': dockLine }"
+      class="relative shrink-0 px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] lg:px-8 lg:pb-5"
+      :class="{ 'z-3 -mt-1.5': dockLine, 'max-lg:[[data-keyboard]_&]:pb-2': !hard }"
     >
       <div
         v-if="dockLine && cover"
