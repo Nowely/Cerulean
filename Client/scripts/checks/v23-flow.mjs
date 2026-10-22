@@ -45,11 +45,12 @@ const headerTitle = p => p.evaluate(() => [...document.querySelectorAll('header 
 export default [
   // 13: «Задачи reads «3 дела · оплатить интернет, позвонить стоматологу…» (overdue first, then today, then the rest);
   // Покупки reads «6 купить · хлеб, молоко, сыр +3» (new first)»
+  // v24 item 17: a summary never cuts a name, so at 390 Задачи reads «3 дела · оплатить интернет +2»
   { id: 'f-13-summary', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
     const tasks = plain(await summaryOf(p, 'Задачи'))
-    expect(tasks.startsWith('3 дела · оплатить интернет, позвонить стоматологу'), `Задачи reads «${tasks}»`)
+    expect(tasks === '3 дела · оплатить интернет +2', `Задачи reads «${tasks}»`)
     const buy = plain(await summaryOf(p, 'Покупки'))
     expect(buy === '6 купить · хлеб, молоко, сыр +3', `Покупки reads «${buy}»`)
   } },
@@ -170,13 +171,14 @@ export default [
     expect(await shows(p.locator('main li').filter({ hasText: 'Подарок маме на др' })), '«Отменить» did not bring the row back')
   } },
   // 16: «Сегодня shows «На неделе · 2 ›»; tap → «Поменять фильтр воды … ср»»; the fold stays as it was left
+  // v24 item 18: one demo world, the fold reads «На неделе · 4» (ср, пт, сб, вс)
   { id: 'f-16-week', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
     await openPage(p, 'Сегодня')
     const cap = p.getByRole('button', { name: /^На неделе/ })
     expect(await shows(cap), 'no «На неделе»')
-    expect(plain(await cap.textContent()) === 'На неделе · 2', `the caption reads «${plain(await cap.textContent())}»`)
+    expect(plain(await cap.textContent()) === 'На неделе · 4', `the caption reads «${plain(await cap.textContent())}»`)
     expect(await cap.getAttribute('aria-expanded') === 'false', '«На неделе» does not start folded')
     expect(!(await p.getByText('Поменять фильтр воды').count()), 'the folded week shows its rows')
     await cap.click()
@@ -185,7 +187,8 @@ export default [
     expect(await shows(row), 'open, the week has no «Поменять фильтр воды»')
     const text = plain(await row.textContent())
     expect(text.endsWith('ср') && text.includes('Дела по дому'), `the row reads «${text}»`)
-    expect(plain(await p.locator('main section[aria-label="На неделе"] > div').nth(1).textContent()).endsWith('вс'), '«Вернуть книгу в библиотеку» does not end with «вс»')
+    const ends = (await p.locator('main section[aria-label="На неделе"] > div').allTextContents()).map(t => plain(t).slice(-2))
+    expect(ends.join(' ') === 'ср пт сб вс', `the week's rows end with ${ends.join(' ')}`)
     // The header still counts today only
     expect(await shows(p.getByText('3 дела со всех страниц · 1 просрочено')), 'the header count changed')
     await p.reload()
@@ -213,13 +216,13 @@ export default [
     expect(await shows(p.getByText('Поменять фильтр воды')), 'the open week has no rows')
     expect(!(await p.getByText(/0 дел/).count()), 'the header says «0 дел»')
   } },
-  // D3: «Сегодня «На неделе · 2»» on desktop too
+  // D3: «Сегодня «На неделе · 2»» on desktop too (v24 item 18: «На неделе · 4»)
   { id: 'f-16-desk-week', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
     await openPage(p, 'Сегодня')
     const cap = p.getByRole('button', { name: /^На неделе/ })
-    expect(plain(await cap.textContent()) === 'На неделе · 2', `the caption reads «${plain(await cap.textContent())}»`)
+    expect(plain(await cap.textContent()) === 'На неделе · 4', `the caption reads «${plain(await cap.textContent())}»`)
     await cap.click()
     expect(await shows(p.getByText('Вернуть книгу в библиотеку')), 'the open week has no «Вернуть книгу в библиотеку»')
   } },
