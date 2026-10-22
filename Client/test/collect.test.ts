@@ -1,6 +1,9 @@
 // Pages that collect records (v24 item 4 and its fixes): «Откуда записи», «Фильтр», the rows, the first day, the
 // summaries that never cut a name, and the one demo world
 import { describe, expect, it } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { useDataStore } from '~/stores/data'
+import { useJournalStore } from '~/stores/journal'
 import { demo } from '~/domain/seed'
 import type { Rec, ViewDef } from '~/domain/types'
 import { collectLead, collected, collects, filterWords, firstCollects, firstDay, onlyCollects, rowEnd, togglePicked } from '~/domain/collect'
@@ -157,6 +160,38 @@ describe('summaries never cut a name (v24 item 17)', () => {
 
   it('with no room for one name, the count alone', () => {
     expect(fitNames('9 дел', ['очень длинное название записи'], 9, line => textW(line, 14) <= 60)).toBe('9 дел')
+  })
+})
+
+describe('the composer of a collecting page (v24 item 10)', () => {
+  let n = 0
+  async function fresh() {
+    setActivePinia(createPinia())
+    const data = useDataStore()
+    await data.init({ demo: true, dbName: `collect-${++n}` })
+    return { data, journal: useJournalStore() }
+  }
+  const find = (data: ReturnType<typeof useDataStore>, text: string) => Object.values(data.records).find(r => r.text === text && !r.deletedAt)
+
+  it('gives a record that names no day the filter\'s first day, wherever Авто files it', async () => {
+    const { data, journal } = await fresh()
+    await journal.send('повесить полку', 'auto', { day: '2026-10-20' })
+    const rec = find(data, 'Повесить полку')
+    expect(data.pages[rec!.pageId]!.title).toBe('Дела по дому')
+    expect(rec!.due?.date).toBe('2026-10-20')
+  })
+
+  it('a day named in the text wins', async () => {
+    const { data, journal } = await fresh()
+    await journal.send('повесить полку завтра', 'auto', { day: '2000-01-01' })
+    expect(find(data, 'Повесить полку')!.due?.date).not.toBe('2000-01-01')
+  })
+
+  it('never files into a page that only collects', async () => {
+    const { data, journal } = await fresh()
+    await journal.send('на неделе: позвонить маме', 'auto')
+    const rec = Object.values(data.records).find(r => /позвонить маме/i.test(r.text))
+    expect(data.pages[rec!.pageId]!.title).not.toBe('На неделе')
   })
 })
 

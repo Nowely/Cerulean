@@ -16,6 +16,9 @@ import { draftsFor } from '~/domain/auto'
 import { onDay } from '~/domain/views'
 import { dayAim } from '~/domain/dates'
 import { useCalendarDay } from '~/composables/useCalendarDay'
+import { useCollecting } from '~/composables/useCollecting'
+import { collects, firstDay } from '~/domain/collect'
+import { parseDue } from '~/domain/parse'
 import { useNow } from '~/composables/useNow'
 import { capitalize, count, RECORD_FORMS } from '~/domain/text'
 import { useLater } from '~/composables/useLater'
@@ -42,13 +45,51 @@ const later = useLater()
 
 const text = ref('')
 const field = useTemplateRef<HTMLTextAreaElement>('field')
-const home = () => props.mode === 'page' && props.pageId ? props.pageId : 'auto'
+
+// ---------- a page whose view collects records (v24, И10): the chip, the first day, the rule line, the placeholder ----------
+const collecting = useCollecting()
+const clock = useNow()
+/** The collecting view this page shows now; nothing elsewhere */
+const collectView = computed(() => {
+  const c = collecting.value
+  if (props.mode !== 'page' || !c || c.pageId !== props.pageId) return null
+  const v = data.pages[c.pageId]?.views.find(x => x.id === c.viewId)
+  return v && collects(v) ? v : null
+})
+/** The chip of a collecting page: «Авто», or that page when the view collects from exactly one */
+function collectHome(): 'auto' | Id | null {
+  const v = collectView.value
+  if (!v) return null
+  return v.from === 'pick' && v.pages?.length === 1 ? v.pages[0]! : 'auto'
+}
+/** What a record that names no day of its own gets: «завтра» under «На неделе», else today under «Сегодня» */
+const firstDayKey = computed(() => collectView.value ? firstDay(collectView.value, clock.value) : null)
+function collectHint(): string | null {
+  const v = collectView.value
+  if (!v) return null
+  return v.dues?.includes('week') ? 'Запись на неделю' : v.dues?.includes('today') ? 'Запись на сегодня' : 'Новая запись'
+}
+/** At rest the line above the pill says the rule, «Авто · без дня — на завтра» (13 muted, no arrow, as the day-one hint) */
+function collectRule(label: string): string | null {
+  return firstDayKey.value ? `${label} · без дня — на ${dayAim(firstDayKey.value, clock.value)}` : null
+}
+/** While typing, the guess carries the day the record gets: «→ Дела по дому · завтра»; a day in the text wins */
+function collectGuess(guess: string, typed: string): string {
+  const day = firstDayKey.value
+  return day && !parseDue(typed, clock.value).due ? `${guess} · ${dayAim(day, clock.value)}` : guess
+}
+
+const home = () => collectHome() ?? (props.mode === 'page' && props.pageId ? props.pageId : 'auto')
 const dest = ref<'auto' | Id>(home())
 /** The aim «Отменить» gave back: it holds for one send, or until the text is cleared */
 const once = ref(false)
 watch(() => props.pageId, () => {
   dest.value = home()
   once.value = false
+})
+// The page's view starts or stops collecting (a tab, «Откуда записи»): the chip follows unless «Отменить» aimed it
+watch(collectHome, () => {
+  if (!once.value) dest.value = home()
 })
 watch(text, (t) => {
   if (once.value && !t.trim()) {
@@ -114,7 +155,9 @@ const guess = computed(() => {
 /** The line on the pill: the guess while there is text, the day-one hint before the first record */
 const guessLine = computed(() => {
   if (props.mode === 'record') return null
-  if (guess.value && (text.value.trim() || once.value)) return { text: `→ ${guess.value}`, hint: false }
+  if (guess.value && (text.value.trim() || once.value)) return { text: `→ ${collectGuess(guess.value, typed.value)}`, hint: false }
+  const rule = !text.value && !speech.listening.value ? collectRule(chip.value.label) : null
+  if (rule) return { text: rule, hint: true }
   if (props.intro && !text.value && dest.value === 'auto' && !speech.listening.value) return { text: 'Пиши что угодно: разложится по страницам', hint: true }
   return null
 })
@@ -135,7 +178,8 @@ function openPicker() {
     title: 'Куда записать',
     subtitle: text.value.trim() || undefined,
     auto: props.mode === 'record' ? undefined : { picks: guess.value || undefined, chosen: dest.value === 'auto', run: () => choose('auto') },
-    thisPage: props.mode === 'page' ? props.pageId : undefined,
+    // A collecting page files nothing of its own: no «Эта страница» row (v24)
+    thisPage: props.mode === 'page' && !collectView.value ? props.pageId : undefined,
     chosen: dest.value === 'auto' ? undefined : dest.value,
     newName: text.value.trim() ? null : undefined,
     run: (c) => {
@@ -160,7 +204,7 @@ const onCalendar = computed(() => {
   return props.mode === 'page' && day && day.pageId === props.pageId && dest.value === props.pageId ? day.date : null
 })
 
-const hint = computed(() => props.placeholder ?? (
+const hint = computed(() => props.placeholder ?? collectHint() ?? (
   props.mode === 'record'
     ? 'Подпункт'
     : props.mode === 'today'
@@ -239,6 +283,7 @@ async function submit(opts: { record?: boolean } = {}) {
   // Anywhere else: the screen docks the receipt, Уточнение or found card above this composer
   await journal.send(t, aimed, {
     today: props.mode === 'today' && aimed === 'auto',
+    day: firstDayKey.value ?? undefined,
     record: opts.record,
     onStart: (e) => {
       lastSend = { text: t, aim: aimed, entryId: e.id, ids: () => data.entries.find(x => x.id === e.id)?.recordIds ?? [] }
