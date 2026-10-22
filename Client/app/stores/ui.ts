@@ -93,8 +93,8 @@ export const useUiStore = defineStore('ui', () => {
   const findQuery = ref('')
   /** «Записать «гараж»» in Поиск: Главная's composer sends it as typed and docks the receipt there (v22, N19) */
   const outbox = ref<string | null>(null)
-  /** «Отменить» on a receipt: its text goes back to the composer on screen, aimed for that one send */
-  const refill = ref<{ text: string, aim: Id | 'auto' } | null>(null)
+  /** «Отменить» on a receipt: its text goes back to the composer on screen, aimed for that one send, its «@» names as chips */
+  const refill = ref<{ text: string, aim: Id | 'auto', links?: Id[] } | null>(null)
   /** The notice on screen; a new one replaces it, and a docked card goes when one shows (useNotify) */
   const notice = shallowRef<Notice | null>(null)
   /**

@@ -3,7 +3,9 @@
 // with the text · mic → send. The chip is text only and opens the page picker. It never changes while typing,
 // so the text never moves: in Авто the guess is a line right on the pill, at the chip's text («→ Покупки»).
 // «Отменить» on a receipt gives the text back aimed at its page for that one send («→ Покупки, только эта запись»).
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+// «@» (v24, items 12 and 13): a name picked in the «@» row is a chip in the field; the send links each record to the names
+// its own text holds, and the title keeps them as «@Name».
+import { computed, inject, nextTick, onBeforeUnmount, ref, useTemplateRef, watch, watchEffect } from 'vue'
 import { refDebounced, useOnline } from '@vueuse/core'
 import { GLYPHS, type Entry, type Id } from '~/domain/types'
 import { pageColor } from '~/domain/look'
@@ -25,8 +27,12 @@ import { useLater } from '~/composables/useLater'
 import { useTemplates } from '~/composables/useTemplates'
 import { templateBrings } from '~/domain/recordTemplates'
 import type { BodyOwner } from '~/domain/body'
+import { inlineOf } from '~/domain/mention'
+import { DOCK_LINE } from '~/composables/useDockEdge'
 import DestChip from './DestChip.vue'
 import RecordDest, { type RecordDestKind } from './RecordDest.vue'
+import ComposerField from './ComposerField.vue'
+import MentionRow from './MentionRow.vue'
 
 const props = withDefaults(defineProps<{
   /**
@@ -53,7 +59,9 @@ const online = useOnline()
 const later = useLater()
 
 const text = ref('')
-const field = useTemplateRef<HTMLTextAreaElement>('field')
+/** What the field's chips point at («@» picks), in the order they stand */
+const links = ref<Id[]>([])
+const field = useTemplateRef<InstanceType<typeof ComposerField>>('field')
 
 // ---------- a page whose view collects records (v24, И10): the chip, the first day, the rule line, the placeholder ----------
 const collecting = useCollecting()
@@ -139,6 +147,18 @@ watch(speech.error, (e) => {
   if (e) notify(e)
 })
 
+// ---------- «@» (v24, item 12) ----------
+
+/** «@» files links: everywhere but a record's «Подпункт», a subitem being one line with no links */
+const mentionsOn = computed(() => props.mode !== 'record' || recordDest.value === 'note')
+/** The «@» row while it is open, in the guess line's place */
+const mention = computed(() => mentionsOn.value ? field.value?.mention ?? null : null)
+/** «· связь: @Стоматолог» (v24 fixes, 1): the link with its marker, never «связано со «…»» */
+const linkLine = computed(() => {
+  const names = links.value.map(id => data.nameOf(id)).filter(Boolean)
+  return names.length ? ` · связь: ${names.map(n => `@${n}`).join(', ')}` : ''
+})
+
 const page = computed(() => props.pageId ? data.pages[props.pageId] : undefined)
 const destPage = computed(() => dest.value === 'auto' ? undefined : data.pages[dest.value])
 const untitled = computed(() => props.mode === 'page' && page.value && !page.value.title.trim() && dest.value === page.value.id)
@@ -167,6 +187,10 @@ const guess = computed(() => {
 const guessLine = computed(() => {
   if (props.mode === 'record') return null
   if (template.value) return { text: `→ ${templateGuess.value}`, hint: false }
+  if (linkLine.value && text.value.trim()) {
+    const to = guess.value ? collectGuess(guess.value, typed.value) : destPage.value ? destPage.value.title || 'Без названия' : ''
+    if (to) return { text: `→ ${to}${linkLine.value}`, hint: false }
+  }
   if (guess.value && (text.value.trim() || once.value)) return { text: `→ ${collectGuess(guess.value, typed.value)}`, hint: false }
   const rule = !text.value && !speech.listening.value ? collectRule(chip.value.label) : null
   if (rule) return { text: rule, hint: true }
@@ -267,12 +291,15 @@ const chipAim = computed(() => props.mode === 'record'
   ? `Куда записать: «${recordChip.value.label}». Выбрать другое`
   : `Куда записать: «${page.value?.title || 'Без названия'}», по шаблону «${template.value?.name}». Выбрать другое`)
 
-/** A subitem as a line of «Подпункты», or a paragraph «В заметку» tinted fresh, with the field ready for the next */
-function writeOnRecord(t: string) {
+/**
+ * A subitem as a line of «Подпункты», or a paragraph «В заметку» tinted fresh, with the field ready for the next; the
+ * paragraph keeps the field's «@» chips as mentions
+ */
+function writeOnRecord(t: string, linked: Id[]) {
   const owner = recordOwner.value
   if (!owner) return
   if (recordDest.value === 'note') {
-    data.appendParagraph(owner, t)
+    data.appendParagraph(owner, linked.length ? inlineOf(t, linked.map(id => ({ id, name: data.nameOf(id) }))) : t)
     templates.noted(owner.id)
   } else if (owner.kind === 'template') {
     const tpl = data.templateOf(owner.id)?.tpl
@@ -303,39 +330,32 @@ const hint = computed(() => props.placeholder ?? collectHint() ?? (
           : 'Хлеб, позвонить в 10…'
 ))
 
-// The field grows with the text: a hidden copy in the same grid cell gives the height (up to five lines).
-// The placeholder never wraps the field: only typed text counts.
+/** The field grows with the text up to five lines; past one line the pill's corners follow */
 const multi = ref(false)
-const mirror = useTemplateRef<HTMLElement>('mirror')
-watch(text, () => nextTick(() => {
-  const el = mirror.value
-  if (!el) return
-  const css = getComputedStyle(el)
-  const line = parseFloat(css.lineHeight) || 22
-  multi.value = el.scrollHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom) > line * 1.5
-}))
 
 const canSend = computed(() => text.value.trim().length > 0)
 
-function onKey(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-    e.preventDefault()
-    void submit()
-  }
-}
+/** The screen's dock ends the list at a hard edge while the guess line or the «@» row shows (v24, item 14) */
+const dockLine = inject(DOCK_LINE, null)
+watchEffect(() => {
+  if (dockLine) dockLine.value = !!guessLine.value || !!mention.value
+})
+onBeforeUnmount(() => {
+  if (dockLine) dockLine.value = false
+})
 
 /**
  * The last send from here, until the browser has kept it: when it refuses (out of space), the send is taken
  * back, its text returns to the field aimed the same way and the screen docks «Не сохранилось…» (v22, G2)
  */
-let lastSend: { text: string, aim: 'auto' | Id, ids: () => Id[], entryId?: Id } | null = null
+let lastSend: { text: string, aim: 'auto' | Id, links: Id[], ids: () => Id[], entryId?: Id } | null = null
 watch(() => data.writeFailed, (f) => {
   const s = lastSend
   if (!f || !s || !s.ids().some(id => f.ids.includes(id))) return
   lastSend = null
   if (s.entryId) journal.undo(s.entryId)
   else data.purgeRecords(s.ids())
-  setText(s.text, s.aim)
+  setText(s.text, s.aim, s.links)
   emit('failed', f.reason)
 })
 
@@ -345,14 +365,16 @@ async function submit(opts: { record?: boolean } = {}) {
   if (!t) return
   data.clearWriteFailed()
   const aimed = dest.value
+  const linked = links.value
   speech.stop()
   text.value = ''
+  links.value = []
   if (once.value) {
     dest.value = home()
     once.value = false
   }
   if (props.mode === 'record') {
-    writeOnRecord(t)
+    writeOnRecord(t, linked)
     emit('sent', null)
     return
   }
@@ -366,7 +388,8 @@ async function submit(opts: { record?: boolean } = {}) {
     const drafts = p.kind === 'inbox' ? [{ text: capitalize(t), due: null, values: {} }] : onDay(draftsFor(t, p, Date.now()), onCalendar.value)
     const ids = [...drafts].reverse().map(d => data.addRecord({ pageId: p.id, text: d.text, due: d.due, values: d.values, via: 'manual' }).id)
     if (by) for (const id of ids) data.fillFromTemplate(id, by)
-    lastSend = { text: t, aim: aimed, ids: () => ids }
+    journal.linkWords(ids, linked)
+    lastSend = { text: t, aim: aimed, links: linked, ids: () => ids }
     emit('sent', null)
     return
   }
@@ -376,14 +399,18 @@ async function submit(opts: { record?: boolean } = {}) {
     day: firstDayKey.value ?? undefined,
     record: opts.record,
     onStart: (e) => {
-      lastSend = { text: t, aim: aimed, entryId: e.id, ids: () => data.entries.find(x => x.id === e.id)?.recordIds ?? [] }
+      lastSend = { text: t, aim: aimed, links: linked, entryId: e.id, ids: () => data.entries.find(x => x.id === e.id)?.recordIds ?? [] }
       emit('sent', e)
     }
   })
 }
 
-/** Puts text in the field with the keyboard open; an aim other than this composer's own lasts one send */
-function setText(t: string, aim?: 'auto' | Id) {
+/**
+ * Puts text in the field with the keyboard open; an aim other than this composer's own lasts one send. Each «@Name» of
+ * `linked` is its chip again («Отменить» gives back the chip and the text)
+ */
+function setText(t: string, aim?: 'auto' | Id, linked: Id[] = []) {
+  links.value = linked
   text.value = t
   if (aim && aim !== home()) {
     dest.value = aim
@@ -395,7 +422,7 @@ function setText(t: string, aim?: 'auto' | Id) {
 // «Отменить» on a receipt: the text comes back here
 watch(() => ui.refill, (r) => {
   if (!r || props.mode === 'record') return
-  setText(r.text, r.aim)
+  setText(r.text, r.aim, r.links)
   ui.refill = null
 })
 
@@ -407,17 +434,25 @@ defineExpose({
   /** Sends words from elsewhere as typed, like a send from here, without raising the keyboard */
   write: (t: string) => {
     text.value = t
+    links.value = []
     return submit({ record: true })
   }
 })
 </script>
 
 <template>
-  <!-- The guess line sits 4px over the pill, so its letters never touch the edge (`.dguess` in the dock's 8px gap) -->
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col">
+    <MentionRow
+      v-if="mention"
+      :mention="mention"
+      :owner-id="recordId"
+      @pick="t => field?.pick(t)"
+      @closed="field?.focus()"
+    />
+    <!-- The guess line sits 4px over the pill, so its letters never touch the edge (`.dguess` in the dock's 8px gap) -->
     <p
-      v-if="guessLine"
-      class="-mb-1 h-5 truncate pl-4 text-13 leading-5 text-toned"
+      v-else-if="guessLine"
+      class="mb-1 h-5 truncate pl-4 text-13 leading-5 text-toned"
       aria-hidden="true"
     >
       {{ guessLine.text }}
@@ -480,30 +515,20 @@ defineExpose({
           :class="heard && text ? 'text-highlighted' : 'text-toned'"
         >{{ heard && text ? text : 'Слушаю…' }}</span>
       </span>
-      <div
+      <ComposerField
         v-show="!speech.listening.value"
-        class="grid min-w-0 flex-1"
-      >
-        <span
-          ref="mirror"
-          class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words py-1.75 pr-1 pl-1 text-input leading-5.5"
-          aria-hidden="true"
-        >{{ text }}&#8203;</span>
-        <textarea
-          ref="field"
-          v-model="text"
-          rows="1"
-          enterkeyhint="send"
-          autocomplete="off"
-          autocapitalize="sentences"
-          :placeholder="hint"
-          :aria-label="mode === 'record' ? (recordDest === 'note' ? 'Новый абзац' : 'Новый подпункт') : 'Новая запись'"
-          class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent py-1.75 pr-1 pl-1 text-input leading-5.5 text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
-          @keydown="onKey"
-          @focus="emit('focus', true)"
-          @blur="emit('focus', false)"
-        />
-      </div>
+        ref="field"
+        v-model="text"
+        v-model:links="links"
+        :label="mode === 'record' ? (recordDest === 'note' ? 'Новый абзац' : 'Новый подпункт') : 'Новая запись'"
+        :placeholder="hint"
+        :mentions="mentionsOn"
+        :owner-id="recordId"
+        field-class="py-1.75 pr-1 pl-1"
+        @enter="submit()"
+        @focus="v => emit('focus', v)"
+        @multi="v => multi = v"
+      />
 
       <button
         v-if="speech.listening.value"

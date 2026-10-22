@@ -124,7 +124,9 @@ export default [
     await p.waitForTimeout(500)
     await p.getByRole('button', { name: /^25 октября/ }).click()
     const field = p.getByRole('textbox', { name: 'Новая запись' })
-    expect((await field.getAttribute('placeholder'))?.includes('Запись на вс, 25 окт'), `the field reads «${await field.getAttribute('placeholder')}»`)
+    // Since v24 (item 12) the field is an editor: its placeholder is aria-placeholder
+    const hint = await field.evaluate(e => e.getAttribute('aria-placeholder') ?? e.getAttribute('placeholder'))
+    expect(hint?.includes('Запись на вс, 25 окт'), `the field reads «${hint}»`)
     await field.fill('купить подарок')
     await p.keyboard.press('Enter')
     await field.blur()

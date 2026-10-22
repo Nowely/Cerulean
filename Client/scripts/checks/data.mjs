@@ -9,6 +9,9 @@
 // Two tabs are two pages of one browser context: they share IndexedDB and BroadcastChannel like two real tabs.
 import { DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
 
+/** The words in the composer: since v24 (item 12) its field is an editor, not a textarea */
+const typed = field => field.evaluate(e => e.value ?? e.textContent)
+
 const DAY = 86400000
 
 export const breakStorage = page => page.addInitScript(() => {
@@ -188,7 +191,7 @@ export default [
     await other.getByRole('checkbox', { name: 'Отметить «Молоко»' }).click()
     await p.waitForTimeout(800)
     expect(await store(p, data => Object.values(data.records).find(r => r.text === 'Молоко').done), 'the tick did not reach the other tab')
-    expect(await field.inputValue() === 'несохранённый текст', 'the unsent text went')
+    expect(await typed(field) === 'несохранённый текст', 'the unsent text went')
     await other.getByRole('checkbox', { name: 'Купить снова «Молоко»' }).click().catch(async () => {
       await store(other, data => data.toggleDone(Object.values(data.records).find(r => r.text === 'Молоко').id))
     })
@@ -223,7 +226,7 @@ export default [
     expect(!(await store(p, data => data.storageError)), 'a full disk reads as storage unavailable')
     // The writing loop: the card, the text back in the field, nothing that claims it was saved
     expect(await shows(p.getByRole('alert').filter({ hasText: 'Не сохранилось. В браузере кончилось место, текст вернулся в поле.' })), 'no «Не сохранилось» card')
-    expect(await p.getByRole('textbox', { name: 'Новая запись' }).inputValue() === 'купить батарейки', 'the text is not back in the field')
+    expect(await typed(p.getByRole('textbox', { name: 'Новая запись' })) === 'купить батарейки', 'the text is not back in the field')
     expect(!(await store(p, data => Object.values(data.records).some(r => /батарейки/i.test(r.text) && !r.deletedAt))), 'the refused record is still shown')
     expect(!(await shows(p.getByText(/записи? → /))), 'a receipt still claims it was saved')
     // «Повторить» once there is room again

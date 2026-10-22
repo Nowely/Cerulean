@@ -16,6 +16,7 @@ import { applyTemplate, readPage, TEMPLATES } from '~/domain/templates'
 import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
 import { uid } from '~/domain/ids'
 import { copyDoc, findTemplate, withParagraph } from '~/domain/recordTemplates'
+import { retitle } from '~/domain/mention'
 
 const TRASH_DAYS = 30
 
@@ -469,8 +470,10 @@ export const useDataStore = defineStore('data', () => {
   function updatePage(id: Id, patch: Partial<Page>) {
     const page = pages.value[id]
     if (!page) return
+    const was = page.title
     Object.assign(page, patch)
     save('pages', page)
+    if (page.title !== was) follow(id, was, page.title)
   }
 
   function removePage(id: Id) {
@@ -648,8 +651,28 @@ export const useDataStore = defineStore('data', () => {
   function updateRecord(id: Id, patch: Partial<Rec>) {
     const rec = records.value[id]
     if (!rec) return
+    const was = rec.text
     Object.assign(rec, patch)
     save('records', rec)
+    if (rec.text !== was) follow(id, was, rec.text)
+  }
+
+  /**
+   * A rename follows in the titles that name the thing after «@» (v24, item 13): every record that links to it and the
+   * line of every receipt that linked it. A typed «@word» with no link is left alone, and so is a name cleared to nothing
+   */
+  function follow(id: Id, was: string, now: string) {
+    if (!was.trim() || !now.trim()) return
+    for (const r of Object.values(records.value)) {
+      if (!r.links?.includes(id)) continue
+      const text = retitle(r.text, was, now)
+      if (text !== r.text) updateRecord(r.id, { text })
+    }
+    for (const e of entries.value) {
+      if (!e.links?.includes(id)) continue
+      const text = retitle(e.text, was, now)
+      if (text !== e.text) updateEntry(e.id, { text })
+    }
   }
 
   /**

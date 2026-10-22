@@ -242,6 +242,11 @@ export interface Entry {
   learn?: boolean
   /** «Запомнить» was tapped: the line is an example in the page's «Что сюда класть» */
   learned?: boolean
+  /**
+   * The names picked after «@» in the composer (v24, item 13): each record of the line links to those its own text holds
+   * with their marker («Позвонить @Стоматолог»), and «Отменить» gives them back as chips
+   */
+  links?: Id[]
 }
 
 export type ModelChoice = 'fast' | 'exact'

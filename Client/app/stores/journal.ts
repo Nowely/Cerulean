@@ -12,6 +12,7 @@ import { newEntry } from '~/domain/factory'
 import { dayKey } from '~/domain/dates'
 import { addQty, duplicateOf, qtyProp } from '~/domain/merge'
 import { onlyCollects } from '~/domain/collect'
+import { menLinks } from '~/domain/mention'
 
 /** A page, a new page (a starter's name makes it from that starter), a starter itself, or «Оставить там» */
 export type Choice = { pageId: Id } | { newPage: string } | { template: TemplateKey } | { keep: true }
@@ -145,11 +146,27 @@ export const useJournalStore = defineStore('journal', () => {
   }
 
   /**
+   * «@» (v24, item 13): each record links to the names its own text holds with their marker («позвонить @Стоматолог, купить
+   * хлеб» links only the first). The link is the record's own, so «Связано» lists it on both sides and «Отменить», which
+   * takes the record, takes the link with it
+   */
+  function linkWords(recIds: Id[], links: Id[] | undefined) {
+    if (!links?.length) return
+    const named = links.map(id => ({ id, name: data.nameOf(id) }))
+    for (const id of recIds) {
+      const rec = data.records[id]
+      const add = rec ? menLinks(rec.text, named).map(l => l.id).filter(x => x !== id && !rec.links?.includes(x)) : []
+      if (rec && add.length) data.updateRecord(id, { links: [...(rec.links ?? []), ...add] })
+    }
+  }
+
+  /**
    * Where a line goes, then what its receipt adds: the key note when the rules filed it because the key was
    * refused, and for a question written down the records like it («Похожее в записях»)
    */
   async function decide(entry: Entry, text: string, opts: { day?: string, record?: boolean } = {}): Promise<Entry> {
     await route(entry, text, opts)
+    linkWords(entry.recordIds ?? [], entry.links)
     if (entry.kind !== 'routed' && entry.kind !== 'ask') return entry
     if (keyRefused() && !entry.note) data.updateEntry(entry.id, { note: 'key' })
     if (isQuestion(text)) {
@@ -203,19 +220,21 @@ export const useJournalStore = defineStore('journal', () => {
    * `onStart`: the line exists and is being decided, so a screen can show «Разбирается…» before the answer.
    * `record`: written down even when it reads as a search («Записать «…»» in Поиск, v22 N19).
    */
-  async function send(text: string, dest: 'auto' | Id, opts: { today?: boolean, day?: string, record?: boolean, onStart?: (entry: Entry) => void } = {}): Promise<Entry> {
+  async function send(text: string, dest: 'auto' | Id, opts: { today?: boolean, day?: string, record?: boolean, links?: Id[], onStart?: (entry: Entry) => void } = {}): Promise<Entry> {
     const t = text.trim()
     const day = opts.day ?? (opts.today ? dayKey(Date.now()) : undefined)
-    const entry = data.addEntry(newEntry({ at: Date.now(), text: t, kind: 'pending' }))
+    const entry = data.addEntry(newEntry({ at: Date.now(), text: t, kind: 'pending', ...(opts.links?.length ? { links: opts.links } : {}) }))
     opts.onStart?.(entry)
     const page = dest === 'auto' ? undefined : data.pages[dest]
     if (page) {
       if (page.kind === 'inbox') {
         data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, recordIds: [addToInbox(t, { tags: [] })] })
         fresh.value.add(entry.id)
-        return entry
+      } else {
+        place(entry, page, draftsFor(t, page, Date.now()), { day })
       }
-      return place(entry, page, draftsFor(t, page, Date.now()), { day })
+      linkWords(entry.recordIds ?? [], entry.links)
+      return entry
     }
     return decide(entry, t, { day, record: opts.record })
   }
@@ -429,5 +448,5 @@ export const useJournalStore = defineStore('journal', () => {
     }
   }
 
-  return { fresh, hasModel, previewFor, send, record, retry, choose, chooseOne, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume, remember, forget, duplicateFor, merge }
+  return { fresh, hasModel, previewFor, send, linkWords, record, retry, choose, chooseOne, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume, remember, forget, duplicateFor, merge }
 })

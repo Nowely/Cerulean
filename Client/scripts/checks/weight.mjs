@@ -2,6 +2,9 @@
 // table's «Check» column; the weight's response (in place, a line with «Отменить», a confirm) is what it looks for.
 import { BASE, MOBILE, expect, open, pageOf, shows, store } from './lib.mjs'
 
+/** The words in the composer: since v24 (item 12) its field is an editor, not a textarea */
+const typed = field => field.evaluate(e => e.value ?? e.textContent)
+
 const pageId = (p, title) => store(p, (data, t) => data.livePages.find(x => x.title === t).id, title)
 const notice = p => p.locator('[data-notice]')
 
@@ -31,10 +34,10 @@ export default [
     await field.fill('хлеб')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(100)
-    expect(await field.inputValue() === '', 'the field did not empty')
+    expect(await typed(field) === '', 'the field did not empty')
     expect(await field.evaluate(e => e === document.activeElement), 'the field lost focus, so the keyboard would drop')
     await p.keyboard.type('молоко')
-    expect(await field.inputValue() === 'молоко', 'the next words did not go in at once')
+    expect(await typed(field) === 'молоко', 'the next words did not go in at once')
   } },
   // Move, medium: «move and undo: the record is back»; the line says «Молоко → Задачи»
   { id: 'wt-move-undo', device: MOBILE, run: async (p) => {

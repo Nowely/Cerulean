@@ -26,7 +26,7 @@ async function keyboardUp(page) {
 
 /** The body being edited: the one with the caret, else the last one on screen (the panel's, when it is open) */
 function editorOf(page) {
-  return page.locator('.ProseMirror').last()
+  return page.locator('.ProseMirror.body-text').last()
 }
 
 /** The caret right after `text` in the body (focuses it like a tap at the end of those words) */

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Поиск. A full screen on a phone; on desktop a Ctrl K dialog with the found item previewed on the right.
-// Both use the same rows: without a query the six records added last, with one «Страницы» then «Записи».
+// Both use the same rows: without a query «Открыто недавно» (v24), with one «Страницы» then «Записи».
 // A result opens as a preview (it is a link, not navigation); «Открыть» or ↵ opens it full. Поиск stays in
 // history with its query and section (?find=…&in=…), so back from a result returns to the same results (v22, G11).
 // Nothing found offers «Искать везде» with a section chosen, and «Записать «…»», a send from Главная (v22, N19).
@@ -13,7 +13,9 @@ import { useScreen } from '~/composables/useScreen'
 import { useFind } from '~/composables/useFind'
 import { encodeTarget, pathOf, type Target } from '~/composables/usePeek'
 import { useFindRows } from '~/composables/useFindRows'
-import { lastAdded, search, type Hit } from '~/domain/search'
+import { search, type Hit } from '~/domain/search'
+import { openedHits } from '~/domain/opened'
+import { useOpened } from '~/composables/useOpened'
 import { splitMatch } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
 import RecordMark from '../common/RecordMark.vue'
@@ -26,6 +28,7 @@ const ui = useUiStore()
 const { pageLine, recLine } = useFindRows()
 const { isDesktop } = useScreen()
 const find = useFind()
+const opened = useOpened()
 const route = useRoute()
 const router = useRouter()
 
@@ -72,8 +75,9 @@ const section = computed(() => sectionId.value ? data.sections[sectionId.value] 
 const groups = computed<{ label: string, hits: Hit[] }[]>(() => {
   const inSection = sectionId.value
   if (!q.value.trim()) {
-    const recs = lastAdded(data.liveRecords.filter(r => !inSection || data.pages[r.pageId]?.sectionId === inSection))
-    return [{ label: 'Недавние записи', hits: recs.map(rec => ({ kind: 'record' as const, rec })) }]
+    // The six things opened last, pages and records, newest first (v24, item 16)
+    const hits = openedHits(opened.list.value, data.pages, data.records, inSection)
+    return hits.length ? [{ label: 'Открыто недавно', hits }] : []
   }
   const hits = search(q.value, data.livePages.filter(p => p.kind !== 'today'), data.liveRecords, { titlesOnly: false, sectionId: inSection, nameOf: data.nameOf })
   return [

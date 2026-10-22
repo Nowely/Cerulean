@@ -23,6 +23,8 @@ const props = defineProps<{
   query?: string
   /** The body's owner, left out of the rows */
   ownerId?: Id
+  /** The composer's «@» row opens it as «Связать» (v24, item 12); the editing bar's «Ещё…» as «Упомянуть» */
+  heading?: string
 }>()
 const emit = defineEmits<{ pick: [Hit], closed: [] }>()
 const data = useDataStore()
@@ -75,7 +77,7 @@ const groups = computed(() => {
 <template>
   <AdaptiveOverlay
     v-model:open="open"
-    :title="mention ? 'Упомянуть' : 'Связать'"
+    :title="heading ?? (mention ? 'Упомянуть' : 'Связать')"
     :align="mention ? 'end' : 'start'"
     @closed="emit('closed')"
   >

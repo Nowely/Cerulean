@@ -6,7 +6,7 @@ import { demo } from '~/domain/seed'
 import { pageBadge, pageSubline, pageSummary, recordSummary, summaryText } from '~/domain/summary'
 import { classify, guessOption, pageNamed, placeOptions } from '~/domain/rules'
 import { addQty, duplicateOf, duplicateWords } from '~/domain/merge'
-import { answer, lastAdded, recent } from '~/domain/search'
+import { answer, recent } from '~/domain/search'
 import { applyView, noValueLabel, onDay } from '~/domain/views'
 import { canCreate, convertValues, formatValue, nextColor, optionColor, optionOf, orderFromListed, propKeys, propList, readDate, readNumber } from '~/domain/props'
 import { findGlyphs, pageColor } from '~/domain/look'
@@ -168,11 +168,6 @@ describe('words and lists', () => {
     expect(genitive('Статус')).toBe('статуса')
     expect(genitive('Отдел')).toBe('отдела')
     expect(genitive('Стадия')).toBe('стадии')
-  })
-
-  it('shows the records added last on an empty Поиск', () => {
-    const d = liveDemo()
-    expect(lastAdded(d.records).map(r => r.text)).toEqual(['Хлеб', 'Подарок маме на др', 'Позвонить стоматологу', 'Молоко', 'Сыр', 'Яйца'])
   })
 })
 

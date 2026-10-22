@@ -6,6 +6,7 @@ import { count, normalize, PAGE_FORMS, RECORD_FORMS } from './text'
 import { uid } from './ids'
 import { readPage } from './templates'
 import { bodyMarkdown, bodyOf, remapMentions, type NameOf } from './body'
+import { mdTitle } from './mention'
 
 export interface Snapshot {
   app: 'cerulean'
@@ -47,9 +48,12 @@ export function toMarkdown(pages: Page[], records: Rec[], sections: Section[], n
     const pad = '  '.repeat(depth)
     const links = (r.links ?? [])
       .map(id => live.find(x => x.id === id)?.text ?? pages.find(p => p.id === id && !p.deletedAt)?.title)
-      .filter(Boolean)
-    if (links.length) values.push(`Связано: ${links.join(', ')}`)
-    out.push(`${pad}${mark}${r.text}${due}${values.length ? ` · ${values.join(', ')}` : ''}`)
+      .filter((n): n is string => !!n)
+    // A link the title names after «@» is written there as [[Name]] (v24, item 13); only the others are listed after it
+    const title = mdTitle(r.text, links)
+    const rest = links.filter(n => !title.includes(`[[${n}]]`))
+    if (rest.length) values.push(`Связано: ${rest.join(', ')}`)
+    out.push(`${pad}${mark}${title}${due}${values.length ? ` · ${values.join(', ')}` : ''}`)
     // The body under its record, indented into the list item (v23: a mention as [[Name]])
     const body = bodyMarkdown(bodyOf(r), name)
     if (body) out.push('', ...body.split('\n').map(l => l ? `${pad}  ${l}` : ''), '')

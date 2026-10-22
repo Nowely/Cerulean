@@ -1,6 +1,8 @@
 // What a body's editor is built from (v23, item 3): StarterKit with only paragraph, one heading level, bullets,
 // numbered lists, quote, divider, bold, italic, Link (autolink) and undo; Mention whose suggestion feeds the editing
 // bar (never a popup); the Markdown shortcuts as input rules; «/» on desktop; the keys the bar names.
+// The composer's field (v24, item 12) is a minimal editor of the same Mention: Document, Paragraph, Text and undo, no marks
+// and no input rules; its suggestion feeds the «@» row in the dock.
 import { Extension, textblockTypeInputRule, type Editor, type Range } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Mention from '@tiptap/extension-mention'
@@ -14,6 +16,7 @@ import MentionNode from './MentionNode.vue'
 
 export const MENTION_KEY = new PluginKey('bodyMention')
 export const SLASH_KEY = new PluginKey('bodySlash')
+export const COMPOSER_MENTION_KEY = new PluginKey('composerMention')
 
 /** «/»: the caret face's tools, each with its Markdown shortcut */
 export const SLASH_ITEMS: SlashItem[] = [
@@ -44,6 +47,97 @@ export interface BodyHooks {
 }
 
 const PUNCT = /^[,.;:!?…)»]$/
+
+type MentionHooks = Pick<BodyHooks, 'nameOf' | 'mentionItems' | 'onMention' | 'onMentionKey'> & {
+  /** Whether «@» opens the strip here at all (the composer's «Подпункт» has no links) */
+  allow?: () => boolean
+}
+
+/** The one Mention both editors use: the chip (its glyph and live name) and a suggestion that feeds a strip, never a popup */
+function mentionExtension(key: PluginKey, hooks: MentionHooks) {
+  return Mention.extend({
+    addNodeView() {
+      return VueNodeViewRenderer(MentionNode, { stopEvent: () => true })
+    }
+  }).configure({
+    deleteTriggerWithBackspace: true,
+    renderText: ({ node }) => hooks.nameOf(String(node.attrs.id ?? ''), node.attrs.label ?? undefined),
+    suggestion: {
+      char: '@',
+      pluginKey: key,
+      allowSpaces: false,
+      ...(hooks.allow ? { allow: () => hooks.allow!() } : {}),
+      items: ({ query }) => hooks.mentionItems(query),
+      render: () => ({
+        onStart: p => hooks.onMention(p),
+        onUpdate: p => hooks.onMention(p),
+        onExit: () => hooks.onMention(null),
+        onKeyDown: p => hooks.onMentionKey(p)
+      })
+    }
+  })
+}
+
+export interface ComposerHooks extends MentionHooks {
+  /** Enter: the «@» row's marked name, or the send */
+  onEnter: () => boolean
+}
+
+/** Backspace with nothing but spaces between a chip and the caret takes the chip whole (v24, item 12) */
+function takeChip(editor: Editor): boolean {
+  const { selection, doc } = editor.state
+  if (!selection.empty) return false
+  const $at = selection.$from
+  let chip: { from: number, to: number } | null = null
+  $at.parent.forEach((node, offset) => {
+    const from = $at.start() + offset
+    if (node.type.name === 'mention' && from + node.nodeSize <= $at.pos) chip = { from, to: from + node.nodeSize }
+  })
+  const found = chip as { from: number, to: number } | null
+  if (!found || doc.textBetween(found.to, $at.pos).trim()) return false
+  editor.view.dispatch(editor.state.tr.delete(found.from, $at.pos))
+  return true
+}
+
+/** The composer's field: Document, Paragraph, Text, Mention and undo; Enter sends, Shift+Enter breaks the line */
+export function composerExtensions(hooks: ComposerHooks) {
+  const Keys = Extension.create({
+    name: 'composerKeys',
+    // Before the suggestion's own keys, so Enter is decided in one place
+    priority: 1000,
+    addKeyboardShortcuts() {
+      return {
+        'Enter': ({ editor }) => editor.view.composing ? false : hooks.onEnter(),
+        'Shift-Enter': ({ editor }) => editor.commands.splitBlock(),
+        'Backspace': ({ editor }) => takeChip(editor)
+      }
+    }
+  })
+  return [
+    StarterKit.configure({
+      blockquote: false,
+      bold: false,
+      bulletList: false,
+      code: false,
+      codeBlock: false,
+      dropcursor: false,
+      gapcursor: false,
+      hardBreak: false,
+      heading: false,
+      horizontalRule: false,
+      italic: false,
+      link: false,
+      listItem: false,
+      listKeymap: false,
+      orderedList: false,
+      strike: false,
+      trailingNode: false,
+      underline: false
+    }),
+    mentionExtension(COMPOSER_MENTION_KEY, hooks),
+    Keys
+  ]
+}
 
 export function bodyExtensions(hooks: BodyHooks) {
   /** «# » makes the one heading (StarterKit's rule for level 2 only takes «## ») */
@@ -104,26 +198,7 @@ export function bodyExtensions(hooks: BodyHooks) {
     }
   })
 
-  const BodyMention = Mention.extend({
-    addNodeView() {
-      return VueNodeViewRenderer(MentionNode, { stopEvent: () => true })
-    }
-  }).configure({
-    deleteTriggerWithBackspace: true,
-    renderText: ({ node }) => hooks.nameOf(String(node.attrs.id ?? ''), node.attrs.label ?? undefined),
-    suggestion: {
-      char: '@',
-      pluginKey: MENTION_KEY,
-      allowSpaces: false,
-      items: ({ query }) => hooks.mentionItems(query),
-      render: () => ({
-        onStart: p => hooks.onMention(p),
-        onUpdate: p => hooks.onMention(p),
-        onExit: () => hooks.onMention(null),
-        onKeyDown: p => hooks.onMentionKey(p)
-      })
-    }
-  })
+  const BodyMention = mentionExtension(MENTION_KEY, hooks)
 
   /** Punctuation right after a chip sits tight: a «,» typed after the space a pick left takes that space's place */
   const Tight = Extension.create({

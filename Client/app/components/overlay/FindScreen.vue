@@ -1,10 +1,10 @@
 <script setup lang="ts">
 // Поиск on a phone: a full screen opened focused with the keyboard up. Finding is recessed (a trk field),
-// writing is the raised pill. Without a query the six records added last; with one «Страницы» and «Записи».
+// writing is the raised pill. Without a query «Открыто недавно» (v24); with one «Страницы» and «Записи».
 // The query, the section and the results live in FindOverlay (one logic with the desktop dialog); nothing found
 // offers «Записать «…»» and, with a section chosen, «Искать везде» (v22, N19).
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
-import type { Id } from '~/domain/types'
+import type { Id, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useFindRows } from '~/composables/useFindRows'
 import type { Hit } from '~/domain/search'
@@ -36,6 +36,8 @@ const section = computed(() => sectionId.value ? data.sections[sectionId.value] 
 
 const { pageLine, recLine } = useFindRows()
 const parts = (text: string) => splitMatch(text, query.value)
+/** In «Открыто недавно» a record with its own page (Полумарафон к маю) was opened as that page: it reads as one (v24, D6) */
+const asPage = (r: Rec) => !query.value && !!r.glyph
 
 function choose(id: Id | null) {
   sectionId.value = id
@@ -194,13 +196,17 @@ function choose(id: Id | null) {
               >
                 <span
                   class="truncate text-base leading-5.5"
-                  :class="h.rec.done ? 'text-dimmed line-through' : 'text-highlighted'"
+                  :class="[h.rec.done ? 'text-dimmed line-through' : 'text-highlighted', asPage(h.rec) ? 'font-medium' : '']"
                 >
                   <template v-if="query && parts(h.rec.text).mid">{{ parts(h.rec.text).pre }}<b class="font-semibold">{{ parts(h.rec.text).mid }}</b>{{ parts(h.rec.text).post }}</template>
                   <template v-else>{{ h.rec.text }}</template>
                 </span>
                 <span
-                  v-if="recLine(h.rec)"
+                  v-if="asPage(h.rec)"
+                  class="truncate text-13 text-toned"
+                >{{ data.placeOf(h.rec).title }}</span>
+                <span
+                  v-else-if="recLine(h.rec)"
                   class="truncate text-13 text-toned"
                 >{{ recLine(h.rec) }}</span>
                 <!-- Found in the body: a snippet from a word before the match, the match in ink 600 (v23, A7) -->
