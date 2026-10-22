@@ -87,7 +87,8 @@ export default [
     const pageId = await store(p, data => data.livePages.find(x => x.title === 'Дела по дому').id)
     const count = await store(p, (data, id) => data.recordsOf(id).length, pageId)
     expect(count === 2, `Дела по дому has ${count} records, not 2`)
-    expect(await shows(p.locator('main').getByText(/^2 дела/)), 'the header does not read «2 дела»')
+    // Main flow, acceptance 1: no count or source line under the title, only the warn word
+    expect(!(await p.locator('main').getByText(/^2 дела/).count()), 'a count under the title')
     await select(p, METERS)
     if (name === 'phone') {
       const names = await bar(p).getByRole('button').evaluateAll(bs => bs.map(x => x.getAttribute('aria-label') || x.innerText.trim()))
@@ -121,7 +122,7 @@ export default [
       return r && { due: r.due, values: Object.keys(r.values).length, parent: r.parentId ?? null }
     }, METERS)
     expect(made && made.due === null && made.values === 0 && made.parent === null, `the record is ${JSON.stringify(made)}`)
-    expect(await shows(p.locator('main').getByText(/^3 дела/)), 'the header does not read «3 дела»')
+    expect(await store(p, (data, id) => data.recordsOf(id).length, pageId) === 3, 'Дела по дому does not have 3 records')
     const t = toast(p, 'Строка стала записью')
     expect(await shows(t), 'no toast «Строка стала записью»')
     // «·» between the words and the action on desktop
@@ -138,7 +139,7 @@ export default [
     expect((await note(p).locator('p').first().innerText()).startsWith(`${KEYS} ${METERS}.`), '«Отменить» did not put the sentence back')
     expect(!(await store(p, (data, x) => data.liveRecords.some(r => r.text === x), METERS)), '«Отменить» left the record')
     expect(!(await p.locator('main [data-row-text]', { hasText: METERS }).count()), '«Отменить» left the row')
-    expect(await shows(p.locator('main').getByText(/^2 дела/)), 'the header does not read «2 дела» after «Отменить»')
+    expect(await store(p, (data, id) => data.recordsOf(id).length, pageId) === 2, 'Дела по дому does not have 2 records after «Отменить»')
   } })),
   // v24 acceptance, outside the Check lines (1): ↶ in the editing bar, or Ctrl Z, right after the ring undoes the whole of
   // it as «Отменить» does: the sentence back once, the row gone, the notice closed. ↶ again never cuts the words a second

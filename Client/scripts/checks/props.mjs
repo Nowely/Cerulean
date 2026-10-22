@@ -34,9 +34,9 @@ export default [
     await p.getByRole('textbox', { name: 'Название', exact: true }).fill('Статус')
     await p.getByRole('radio', { name: 'Выбор' }).click()
     const create = p.getByRole('button', { name: 'Создать' })
-    expect(await create.isDisabled(), '«Создать» works with no options')
-    expect(await shows(p.getByText('Нужен хотя бы один вариант')), 'no «Нужен хотя бы один вариант»')
-    await p.getByRole('button', { name: 'Вариант', exact: true }).click()
+    // Main flow, acceptance 1: «Выбор» starts on an empty option with the caret, and no line explains it
+    expect(await p.evaluate(() => document.activeElement?.getAttribute('aria-label')) === 'Название варианта', 'no caret in an empty option')
+    expect(!(await p.getByText('Нужен хотя бы один вариант').count()), '«Нужен хотя бы один вариант» shows')
     expect(await create.isDisabled(), '«Создать» works with an empty option')
     await p.keyboard.type('Новая')
     expect(await create.isEnabled(), '«Создать» stays off with an option')

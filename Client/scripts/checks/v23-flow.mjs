@@ -171,8 +171,8 @@ export default [
     expect(text.endsWith('ср') && text.includes('Дела по дому'), `the row reads «${text}»`)
     const ends = (await p.locator('main section[aria-label="На неделе"] > div').allTextContents()).map(t => plain(t).slice(-2))
     expect(ends.join(' ') === 'ср пт сб вс', `the week's rows end with ${ends.join(' ')}`)
-    // The header still counts today only
-    expect(await shows(p.getByText('3 дела со всех страниц · 1 просрочено')), 'the header count changed')
+    // The header still counts today only; since the main flow's acceptance 1 that is only its warn word
+    expect(await shows(p.locator('main p.text-warn').filter({ hasText: /^\s*1 просрочено\s*$/ })) && !(await p.getByText(/со всех страниц/).count()), 'the header changed')
     await p.reload()
     await p.waitForSelector('main')
     await p.waitForTimeout(800)

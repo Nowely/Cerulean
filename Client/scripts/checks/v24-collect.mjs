@@ -203,8 +203,8 @@ export default [
     expect(at === 3 && rows[2].text === 'Пробежка 6 км', `Повесить полку is row ${at}: ${rows.map(r => r.text)}`)
     expect(rows[at].home === 'Дела по дому' && rows[at].end === 'завтра', `the row reads ${JSON.stringify(rows[at])}`)
     expect(await p.locator('[data-collect-row].fresh-tint').count() === 1, 'the new row has no fresh tint')
-    const head = plain(await p.locator('h1 + * , p.text-meta').filter({ hasText: 'со всех страниц' }).first().innerText())
-    expect(head.startsWith('8 дел со всех страниц'), `the header reads «${head}»`)
+    // Main flow, acceptance 1: no count or source line under the title, only the warn word
+    expect(!(await p.getByText(/со всех страниц/).count()), 'a source line under the title')
     const rec = await store(p, (d) => {
       const r = Object.values(d.records).find(x => x.text === 'Повесить полку')
       return r && { page: d.pages[r.pageId].title, due: r.due?.date }
@@ -246,8 +246,9 @@ export default [
     await p.getByRole('link', { name: /^Сегодня/ }).first().click()
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(500)
-    const sub = plain(await p.locator('p').filter({ hasText: 'со всех страниц' }).first().innerText())
-    expect(sub === '3 дела со всех страниц · 1 просрочено', `Сегодня reads «${sub}»`)
+    // Main flow, acceptance 1: no count or source line under the title, only the warn word
+    const sub = plain(await p.locator('main p.text-warn').first().innerText())
+    expect(sub === '1 просрочено' && !(await p.getByText(/со всех страниц/).count()), `Сегодня reads «${sub}»`)
   } },
   // 18: «Сегодня shows «На неделе · 4 ›». Open it: ср, пт, сб, вс in that order, each with its home page on line 2.
   // Дела по дому: «Поменять фильтр воды · ср, 21 окт», «Вызвать мастера · пт, 23 окт»»
@@ -322,7 +323,7 @@ export default [
   { id: 'c24-21-one-warn', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
     const look = await p.evaluate(() => {
-      const warn = document.querySelector('main p .text-warn')
+      const warn = document.querySelector('main p.text-warn')
       const row = document.querySelector('[data-collect-row]')
       const home = row.querySelector('button.flex-col').children[1]
       const end = row.querySelector('button.flex-col + span')
@@ -433,8 +434,8 @@ export default [
     await p.waitForTimeout(800)
     expect(plain(await p.getByRole('button', { name: /^Страницы/ }).innerText()) === 'Страницы 2', 'the row does not count two')
     await closeTop(p)
-    const head = plain(await p.locator('p').filter({ hasText: 'страниц' }).first().innerText())
-    expect(head.startsWith('5 дел с 2 страниц'), `the header reads «${head}»`)
+    // Main flow, acceptance 1: no count or source line under the title, only the warn word
+    expect(!(await p.getByText(/дел с \d страниц/).count()), 'a source line under the title')
   } },
   // 25: «На неделе «⋯» has no «Что сюда класть». Switch its view to «Эта страница»: the row is back with «не задано».
   // Задачи «⋯» has the row»
