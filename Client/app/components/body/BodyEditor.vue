@@ -418,6 +418,9 @@ function toSub() {
   const id = notify(rec ? 'Строка стала подпунктом' : 'Строка стала записью', { label: 'Отменить', run: undo })
   lastCut = {
     doc: editor.value!.state.doc,
+    notice: id,
+    rec: made.id,
+    as: JSON.stringify(data.records[made.id]),
     undo: () => {
       if (ui.notice?.id === id) ui.notice = null
       undo()
@@ -426,9 +429,19 @@ function toSub() {
   refresh()
 }
 
-/** The last cut, while the text is as the cut left it: ↶ and Ctrl Z then undo it whole, as the notice's «Отменить» */
-let lastCut: { doc: PMNode, undo: () => void } | null = null
-const cutLive = () => !!lastCut && !!editor.value && editor.value.state.doc.eq(lastCut.doc)
+/**
+ * The last cut: ↶ and Ctrl Z undo it whole, as the notice's «Отменить», only while that notice shows, the row is as the
+ * cut made it and the text as the cut left it. After that the cut is final, and ↶ goes on to earlier edits of the text,
+ * never deleting the row
+ */
+let lastCut: { doc: PMNode, notice: number, rec: string, as: string, undo: () => void } | null = null
+const cutLive = () => !!lastCut && ui.notice?.id === lastCut.notice && JSON.stringify(data.records[lastCut.rec]) === lastCut.as
+  && !!editor.value && editor.value.state.doc.eq(lastCut.doc)
+// ↶ goes off with the notice
+watch(() => ui.notice?.id, () => {
+  if (lastCut && !cutLive()) lastCut = null
+  refresh()
+})
 
 function undoCut() {
   if (!cutLive()) return false

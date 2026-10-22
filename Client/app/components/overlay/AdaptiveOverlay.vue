@@ -64,7 +64,7 @@ watch(open, (on) => {
     if (r.width) room = Math.max(room, window.innerHeight - r.bottom + NOTICE_ROOM)
   })
   padding.value = room > 12 ? { top: 12, right: 12, bottom: room, left: 12 } : 12
-})
+}, { immediate: true })
 function onEscape(e: KeyboardEvent) {
   if (!props.back) return
   e.preventDefault()

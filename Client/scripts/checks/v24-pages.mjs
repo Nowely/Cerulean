@@ -398,6 +398,39 @@ export default [
       await whole(`after ${round} and ↶ twice more`)
     }
   } })),
+  // v24 re-check (1): ↶ takes the cut back only while its notice shows and the row is as the cut made it. After the notice
+  // has gone, or once the row is ticked, the cut is final: ↶ and Ctrl Z never delete the row, nor put the words back
+  ...[['gone-phone', MOBILE, 'gone'], ['gone-desktop', DESKTOP, 'gone'], ['ticked-desktop', DESKTOP, 'ticked']].map(([name, device, why]) => ({ id: `p24-15-undo-late-${name}`, device, run: async (p) => {
+    await openPage(p, 'Дела по дому')
+    await select(p, METERS)
+    await bar(p).getByRole('button', { name: 'Сделать записью' }).click()
+    await p.waitForTimeout(700)
+    const made = () => store(p, (data, x) => {
+      const r = data.liveRecords.find(y => y.text === x)
+      return r ? { done: r.done } : null
+    }, METERS)
+    expect(await made(), 'the ring made no record')
+    if (why === 'gone') {
+      await p.mouse.move(5, 5)
+      await p.waitForTimeout(9000)
+      expect(!(await toast(p, 'Строка стала записью').count()), 'the notice did not go')
+    } else {
+      await store(p, (data, x) => data.toggleDone(data.liveRecords.find(y => y.text === x).id), METERS)
+      await p.waitForTimeout(400)
+    }
+    const button = bar(p).getByRole('button', { name: 'Отменить ввод' })
+    if (device === MOBILE) {
+      if (await button.isEnabled()) await button.click()
+    } else {
+      expect(await inNote(p), 'the note lost the caret')
+      await p.keyboard.press('Control+z')
+    }
+    await p.waitForTimeout(600)
+    const after = await made()
+    expect(after && (why === 'gone' || after.done), `after a late ↶ the record is ${JSON.stringify(after)}`)
+    const first = await note(p).locator('p').first().innerText()
+    expect(!first.includes(METERS), `a late ↶ put the words back: «${first}»`)
+  } })),
   // The same on a record: ↶ right after «Сделать подпунктом» takes the subitem away and puts the words back
   { id: 'p24-15-undo-sub', device: MOBILE, run: async (p) => {
     await open(p, '/')
@@ -500,6 +533,27 @@ export default [
     expect(!(await sheet.getByRole('button', { name: /^Закрыть/ }).count()), 'the popover has ×')
     await p.keyboard.press('Escape')
     await afterDoska(p, line)
+  } },
+  // v24 re-check (2): on an empty page «⋯» → «Настроить вид» mounts the popover already open; at 1280×720 it still stops
+  // above the notice its «Все страницы» raises
+  { id: 'p24-1-how-notice-desk', device: { ...DESKTOP, viewport: { width: 1280, height: 720 } }, run: async (p) => {
+    await kitchen(p)
+    await p.getByRole('button', { name: 'Действия со страницей' }).first().click()
+    await p.waitForTimeout(500)
+    await p.getByRole('menuitem', { name: 'Настроить вид' }).first().click()
+    await p.waitForTimeout(900)
+    const sheet = p.getByRole('dialog', { name: /^Настроить вид/ })
+    expect(await shows(sheet), '«⋯» did not open «Настроить вид»')
+    await sheet.getByRole('radio', { name: 'Все страницы' }).click()
+    await p.waitForTimeout(700)
+    const notice = p.locator('[data-notice]')
+    expect(await shows(notice), 'no notice after «Все страницы»')
+    const covered = await p.evaluate(() => {
+      const n = document.querySelector('[data-notice]').getBoundingClientRect()
+      return [[n.left + n.width / 2, n.top + n.height / 2], [n.left + 4, n.top + 4], [n.right - 4, n.top + 4], [n.left + 4, n.bottom - 4], [n.right - 4, n.bottom - 4]]
+        .filter(([x, y]) => !document.elementFromPoint(x, y)?.closest('[data-notice]')).length
+    })
+    expect(!covered, `the popover covers the notice (${covered} of 5 points)`)
   } },
   // «Свойство» opens «Новое свойство» as a dialog
   { id: 'p24-1-prop-desk', device: DESKTOP, run: async (p) => {
