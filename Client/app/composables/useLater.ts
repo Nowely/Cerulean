@@ -2,18 +2,18 @@
 // vaul) is not in the first download: it loads once the browser is idle after the first paint, or at once
 // when one is asked for. Until then a menu's button renders on its own, and a tap on it opens the menu
 // as soon as the code is in.
-import { ref } from 'vue'
+import { ref, type Component } from 'vue'
+import { LazyUContextMenu, LazyUDrawer, LazyUDropdownMenu, LazyUModal, LazyUPopover, LazyUTooltip } from '#components'
 
 const ready = ref(false)
 let loading: Promise<void> | undefined
 
+/** Resolving the lazy components themselves, not only their modules, lets them render at once when `ready`
+ * flips: a menu trigger nested in a context menu never sees a loading placeholder (a Reka anchor with no element) */
+const resolve = (c: Component) => (c as { __asyncLoader?: () => Promise<unknown> }).__asyncLoader?.()
+
 function load() {
-  loading ??= Promise.all([
-    import('@nuxt/ui/components/DropdownMenu.vue'),
-    import('@nuxt/ui/components/Popover.vue'),
-    import('@nuxt/ui/components/Modal.vue'),
-    import('@nuxt/ui/components/Drawer.vue')
-  ]).then(() => {
+  loading ??= Promise.all([LazyUContextMenu, LazyUDrawer, LazyUDropdownMenu, LazyUModal, LazyUPopover, LazyUTooltip].map(resolve)).then(() => {
     ready.value = true
   }, () => {
     loading = undefined

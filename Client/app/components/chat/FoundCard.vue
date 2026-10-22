@@ -19,13 +19,22 @@ const hits = computed(() => (props.entry.hits ?? []).map(id => data.records[id])
     class="overflow-hidden rounded-card"
     :class="float ? 'raised bg-default shadow-float dark:ring dark:ring-inset dark:ring-line2' : 'bg-card'"
   >
-    <p class="flex items-start gap-2 px-3 pt-2.75 pb-2.25 text-meta leading-snug text-toned">
+    <!-- Docked, the card has a × at its top right (ComposerDock): the line stops short of it -->
+    <p
+      class="flex items-start gap-2 pt-2.75 pb-2.25 pl-3 text-meta leading-snug text-toned"
+      :class="float ? 'pr-10' : 'pr-3'"
+    >
       <UIcon
         name="i-lucide-search"
         class="mt-0.5 size-4 shrink-0"
       />
-      <span v-if="hits.length">Похоже на вопрос, поэтому пока ничего не записано. Вот что нашлось:</span>
-      <span v-else>Похоже на вопрос, поэтому пока ничего не записано. Ничего похожего не нашлось.</span>
+      <span>Это поиск, поэтому ничего не записано.{{ hits.length ? ' Вот что нашлось:' : '' }}</span>
+    </p>
+    <p
+      v-if="!hits.length"
+      class="px-3 pb-2.25 pl-9 text-meta text-dimmed"
+    >
+      Ничего похожего в записях нет.
     </p>
     <ul>
       <li

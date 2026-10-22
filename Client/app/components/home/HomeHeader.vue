@@ -1,14 +1,13 @@
 <script setup lang="ts">
-// Top of Главная. Phone: the title in the page-title role and three glyphs, Найти, Чат and «⋯».
-// Чат carries an 8px accent dot while records wait for «уточнить» (the number stays on Входящие).
-// Desktop: the 72px title header with «⋯» only (Найти and Чат are in the sidebar).
+// Top of Главная. Phone: the title in the page-title role and three glyphs, Найти, Журнал and «⋯».
+// No dot on Журнал: the «уточнить» count lives on Входящие only.
+// Desktop: the 72px title header with «⋯» only (Найти and Журнал are in the sidebar).
 // «⋯» of Главная: «Компактные строки», «Новая страница», «Новая секция», «Настройки», «Корзина».
 import { computed } from 'vue'
 import { useRouter } from '#imports'
 import { useDataStore } from '~/stores/data'
 import { useFind } from '~/composables/useFind'
 import { useCreatePage } from '~/composables/useCreatePage'
-import { count } from '~/domain/text'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import DotsButton from '../common/DotsButton.vue'
 import TitleHeader from '../shell/TitleHeader.vue'
@@ -18,11 +17,6 @@ const data = useDataStore()
 const router = useRouter()
 const find = useFind()
 const { create } = useCreatePage()
-
-const waiting = computed(() => data.clarify.length)
-const chatLabel = computed(() => waiting.value
-  ? `Чат: ${count(waiting.value, ['запись ждёт', 'записи ждут', 'записей ждут'])} уточнения`
-  : 'Чат')
 
 const items = computed<MenuItem[][]>(() => [
   [{
@@ -55,11 +49,11 @@ const items = computed<MenuItem[][]>(() => [
       />
     </ActionMenu>
   </TitleHeader>
-  <header class="flex h-15 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1 pl-4 lg:hidden">
+  <header class="flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1 pl-4 lg:hidden">
     <h1 class="min-w-0 flex-1">
       <button
         type="button"
-        class="max-w-full cursor-pointer truncate text-left text-28 font-semibold tracking-[-.015em] text-highlighted"
+        class="max-w-full cursor-pointer truncate text-left text-title font-semibold text-highlighted"
         @click="emit('top')"
       >
         Главная
@@ -77,18 +71,13 @@ const items = computed<MenuItem[][]>(() => [
       />
     </button>
     <NuxtLink
-      to="/chat"
-      class="relative flex size-11 items-center justify-center rounded-item text-toned active:bg-pressed"
-      :aria-label="chatLabel"
+      to="/journal"
+      class="flex size-11 items-center justify-center rounded-item text-toned active:bg-pressed"
+      aria-label="Журнал"
     >
       <UIcon
-        name="i-lucide-message-square"
+        name="cer:journal"
         class="size-5"
-      />
-      <span
-        v-if="waiting"
-        class="absolute top-2.25 right-2 size-2 rounded-full bg-accent ring-2 ring-canvas"
-        aria-hidden="true"
       />
     </NuxtLink>
     <ActionMenu
@@ -96,6 +85,7 @@ const items = computed<MenuItem[][]>(() => [
       title="Главная"
       label="Действия с Главной"
       headless
+      divided
     >
       <DotsButton
         label="Действия с Главной"

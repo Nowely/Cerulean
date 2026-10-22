@@ -3,8 +3,19 @@ import type { Due } from './types'
 import { addDays, dayKey } from './dates'
 import { capitalize } from './text'
 
-const QUESTION_START = /^(что|где|когда|сколько|как|какой|какая|какие|какое|каком|зачем|почему|кто|чем|куда|откуда|есть ли|можно ли|нужно ли|надо ли|был[аио]? ли)(\s|$)/i
+/**
+ * Only an explicit search gives the found card: «найти…», «найди…», «где…», «поиск…», «искать…» (v22, U10).
+ * Any other line, a question with «?» included, is written down like everything else.
+ */
+const SEARCH_START = /^(найти|найди|где|поиск|искать|ищи)(\s|$|[?,:])/i
 
+export function isSearch(text: string): boolean {
+  return SEARCH_START.test(text.trim())
+}
+
+const QUESTION_START = /^(что|когда|сколько|как|какой|какая|какие|какое|каком|зачем|почему|кто|чем|куда|откуда|есть ли|можно ли|нужно ли|надо ли|был[аио]? ли)(\s|$)/i
+
+/** A question written down («когда менять фильтр?»): its receipt shows records like it, «Похожее в записях» */
 export function isQuestion(text: string): boolean {
   const t = text.trim()
   return /\?\s*$/.test(t) || QUESTION_START.test(t)
@@ -141,17 +152,31 @@ export function parseQty(text: string): { qty: string | null, rest: string } {
 /** «купить», «надо взять»… in front of a shopping list say nothing the page doesn't already say */
 const LIST_VERB = /^(?:(?:надо|нужно|не забыть)\s+)?(?:купить|купи|докупить|взять|возьми)\s+/i
 
-/** «купить молоко, яйца и сыр» → three lines; used for pages that hold lists of things */
+/** Commas (not the one in «2,5 л»), semicolons and new lines: a send is a list on every page and in Авто */
+const PARTS = /\s*(?:(?<!\d),|,(?!\d)|;|\n)\s*/
+
+/** «сыр, позвонить бабушке» → two parts; a line without a separator is one part */
+export function splitParts(text: string): string[] {
+  return text.split(PARTS).map(s => s.trim()).filter(Boolean)
+}
+
+/** «купить молоко, яйца и сыр» → three lines; on pages that hold lists of things «и» splits too */
 export function splitItems(text: string): string[] {
-  return text
-    .replace(LIST_VERB, '')
-    .split(/\s*(?:,|;|\n|\s+и\s+)\s*/i)
+  return splitParts(text.replace(LIST_VERB, ''))
+    .flatMap(part => part.split(/\s+и\s+/i))
     .map(s => s.trim())
     .filter(Boolean)
     .map(capitalize)
 }
 
-/** Text of a record as the user wrote it, without trailing punctuation, capitalised */
+/** A first word Авто understood as the page («идея: …», «цель: …»): the page says it, the record does not */
+const ROUTE_PREFIX = /^(?:идея|идеи|цель|задача|заметка|мысль|покупки|купить)\s*:\s*/i
+
+export function dropPrefix(text: string): string {
+  return text.replace(ROUTE_PREFIX, '')
+}
+
+/** Text of a record as the user typed it: «?», punctuation and case kept, only the first letter capitalised */
 export function cleanRecordText(text: string): string {
-  return capitalize(text.replace(/[\s,;:]+$/, '').replace(/\?+$/, '').trim())
+  return capitalize(text.replace(/[\s,;:]+$/, '').trim())
 }

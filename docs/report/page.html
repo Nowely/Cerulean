@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Состояние фронта Cerulean</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* The app next to its mockup, state by state. Colours are the approved Cerulean pair (light «Строгий, плоский», dark night). */
+:root {
+  --bg: #FCFCFB; --surface: #F1F1EF; --card: #FFFFFF; --trk: #EAEAE8; --hover: #F1F1EF;
+  --line: #E4E4E1; --line2: #CDCDC9; --ink: #161618; --text: #29292C; --muted: #4E4E52; --faint: #67676B;
+  --accent: #1F5F8B; --accent-ink: #1A4F75; --accent-soft: #E5EDF3;
+  --warn-ink: #8E3613; --warn-soft: #F6E7E0; --ok-ink: #2F5C3D; --ok-soft: #E4EFE6;
+  --show-l: block; --show-d: none; --sp-y: 0%;
+  --font: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161F26; --surface: #0D151A; --card: #1A2329; --trk: #212C33; --hover: #1E282F;
+    --line: #232D33; --line2: #33414A; --ink: #E9F0F2; --text: #D3DCE1; --muted: #A5B4BB; --faint: #8B9AA3;
+    --accent: #78B2DF; --accent-ink: #ADD3F3; --accent-soft: #153045;
+    --warn-ink: #F4B88D; --warn-soft: #3A2519; --ok-ink: #A6D6AF; --ok-soft: #1A3324;
+    --show-l: none; --show-d: block; --sp-y: -50%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161F26; --surface: #0D151A; --card: #1A2329; --trk: #212C33; --hover: #1E282F;
+  --line: #232D33; --line2: #33414A; --ink: #E9F0F2; --text: #D3DCE1; --muted: #A5B4BB; --faint: #8B9AA3;
+  --accent: #78B2DF; --accent-ink: #ADD3F3; --accent-soft: #153045;
+  --warn-ink: #F4B88D; --warn-soft: #3A2519; --ok-ink: #A6D6AF; --ok-soft: #1A3324;
+  --show-l: none; --show-d: block; --sp-y: -50%;
+  color-scheme: dark;
+}
+/* The screenshot switch wins over the page theme */
+:root[data-shots="light"] { --show-l: block; --show-d: none; --sp-y: 0%; }
+:root[data-shots="dark"] { --show-l: none; --show-d: block; --sp-y: -50%; }
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 64px); }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 16px/1.55 var(--font); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+a { color: var(--accent-ink); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--trk); color: var(--ink); padding: 0.1em 0.35em; border-radius: 5px; }
+h1, h2, h3 { color: var(--ink); text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.4rem, 1.1rem + 1vw, 1.8rem); font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
+h3 { font-size: 1rem; font-weight: 600; line-height: 1.3; }
+p { margin: 0; }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.prose { max-width: 68ch; display: grid; gap: 12px; }
+.prose ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+.prose li::marker { color: var(--accent); }
+
+.hero { padding-block: 48px 24px; display: grid; gap: 16px; }
+.eyebrow { font-size: 13px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); }
+.hero h1 { font-size: clamp(2.1rem, 1.4rem + 3vw, 3.3rem); font-weight: 600; letter-spacing: -0.025em; line-height: 1.05; }
+.lead { font-size: 1.1rem; color: var(--muted); max-width: 64ch; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 6px 0 0; }
+.facts div { background: var(--card); padding: 12px 16px; display: grid; gap: 2px; min-width: 0; }
+.facts dt { font-size: 13px; color: var(--faint); }
+.facts dd { margin: 0; color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding-block: 8px; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--trk); border-radius: 11px; }
+.seg button { font: inherit; font-size: 14px; color: var(--muted); background: none; border: 0; padding: 5px 11px; border-radius: 8px; cursor: pointer; min-height: 32px; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); font-weight: 500; }
+.ctl { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--faint); }
+
+section.block { padding-block: 40px 8px; }
+section.block > .wrap { display: grid; gap: 18px; }
+
+.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12.5px; font-weight: 500; white-space: nowrap; flex: none; }
+.tag.same { background: var(--trk); color: var(--muted); }
+.tag.better { background: var(--ok-soft); color: var(--ok-ink); }
+.tag.diff { background: var(--accent-soft); color: var(--accent-ink); }
+.tag.wait { background: var(--warn-soft); color: var(--warn-ink); }
+.tag.fail { background: var(--warn-ink); color: var(--bg); }
+
+.checks { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.checks table { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.45; min-width: 640px; }
+.checks th, .checks td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--line); }
+.checks thead th { border-top: 0; font-size: 12.5px; font-weight: 500; color: var(--faint); letter-spacing: 0.02em; }
+.checks tr.sub th { background: var(--surface); color: var(--ink); font-weight: 600; font-size: 13.5px; }
+.checks td.num { font-variant-numeric: tabular-nums; color: var(--faint); white-space: nowrap; }
+.checks td b { color: var(--ink); font-weight: 500; }
+.checks td:nth-child(3) { white-space: nowrap; }
+
+.group { padding-block: 36px 4px; }
+.group { max-width: calc(1160px); margin-inline: auto; }
+.group { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.group .lead { font-size: 1rem; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.card.desk { grid-column: 1 / -1; }
+.card header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.card.desk .pair { grid-template-columns: 1fr; }
+@media (min-width: 900px) { .card.desk .pair { grid-template-columns: 1fr 1fr; } }
+figure { margin: 0; min-width: 0; }
+figcaption { font-size: 12px; color: var(--faint); margin: 0 0 6px 2px; letter-spacing: 0.02em; }
+.card img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.card.desk img { border-radius: 6px; }
+.card .sp { display: block; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.card.desk .sp { border-radius: 6px; }
+.card .sp img { display: block; border: 0; border-radius: 0; transform: translateY(var(--sp-y)); }
+.miss { aspect-ratio: 390 / 844; display: grid; place-items: center; border: 1px dashed var(--line2); border-radius: 10px; color: var(--faint); font-size: 13px; }
+.card.desk .miss { aspect-ratio: 16 / 10; }
+.card p { font-size: 15px; }
+[data-dev-filter="phone"] .card.desk, [data-dev-filter="desk"] .card.phone { display: none; }
+.card.off { display: none; }
+.group.empty { display: none; }
+
+footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
+</style>
+</head>
+<body>
+<header class="wrap hero">
+  <p class="eyebrow">Cerulean · клиент · @@DATE@@</p>
+  <h1>Приложение рядом с макетом</h1>
+  <p class="lead">@@LEAD@@</p>
+  <dl class="facts">
+    <div><dt>Состояний</dt><dd>@@STATES@@</dd></div>
+    <div><dt>Кадров (светлая и тёмная)</dt><dd>@@FRAMES@@</dd></div>
+    <div><dt>Как в макете или лучше</dt><dd>@@SAME@@</dd></div>
+    <div><dt>Иначе, с причиной</dt><dd>@@DIFF@@</dd></div>
+    <div><dt>Проверок пройдено</dt><dd>@@PASSED@@</dd></div>
+  </dl>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <span class="ctl">Тема кадров
+      <span class="seg" data-ctl="shots">
+        <button type="button" data-v="auto" aria-pressed="true">Авто</button>
+        <button type="button" data-v="light" aria-pressed="false">Светлая</button>
+        <button type="button" data-v="dark" aria-pressed="false">Тёмная</button>
+      </span>
+    </span>
+    <span class="ctl">Экран
+      <span class="seg" data-ctl="dev">
+        <button type="button" data-v="all" aria-pressed="true">Все</button>
+        <button type="button" data-v="phone" aria-pressed="false">Телефон</button>
+        <button type="button" data-v="desk" aria-pressed="false">Компьютер</button>
+      </span>
+    </span>
+    <span class="ctl">Показать
+      <span class="seg" data-ctl="tag">
+        <button type="button" data-v="all" aria-pressed="true">Все</button>
+        <button type="button" data-v="diff" aria-pressed="false">Отличия</button>
+      </span>
+    </span>
+  </div>
+</div>
+
+<section class="block">
+  <div class="wrap prose">
+    <h2>Что сделано</h2>
+    @@DONE@@
+  </div>
+</section>
+
+<section class="block" id="checks">
+  <div class="wrap">
+    <h2>Проверки</h2>
+    <p class="lead">Каждый пункт дельты и каждый баг со своей проверкой: что нажать и что должно случиться. Пункт без пройденной проверки не сделан.</p>
+    @@CHECKS@@
+  </div>
+</section>
+
+@@CARDS@@
+
+<section class="block">
+  <div class="wrap prose">
+    <h2>Что дальше</h2>
+    @@NEXT@@
+  </div>
+</section>
+
+<footer class="wrap">@@FOOT@@</footer>
+
+<script>
+(() => {
+  const root = document.documentElement
+  const state = { dev: 'all', tag: 'all' }
+  function apply() {
+    root.dataset.devFilter = state.dev
+    document.querySelectorAll('.card').forEach(c => {
+      const t = c.dataset.tag
+      const off = state.tag === 'diff' ? !(t === 'diff' || t === 'better') : state.tag === 'wait' ? t !== 'wait' : false
+      c.classList.toggle('off', off)
+    })
+    document.querySelectorAll('.group').forEach(g => {
+      const shown = [...g.querySelectorAll('.card')].some(c => !c.classList.contains('off') && getComputedStyle(c).display !== 'none')
+      g.classList.toggle('empty', !shown)
+    })
+  }
+  document.querySelectorAll('.seg[data-ctl]').forEach(seg => {
+    seg.addEventListener('click', e => {
+      const b = e.target.closest('button')
+      if (!b) return
+      seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)))
+      const ctl = seg.dataset.ctl, v = b.dataset.v
+      if (ctl === 'shots') { if (v === 'auto') delete root.dataset.shots; else root.dataset.shots = v }
+      else { state[ctl] = v; apply() }
+    })
+  })
+  apply()
+})()
+</script>
+</body>
+</html>

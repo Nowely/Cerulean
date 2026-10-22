@@ -1,7 +1,8 @@
 // A view is a saved way to look at a page: which records, in what order, grouped how
-import type { FilterRule, GroupBy, Page, PropDef, Rec, ViewDef } from './types'
+import type { Due, DueChip, FilterRule, GroupBy, Page, PropDef, Rec, ViewDef } from './types'
 import { addDays, dayKey } from './dates'
-import { fold } from './text'
+import { fold, ofProp } from './text'
+import { searchText } from './body'
 
 export interface Group {
   key: string
@@ -23,8 +24,39 @@ function matches(rec: Rec, rule: FilterRule): boolean {
   return value === rule.value
 }
 
-export function filterRecords(records: Rec[], view: ViewDef): Rec[] {
-  return records.filter(r => view.filter.every(rule => matches(r, rule)))
+/** «На неделе» as a filter chip (v24 fixes, item 11): today and the six days after it, so never an overdue record */
+export function inWeek(due: Due | null | undefined, now: number): boolean {
+  const today = dayKey(now)
+  return !!due && due.date >= today && due.date <= addDays(today, 6)
+}
+
+function matchesDue(rec: Rec, chip: DueChip, now: number): boolean {
+  const d = rec.due?.date
+  if (chip === 'none') return !d
+  if (!d) return false
+  if (chip === 'late') return !rec.done && d < dayKey(now)
+  if (chip === 'today') return d === dayKey(now)
+  return inWeek(rec.due, now)
+}
+
+/**
+ * The «Фильтр» chips of a view (v24), the same on its own records and on what it collects: a record passes when it
+ * matches any picked «Срок» chip (none picked is «Любой»), and with «Ждут уточнения» only when tagged «уточнить»
+ */
+export function matchesChips(rec: Rec, view: ViewDef, now: number): boolean {
+  const dues = view.dues ?? []
+  if (dues.length && !dues.some(c => matchesDue(rec, c, now))) return false
+  return !view.asking || rec.tags.includes('clarify')
+}
+
+/**
+ * `since`: rows ticked or unticked after this moment (the page was opened) stay where they were, struck through,
+ * until the page is opened again; a tick never makes a row vanish under the finger (v22, U2). Only the views the row
+ * belonged to before the tick keep it: a row ticked on «Купить» never shows up on «Запасы»
+ */
+export function filterRecords(records: Rec[], view: ViewDef, since = Number.POSITIVE_INFINITY, now = Date.now()): Rec[] {
+  const fits = (r: Rec) => view.filter.every(rule => matches(r, rule)) && matchesChips(r, view, now)
+  return records.filter(r => fits(r) || ((r.tickedAt ?? 0) >= since && fits({ ...r, done: !r.done })))
 }
 
 const byOrder = (a: Rec, b: Rec) => a.order - b.order
@@ -45,15 +77,18 @@ export function sortRecords(records: Rec[], sort: ViewDef['sort']): Rec[] {
   return list.sort(byOrder)
 }
 
-/** Groups by a «Выбор» property follow the order of its options; records without a value go last */
+/** «Без отдела», «Без статуса»: the group of records without a value of a «Выбор» */
+export const noValueLabel = (prop: PropDef) => `Без ${ofProp(prop.name)}`
+
+/** Groups by a «Выбор» property follow the order of its options; records without a value come first («Без отдела») */
 function groupBySelect(records: Rec[], prop: PropDef): Group[] {
   const groups: Group[] = (prop.options ?? []).map(o => ({ key: o.id, label: o.name, records: [] }))
-  const rest: Group = { key: 'none', label: `Без свойства «${prop.name}»`, records: [] }
+  const rest: Group = { key: 'none', label: noValueLabel(prop), records: [] }
   for (const r of records) {
     const g = groups.find(x => x.key === r.values[prop.id]) ?? rest
     g.records.push(r)
   }
-  return [...groups, rest].filter(g => g.records.length)
+  return [rest, ...groups].filter(g => g.records.length)
 }
 
 /** «Просрочено», «Сегодня», «Завтра», «На неделе», «Позже», «Без срока» */
@@ -85,12 +120,43 @@ export function groupRecords(records: Rec[], groupBy: GroupBy, page: Page, now: 
 }
 
 /** Records of a view in display order, grouped. Groups have an empty label when the view is not grouped. */
-export function applyView(page: Page, records: Rec[], view: ViewDef, now: number): Group[] {
-  return groupRecords(sortRecords(filterRecords(records, view), view.sort), view.groupBy, page, now)
+export function applyView(page: Page, records: Rec[], view: ViewDef, now: number, since?: number): Group[] {
+  return groupRecords(sortRecords(filterRecords(records, view, since, now), view.sort), view.groupBy, page, now)
 }
 
 export function viewCount(page: Page, records: Rec[], view: ViewDef | undefined): number {
   return view ? filterRecords(records, view).length : records.length
+}
+
+/** «Очистить купленное»: the ticked records a view shows (v22, N9) */
+export function doneIn(records: Rec[], view: ViewDef, since?: number): Rec[] {
+  return filterRecords(records, view, since).filter(r => r.done)
+}
+
+/** A send on a calendar's selected day: a record without its own date lands on that day (v22, G6) */
+export function onDay<T extends { due: Due | null }>(drafts: T[], day: string | null | undefined): T[] {
+  return day ? drafts.map(d => d.due ? d : { ...d, due: { date: day } }) : drafts
+}
+
+/**
+ * Where a row dropped at `index` of the group `to` goes (drag, Alt+↑/↓): the `order` between its new neighbours,
+ * read from `orders`, and the group's value when it crosses into another group of a «Выбор» property. Null when
+ * it cannot go there: groups by date or no groups at all take no rows from another group
+ */
+export function dropPlace(groups: Group[], prop: PropDef | undefined, rec: Rec, to: string, index: number, orders: (r: Rec) => number = r => r.order): { order: number, values: Rec['values'], into: Group | null } | null {
+  const from = groups.find(g => g.records.some(r => r.id === rec.id))
+  const target = groups.find(g => g.key === to)
+  if (!target) return null
+  const into = from && from.key !== target.key ? target : null
+  if (into && !prop) return null
+  const others = target.records.filter(r => r.id !== rec.id)
+  const before = others[index - 1]
+  const after = others[index]
+  const order = before && after
+    ? (orders(before) + orders(after)) / 2
+    : before ? orders(before) + 1 : after ? orders(after) - 1 : orders(rec)
+  const values = into ? { ...rec.values, [prop!.id]: into.key === 'none' ? null : into.key } : rec.values
+  return { order, values, into }
 }
 
 /** New records go on top of a manually sorted list */
@@ -107,8 +173,8 @@ export function groupOptions(page: Page): { value: GroupBy, label: string }[] {
   ]
 }
 
-/** Search inside one page: text and note */
+/** Search inside one page: text and body */
 export function matchesQuery(rec: Rec, q: string): boolean {
   const f = fold(q.trim())
-  return !f || fold(rec.text).includes(f) || fold(rec.note).includes(f)
+  return !f || fold(rec.text).includes(f) || fold(searchText(rec)).includes(f)
 }

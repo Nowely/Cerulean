@@ -5,13 +5,18 @@ import { useHead, useRoute } from '#imports'
 import { useDataStore } from '~/stores/data'
 import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
+import { useTitleCollapse } from '~/composables/useTitleCollapse'
 import AppScreen from '~/components/shell/AppScreen.vue'
-import DeskHeader from '~/components/shell/DeskHeader.vue'
+import DeskBack from '~/components/shell/DeskBack.vue'
+import BackLink from '~/components/shell/BackLink.vue'
 import PageView from '~/components/page/PageView.vue'
 import PageMenu from '~/components/page/PageMenu.vue'
 import PageAside from '~/components/page/PageAside.vue'
 import PageTile from '~/components/common/PageTile.vue'
-import AppComposer from '~/components/composer/AppComposer.vue'
+import ComposerDock from '~/components/composer/ComposerDock.vue'
+import EditingBar from '~/components/body/EditingBar.vue'
+import { useBodyEditing } from '~/composables/useBodyEditing'
+import { onlyCollects } from '~/domain/collect'
 
 const route = useRoute()
 const data = useDataStore()
@@ -19,68 +24,121 @@ const { isDesktop } = useScreen()
 const peek = usePeek()
 const page = computed(() => data.pages[route.params.id as string])
 const live = computed(() => page.value && !page.value.deletedAt)
+/** A new page's setup has focus: its fields stand in for the composer */
 const editing = ref(false)
+/** The page note has focus: the editing bar takes the composer's slot (v23) */
+const body = useBodyEditing()
+const noting = computed(() => body.on('main'))
 const view = useTemplateRef<InstanceType<typeof PageView>>('view')
+const screen = useTemplateRef<InstanceType<typeof AppScreen>>('screen')
+// Past the title block the header names the page and its tab (v23, B2); on desktop it is the slim 44px header
+const { collapsed } = useTitleCollapse(computed(() => screen.value?.scroller), '[data-rows]', 'top', () => route.params.id)
 
 useHead({ title: computed(() => `${page.value?.title || 'Без названия'} · Cerulean`) })
 </script>
 
 <template>
   <div class="flex min-h-0 flex-1">
-    <AppScreen v-if="live && page">
+    <AppScreen
+      v-if="live && page"
+      ref="screen"
+    >
       <template #header>
-        <header class="flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
-          <NuxtLink
+        <header class="relative flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
+          <BackLink
+            v-slot="{ label }"
             to="/"
-            class="flex h-11 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"
+            label="Главная"
+            class="flex h-11 min-w-0 items-center gap-0.5 rounded-card pr-2.5 pl-1 text-base text-accent-ink active:bg-pressed"
+            :class="{ 'max-w-[118px]': collapsed }"
           >
             <UIcon
               name="i-lucide-chevron-left"
-              class="size-6"
-            />Главная
-          </NuxtLink>
+              class="size-6 shrink-0"
+            /><span class="truncate">{{ label }}</span>
+          </BackLink>
           <span class="flex-1" />
+          <span
+            class="pointer-events-none absolute left-1/2 max-w-40 -translate-x-1/2 truncate text-base font-semibold text-highlighted"
+            :class="{ invisible: !collapsed }"
+            aria-hidden="true"
+          >{{ view?.heading }}</span>
+          <UButton
+            v-if="page.kind === 'today'"
+            icon="i-lucide-search"
+            variant="ghost"
+            square
+            size="lg"
+            aria-label="Найти на странице"
+            class="text-toned"
+            @click="view?.toggleSearch()"
+          />
           <PageMenu
             :page="page"
             @settings="view?.openSettings()"
           />
         </header>
-        <DeskHeader>
-          <NuxtLink
-            to="/"
-            class="flex h-8 items-center gap-0.5 rounded-item pr-2.5 pl-1 text-sm text-toned hover:bg-muted hover:text-highlighted"
+        <!-- Desktop: the slim header past the title block: «‹ Главная», the page and its tab, «⋯» -->
+        <header
+          v-if="collapsed"
+          class="hidden h-11 shrink-0 lg:block lg:px-8"
+          data-slim
+        >
+          <div
+            class="relative mx-auto flex h-full w-full items-center"
+            :class="{ 'max-w-170': !view?.wide }"
           >
-            <UIcon
-              name="i-lucide-chevron-left"
-              class="size-4.5"
-            />Главная
-          </NuxtLink>
-          <template #actions>
+            <BackLink
+              v-slot="{ label }"
+              to="/"
+              label="Главная"
+              class="flex h-8 min-w-0 items-center gap-1 rounded-badge text-13 text-toned hover:text-highlighted"
+            >
+              <UIcon
+                name="i-lucide-chevron-left"
+                class="size-3.5 shrink-0"
+              /><span class="truncate">{{ label }}</span>
+            </BackLink>
+            <span
+              class="pointer-events-none absolute left-1/2 max-w-90 -translate-x-1/2 truncate text-base font-semibold text-highlighted"
+              aria-hidden="true"
+            >{{ view?.heading }}</span>
+            <span class="flex-1" />
+            <PageMenu
+              :page="page"
+              @settings="view?.openSettings()"
+            />
+          </div>
+        </header>
+      </template>
+
+      <div
+        class="mx-auto w-full lg:px-8"
+        :class="view?.wide ? 'lg:max-w-none' : 'lg:max-w-186'"
+      >
+        <DeskBack :crumbs="[{ to: '/', label: 'Главная' }]" />
+        <PageView
+          ref="view"
+          :page="page"
+          @editing="v => editing = v"
+        >
+          <template #menu>
             <PageMenu
               :page="page"
               @settings="view?.openSettings()"
             />
           </template>
-        </DeskHeader>
-      </template>
-
-      <div
-        class="mx-auto w-full lg:px-8"
-        :class="view?.wide ? 'lg:max-w-none' : 'lg:max-w-170'"
-      >
-        <PageView
-          ref="view"
-          :page="page"
-          @editing="v => editing = v"
-        />
+        </PageView>
       </div>
 
       <template #dock>
-        <AppComposer
-          v-show="!editing"
+        <ComposerDock
+          v-show="!editing && !noting"
+          :key="page.id"
           :mode="page.kind === 'today' ? 'today' : 'page'"
           :page-id="page.kind === 'today' ? undefined : page.id"
         />
+        <EditingBar v-if="noting" />
       </template>
     </AppScreen>
     <div
@@ -98,8 +156,10 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
         На главную
       </UButton>
     </div>
+    <!-- Входящие and Сегодня have nothing to put there (PagesInbox, PagesWeek), nor a page that only collects (v24); a new
+         page asks «Что сюда класть?» itself (PagesEmpty) -->
     <PageAside
-      v-if="isDesktop && live && page && !peek.target.value && !view?.wide"
+      v-if="isDesktop && live && page && page.kind === 'page' && !onlyCollects(page) && !peek.target.value && !view?.wide && !view?.setup"
       :page="page"
     />
   </div>

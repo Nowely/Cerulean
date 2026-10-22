@@ -2,6 +2,7 @@
 @import "@nuxt/ui";
 @import "@fontsource-variable/onest/wght.css";
 @import "./tokens.css";
+@import "./body.css";
 
 /*
  * The theme in one place: tokens.css holds the colours, this file turns them into
@@ -25,8 +26,8 @@
 
   /*
    * Type scale: nothing outside these sizes. Fixed steps for chrome
-   * (11 the Чат counter, 12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
-   * 16 inputs and journal text, 17 records, 20 sheet titles, 28 / 30 page titles)
+   * (11 the Журнал counter, 12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
+   * 16 inputs, journal text and records, 20 sheet titles, 24 / 30 page titles)
    * and role steps that switch to their desktop size at lg (see the media block below).
    */
   --text-*: initial;
@@ -52,14 +53,14 @@
   --text-30--line-height: 1.2;
 
   /* Roles from «Шрифт» in the doc: mobile value here, desktop value in the lg block */
-  --text-title: 28px;
-  --text-title--line-height: 1.2;
-  --text-title--letter-spacing: -0.01em;
+  --text-title: 24px;
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: -0.015em;
   --text-title--font-weight: 600;
   --text-sheet: 20px;
   --text-sheet--line-height: 1.3;
   --text-sheet--font-weight: 600;
-  --text-record: 17px;
+  --text-record: 16px;
   --text-record--line-height: 1.35;
   --text-row: 16px;
   --text-row--line-height: 1.3;
@@ -68,7 +69,7 @@
   --text-body--line-height: 1.45;
   --text-meta: 14px;
   --text-meta--line-height: 1.35;
-  /* Every group label: sections, page groups, Доска columns, Настройки groups, picker and Поиск groups, Чат days */
+  /* Every group label: sections, page groups, Доска columns, Настройки groups, picker and Поиск groups, Журнал days */
   --text-cap: 12px;
   --text-cap--line-height: 20px;
   --text-cap--letter-spacing: 0.02em;
@@ -78,16 +79,21 @@
   --text-caption--font-weight: 500;
   --text-input: 16px;
   --text-input--line-height: 1.4;
+  /* An option pill typed into (the property editor): the input minimum on touch, 28 high; the reading pill on desktop */
+  --text-opt: 16px;
+  --text-opt--line-height: 28px;
 
   /* Radii: 12 composer, cards, buttons · 10 chips, segments, rows, 36px tiles · 8 menu items ·
-     7 badges and 24px tiles · 5 for 18px tiles · 20 sheet tops. Circles only for checkbox and dot. */
+     7 badges and 24px tiles · 6 option pills · 5 for 18px tiles · 20 sheet tops. Circles only for checkbox and dot. */
   --radius-card: 12px;
   --radius-chip: 10px;
   --radius-item: 8px;
   --radius-badge: 7px;
   --radius-tile: 7px;
   --radius-tile-sm: 5px;
+  --radius-tile-md: 9px;
   --radius-tile-lg: 10px;
+  --radius-opt: 6px;
   --radius-sheet: 20px;
   --radius-pill: 22px;
   --radius-pill-grown: 20px;
@@ -95,10 +101,15 @@
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --animate-drain: drain 15s linear forwards;
   --animate-rise: rise 0.2s var(--ease-out-soft);
+  --animate-wave: wave 1.1s ease-in-out infinite;
 
   @keyframes drain {
     from { transform: scaleX(1); }
     to { transform: scaleX(0); }
+  }
+
+  @keyframes wave {
+    50% { transform: scaleY(0.6); }
   }
 
   @keyframes rise {
@@ -110,11 +121,12 @@
 @media (width >= 64rem) {
   :root {
     --text-title: 30px;
+    --text-title--line-height: 1.2;
     --text-sheet: 15px;
     --text-record: 15px;
     --text-row: 14px;
     --text-row--font-weight: 500;
-    --text-body: 14px;
+    --text-body: 15px;
     --text-meta: 13px;
     --text-caption: 12px;
   }
@@ -124,6 +136,8 @@
 @media (width >= 64rem) and (pointer: fine) {
   :root {
     --text-input: 14px;
+    --text-opt: 13px;
+    --text-opt--line-height: 22px;
   }
 }
 
@@ -156,10 +170,12 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-text-sel: var(--text-sel);
   --color-on-accent: var(--on-accent);
   --color-warn: var(--warn);
   --color-warn-ink: var(--warn-ink);
   --color-warn-fill: var(--warn-fill);
+  --color-warn-soft: var(--warn-soft);
   --color-on-warn: var(--on-warn);
   --color-ok: var(--ok);
   --color-knob: var(--knob);
@@ -227,6 +243,11 @@
   --btn-pressed: var(--chip-elev-pressed);
 }
 
+/* A page's body on a phone (Входящие chips, the board's column chips, an empty page): chips sit sunk into it */
+@utility sunk {
+  --btn: var(--trk);
+}
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
@@ -241,7 +262,7 @@
   }
 
   ::selection {
-    background: var(--accent-soft);
+    background: var(--text-sel);
     color: var(--ink);
   }
 
@@ -270,6 +291,37 @@
   &[data-fade-bottom] {
     --fade-bottom: 20px;
   }
+}
+
+/* The rows of the latest send: the fresh tint holds 4 s, then fades in 1 s to the row's own fill (v22). It is a
+   layer under the row's content, so hover fills the row again once it is gone */
+@utility fresh-tint {
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--fresh);
+    pointer-events: none;
+    animation: fresh-out 1s 4s forwards;
+  }
+}
+
+@keyframes fresh-out {
+  to { opacity: 0; }
+}
+
+/* A strip that scrolls sideways fades over its last 32px instead of cutting a tab in half */
+@utility fade-end {
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+}
+
+/* A sheet's scroll area ends above the notice at its foot with a 24pt fade, so the notice never lies on a row */
+@utility fade-foot {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
 }
 
 @utility no-scrollbar {

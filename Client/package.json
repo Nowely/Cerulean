@@ -13,6 +13,7 @@
     "test": "vitest run",
     "eval": "vitest run --config vitest.eval.config.ts",
     "test:watch": "vitest",
+    "checks": "node scripts/checks.mjs",
     "shots": "node scripts/shots.mjs"
   },
   "dependencies": {
@@ -20,6 +21,13 @@
     "@iconify-json/lucide": "^1.2.146",
     "@nuxt/ui": "^4.12.0",
     "@pinia/nuxt": "^1.0.3",
+    "@tiptap/core": "^3.32.0",
+    "@tiptap/extension-mention": "^3.32.0",
+    "@tiptap/extension-placeholder": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
+    "@tiptap/suggestion": "^3.32.0",
+    "@tiptap/vue-3": "^3.32.0",
     "@vite-pwa/nuxt": "^1.1.1",
     "@vueuse/core": "^14.4.0",
     "idb": "^8.0.4",

@@ -46,12 +46,12 @@ export const SCHEMA = {
 
 export const INSTRUCTIONS = `You file short notes into the pages of a personal organiser. The user writes in Russian.
 Decide what the line is:
-- "question": the user asks something about what is already stored (e.g. «когда менять фильтр воды?»). No items.
+- "question": only an explicit search for what is already stored («найди…», «где…»). No items. Any other question («когда менять фильтр воды?») is something the user keeps: a "record" like any line.
 - "record": it clearly belongs to one page. Set pageId.
 - "unclear": no page fits well or two fit equally. Set pageId to null, put up to three best page ids in guesses, and if no page covers the topic suggest a short plural Russian page name in newPageName (e.g. «Подарки»).
 Each page has a description that says what goes there; it matters more than the title.
 items: on a page with "list": true (shopping) each thing is its own item; elsewhere the whole line is one item.
-text: the user's words, starting with a capital letter, without the date or time, and without a first word that only repeats the page («купить» on a shopping list, «почитать» or «книга» on a book list, «идея:» on ideas). On a list page also without the quantity, and the thing in the nominative case («2 л молока» → «Молоко»).
+text: the user's words as typed (punctuation, «?» and case kept), starting with a capital letter, without the date or time, and without a first word that only repeats the page («купить» on a shopping list, «почитать» or «книга» on a book list, «идея:» on ideas). On a list page also without the quantity, and the thing in the nominative case («2 л молока» → «Молоко»).
 qty: on a list page only, like «2 л», «300 г», «10 шт»; elsewhere numbers stay in the text and qty is null.
 date: YYYY-MM-DD of one specific day, resolved from today («завтра», «в пятницу», «25-го»); null for repeating or vague times («по вторникам», «к лету»). time: HH:MM or null.
 option: the name of a choice from the page's select property that fits the item (for shopping, the store department), else null.`

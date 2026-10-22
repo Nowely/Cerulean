@@ -7,9 +7,12 @@ import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import { useFind } from '~/composables/useFind'
 import { useViewport } from '~/composables/useViewport'
+import { useOpenedTracking } from '~/composables/useOpened'
 import { FOCUS_PROXY_ID } from '~/composables/useCreatePage'
 import { useLater } from '~/composables/useLater'
+import { useNotify } from '~/composables/useNotify'
 import { useUiStore } from '~/stores/ui'
+import { useDataStore } from '~/stores/data'
 
 // Only the screen itself is in the first download. The sidebar (desktop only) keeps its width while it
 // loads; the overlays come with the menus and sheets (useLater), after the first paint.
@@ -22,6 +25,7 @@ const PreviewPane = defineAsyncComponent(() => import('../overlay/PreviewPane.vu
 const FindOverlay = defineAsyncComponent(() => import('../overlay/FindOverlay.vue'))
 const PagePicker = defineAsyncComponent(() => import('../overlay/PagePicker.vue'))
 const ConfirmDialog = defineAsyncComponent(() => import('../overlay/ConfirmDialog.vue'))
+const PropSheets = defineAsyncComponent(() => import('../page/PropSheets.vue'))
 
 const { isDesktop } = useScreen()
 const peek = usePeek()
@@ -30,7 +34,11 @@ const route = useRoute()
 const router = useRouter()
 const colorMode = useColorMode()
 const ui = useUiStore()
+const data = useDataStore()
+const notify = useNotify()
 useViewport()
+// «Открыто недавно» in Поиск follows what is opened, from anywhere (v24, item 16)
+useOpenedTracking()
 
 const later = useLater()
 onMounted(later.loadWhenIdle)
@@ -49,7 +57,7 @@ watch(() => colorMode.value, () => nextTick(() => {
 }), { immediate: true, flush: 'post' })
 useHead({ meta: [{ name: 'theme-color', content: themeColor }] })
 
-// On a phone a swipe to the right goes back from Чат to Главная (Чат is a screen pushed from Главная)
+// On a phone a swipe to the right goes back from Журнал to Главная (Журнал is a screen pushed from Главная)
 let x0 = 0
 let y0 = 0
 function touchStart(e: TouchEvent) {
@@ -57,7 +65,7 @@ function touchStart(e: TouchEvent) {
   y0 = e.touches[0]!.clientY
 }
 function touchEnd(e: TouchEvent) {
-  if (isDesktop.value || route.path !== '/chat') return
+  if (isDesktop.value || route.path !== '/journal') return
   const t = e.changedTouches[0]!
   const dx = t.clientX - x0
   const dy = t.clientY - y0
@@ -65,6 +73,14 @@ function touchEnd(e: TouchEvent) {
   if ((e.target as HTMLElement).closest('input, textarea, [data-no-swipe], .no-scrollbar')) return
   if (dx > 0) void router.push('/')
 }
+
+// A preview of something that never existed (an old or mistyped link) closes and says so;
+// something deleted stays open with «Этого больше нет»
+watch(() => peek.target.value, (t) => {
+  if (!t || (t.kind === 'page' ? data.pages[t.id] : data.records[t.id])) return
+  peek.close()
+  notify(t.kind === 'page' ? 'Такой страницы нет' : 'Такой записи нет', undefined, 3000)
+}, { immediate: true })
 
 // Leaving a screen closes its preview on a phone
 watch(() => route.path, () => {
@@ -97,6 +113,7 @@ watch(() => route.path, () => {
     <FindOverlay />
     <PagePicker />
     <ConfirmDialog />
+    <PropSheets />
   </template>
   <input
     :id="FOCUS_PROXY_ID"

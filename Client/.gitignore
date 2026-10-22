@@ -27,4 +27,4 @@ logs
 coverage/
 
 # Screenshots from `pnpm shots`
-shots
+/shots

@@ -9,6 +9,8 @@ export function useViewport() {
       const vv = window.visualViewport
       if (!vv) return
       document.documentElement.style.setProperty('--vvh', `${vv.height}px`)
+      // The keys are up: a dock sits 8 above them, not above the home indicator they cover (v24, item 14)
+      document.documentElement.toggleAttribute('data-keyboard', window.innerHeight - vv.height * vv.scale > 120)
       // iOS scrolls the whole document to show the focused field; the shell already moved, so undo that
       if (window.scrollY) window.scrollTo(0, 0)
     })

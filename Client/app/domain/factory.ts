@@ -10,7 +10,7 @@ export function newPage(init: Partial<Page> = {}, now = Date.now()): Page {
     kind: 'page',
     title: '',
     glyph: null,
-    color: 'gray',
+    color: null,
     sectionId: null,
     order: 0,
     hasDone,
@@ -63,7 +63,11 @@ export const DEFAULT_SETTINGS: Settings = {
   rulesFirst: true,
   homeRows: 'summary',
   dismissed: [],
-  folded: []
+  folded: [],
+  copiedAt: 0,
+  copyHiddenAt: 0,
+  startedAt: 0,
+  persistAsked: false
 }
 
 /** The system pages every database has: Входящие (pinned) and Сегодня (all pages, due today) */
@@ -73,7 +77,6 @@ export function systemPages(now = Date.now()): Page[] {
       kind: 'inbox',
       title: 'Входящие',
       glyph: 'inbox',
-      color: 'gray',
       order: -2,
       hasDone: true,
       description: 'то, что не удалось разложить',
@@ -83,7 +86,6 @@ export function systemPages(now = Date.now()): Page[] {
       kind: 'today',
       title: 'Сегодня',
       glyph: 'cal',
-      color: 'teal',
       order: -1,
       hasDone: true,
       description: 'дела со сроком на сегодня и просроченные, со всех страниц',

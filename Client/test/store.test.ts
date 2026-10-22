@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
+import type { PropDef } from '~/domain/types'
+import { placeOptions } from '~/domain/rules'
+import { applyView } from '~/domain/views'
+import { bodyOf, docText } from '~/domain/body'
 
 vi.mock('~/domain/model', async (orig) => {
   const real = await orig<typeof import('~/domain/model')>()
@@ -9,7 +13,7 @@ vi.mock('~/domain/model', async (orig) => {
     ...real,
     askModel: vi.fn(async (_c: unknown, text: string, pages: { id: string, title: string }[]) => ({
       kind: 'record',
-      pageId: pages.find(p => p.title === 'Продукты')!.id,
+      pageId: pages.find(p => p.title === 'Покупки')!.id,
       items: [{ text: text.replace(/ для пульта/, ''), date: null, time: null, qty: '4 шт', option: 'Прочее' }],
       guesses: [],
       newPageName: null
@@ -47,21 +51,21 @@ describe('data store', () => {
 
   it('writes reactive objects to IndexedDB (the DataCloneError on main)', async () => {
     const { data, dbName } = await fresh({ demo: true })
-    const products = data.livePages.find(p => p.title === 'Продукты')!
+    const products = data.livePages.find(p => p.title === 'Покупки')!
     const rec = data.addRecord({ pageId: products.id, text: 'Кефир', values: { a: 1 } })
     data.updateRecord(rec.id, { note: 'обезжиренный', due: { date: '2026-10-20' } })
     expect(data.storageError).toBeNull()
     await data.flush()
     const again = await reload(dbName)
     expect(again.records[rec.id]).toMatchObject({ text: 'Кефир', note: 'обезжиренный', due: { date: '2026-10-20' } })
-    expect(again.livePages.map(p => p.title)).toContain('Продукты')
+    expect(again.livePages.map(p => p.title)).toContain('Покупки')
   })
 
   it('keeps pages of a deleted section and empties the trash', async () => {
     const { data } = await fresh({ demo: true })
     const home = data.sectionList.find(s => s.name === 'Дом')!
     data.removeSection(home.id)
-    expect(data.livePages.find(p => p.title === 'Продукты')!.sectionId).toBeNull()
+    expect(data.livePages.find(p => p.title === 'Покупки')!.sectionId).toBeNull()
     const books = data.livePages.find(p => p.title === 'Книги')!
     data.removePage(books.id)
     expect(data.trash[0]).toMatchObject({ kind: 'page' })
@@ -75,8 +79,11 @@ describe('data store', () => {
     const library = find('Вернуть книгу в библиотеку')
     const book = find('Атомные привычки')
     const titles = (id: string) => data.linksOf(id).map(h => h.kind === 'page' ? h.page.title : h.rec.text)
-    expect(titles(library.id)).toEqual(['Атомные привычки'])
+    // The library record is linked to «24 книги за год» by hand and mentions the book in its body: its own links first
+    expect(titles(library.id)).toEqual(['24 книги за год', 'Атомные привычки'])
     expect(titles(book.id)).toEqual(['Вернуть книгу в библиотеку', 'Полумарафон к маю'])
+    expect(data.relatedOf(library.id).map(x => x.why)).toEqual(['hand', 'text'])
+    expect(data.relatedOf(book.id)[0]).toMatchObject({ why: 'quote', quote: 'Сначала дочитать Атомные привычки, осталось две главы.' })
 
     const marathon = find('Полумарафон к маю')
     data.toggleLink(book.id, marathon.id)
@@ -84,7 +91,10 @@ describe('data store', () => {
     data.toggleLink(book.id, goals.id)
     data.toggleLink(book.id, library.id)
     expect(titles(book.id)).toEqual(['Цели'])
-    expect(titles(library.id)).toEqual([])
+    // Unlinking a mention turns the chip into words; the hand link stays
+    expect(titles(library.id)).toEqual(['24 книги за год'])
+    expect(docText(bodyOf(data.records[library.id]))).toContain('Сначала дочитать Атомные привычки, осталось')
+    expect(data.records[library.id]!.mentions).toEqual([])
     expect(titles(marathon.id)).toEqual([])
 
     data.removePage(goals.id)
@@ -95,11 +105,44 @@ describe('data store', () => {
   })
 })
 
+describe('bodies', () => {
+  it('saves a body, reads its mentions out for «Связано» on both sides, and keeps a hand link when the chip goes', async () => {
+    const { data, dbName } = await fresh({ demo: true })
+    const find = (text: string) => data.liveRecords.find(r => r.text === text)!
+    const dentist = find('Позвонить стоматологу')
+    const milk = find('Молоко')
+    const doc = (...content: object[]) => ({ type: 'doc' as const, content: [{ type: 'paragraph', content }] })
+    data.setBody({ kind: 'record', id: dentist.id }, doc({ type: 'text', text: 'Спросить про ' }, { type: 'mention', attrs: { id: milk.id, label: 'Молоко' } }, { type: 'text', text: '.' }))
+    expect(data.records[dentist.id]!.mentions).toEqual([milk.id])
+    expect(data.relatedOf(dentist.id)).toMatchObject([{ why: 'text' }])
+    expect(data.relatedOf(milk.id).find(x => x.hit.kind === 'record' && x.hit.rec.id === dentist.id)).toMatchObject({ why: 'quote', quote: 'Спросить про Молоко.' })
+    data.toggleLink(dentist.id, milk.id) // unticking in «Связать» turns the chip into words
+    expect(data.linksOf(dentist.id)).toEqual([])
+    data.toggleLink(dentist.id, milk.id) // a second tap makes a hand link
+    data.setBody({ kind: 'record', id: dentist.id }, doc({ type: 'mention', attrs: { id: milk.id, label: 'Молоко' } }))
+    data.setBody({ kind: 'record', id: dentist.id }, doc({ type: 'text', text: 'без молока' }))
+    expect(data.relatedOf(dentist.id)).toMatchObject([{ why: 'hand' }])
+    // An emptied body is stored as none; an old note is left behind once the body is written
+    const marathon = find('Полумарафон к маю')
+    expect(docText(bodyOf(marathon))).toContain('Три пробежки в неделю')
+    data.setBody({ kind: 'record', id: marathon.id }, { type: 'doc', content: [{ type: 'paragraph' }] })
+    expect(data.records[marathon.id]).toMatchObject({ body: null, note: '' })
+    // A page note mentions too
+    const chores = data.livePages.find(p => p.title === 'Дела по дому')!
+    data.setBody({ kind: 'page', id: chores.id }, doc({ type: 'mention', attrs: { id: milk.id, label: 'Молоко' } }))
+    expect(data.linksOf(milk.id).some(h => h.kind === 'page' && h.page.id === chores.id)).toBe(true)
+    await data.flush()
+    const again = await reload(dbName)
+    expect(again.records[dentist.id]!.body).toEqual(doc({ type: 'text', text: 'без молока' }))
+    expect(again.pages[chores.id]!.mentions).toEqual([milk.id])
+  })
+})
+
 describe('Авто without a key', () => {
   it('files a clear line by simple rules', async () => {
     const { data, journal } = await fresh({ demo: true })
     const entry = await journal.send('кефир 1 л', 'auto')
-    const products = data.livePages.find(p => p.title === 'Продукты')!
+    const products = data.livePages.find(p => p.title === 'Покупки')!
     expect(entry.kind).toBe('routed')
     expect(entry.pageId).toBe(products.id)
     const rec = data.records[entry.recordIds![0]!]!
@@ -129,14 +172,46 @@ describe('Авто without a key', () => {
     expect((await reload(dbName)).learned).toMatchObject({ подар: page.id })
   })
 
-  it('answers a question first and records it on «Записать»', async () => {
+  it('writes a question down with «?» and shows records like it (v22, U10)', async () => {
     const { data, journal } = await fresh({ demo: true })
-    const q = await journal.send('когда менять фильтр воды?', 'auto')
+    const q = await journal.send('когда менять фильтр?', 'auto')
+    expect(q.kind).toBe('routed')
+    expect(data.pages[q.pageId!]!.title).toBe('Дела по дому')
+    expect(data.records[q.recordIds![0]!]!.text).toBe('Когда менять фильтр?')
+    expect(q.similar!.map(id => data.records[id]!.text)).toEqual(['Поменять фильтр воды'])
+  })
+
+  it('gives the found card only for an explicit search, and records it on «Записать»', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const q = await journal.send('где фильтр воды', 'auto')
     expect(q.kind).toBe('found')
     expect(q.hits!.map(id => data.records[id]!.text)).toEqual(['Поменять фильтр воды'])
     const r = await journal.record(q.id)
     expect(r!.kind).toBe('routed')
-    expect(data.pages[r!.pageId!]!.title).toBe('Дела по дому')
+  })
+
+  it('sends each part of a list to its own page under one receipt (v22, U3)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const e = await journal.send('сыр, позвонить бабушке', 'auto')
+    expect(e).toMatchObject({ kind: 'routed', split: true })
+    const recs = e.recordIds!.map(id => data.records[id]!)
+    expect(recs.map(r => [r.text, data.pages[r.pageId]!.title])).toEqual([['Сыр', 'Покупки'], ['Позвонить бабушке', 'Задачи']])
+    // One row moves on its own
+    const ideas = data.livePages.find(p => p.title === 'Идеи')!
+    journal.chooseOne(e.id, recs[1]!.id, { pageId: ideas.id })
+    expect(data.records[recs[1]!.id]!.pageId).toBe(ideas.id)
+    expect(data.records[recs[0]!.id]!.pageId).not.toBe(ideas.id)
+    // «Отменить» takes back every part
+    journal.undo(e.id)
+    expect(recs.every(r => !data.records[r.id])).toBe(true)
+  })
+
+  it('keeps a list with an unknown thing on one page', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const e = await journal.send('молоко, вафли', 'auto')
+    expect(e.split).toBeFalsy()
+    expect(data.pages[e.pageId!]!.title).toBe('Покупки')
+    expect(e.recordIds).toHaveLength(2)
   })
 
   it('«Отменить» removes the records, «Не туда» moves them', async () => {
@@ -160,6 +235,62 @@ describe('Авто without a key', () => {
   })
 })
 
+describe('day one (v21 F1)', () => {
+  it('makes a page from a starter when no page fits, and «Отменить» takes it back', async () => {
+    const { data, journal } = await fresh()
+    const e = await journal.send('хлеб', 'auto')
+    const page = data.pages[e.pageId!]!
+    expect(e).toMatchObject({ kind: 'routed', made: true })
+    expect(page).toMatchObject({ title: 'Покупки', template: 'shop', sectionId: null })
+    expect(data.recentlyMade.map(p => p.title)).toEqual(['Покупки'])
+    journal.undo(e.id)
+    expect(data.livePages.some(p => p.title === 'Покупки')).toBe(false)
+  })
+
+  it('files calls into Дела and asks about a book with the starters to choose from', async () => {
+    const { data, journal } = await fresh()
+    const call = await journal.send('позвонить маме', 'auto')
+    expect(data.pages[call.pageId!]!.title).toBe('Задачи')
+    const book = await journal.send('прочитать Канемана', 'auto')
+    expect(book.kind).toBe('ask')
+    expect(data.livePages.filter(p => p.kind === 'page').map(p => p.title)).toEqual(['Задачи'])
+    const page = journal.choose(book.id, { template: 'note' })!
+    expect(page).toMatchObject({ title: 'Идеи', template: 'note' })
+    expect(data.recordsOf(page.id).map(r => r.text)).toEqual(['Прочитать Канемана'])
+  })
+
+  it('«Не туда» drops the page Авто made while it is empty', async () => {
+    const { data, journal } = await fresh()
+    const e = await journal.send('хлеб', 'auto')
+    const made = e.pageId!
+    journal.choose(e.id, { newPage: 'Дача' })
+    expect(data.pages[made]).toBeUndefined()
+    expect(data.pages[e.pageId!]!.title).toBe('Дача')
+  })
+
+  it('takes a choice in Входящие back with its Чат line', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const gift = data.liveRecords.find(r => r.text === 'Подарок маме на др')!
+    const tasks = data.livePages.find(p => p.title === 'Задачи')!
+    const entry = data.entries.find(x => x.recordIds?.includes(gift.id))!
+    const { undo } = journal.undoable([gift.id], () => journal.chooseForRecord(gift.id, { pageId: tasks.id }))
+    expect(data.records[gift.id]).toMatchObject({ pageId: tasks.id, tags: [] })
+    expect(entry.kind).toBe('routed')
+    undo()
+    expect(data.records[gift.id]).toMatchObject({ pageId: data.inbox.id, tags: ['clarify'] })
+    expect(entry.kind).toBe('ask')
+  })
+
+  it('works out the Входящие guesses again when pages change', async () => {
+    const { data, journal } = await fresh()
+    const e = await journal.send('прочитать Канемана', 'auto')
+    const rec = data.records[e.recordIds![0]!]!
+    expect(journal.guessesFor(rec)).toEqual([])
+    const books = data.createPage({ title: 'Книги' })
+    expect(journal.guessesFor(rec)).toEqual([books.id])
+  })
+})
+
 describe('Авто with a key', () => {
   it('waits for the network in Входящие and files the line when it is back', async () => {
     const { data, journal } = await fresh({ demo: true })
@@ -175,6 +306,255 @@ describe('Авто with a key', () => {
     expect(data.records[parked.id]).toBeUndefined()
     const rec = data.records[e.recordIds![0]!]!
     expect(rec.text).toBe('Батарейки')
-    expect(data.pages[rec.pageId]!.title).toBe('Продукты')
+    expect(data.pages[rec.pageId]!.title).toBe('Покупки')
+  })
+
+  it('puts the line in Входящие when the model does not answer, and «Повторить» runs it again (v22, B7)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    data.setSettings({ apiKey: 'sk-test', keyState: 'ok', rulesFirst: false })
+    const { askModel, ModelError } = await import('~/domain/model')
+    vi.mocked(askModel).mockRejectedValueOnce(new ModelError('timeout'))
+    const e = await journal.send('батарейки для пульта', 'auto')
+    expect(e).toMatchObject({ kind: 'routed', pageId: data.inbox.id, note: 'slow' })
+    const waiting = e.recordIds![0]!
+    await journal.retry(e.id)
+    expect(data.records[waiting]).toBeUndefined()
+    expect(e.note).toBeUndefined()
+    expect(data.pages[e.pageId!]!.title).toBe('Покупки')
+  })
+
+  it('says the rules filed it when the key was refused (v22, B6)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    data.setSettings({ apiKey: 'sk-test', keyState: 'ok', rulesFirst: false })
+    const { askModel, ModelError } = await import('~/domain/model')
+    vi.mocked(askModel).mockRejectedValueOnce(new ModelError('key'))
+    const e = await journal.send('батарейки', 'auto')
+    expect(e).toMatchObject({ kind: 'routed', note: 'key' })
+    expect(data.pages[e.pageId!]!.title).toBe('Покупки')
+    expect(data.settings.keyState).toBe('bad')
+  })
+})
+
+describe('duplicates, «Запомнить», existing pages (v22)', () => {
+  it('writes a duplicate as typed and merges it, adding the quantities; «Отменить» leaves the merged record (G3)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const shop = data.livePages.find(p => p.title === 'Покупки')!
+    const qty = shop.props.find(p => p.name === 'Количество')!.id
+    const milk = data.liveRecords.find(r => r.text === 'Молоко')!
+    const e = await journal.send('молоко 1 л', 'auto')
+    const typed = e.recordIds![0]!
+    expect(data.records[typed]).toMatchObject({ text: 'Молоко', pageId: shop.id, values: { [qty]: '1 л' } })
+    expect(journal.duplicateFor(e.id, typed)?.id).toBe(milk.id)
+    expect(journal.merge(e.id, typed)?.id).toBe(milk.id)
+    expect(data.records[typed]).toBeUndefined()
+    expect(data.records[milk.id]!.values[qty]).toBe('3 л')
+    expect(data.recordsOf(shop.id).filter(r => r.text === 'Молоко')).toHaveLength(1)
+    expect(e.merged).toEqual({ [typed]: milk.id })
+    journal.undo(e.id)
+    expect(data.records[milk.id]).toMatchObject({ deletedAt: null, values: { [qty]: '3 л' } })
+  })
+
+  it('offers no merge for a ticked record or one of the same send', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const both = await journal.send('кефир, кефир', 'auto')
+    expect(both.recordIds!.map(id => journal.duplicateFor(both.id, id))).toEqual([undefined, undefined])
+    const bread = data.liveRecords.find(r => r.text === 'Хлеб')!
+    data.toggleDone(bread.id)
+    const e = await journal.send('хлеб', 'auto')
+    expect(journal.duplicateFor(e.id, e.recordIds![0]!)).toBeUndefined()
+  })
+
+  it('«Запомнить» after a page chosen by hand writes an example into its description; «Отменить» takes it out (U5)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const tasks = data.livePages.find(p => p.title === 'Задачи')!
+    const before = tasks.description
+    const ask = await journal.send('подарок Лене на новоселье', 'auto')
+    expect(ask.kind).toBe('ask')
+    expect(ask.learn).toBeFalsy()
+    journal.choose(ask.id, { pageId: tasks.id })
+    expect(ask).toMatchObject({ kind: 'routed', pageId: tasks.id, learn: true, learned: false })
+    journal.remember(ask.id)
+    expect(ask.learned).toBe(true)
+    expect(data.pages[tasks.id]!.description).toBe(`${before}\nНапример: «подарок Лене на новоселье»`)
+    journal.remember(ask.id)
+    expect(data.pages[tasks.id]!.description.match(/Например/g)).toHaveLength(1)
+    journal.forget(ask.id)
+    expect(ask.learned).toBe(false)
+    expect(data.pages[tasks.id]!.description).toBe(before)
+    // Remembered, then moved on: the example leaves the first page with it
+    journal.remember(ask.id)
+    const ideas = data.livePages.find(p => p.title === 'Идеи')!
+    journal.choose(ask.id, { pageId: ideas.id })
+    expect(data.pages[tasks.id]!.description).toBe(before)
+    expect(ask).toMatchObject({ pageId: ideas.id, learn: true, learned: false })
+  })
+
+  it('offers nothing to remember when Авто filed it by itself or the record stays in Входящие', async () => {
+    const { journal } = await fresh({ demo: true })
+    const e = await journal.send('позвонить маме', 'auto')
+    expect(e.learn).toBeFalsy()
+    journal.remember(e.id)
+    expect(e.learned).toBeFalsy()
+    const ask = await journal.send('подарок Лене на новоселье', 'auto')
+    journal.choose(ask.id, { keep: true })
+    expect(ask.learn).toBeFalsy()
+  })
+
+  it('a new page named like one there is becomes that page in the Уточнение (N23)', async () => {
+    const { data, journal } = await fresh({ demo: true })
+    const gifts = data.createPage({ title: 'Подарки' })
+    data.setSettings({ apiKey: 'sk-test', keyState: 'ok', rulesFirst: false })
+    const { askModel } = await import('~/domain/model')
+    vi.mocked(askModel).mockResolvedValueOnce({ kind: 'unclear', pageId: null, items: [], guesses: [], newPageName: 'подарки' })
+    const e = await journal.send('что-нибудь для Лены', 'auto')
+    expect(e.kind).toBe('ask')
+    const rec = data.records[e.recordIds![0]!]!
+    const offer = placeOptions(journal.guessesFor(rec), e.newName, data.livePages)
+    expect(offer.pageIds).toContain(gifts.id)
+    expect(offer.newName).toBeNull()
+  })
+})
+
+describe('properties (v22 item 30)', () => {
+  async function shop() {
+    const { data, dbName } = await fresh({ demo: true })
+    const id = data.livePages.find(p => p.title === 'Покупки')!.id
+    const [qty, dept, left, norm] = data.pages[id]!.props.map(p => JSON.parse(JSON.stringify(p)) as PropDef)
+    const rec = (text: string) => Object.values(data.records).find(r => r.text === text && !r.deletedAt)!
+    return { data, dbName, id, page: () => data.pages[id]!, rec, qty: qty!, dept: dept!, left: left!, norm: norm! }
+  }
+
+  it('adds a property after the own ones and reorders Срок and Заметка with the rest', async () => {
+    const { data, dbName, id, page, qty, dept, left, norm } = await shop()
+    data.moveProp(id, 'due', 0)
+    expect(page().propOrder).toEqual(['due', qty.id, dept.id, left.id, norm.id, 'note'])
+    const shopName = data.addProp(id, { name: 'Магазин', type: 'select', options: [{ id: 'o1', name: 'Лента', color: 'teal' }] })!
+    expect(page().propOrder).toEqual(['due', qty.id, dept.id, left.id, norm.id, shopName.id, 'note'])
+    // The place counts the rows as listed: Осталось second, its «Норма» right after it
+    data.moveProp(id, left.id, 1)
+    expect(page().propOrder).toEqual(['due', left.id, norm.id, qty.id, dept.id, shopName.id, 'note'])
+    expect(page().props.map(p => p.name)).toEqual(['Осталось', 'Норма', 'Количество', 'Отдел', 'Магазин'])
+    await data.flush()
+    const again = await reload(dbName)
+    expect(again.pages[id]!.propOrder).toEqual(page().propOrder)
+    expect(again.pages[id]!.props.at(-1)!.options).toEqual([{ id: 'o1', name: 'Лента', color: 'teal' }])
+  })
+
+  it('deletes an option with its values, and «Отменить» brings both back', async () => {
+    const { data, id, page, rec, dept } = await shop()
+    const chem = dept.options!.find(o => o.name === 'Бытовая химия')!
+    expect(data.propUsage(id, [dept.id], chem.id)).toBe(1)
+    const done = data.removeOption(id, dept.id, chem.id)!
+    expect(done.count).toBe(1)
+    expect(page().props[1]!.options!.map(o => o.name)).not.toContain('Бытовая химия')
+    expect(dept.id in rec('Порошок').values).toBe(false)
+    done.undo()
+    expect(page().props[1]!.options).toEqual(dept.options)
+    expect(rec('Порошок').values[dept.id]).toBe(chem.id)
+  })
+
+  it('changes a type, converting what it can, and undoes all of it', async () => {
+    const { data, id, page, rec, qty, dept } = await shop()
+    const done = data.retypeProp(id, qty.id, 'number')!
+    expect(done.dropped).toBe(4)
+    expect(qty.id in rec('Молоко').values).toBe(false)
+    done.undo()
+    expect(page().props[0]!.type).toBe('text')
+    expect(rec('Молоко').values[qty.id]).toBe('2 л')
+    // «Купить» is grouped by Отдел: as text it loses the groups, as «Выбор» again it finds the same options
+    const t = data.retypeProp(id, dept.id, 'text')!
+    expect(t.dropped).toBe(0)
+    expect(page().views[0]!.groupBy).toBeNull()
+    expect(rec('Молоко').values[dept.id]).toBe('Молочное')
+    data.retypeProp(id, dept.id, 'select')
+    expect(page().props[1]!.options).toEqual(dept.options)
+    expect(rec('Молоко').values[dept.id]).toBe(dept.options!.find(o => o.name === 'Молочное')!.id)
+    t.undo()
+    expect(page().views[0]!.groupBy).toBe(dept.id)
+  })
+
+  it('deletes a property with its «Норма», values and place in the views; «Отменить» restores them', async () => {
+    const { data, id, page, left, norm } = await shop()
+    const before = JSON.parse(JSON.stringify(page()))
+    const n = data.propUsage(id, [left.id, norm.id])
+    expect(n).toBeGreaterThan(0)
+    const done = data.removeProp(id, left.id)!
+    expect(done.count).toBe(n)
+    expect(page().props.map(p => p.name)).toEqual(['Количество', 'Отдел'])
+    expect(page().views.some(v => v.shown.includes(left.id) || v.filter.some(f => f.field === left.id))).toBe(false)
+    expect(Object.values(data.records).some(r => left.id in r.values || norm.id in r.values)).toBe(false)
+    done.undo()
+    expect(JSON.parse(JSON.stringify(page()))).toEqual(before)
+    expect(data.propUsage(id, [left.id, norm.id])).toBe(n)
+  })
+})
+
+describe('drag and the shop loop (v22, Josh #3, N9)', () => {
+  async function shop() {
+    const { data } = await fresh({ demo: true })
+    const page = () => data.livePages.find(p => p.title === 'Покупки')!
+    const view = () => page().views[0]!
+    const groups = () => applyView(page(), data.recordsOf(page().id), view(), Date.now())
+    const texts = (key: string) => groups().find(g => g.key === key)!.records.map(r => r.text)
+    const rec = (text: string) => Object.values(data.records).find(r => r.text === text && !r.deletedAt)!
+    const dept = page().props.find(p => p.name === 'Отдел')!
+    const option = (name: string) => dept.options!.find(o => o.name === name)!.id
+    return { data, page, view, groups, texts, rec, dept, option }
+  }
+
+  it('a drop into another group sets its value, and «Отменить» puts the record back', async () => {
+    const { data, page, view, groups, texts, rec, dept, option } = await shop()
+    const before = groups().map(g => [g.label, g.records.map(r => r.text)])
+    const veg = option('Овощи и фрукты')
+    const done = data.placeRecord(page().id, view().id, groups(), rec('Яйца').id, veg, 1)!
+    expect(done.into?.label).toBe('Овощи и фрукты')
+    expect(rec('Яйца').values[dept.id]).toBe(veg)
+    expect(texts(veg)).toEqual(['Бананы', 'Яйца'])
+    done.undo()
+    expect(rec('Яйца').values[dept.id]).toBe(option('Молочное'))
+    expect(groups().map(g => [g.label, g.records.map(r => r.text)])).toEqual(before)
+  })
+
+  it('a move within a group only reorders; a sorted view turns «Вручную» and undoes that too', async () => {
+    const { data, page, view, groups, texts, rec, option } = await shop()
+    const dairy = option('Молочное')
+    const done = data.placeRecord(page().id, view().id, groups(), rec('Яйца').id, dairy, 0)!
+    expect(done.into).toBeNull()
+    expect(done.manual).toBe(false)
+    expect(texts(dairy)[0]).toBe('Яйца')
+    data.updatePage(page().id, { views: page().views.map((v, i) => i ? v : { ...v, sort: 'name' as const }) })
+    const sorted = texts(dairy)
+    const again = data.placeRecord(page().id, view().id, groups(), rec('Сыр').id, dairy, 0)!
+    expect(again.manual).toBe(true)
+    expect(view().sort).toBe('manual')
+    expect(texts(dairy)[0]).toBe('Сыр')
+    again.undo()
+    expect(view().sort).toBe('name')
+    expect(texts(dairy)).toEqual(sorted)
+  })
+
+  it('a group by date takes no rows from another group', async () => {
+    const { data } = await fresh({ demo: true })
+    const tasks = data.livePages.find(p => p.title === 'Задачи')!
+    const view = { ...tasks.views[0]!, groupBy: 'due' as const }
+    data.updatePage(tasks.id, { views: [view, ...tasks.views.slice(1)] })
+    const groups = applyView(tasks, data.recordsOf(tasks.id), view, Date.now())
+    expect(groups.length).toBeGreaterThan(1)
+    expect(data.placeRecord(tasks.id, view.id, groups, groups[0]!.records[0]!.id, groups[1]!.key, 0)).toBeNull()
+  })
+
+  it('«Очистить купленное» sends the bought records to Корзина, and «Отменить» brings them back', async () => {
+    const { data, page, rec } = await shop()
+    const bought = page().views.find(v => v.name === 'Куплено')!
+    const ids = ['Кофе в зёрнах', 'Помидоры'].map(t => rec(t).id)
+    const done = data.clearDone(page().id, bought.id)
+    expect(done.count).toBe(2)
+    expect(ids.every(id => data.records[id]!.deletedAt)).toBe(true)
+    expect(data.trash.flatMap(t => t.kind === 'record' ? [t.rec.text] : [])).toEqual(expect.arrayContaining(['Кофе в зёрнах', 'Помидоры']))
+    // What is still to buy stays
+    expect(rec('Молоко').deletedAt).toBeNull()
+    done.undo()
+    expect(ids.every(id => !data.records[id]!.deletedAt)).toBe(true)
+    expect(data.recordsOf(page().id).filter(r => r.done).map(r => r.text).sort()).toEqual(['Кофе в зёрнах', 'Помидоры'])
   })
 })

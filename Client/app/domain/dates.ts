@@ -56,6 +56,20 @@ export function formatDue(due: Due, now: number): string {
   return due.time ? `${base}, ${due.time}` : base
 }
 
+/** The day a calendar composer writes on: «сегодня», «завтра», «вс, 25 окт» (v22, G6: «Запись на вс, 25 окт») */
+export function dayAim(key: string, now: number): string {
+  const diff = daysBetween(dayKey(now), key)
+  if (diff === 0 || diff === 1) return dayWord(diff)!
+  const d = keyToDate(key)
+  const base = `${WEEKDAYS[d.getDay()]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
+  return d.getFullYear() !== new Date(now).getFullYear() ? `${base} ${d.getFullYear()}` : base
+}
+
+/** The day a row of «На неделе» shows on its right (v23, B4): «завтра», then the short weekday («ср», «вс») */
+export function weekday(key: string, now: number): string {
+  return daysBetween(dayKey(now), key) === 1 ? 'завтра' : WEEKDAYS[keyToDate(key).getDay()]!
+}
+
 /** Only the time when the day goes without saying (in «Сегодня»): «10:00», otherwise the short form */
 export function formatDueBrief(due: Due, now: number): string {
   if (due.time && daysBetween(dayKey(now), due.date) === 0) return due.time
@@ -87,6 +101,20 @@ function inTime(days: number): string {
   return `через ${y} ${plural(y, ['год', 'года', 'лет'])}`
 }
 
+/** The day choices of the «Срок» sheet: today, tomorrow, the coming Saturday after tomorrow («В субботу, 24 окт») */
+export function dueChoices(now: number): { key: string, label: string }[] {
+  const today = dayKey(now)
+  const tomorrow = addDays(today, 1)
+  let sat = addDays(today, 2)
+  while (keyToDate(sat).getDay() !== 6) sat = addDays(sat, 1)
+  const d = keyToDate(sat)
+  return [
+    { key: today, label: 'Сегодня' },
+    { key: tomorrow, label: 'Завтра' },
+    { key: sat, label: `В субботу, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}` }
+  ]
+}
+
 export function isOverdue(due: Due | null | undefined, now: number): boolean {
   return !!due && due.date < dayKey(now)
 }
@@ -95,7 +123,7 @@ export function isDueToday(due: Due | null | undefined, now: number): boolean {
   return !!due && due.date === dayKey(now)
 }
 
-/** Day header in Чат: «Сегодня, 19 октября», «Вчера», «17 октября», «17 октября 2025» */
+/** Day header in Журнал: «Сегодня, 19 октября», «Вчера», «17 октября», «17 октября 2025» */
 export function formatDay(t: number, now: number): string {
   const diff = daysBetween(dayKey(now), dayKey(t))
   const d = new Date(t)
@@ -105,17 +133,31 @@ export function formatDay(t: number, now: number): string {
   return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`
 }
 
+/** A day in running text: «сегодня», «вчера», «12 сентября», «12 сентября 2025» («последняя 12 сентября») */
+export function formatDate(t: number, now: number): string {
+  const word = dayWord(daysBetween(dayKey(now), dayKey(t)))
+  if (word) return word
+  const d = new Date(t)
+  const dm = `${d.getDate()} ${MONTHS[d.getMonth()]}`
+  return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`
+}
+
 /** A moment relative to now: «сегодня, 8:40», «вчера, 22:15», «16 окт», «16 окт 2025» */
 export function formatMoment(t: number, now: number): string {
-  const diff = daysBetween(dayKey(now), dayKey(t))
-  const word = dayWord(diff)
-  if (word) return `${word}, ${clock(t)}`
+  const word = dayWord(daysBetween(dayKey(now), dayKey(t)))
+  return word ? `${word}, ${clock(t)}` : formatDayShort(t, now)
+}
+
+/** Only the day: «сегодня», «вчера», «16 окт», «16 окт 2025» (Корзина: «удалено вчера») */
+export function formatDayShort(t: number, now: number): string {
+  const word = dayWord(daysBetween(dayKey(now), dayKey(t)))
+  if (word) return word
   const d = new Date(t)
   const dm = `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
   return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`
 }
 
-/** «Добавлено»: «из чата · сегодня, 8:40» or «вручную · 12 окт» */
+/** «Добавлено» always has a date: «с Главной · сегодня, 8:40», «вручную · 17 окт», «вручную · сейчас» for a record just made */
 export function formatAdded(via: 'chat' | 'manual', at: number, now: number): string {
-  return `${via === 'chat' ? 'из чата' : 'вручную'} · ${formatMoment(at, now)}`
+  return `${via === 'chat' ? 'с Главной' : 'вручную'} · ${now - at < 60_000 ? 'сейчас' : formatMoment(at, now)}`
 }

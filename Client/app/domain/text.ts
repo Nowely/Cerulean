@@ -14,6 +14,7 @@ export function count(n: number, forms: readonly [string, string, string]): stri
 }
 
 export const RECORD_FORMS = ['запись', 'записи', 'записей'] as const
+export const PAGE_FORMS = ['страница', 'страницы', 'страниц'] as const
 
 export function capitalize(s: string): string {
   const t = s.trim()
@@ -26,7 +27,21 @@ export function lowerFirst(s: string): string {
   return s.charAt(0).toLowerCase() + s.slice(1)
 }
 
+/**
+ * A one-letter preposition or conjunction («в, к, с, у, о, и, а») stays with the next word: a no-break space after it
+ * (v23, F9). For titles, line 2 and the question card as shown; a draft being typed is left as typed, and a saved
+ * title turns it back into a plain space (`\s` takes it), so the stored text never holds it.
+ */
+export function nb(s: string): string {
+  return s.replace(/(?<=^|[\s(«„"])([вксуоиаВКСУОИА]) (?=\S)/g, '$1 ')
+}
+
 /** Lower case without ё, same length as the input (safe for index math) */
+/** A name cut to `max` characters with «…», for notices that must keep what comes after it */
+export function clip(s: string, max = 24): string {
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s
+}
+
 export function fold(s: string): string {
   return s.toLowerCase().replace(/ё/g, 'е')
 }
@@ -61,14 +76,24 @@ export function splitMatch(text: string, query: string): { pre: string, mid: str
 export function genitive(word: string): string {
   const w = lowerFirst(word.trim())
   if (/[бвгджзклмнпрстфхцчшщ]$/.test(w)) return `${w}а`
-  if (/ь$/.test(w)) return `${w.slice(0, -1)}я`
+  // Feminine -ость, -ль and a soft sign after a hissing sound: «сложности», «цели»; the rest is masculine: «календаря»
+  if (/(сть|ль|[жчшщ]ь)$/.test(w)) return `${w.slice(0, -1)}и`
+  if (/[ьй]$/.test(w)) return `${w.slice(0, -1)}я`
+  if (/мя$/.test(w)) return `${w.slice(0, -1)}ени`
   if (/[гкхжчшщ]а$/.test(w)) return `${w.slice(0, -1)}и`
   if (/а$/.test(w)) return `${w.slice(0, -1)}ы`
   if (/я$/.test(w)) return `${w.slice(0, -1)}и`
+  if (/о$/.test(w)) return `${w.slice(0, -1)}а`
   return w
 }
 
-/** «в Задачи», «во Входящие»: «во» before в or ф followed by a consonant */
-export function inPlace(name: string): string {
-  return `${/^[вф][^аеёиоуыэюя]/i.test(name) ? 'во' : 'в'} ${name}`
+/**
+ * A property after «без»: «Без отдела», «1 запись без статуса». A name the genitive can't handle well (several
+ * words, an adjective, a plural, a verb like «Осталось», a vowel ending) stays as it is, in quotes: «Без «Тип связи»».
+ */
+export function ofProp(name: string): string {
+  const n = name.trim()
+  if (!n) return 'значения'
+  if (/\s/.test(n) || /(ое|ее|ый|ий|ой|ая|яя|ые|ие|сь|ся)$/i.test(n) || /[еиуыэюё]$/i.test(n)) return `«${n}»`
+  return genitive(n)
 }

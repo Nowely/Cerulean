@@ -1,25 +1,30 @@
 <script setup lang="ts">
-// Настройки: Авто, Оформление, Данные. Everything here acts at once, nothing to save.
-import { computed, onMounted, ref, useTemplateRef } from 'vue'
+// Настройки: Авто, Данные, Оформление (v23, B6: a copy is what one comes back for, the theme is set once).
+// Everything here acts at once, nothing to save.
+import { computed, onMounted, ref, shallowRef, useTemplateRef } from 'vue'
 import { useColorMode, useHead, useRoute, useRouter } from '#imports'
 import type { ModelChoice } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
 import { useNotify } from '~/composables/useNotify'
-import { checkConnection, maskKey, modelOf, ModelError, PROVIDERS } from '~/domain/model'
+import { useNow } from '~/composables/useNow'
+import { checkConnection, ModelError, PROVIDERS } from '~/domain/model'
+import { copyDue } from '~/domain/keep'
 import { finishOpenRouter } from '~/domain/openrouter'
-import { parseSnapshot, toJSON, toMarkdown } from '~/domain/export'
-import { dayKey } from '~/domain/dates'
-import { count, RECORD_FORMS } from '~/domain/text'
+import { measure, parseSnapshot, sizeText, type Snapshot } from '~/domain/export'
+import { formatDate } from '~/domain/dates'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import BackHeader from '~/components/shell/BackHeader.vue'
 import TitleHeader from '~/components/shell/TitleHeader.vue'
 import SegmentedControl from '~/components/common/SegmentedControl.vue'
-import ActionMenu from '~/components/overlay/ActionMenu.vue'
+import CopyMenu from '~/components/settings/CopyMenu.vue'
 import SettingRow from '~/components/settings/SettingRow.vue'
 import ConnectionEditor from '~/components/settings/ConnectionEditor.vue'
 import DescriptionList from '~/components/settings/DescriptionList.vue'
+import ImportSheet from '~/components/settings/ImportSheet.vue'
+import StoreWarning from '~/components/home/StoreWarning.vue'
+import { onlyCollects } from '~/domain/collect'
 
 useHead({ title: 'Настройки · Cerulean' })
 
@@ -37,10 +42,11 @@ const keyEditor = useTemplateRef<InstanceType<typeof ConnectionEditor>>('keyEdit
 const key = computed(() => data.settings.apiKey)
 const service = computed(() => PROVIDERS[data.settings.provider].name)
 const keyStatus = computed(() => {
-  if (!key.value) return { text: 'Без ключа работают только простые правила', tone: undefined, icon: '' }
-  if (data.settings.keyState === 'bad') return { text: 'Не работает: проверь ключ и модель', tone: 'warn' as const, icon: 'i-lucide-circle-alert' }
-  if (data.settings.keyState === 'ok') return { text: `Работает · ${modelOf(data.settings)}`, tone: undefined, icon: 'i-lucide-check' }
-  return { text: 'Ещё не проверено · не попадает в экспорт', tone: undefined, icon: '' }
+  if (!key.value) return { text: 'Без ключа работают только простые правила', tone: undefined, dot: undefined }
+  if (data.settings.keyState === 'bad') return { text: 'Не работает: проверь ключ и модель', tone: 'warn' as const, dot: 'warn' as const }
+  // v23 (M11, F16): «OpenAI · подключено»; the key and the model live in the connection's own screen
+  if (data.settings.keyState === 'ok') return { text: `${service.value} · подключено`, tone: undefined, dot: 'ok' as const }
+  return { text: 'Ещё не проверено · не попадает в экспорт', tone: undefined, dot: 'faint' as const }
 })
 
 async function check() {
@@ -80,7 +86,8 @@ const rulesFirst = computed({
   get: () => data.settings.rulesFirst,
   set: (v: boolean) => data.setSettings({ rulesFirst: v })
 })
-const userPages = computed(() => data.livePages.filter(p => p.kind === 'page'))
+// A page that only collects files nothing by words, so it has no «Что сюда класть» (v24 fixes, 16)
+const userPages = computed(() => data.livePages.filter(p => p.kind === 'page' && !onlyCollects(p)))
 const described = computed(() => userPages.value.filter(p => p.description).length)
 const descOpen = ref(false)
 
@@ -98,60 +105,32 @@ const compactRows = computed({
 
 // Данные
 
-const stamp = () => dayKey(Date.now())
-
-/** A phone gets the share sheet (Files, Telegram, mail); otherwise the file is downloaded */
-async function save(name: string, text: string, type: string) {
-  const file = new File([text], name, { type })
-  if (!isDesktop.value && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file] })
-      return
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return
-    }
-  }
-  const url = URL.createObjectURL(file)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = name
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+// The browser may clear site data when the disk runs short, unless asked to keep it (null: it cannot say)
+async function persist() {
+  if (data.persisted) return
+  if (!await data.persist()) notify('Браузер не разрешил. Сохраняй копию время от времени', undefined, 4000)
 }
 
-function exportJson() {
-  void save(`cerulean-${stamp()}.json`, toJSON(data.snapshot()), 'application/json')
-}
-function exportMarkdown() {
-  const live = data.livePages.filter(p => p.kind === 'page' || p.kind === 'inbox')
-  void save(`cerulean-${stamp()}.md`, toMarkdown(live, data.liveRecords, data.sectionList), 'text/markdown')
-}
-const exporting = ref(false)
-const exportItems = [[
-  { label: 'JSON', icon: 'i-lucide-file-json', value: 'для переноса и копии', onSelect: exportJson },
-  { label: 'Markdown', icon: 'i-lucide-file-text', value: 'читать и вставлять', onSelect: exportMarkdown }
-]]
+const now = useNow()
+const copiedAt = computed(() => data.settings.copiedAt)
+const copyHint = computed(() => `JSON или Markdown${copiedAt.value ? ` · последняя ${formatDate(copiedAt.value, now.value)}` : ''}`)
+/** The status line carries the copy's state (v23, B6, M11): «копии нет» or «копия 12 сентября» */
+const copyState = computed(() => copiedAt.value ? `копия ${formatDate(copiedAt.value, now.value)}` : 'копии нет')
+/** «Сохранить» in the status line while a copy is due: none yet, or the monthly reminder of Главная is due */
+const copyNeeded = computed(() => !copiedAt.value || copyDue(data.settings, Object.values(data.records), now.value, data.persisted))
+const copying = ref(false)
 
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
+const loaded = shallowRef<{ name: string, snap: Snapshot } | null>(null)
+const importing = ref(false)
 async function onFile(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
   try {
-    const snap = parseSnapshot(await file.text())
-    const pages = snap.pages.filter(p => !p.deletedAt && p.kind === 'page').length
-    const records = snap.records.filter(r => !r.deletedAt).length
-    ui.confirm({
-      title: 'Заменить всё данными из файла?',
-      text: `В файле ${count(pages, ['страница', 'страницы', 'страниц'])} и ${count(records, RECORD_FORMS)}. Всё, что сейчас в этом браузере, заменится. Ключ останется.`,
-      action: 'Заменить',
-      run: async () => {
-        await data.importSnapshot(snap)
-        void router.push('/')
-        notify('Данные из файла загружены', undefined, 3000)
-      }
-    })
+    loaded.value = { name: file.name, snap: parseSnapshot(await file.text()) }
+    importing.value = true
   } catch (err) {
     notify(err instanceof Error ? err.message : 'Не удалось прочитать файл', undefined, 5000)
   }
@@ -160,9 +139,10 @@ async function onFile(e: Event) {
 const trashCount = computed(() => data.trash.length)
 
 function wipe() {
+  const size = sizeText(measure({ pages: Object.values(data.pages), records: Object.values(data.records) }))
   ui.confirm({
     title: 'Удалить всё?',
-    text: 'Страницы, записи и ключ удалятся из этого браузера без возможности вернуть. Сначала можно сделать экспорт.',
+    text: `Удалятся ${size}${key.value ? ' и ключ' : ''}, вернуть их будет нельзя. Сначала можно сохранить копию.`,
     action: 'Удалить всё',
     run: async () => {
       await data.wipe()
@@ -172,15 +152,11 @@ function wipe() {
   })
 }
 
-// The browser may clear site data when the disk is full, unless asked to keep it (null: no such API)
-const persisted = ref<boolean | null>(null)
-onMounted(async () => {
-  persisted.value = 'storage' in navigator && 'persist' in navigator.storage ? await navigator.storage.persisted() : null
+// «Освободить место ›» after a failed save comes here: /settings#data
+const dataSection = useTemplateRef<HTMLElement>('dataSection')
+onMounted(() => {
+  if (route.hash === '#data') dataSection.value?.scrollIntoView({ block: 'start' })
 })
-async function persist() {
-  persisted.value = await navigator.storage.persist()
-  if (!persisted.value) notify('Браузер не разрешил. Делай экспорт время от времени', undefined, 4000)
-}
 </script>
 
 <template>
@@ -193,84 +169,69 @@ async function persist() {
       <TitleHeader title="Настройки" />
     </template>
 
-    <div class="mx-auto w-full pb-8 lg:max-w-180 lg:px-8 lg:pb-16">
-      <h1 class="px-5 pb-1 text-28 font-semibold tracking-[-.015em] text-highlighted lg:hidden">
+    <!-- Desktop: the rows' buttons sit in the raised chip fill, as on Settings in the mockup -->
+    <div class="mx-auto w-full pb-8 lg:max-w-196 lg:px-8 lg:pb-16 lg:raised">
+      <h1 class="px-4 pt-1 text-title text-highlighted lg:hidden">
         Настройки
       </h1>
+      <StoreWarning
+        v-if="data.storageError"
+        place="settings"
+        class="mx-4 mt-2 lg:mx-0 lg:mt-0"
+      />
+      <!-- The data state and its one action; no copy yet is a faint dot, never the ok green (v23, B6, M11) -->
       <div
-        class="flex items-center gap-2.5 px-5 pt-2 pb-1 text-sm text-default lg:-mt-2 lg:gap-2 lg:px-0 lg:pt-0 lg:text-sm lg:text-toned"
+        v-else
+        class="flex items-start gap-2 px-4 pt-1.5 pb-0.5 text-sm leading-5 text-toned lg:px-0 lg:pt-0 lg:pb-0"
         role="status"
       >
-        <template v-if="data.storageError">
-          <UIcon
-            name="i-lucide-circle-alert"
-            class="size-4 shrink-0 text-warn"
-          />
-          <span class="text-warn-ink">Хранилище браузера недоступно: изменения пропадут, когда закроешь вкладку</span>
-        </template>
-        <template v-else>
-          <span
-            class="size-2 shrink-0 rounded-full bg-ok lg:hidden"
-            aria-hidden="true"
-          />
-          <UIcon
-            name="i-lucide-check"
-            class="hidden size-4 shrink-0 text-ok lg:block"
-          />
-          <span>Работает офлайн, всё хранится в этом браузере</span>
-        </template>
+        <span
+          class="mt-1.5 size-2 shrink-0 rounded-full"
+          :class="copiedAt ? 'bg-ok' : 'bg-faint'"
+          aria-hidden="true"
+        />
+        <span>Работает офлайн, всё в этом браузере · <span class="whitespace-nowrap">{{ copyState }}<template v-if="copyNeeded"> · <CopyMenu align="start">
+          <button
+            type="button"
+            class="hit-44 cursor-pointer text-accent-ink hover:underline"
+            aria-label="Сохранить копию"
+          >Сохранить</button>
+        </CopyMenu></template></span></span>
       </div>
 
       <!-- Авто -->
       <section aria-labelledby="s-auto">
         <h2
           id="s-auto"
-          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
+          class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
         >
-          Авто
+          Раскладка
         </h2>
+        <!-- Desktop: line 2 is the real state with its dot (S10); «Без ключа…» only without a key -->
         <SettingRow
           label="Подключение"
           icon="i-lucide-key-round"
           :hint="keyStatus.text"
           :hint-tone="keyStatus.tone"
-          desk-hint="Без ключа работают только простые правила"
-          :value="key ? `${service} · ${maskKey(key)}` : 'Добавить'"
+          :dot="key ? keyStatus.dot : undefined"
+          :value="key ? undefined : 'Добавить'"
           opens
           @open="keyEditor?.open()"
         >
-          <div class="flex flex-col items-end gap-1.5">
-            <div class="flex items-center gap-2">
-              <span
-                v-if="key"
-                class="inline-flex h-9 items-center rounded-chip border border-default bg-default px-3 text-sm tracking-wide text-highlighted"
-              >{{ service }} · {{ maskKey(key) }}</span>
-              <UButton
-                :color="key ? 'neutral' : 'primary'"
-                :variant="key ? 'outline' : 'solid'"
-                @click="keyEditor?.open()"
-              >
-                {{ key ? 'Изменить' : 'Добавить ключ' }}
-              </UButton>
-            </div>
-            <p
-              v-if="key"
-              class="flex items-center gap-1.5 text-13"
-              :class="keyStatus.tone === 'warn' ? 'text-warn-ink' : keyStatus.icon ? 'text-ok' : 'text-toned'"
+          <div class="flex items-center gap-3">
+            <UButton
+              :class="{ 'text-accent-ink': !key }"
+              @click="keyEditor?.open()"
             >
-              <UIcon
-                v-if="keyStatus.icon"
-                :name="keyStatus.icon"
-                class="size-3.5"
-              />{{ keyStatus.text }}
-            </p>
+              {{ key ? 'Изменить' : 'Добавить ключ' }}
+            </UButton>
           </div>
         </SettingRow>
         <SettingRow
-          v-if="!data.settings.modelId && data.settings.provider !== 'custom'"
+          v-if="key && !data.settings.modelId && data.settings.provider !== 'custom'"
           label="Модель"
-          icon="i-lucide-split"
-          desk-hint="Точная медленнее, зато лучше с непонятными записями"
+          icon="i-lucide-gauge"
+          hint="Точная медленнее, зато лучше с непонятными записями"
           below
         >
           <SegmentedControl
@@ -291,20 +252,19 @@ async function persist() {
           />
         </SettingRow>
         <SettingRow
-          label="Описания для Авто"
+          label="Что класть на страницы"
           icon="i-lucide-lightbulb"
-          hint="Что класть на каждую страницу"
-          desk-hint="По описанию записи попадают на нужную страницу"
-          :value="`${described}`"
+          hint="По этим словам решается, куда положить запись"
+          :value="`${described} из ${userPages.length}`"
           opens
           @open="router.push('/settings/descriptions')"
         >
           <UButton
             variant="ghost"
-            trailing-icon="i-lucide-chevron-down"
+            trailing-icon="i-lucide-chevron-right"
             :aria-expanded="descOpen"
             aria-controls="desc-table"
-            :ui="{ trailingIcon: descOpen ? 'rotate-180' : '' }"
+            :ui="{ trailingIcon: `size-4 text-dimmed transition-transform ${descOpen ? 'rotate-90' : ''}` }"
             class="text-15"
             @click="descOpen = !descOpen"
           >
@@ -324,67 +284,75 @@ async function persist() {
         </SettingRow>
       </section>
 
-      <!-- Оформление -->
-      <section aria-labelledby="s-look">
-        <h2
-          id="s-look"
-          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
-        >
-          Оформление
-        </h2>
-        <SettingRow
-          label="Тема"
-          icon="i-lucide-moon"
-          below
-        >
-          <SegmentedControl
-            v-model="theme"
-            label="Тема"
-            :options="[{ value: 'light', label: 'Светлая' }, { value: 'dark', label: 'Тёмная' }, { value: 'system', label: 'Как в системе' }]"
-            class="lg:w-90"
-          />
-        </SettingRow>
-        <SettingRow
-          label="Компактные строки"
-          icon="i-lucide-rows-3"
-          hint="На Главной только названия страниц, без сводки"
-        >
-          <USwitch
-            v-model="compactRows"
-            aria-label="Компактные строки"
-          />
-        </SettingRow>
-      </section>
-
       <!-- Данные -->
-      <section aria-labelledby="s-data">
+      <section
+        ref="dataSection"
+        aria-labelledby="s-data"
+        class="scroll-mt-4"
+      >
         <h2
           id="s-data"
-          class="px-5 pt-5 pb-1 text-cap text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5"
+          class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
         >
           Данные
         </h2>
         <SettingRow
-          label="Экспорт"
-          icon="i-lucide-download"
-          desk-hint="JSON для переноса, Markdown чтобы читать"
-          value="JSON или Markdown"
-          opens
-          @open="exporting = true"
+          v-if="data.persisted !== null && !data.storageError"
+          label="Не удалять при нехватке места"
+          icon="i-lucide-shield"
+          :hint="data.persisted ? 'Браузер не удалит записи сам' : 'Без этого браузер может очистить данные сам'"
+          :value="data.persisted ? 'Включено' : 'Включить'"
+          :value-tone="data.persisted ? undefined : 'accent'"
+          :opens="!data.persisted"
+          acts
+          @open="persist"
         >
-          <div class="flex gap-2">
-            <UButton @click="exportJson">
-              JSON
+          <!-- A phone says it in the value -->
+          <template v-if="isDesktop">
+            <p
+              v-if="data.persisted"
+              class="flex items-center gap-2 text-sm text-default"
+            >
+              <span
+                class="size-2 rounded-full bg-ok"
+                aria-hidden="true"
+              />Включено
+            </p>
+            <UButton
+              v-else
+              class="text-accent-ink"
+              @click="persist"
+            >
+              Включить
             </UButton>
-            <UButton @click="exportMarkdown">
-              Markdown
-            </UButton>
-          </div>
+          </template>
         </SettingRow>
         <SettingRow
-          label="Импорт"
+          label="Сохранить копию"
+          icon="i-lucide-download"
+          :hint="copyHint"
+          :value="data.storageError ? 'Сейчас' : undefined"
+          value-tone="accent"
+          opens
+          @open="copying = true"
+        >
+          <!-- Desktop: one row too, the same two formats at its right end; while nothing is kept «Сейчас» says it in
+               accent words (SettingsNoStore) -->
+          <CopyMenu align="end">
+            <UButton
+              variant="ghost"
+              trailing-icon="i-lucide-chevron-right"
+              aria-label="Сохранить копию"
+              :class="data.storageError ? 'text-accent-ink' : 'text-dimmed'"
+            >
+              {{ data.storageError ? 'Сейчас' : '' }}
+            </UButton>
+          </CopyMenu>
+        </SettingRow>
+        <SettingRow
+          label="Загрузить копию"
           icon="i-lucide-upload"
-          hint="Из файла экспорта JSON"
+          hint="Добавить к текущим или заменить всё"
           opens
           @open="fileInput?.click()"
         >
@@ -396,40 +364,13 @@ async function persist() {
           label="Корзина"
           icon="i-lucide-trash-2"
           hint="Удалённое хранится 30 дней"
-          :value="trashCount ? `${trashCount}` : 'пусто'"
+          :value="trashCount ? `${trashCount}` : undefined"
           opens
           @open="router.push('/settings/trash')"
         >
+          <!-- Desktop: the button alone, as drawn; the phone's line keeps the count as its value -->
           <UButton to="/settings/trash">
-            Открыть<span
-              v-if="trashCount"
-              class="inline-flex h-5 min-w-5 items-center justify-center rounded-badge bg-trk px-1.5 text-xs text-toned"
-            >{{ trashCount }}</span>
-          </UButton>
-        </SettingRow>
-        <SettingRow
-          v-if="persisted !== null && !data.storageError"
-          label="Не удалять при нехватке места"
-          icon="i-lucide-shield-check"
-          :hint="persisted ? 'Браузер не удалит данные сам' : 'Без этого браузер может очистить данные сам'"
-          :value="persisted ? undefined : 'Включить'"
-          :opens="!persisted"
-          @open="persist"
-        >
-          <p
-            v-if="persisted"
-            class="flex items-center gap-1.5 text-13 text-ok"
-          >
-            <UIcon
-              name="i-lucide-check"
-              class="size-3.5"
-            />Включено
-          </p>
-          <UButton
-            v-else
-            @click="persist"
-          >
-            Включить
+            Открыть
           </UButton>
         </SettingRow>
         <SettingRow
@@ -453,6 +394,38 @@ async function persist() {
           Синхронизации между устройствами нет: данные переносятся экспортом. Ключ хранится здесь же и уходит только в выбранный сервис.
         </p>
       </section>
+
+      <!-- Оформление -->
+      <section aria-labelledby="s-look">
+        <h2
+          id="s-look"
+          class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
+        >
+          Оформление
+        </h2>
+        <SettingRow
+          label="Тема"
+          icon="i-lucide-moon"
+          below
+        >
+          <SegmentedControl
+            v-model="theme"
+            label="Тема"
+            :options="[{ value: 'light', label: 'Светлая' }, { value: 'dark', label: 'Тёмная' }, { value: 'system', label: 'Как в системе' }]"
+            class="lg:w-90"
+          />
+        </SettingRow>
+        <SettingRow
+          label="Компактные строки"
+          icon="i-lucide-rows-3"
+          hint="На Главной только названия страниц"
+        >
+          <USwitch
+            v-model="compactRows"
+            aria-label="Компактные строки"
+          />
+        </SettingRow>
+      </section>
     </div>
 
     <input
@@ -463,13 +436,14 @@ async function persist() {
       @change="onFile"
     >
     <ConnectionEditor ref="keyEditor" />
-    <ActionMenu
+    <CopyMenu
       v-if="!isDesktop"
-      v-model:open="exporting"
-      :items="exportItems"
-      title="Экспорт"
-      label="Экспорт"
+      v-model:open="copying"
       bare
+    />
+    <ImportSheet
+      v-model:open="importing"
+      :file="loaded"
     />
   </AppScreen>
 </template>

@@ -1,9 +1,22 @@
 // Demo data from the spec, relative to now: open the app with ?demo on an empty database to see it
-import type { Entry, Id, Page, PropDef, Rec, Section } from './types'
+import type { BodyDoc, BodyNode, Entry, Id, Page, PropDef, Rec, Section } from './types'
 import { addDays, dayKey, keyToDate } from './dates'
 import { newEntry, newPage, newRecord, newSection, systemPages } from './factory'
-import { listView, shoppingProps } from './templates'
+import { listView, shoppingProps, WEEK_STARTER } from './templates'
 import { uid } from './ids'
+import { mentionIds } from './body'
+
+// Bodies as the editor writes them (v23)
+const tx = (text: string): BodyNode => ({ type: 'text', text })
+const men = (x: Rec | Page): BodyNode => ({ type: 'mention', attrs: { id: x.id, label: 'text' in x ? x.text : x.title, mentionSuggestionChar: '@' } })
+const para = (...content: (BodyNode | string)[]): BodyNode => ({ type: 'paragraph', content: content.map(c => typeof c === 'string' ? tx(c) : c) })
+const heading = (text: string): BodyNode => ({ type: 'heading', attrs: { level: 2 }, content: [tx(text)] })
+const bullets = (...items: (BodyNode | string)[][]): BodyNode => ({ type: 'bulletList', content: items.map(c => ({ type: 'listItem', content: [para(...c)] })) })
+/** A body and the mentions read out of it, as `setBody` stores them */
+const withBody = (...content: BodyNode[]): { body: BodyDoc, mentions: Id[] } => {
+  const body: BodyDoc = { type: 'doc', content }
+  return { body, mentions: mentionIds(body) }
+}
 
 export interface Dataset {
   pages: Page[]
@@ -18,6 +31,7 @@ export function firstRun(now = Date.now()): Dataset {
   return { pages: [inbox!, today!], records: [], sections: [], entries: [] }
 }
 
+/** Only Покупки (green) and Книги (purple) have a colour chosen; every other page is «Без цвета» (v23) */
 export function demo(now = Date.now()): Dataset {
   const day = dayKey(now)
   /** A moment today (or `shift` days away) at h:m */
@@ -39,7 +53,7 @@ export function demo(now = Date.now()): Dataset {
   const home = newSection('Дом', 0)
   const personal = newSection('Личное', 1)
 
-  // Продукты: «Купить» grouped by Отдел, «Запасы» with numbers against a norm, «Куплено»
+  // Покупки: «Купить» grouped by Отдел, «Запасы» with numbers against a norm, «Куплено»
   const shop = shoppingProps()
   const qty = shop[0]!
   const dept = shop[1]!
@@ -48,7 +62,7 @@ export function demo(now = Date.now()): Dataset {
   left.normProp = norm.id
   const opt = (name: string) => dept.options!.find(o => o.name === name)!.id
   const products = newPage({
-    title: 'Продукты',
+    title: 'Покупки',
     glyph: 'basket',
     color: 'green',
     sectionId: home.id,
@@ -69,15 +83,15 @@ export function demo(now = Date.now()): Dataset {
   const tasks = newPage({
     title: 'Задачи',
     glyph: 'check',
-    color: 'blue',
     sectionId: personal.id,
     order: 0,
     template: 'todo',
     description: 'дела со сроком: звонки, оплаты, документы',
     noun: ['дело', 'дела', 'дел'],
     views: [
-      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
-      listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
+      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
+      listView('Календарь', { layout: 'calendar', filter: [{ field: 'done', op: 'is', value: false }] }),
+      listView('Сделано', { filter: [{ field: 'done', op: 'is', value: true }] })
     ],
     openedAt: at(8, 55),
     seenAt: at(8, 55)
@@ -87,12 +101,11 @@ export function demo(now = Date.now()): Dataset {
     id: uid('f'),
     name: 'Статус',
     type: 'select',
-    options: ['В процессе', 'Достигнута', 'Отложена'].map(name => ({ id: uid('o'), name }))
+    options: ([['В процессе', 'blue'], ['Достигнута', 'green'], ['Отложена', 'gray']] as const).map(([name, color]) => ({ id: uid('o'), name, color }))
   }
   const goals = newPage({
     title: 'Цели',
     glyph: 'target',
-    color: 'pink',
     sectionId: personal.id,
     order: 1,
     template: 'goal',
@@ -108,7 +121,6 @@ export function demo(now = Date.now()): Dataset {
   const ideas = newPage({
     title: 'Идеи',
     glyph: 'bulb',
-    color: 'yellow',
     sectionId: personal.id,
     order: 2,
     hasDone: false,
@@ -137,18 +149,25 @@ export function demo(now = Date.now()): Dataset {
   const chores = newPage({
     title: 'Дела по дому',
     glyph: 'home',
-    color: 'brown',
     sectionId: home.id,
     order: 1,
     template: 'todo',
     description: 'ремонт, уборка, мастера',
     noun: ['дело', 'дела', 'дел'],
+    // «Заметка к странице» (v23): longer than four lines, so it folds
+    ...withBody(
+      para('Ключи от щитка в верхнем ящике у двери. Показания счётчиков отправлять до 25-го.'),
+      heading('Мастера'),
+      bullets(['сантехник Сергей, звонить после 18:00'], ['электрик через управляющую компанию']),
+      para('Картриджи для фильтра на балконе, хватит до весны.')
+    ),
     views: [
-      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }], sort: 'due' }),
-      listView('Готово', { filter: [{ field: 'done', op: 'is', value: true }] })
+      listView('Список', { filter: [{ field: 'done', op: 'is', value: false }] }),
+      listView('Сделано', { filter: [{ field: 'done', op: 'is', value: true }] })
     ],
-    openedAt: at(18, 10, -1),
-    seenAt: at(18, 10, -1)
+    // Opened after yesterday's «вызвать мастера», so it is not «новых» on Главная
+    openedAt: at(21, 0, -1),
+    seenAt: at(21, 0, -1)
   }, now)
 
   inbox!.openedAt = at(9, 3)
@@ -156,7 +175,7 @@ export function demo(now = Date.now()): Dataset {
   today!.favorite = 0
   today!.openedAt = at(8, 50)
 
-  // Продукты
+  // Покупки
   const chat = (h: number, m: number, shift = 0) => ({ via: 'chat' as const, addedAt: at(h, m, shift) })
   const bread = add(products, 'Хлеб', { ...chat(9, 10), values: { [dept.id]: opt('Хлеб и выпечка') } })
   bread.order = -1
@@ -165,11 +184,16 @@ export function demo(now = Date.now()): Dataset {
   const eggs = add(products, 'Яйца', {
     ...chat(8, 40),
     values: { [qty.id]: '10 шт', [dept.id]: opt('Молочное') },
-    note: 'Брать С0, десяток в картонной упаковке. Если нет, подойдут С1.'
+    ...withBody(
+      para('Брать С0, десяток в картонной упаковке. Если нет, подойдут С1. Проверить, что ни одно не треснуло.'),
+      heading('На неделю'),
+      bullets(['омлет на завтрак, к нему ', men(milk)], ['шакшука в субботу'])
+    )
   })
   add(products, 'Взять два десятка, если будет скидка', { parentId: eggs.id, addedAt: at(8, 41) })
-  add(products, 'Бананы', { values: { [qty.id]: '1 кг', [dept.id]: opt('Овощи и фрукты') }, addedAt: at(18, 0, -1) })
-  add(products, 'Порошок', { values: { [dept.id]: opt('Бытовая химия') }, addedAt: at(18, 1, -1) })
+  // Written yesterday at 19:20 in one line, the first receipt in Журнал (v23, B5)
+  const bananas = add(products, 'Бананы', { ...chat(19, 20, -1), values: { [qty.id]: '1 кг', [dept.id]: opt('Овощи и фрукты') } })
+  const powder = add(products, 'Порошок', { ...chat(19, 20, -1), values: { [dept.id]: opt('Бытовая химия') } })
   add(products, 'Кофе в зёрнах', { ...chat(10, 0, -3), done: true, doneAt: at(19, 0, -2), values: { [dept.id]: opt('Бакалея') } })
   add(products, 'Помидоры', { ...chat(10, 0, -4), done: true, doneAt: at(19, 0, -2), values: { [dept.id]: opt('Овощи и фрукты') } })
   for (const [text, n, min] of [['Куриная грудка', 2, 1], ['Яблоки', 0, 3], ['Макароны', 3, 1], ['Туалетная бумага', 1, 2]] as const) {
@@ -186,11 +210,11 @@ export function demo(now = Date.now()): Dataset {
   const marathon = add(goals, 'Полумарафон к маю', {
     ...chat(9, 30, -7),
     glyph: 'flag',
-    color: 'pink',
     favorite: 1,
     due: { date: '2027-05-18' },
     values: { [status.id]: status.options![0]!.id },
-    note: 'Зачем: вернуть форму и полгода держать регулярность. Три пробежки в неделю, длинная по выходным.\n\nКолено ноет после 8 км, спросить про стельки. Пульс на длинных ниже 150.',
+    // A «Заметка» from before v23: read as a one-paragraph body
+    note: 'Зачем: вернуть форму и полгода держать регулярность. Три пробежки в неделю, длинная по выходным.',
     openedAt: at(7, 30)
   })
   for (const [text, done, due] of [
@@ -199,30 +223,34 @@ export function demo(now = Date.now()): Dataset {
     ['10 км без остановки', true, null],
     ['Пробежка 6 км', false, { date: date(0), time: '19:00' }],
     ['Записаться на забег', false, { date: addDays(day, 13) }],
-    ['Длинная пробежка 14 км', false, null]
+    // One demo world (v24 fixes, 11): the long run is сб, 24 окт in every state
+    ['Длинная пробежка 14 км', false, { date: date(5) }]
   ] as const) {
     add(goals, text, { parentId: marathon.id, done, due: due ? { ...due } : null, addedAt: at(9, 31, -7) })
   }
-  add(goals, '24 книги за год', { addedAt: at(9, 40, -7) })
+  const yearOfBooks = add(goals, '24 книги за год', { addedAt: at(9, 40, -7) })
 
   add(ideas, 'Семейный бюджет в приложении', { addedAt: at(21, 0, -4) })
   const habits = add(books, 'Атомные привычки', { addedAt: at(22, 0, -9) })
-  library.links = [habits.id]
+  Object.assign(library, withBody(
+    para('Сдать до воскресенья, продлить уже нельзя.'),
+    para('Сначала дочитать ', men(habits), ', осталось две главы.')
+  ))
+  library.links = [yearOfBooks.id]
   marathon.links = [habits.id]
   const filter = add(chores, 'Поменять фильтр воды', { due: { date: date(2) }, addedAt: at(18, 0, -2) })
-  add(chores, 'Вызвать мастера', { addedAt: at(18, 5, -2) })
+  const master = add(chores, 'Вызвать мастера', { ...chat(20, 40, -1), due: { date: date(4) } })
 
   // Входящие: two records Авто could not place
   const gift = add(inbox!, 'Подарок маме на др', { ...chat(9, 2), tags: ['clarify'], guesses: [tasks.id, ideas.id, chores.id] })
   const series = add(inbox!, 'Посмотреть тот сериал', { ...chat(22, 15, -1), tags: ['clarify'], guesses: [ideas.id, tasks.id, books.id] })
 
-  // Корзина: a record from Задачи deleted yesterday, a page with its records, a record from Продукты
+  // Корзина: a record from Задачи deleted yesterday, a page with its records, a record from Покупки
   add(tasks, 'Позвонить в банк', { addedAt: at(10, 0, -6), deletedAt: at(18, 0, -1) })
   add(products, 'Овсянка', { addedAt: at(10, 0, -9), deletedAt: at(12, 0, -7) })
   const dacha = newPage({
     title: 'Поездка на дачу',
     glyph: 'leaf',
-    color: 'green',
     sectionId: home.id,
     order: 2,
     template: 'todo',
@@ -233,15 +261,32 @@ export function demo(now = Date.now()): Dataset {
   for (const text of ['Взять рассаду', 'Закрыть воду', 'Забрать шланг', 'Купить уголь']) add(dacha, text, { addedAt: at(9, 0, -12) })
 
   const entries: Entry[] = [
+    newEntry({ at: at(19, 20, -1), text: 'бананы 1 кг, порошок', kind: 'routed', pageId: products.id, recordIds: [bananas.id, powder.id] }),
+    newEntry({ at: at(20, 40, -1), text: 'вызвать мастера', kind: 'routed', pageId: chores.id, recordIds: [master.id] }),
     newEntry({ at: at(22, 15, -1), text: 'посмотреть тот сериал', kind: 'ask', pageId: inbox!.id, recordIds: [series.id], newName: 'Фильмы' }),
     newEntry({ at: at(8, 40), text: 'молоко, яйца, сыр', kind: 'routed', pageId: products.id, recordIds: [milk.id, eggs.id, cheese.id] }),
     newEntry({ at: at(8, 52), text: 'позвонить стоматологу сегодня в 10', kind: 'routed', pageId: tasks.id, recordIds: [dentist.id] }),
     newEntry({ at: at(9, 2), text: 'подарок маме на др', kind: 'ask', pageId: inbox!.id, recordIds: [gift.id], newName: 'Подарки' }),
-    newEntry({ at: at(9, 5), text: 'когда менять фильтр воды?', kind: 'found', hits: [filter.id] }),
+    newEntry({ at: at(9, 5), text: 'найти фильтр воды', kind: 'found', hits: [filter.id] }),
     newEntry({ at: at(9, 10), text: 'хлеб', kind: 'routed', pageId: products.id, recordIds: [bread.id] })
   ]
 
-  const pages = [inbox!, today!, products, chores, tasks, goals, ideas, books, dacha]
+  // На неделе (v24): made from the starter, in Избранное after Полумарафон к маю; its one view collects from every
+  // page «Просрочено · На неделе · не сделано», so it holds nothing itself
+  const week = newPage({
+    title: WEEK_STARTER.name,
+    glyph: WEEK_STARTER.glyph,
+    template: 'week',
+    hasDone: true,
+    noun: WEEK_STARTER.noun,
+    views: WEEK_STARTER.views([]),
+    favorite: 2,
+    createdAt: at(9, 0, -10),
+    openedAt: at(9, 0, -10),
+    seenAt: at(9, 0, -10)
+  }, now)
+
+  const pages = [inbox!, today!, products, chores, tasks, goals, ideas, books, dacha, week]
   return { pages, records, sections: [home, personal], entries }
 }
 

@@ -1,0 +1,249 @@
+/*
+ * Bodies (v23): a record's or a page's text. One look at rest (BodyView) and in the editor (Tiptap's DOM, the same
+ * elements), so nothing moves when the caret comes: paragraphs 16/24 `text`, one heading 20/28 600 `ink`, bullets with a
+ * `faint` dot, numbered lists in tabular `muted`, a quote with a 2px `line2` bar, a divider, links in accent-ink,
+ * mentions as 22px chips on `chip-elev`, bold 600 and italic as Onest's synthesized oblique.
+ */
+@layer components {
+  .body-text {
+    position: relative;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--text);
+    overflow-wrap: break-word;
+    word-break: normal;
+    outline: none;
+    white-space: pre-wrap;
+    caret-color: var(--accent);
+    /* The editor turns ligatures off so the caret lands right; the text at rest does the same */
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0;
+  }
+
+  /* The composer's field (v24, item 12): the words as typed, a picked name as the body's chip sitting on the 22px line */
+  .field-text {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    outline: none;
+  }
+
+  .field-text p {
+    margin: 0;
+  }
+
+  /* What ProseMirror needs (Tiptap's own injected CSS is off: it set break-spaces, which wrapped lines earlier) */
+  .body-text [contenteditable="false"],
+  .field-text [contenteditable="false"] {
+    white-space: normal;
+  }
+
+  .body-text img.ProseMirror-separator,
+  .field-text img.ProseMirror-separator {
+    display: inline !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+
+  .ProseMirror-hideselection *::selection {
+    background: transparent;
+  }
+
+  .ProseMirror-hideselection * {
+    caret-color: transparent;
+  }
+
+  .body-text :where(p, h2, ul, ol, li, blockquote, hr) {
+    margin: 0;
+  }
+
+  .body-text > * + *,
+  .body-text blockquote > * + * {
+    margin-top: 4px;
+  }
+
+  .body-text h2 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .body-text > * + h2 {
+    margin-top: 14px;
+  }
+
+  .body-text :where(ul, ol) {
+    padding-left: 24px;
+  }
+
+  .body-text ul {
+    list-style: none;
+  }
+
+  .body-text li {
+    position: relative;
+  }
+
+  .body-text li + li,
+  .body-text li > * + * {
+    margin-top: 2px;
+  }
+
+  .body-text ul > li::before {
+    content: "";
+    position: absolute;
+    left: -15px;
+    top: 10px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--faint);
+  }
+
+  .body-text ol {
+    list-style: decimal outside;
+  }
+
+  .body-text ol > li::marker {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .body-text blockquote {
+    position: relative;
+    padding-left: 14px;
+  }
+
+  .body-text blockquote::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    bottom: 2px;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--line2);
+  }
+
+  .body-text hr {
+    height: 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 12px 0;
+  }
+
+  .body-text hr.ProseMirror-selectednode {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .body-text strong {
+    font-weight: 600;
+  }
+
+  .body-text em {
+    font-style: oblique;
+  }
+
+  .body-text a {
+    color: var(--accent-ink);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  /* A mention: the glyph of the page the thing lives in and its name, never taller than the line */
+  .body-text .mention,
+  .field-text .mention {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    max-width: 100%;
+    margin-top: 1px;
+    padding: 0 6px 0 5px;
+    vertical-align: top;
+    border-radius: 8px;
+    background: var(--chip-elev);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 400;
+    font-style: normal;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .body-text h2 .mention {
+    margin-top: 3px;
+  }
+
+  .body-text .mention:active,
+  .body-text .mention.ProseMirror-selectednode,
+  .field-text .mention.ProseMirror-selectednode {
+    background: var(--chip-elev-pressed);
+  }
+
+  .body-text .mention > .mention-name,
+  .field-text .mention > .mention-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .body-text .mention > .mention-glyph,
+  .field-text .mention > .mention-glyph {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+
+  /* In the composer the chip sits on the field's 22px line, not a step below as in a 24px body line */
+  .field-text .mention {
+    margin: 0 1px;
+    cursor: default;
+  }
+
+  /* The faint placeholder of an empty body: «Заметка», «Заметка к странице» */
+  .body-text p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    color: var(--faint);
+    pointer-events: none;
+  }
+
+  /* An empty body that can be edited is a 44px target (36 with the hover fill on desktop), its placeholder where the
+     text would start */
+  .body-target .body-text:has(> p.is-editor-empty:only-child) {
+    margin-top: -10px;
+    padding-block: 10px;
+    cursor: text;
+  }
+
+  @media (width >= 64rem) {
+    .body-target .body-text:has(> p.is-editor-empty:only-child) {
+      margin: -6px 0 0 -8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+
+    .body-target .body-text:has(> p.is-editor-empty:only-child):hover {
+      background: var(--hover);
+    }
+  }
+
+  /* A page note over four lines folds at four: cut on a line, the fourth ending in «…», no fade */
+  .body-folded .body-text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    overflow: hidden;
+  }
+
+}

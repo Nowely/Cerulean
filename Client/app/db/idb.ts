@@ -11,6 +11,13 @@ interface Schema extends DBSchema {
 }
 
 export type Kind = 'pages' | 'records' | 'sections' | 'entries'
+export const KINDS: Kind[] = ['pages', 'records', 'sections', 'entries']
+
+/** What a write was about, handed to the error callback when the browser refuses it */
+export interface Touched {
+  kinds: (Kind | 'meta')[]
+  ids: string[]
+}
 
 export interface Loaded {
   pages: Page[]
@@ -31,9 +38,9 @@ export function plain<T>(value: T): T {
 export class Storage {
   private queue: Promise<unknown> = Promise.resolve()
 
-  private constructor(private db: IDBPDatabase<Schema>, private onError: (e: unknown) => void) {}
+  private constructor(private db: IDBPDatabase<Schema>, private onError: (e: unknown, what: Touched) => void) {}
 
-  static async open(name = 'cerulean', onError: (e: unknown) => void = console.error): Promise<Storage> {
+  static async open(name = 'cerulean', onError: (e: unknown, what: Touched) => void = console.error): Promise<Storage> {
     const db = await openDB<Schema>(name, 1, {
       upgrade(db) {
         db.createObjectStore('pages', { keyPath: 'id' })
@@ -59,16 +66,16 @@ export class Storage {
     return { pages, records, sections, entries, meta: new Map(keys.map((k, i) => [k, values[i]])) }
   }
 
-  /** Writes run one after another, in the order they were made */
-  private run(task: () => Promise<unknown>): Promise<void> {
-    const next = this.queue.then(task).catch(this.onError)
+  /** Writes run one after another, in the order they were made; a refused one is reported with what it was about */
+  private run(task: () => Promise<unknown>, what: Touched): Promise<void> {
+    const next = this.queue.then(task).catch(e => this.onError(e, what))
     this.queue = next
     return next.then(() => undefined)
   }
 
   put(kind: Kind, value: Page | Rec | Section | Entry): Promise<void> {
     const data = plain(value)
-    return this.run(() => this.db.put(kind, data as never))
+    return this.run(() => this.db.put(kind, data as never), { kinds: [kind], ids: [value.id] })
   }
 
   putMany(kind: Kind, values: (Page | Rec | Section | Entry)[]): Promise<void> {
@@ -76,19 +83,30 @@ export class Storage {
     return this.run(async () => {
       const tx = this.db.transaction(kind, 'readwrite')
       await Promise.all([...data.map(v => tx.store.put(v as never)), tx.done])
-    })
+    }, { kinds: [kind], ids: values.map(v => v.id) })
   }
 
   delete(kind: Kind, ids: string[]): Promise<void> {
     return this.run(async () => {
       const tx = this.db.transaction(kind, 'readwrite')
       await Promise.all([...ids.map(id => tx.store.delete(id)), tx.done])
-    })
+    }, { kinds: [kind], ids })
   }
 
   setMeta(key: string, value: unknown): Promise<void> {
     const data = plain(value)
-    return this.run(() => this.db.put('meta', data, key))
+    return this.run(() => this.db.put('meta', data, key), { kinds: ['meta'], ids: [key] })
+  }
+
+  /** Reads items back by id (what another tab wrote); undefined for those that are gone */
+  getMany<K extends Kind>(kind: K, ids: string[]): Promise<(Schema[K]['value'] | undefined)[]> {
+    const tx = this.db.transaction(kind)
+    return Promise.all(ids.map(id => tx.store.get(id)))
+  }
+
+  getMeta(keys: string[]): Promise<unknown[]> {
+    const tx = this.db.transaction('meta')
+    return Promise.all(keys.map(k => tx.store.get(k)))
   }
 
   /** Replaces everything (import, «Удалить всё») in one transaction */
@@ -106,7 +124,7 @@ export class Storage {
         ...metaCopy.map(([k, v]) => tx.objectStore('meta').put(v, k)),
         tx.done
       ])
-    })
+    }, { kinds: [...KINDS, 'meta'], ids: [] })
   }
 
   /** Resolves when every write made so far has finished (tests, before reload) */

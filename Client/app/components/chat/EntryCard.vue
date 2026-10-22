@@ -6,12 +6,14 @@ import QuestionCard from './QuestionCard.vue'
 import FoundCard from './FoundCard.vue'
 import PendingCard from './PendingCard.vue'
 
-defineProps<{ entry: Entry, float?: boolean }>()
+/** `past`: written before today, a receipt is one line until tapped */
+defineProps<{ entry: Entry, float?: boolean, past?: boolean }>()
 </script>
 
 <template>
   <PendingCard
     v-if="entry.kind === 'pending'"
+    :text="entry.text"
     :float="float"
   />
   <QuestionCard
@@ -28,5 +30,6 @@ defineProps<{ entry: Entry, float?: boolean }>()
     v-else
     :entry="entry"
     :float="float"
+    :past="past"
   />
 </template>

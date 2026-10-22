@@ -3,8 +3,8 @@ import type { AppConfigInput } from 'nuxt/schema'
 
 // Theme-defined sizes (main.css @theme) that tailwind-merge has to know about,
 // otherwise `text-record` reads as a colour and `rounded-card` never replaces `rounded-md`
-const textRoles = ['11', '13', '15', '17', '28', '30', 'title', 'sheet', 'record', 'row', 'body', 'meta', 'cap', 'caption', 'input']
-const radii = ['card', 'chip', 'item', 'badge', 'tile', 'tile-sm', 'tile-lg', 'sheet', 'pill', 'pill-grown']
+const textRoles = ['11', '13', '15', '17', '28', '30', 'title', 'sheet', 'record', 'row', 'body', 'meta', 'cap', 'caption', 'input', 'opt']
+const radii = ['card', 'chip', 'item', 'badge', 'tile', 'tile-sm', 'tile-lg', 'opt', 'sheet', 'pill', 'pill-grown']
 
 // Focus is one accent outline everywhere, as in the mockups
 const focus = 'outline-primary focus-visible:outline-2 focus-visible:outline-offset-1'
@@ -34,10 +34,10 @@ export default {
 
     // Buttons: radius 8 (nested inside the 12 of cards); 36px by default, 32 for the dense desktop receipt actions,
     // 44 for primary actions on touch. A square (icon-only) button is a 44pt target on
-    // mobile and a 32px one on desktop.
+    // mobile and a 32px one on desktop. One not ready yet («Сохранить» before the key) is at half strength.
     button: {
       slots: {
-        base: 'rounded-item font-medium justify-center',
+        base: 'rounded-item font-medium justify-center disabled:opacity-50 aria-disabled:opacity-50',
         leadingIcon: 'shrink-0',
         trailingIcon: 'shrink-0'
       },
@@ -63,11 +63,12 @@ export default {
           variant: 'outline',
           class: 'ring-0 bg-btn text-highlighted hover:bg-btn-pressed active:bg-btn-pressed aria-pressed:bg-btn-pressed aria-expanded:bg-btn-pressed'
         },
-        // Quiet icon and text buttons: muted ink, hover tint, pressed state
+        // Quiet icon and text buttons: muted ink, hover tint, pressed state; lit while open only on desktop, where
+        // its popover hangs from it (a phone's sheet covers the screen and nothing stays lit under it)
         {
           color: 'neutral',
           variant: 'ghost',
-          class: 'text-toned hover:bg-muted hover:text-highlighted active:bg-accented aria-expanded:bg-elevated aria-expanded:text-highlighted'
+          class: 'text-toned hover:bg-muted hover:text-highlighted active:bg-accented lg:aria-expanded:bg-elevated lg:aria-expanded:text-highlighted'
         },
         {
           color: 'neutral',
@@ -157,12 +158,13 @@ export default {
       }
     },
 
-    // Switch: 40×24 track, 20px knob; off track is the ring token so it stays visible (3:1)
+    // Switch: 40×24 track, 20px knob. Off is quieter than its label: the `trk` track with a 1px `line2` edge, so it
+    // reads in dark too, and the knob keeps a `ring` border (3:1, v22 N24); on is the accent fill alone
     switch: {
       slots: {
         // The 44px touch target belongs to the button itself, so a tap anywhere on it toggles
-        base: 'hit-44 data-[state=unchecked]:bg-ring',
-        thumb: 'bg-knob shadow-seg'
+        base: 'hit-44 border p-px data-[state=unchecked]:border-line2 data-[state=unchecked]:bg-trk',
+        thumb: 'bg-knob shadow-seg data-[state=unchecked]:shadow-none data-[state=unchecked]:ring-[1.5px] data-[state=unchecked]:ring-ring data-[state=unchecked]:ring-inset'
       },
       variants: {
         size: {
@@ -189,6 +191,7 @@ export default {
         separator: 'my-1',
         item: 'before:rounded-item items-center',
         itemLabel: 'truncate',
+        itemDescription: 'mt-px text-meta',
         itemTrailing: 'text-toned'
       },
       variants: {
@@ -230,20 +233,25 @@ export default {
         footer: 'px-5 pb-5 pt-0 justify-end',
         title: 'text-sheet text-highlighted',
         description: 'text-meta text-toned'
+      },
+      // Nuxt UI paints the scrim in the `overlay` variant, which comes after the slot: set it there too
+      variants: {
+        overlay: { true: { overlay: 'bg-scrim' } }
       }
     },
-    // Mobile sheets: radius 20 on top, a handle in the ring colour
+    // Mobile sheets: radius 20 on top, a 36×5 handle in the ring colour at full strength (vaul dims it to 0.7, under the
+    // 3:1 a control needs); the size sits in the bottom variant, where the theme sets its own
     drawer: {
       slots: {
         overlay: 'bg-scrim',
         content: 'raised bg-default ring ring-default',
-        handle: '!w-9 !h-1.25 !bg-ring rounded-full',
+        handle: '!bg-ring !opacity-100 rounded-full',
         container: 'p-0 gap-0',
         title: 'text-sheet text-highlighted',
         description: 'text-meta text-toned'
       },
       compoundVariants: [
-        { direction: 'bottom', inset: false, class: { content: 'rounded-t-sheet', handle: 'mt-2 mb-1' } }
+        { direction: 'bottom', inset: false, class: { content: 'rounded-t-sheet', handle: 'mt-2 mb-1 !w-9 !h-1.25' } }
       ]
     },
     tooltip: {
@@ -251,31 +259,16 @@ export default {
         content: 'bg-inverted text-canvas ring-0 shadow-none rounded-badge h-6 px-2 text-xs'
       }
     },
-    // The toast is inverted (ink on the canvas colour), sits above the composer and carries one action
-    toast: {
-      slots: {
-        root: 'bg-inverted ring-0 shadow-float rounded-card py-1 ps-4 pe-1 items-center gap-1',
-        wrapper: 'min-w-0',
-        title: 'text-sm font-normal text-canvas truncate',
-        description: 'text-13 text-canvas/80',
-        actions: 'shrink-0 gap-0',
-        close: 'text-canvas/80'
-      }
-    },
-    toaster: {
-      slots: {
-        viewport: 'sm:w-96'
-      }
-    },
+    // Key caps fill like a chip of the surface they sit on, no edge (Поиск's foot, the «/» menu)
     kbd: {
       base: 'rounded-badge font-sans normal-case',
       variants: {
         size: {
-          md: 'h-5 min-w-5 px-1.5 text-xs'
+          md: 'h-5 min-w-6 px-1.5 text-xs'
         }
       },
       compoundVariants: [
-        { color: 'neutral', variant: 'outline', class: 'ring-line2 text-toned bg-transparent' }
+        { color: 'neutral', variant: 'outline', class: 'ring-0 text-toned bg-btn' }
       ],
       defaultVariants: {
         variant: 'outline'

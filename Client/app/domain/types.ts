@@ -1,9 +1,14 @@
-// The data model. Everything lives on pages: Чат and Поиск only point at pages and records.
+// The data model. Everything lives on pages: Журнал and Поиск only point at pages and records.
 
 export type Id = string
 
 export const PAGE_COLORS = ['green', 'blue', 'brown', 'yellow', 'pink', 'purple', 'gray', 'teal'] as const
 export type PageColor = typeof PAGE_COLORS[number]
+
+/** Names read by screen readers in the colour pickers */
+export const COLOR_NAMES: Record<PageColor, string> = {
+  green: 'Зелёный', blue: 'Синий', brown: 'Коричневый', yellow: 'Жёлтый', pink: 'Розовый', purple: 'Фиолетовый', gray: 'Серый', teal: 'Бирюзовый'
+}
 
 /** A date with an optional time, both local. Stored as text so it never shifts with time zones. */
 export interface Due {
@@ -16,6 +21,8 @@ export type PropType = 'text' | 'number' | 'select' | 'date' | 'relation'
 export interface PropOption {
   id: Id
   name: string
+  /** Its pill wherever the value shows; older data has none and reads one by position */
+  color?: PageColor
 }
 
 export interface PropDef {
@@ -23,11 +30,16 @@ export interface PropDef {
   name: string
   type: PropType
   options?: PropOption[]
+  /** A «Выбор» changed to another type keeps its options here, so going back keeps their ids and colours */
+  stash?: PropOption[]
   /** For a number: the number property it is compared with («Осталось» below «Норма» shows «мало») */
   normProp?: Id
   /** Unit shown after a number («шт», «л») */
   unit?: string
 }
+
+/** The built-in properties every page has: Срок (`rec.due`) and Заметка (the body, `rec.body`) */
+export type BuiltinProp = 'due' | 'note'
 
 /** What «Как показывать» offers: exactly these four */
 export type Layout = 'list' | 'board' | 'table' | 'calendar'
@@ -43,6 +55,12 @@ export interface FilterRule {
 
 export type GroupBy = Id | 'due' | null
 
+/** «Откуда записи» of a view (v24): this page's own records, every page's, or the chosen pages' */
+export type ViewSource = 'self' | 'all' | 'pick'
+
+/** A «Срок» chip of a view's «Фильтр» (v24): Просрочено, Сегодня, На неделе (today and the six days after), Без срока */
+export type DueChip = 'late' | 'today' | 'week' | 'none'
+
 export interface ViewDef {
   id: Id
   name: string
@@ -52,25 +70,81 @@ export interface ViewDef {
   sort: 'manual' | 'due' | 'name'
   /** «Справа в строке»: what a row shows on its right */
   shown: (Id | 'due' | 'note')[]
+  /** Group captions folded in this view (group keys), kept per page and view */
+  folded?: string[]
+  /** The name was typed: it no longer follows the type («Список», «Доска 2») */
+  named?: boolean
+  /** «Откуда записи» (v24); absent: this page's own records */
+  from?: ViewSource
+  /** «Выбранные»: the pages the view collects from */
+  pages?: Id[]
+  /** «Срок» chips picked in «Фильтр» (v24): a record passes when it matches any; empty or absent is «Любой» */
+  dues?: DueChip[]
+  /** «Ждут уточнения» in «Фильтр» (v24): only records tagged «уточнить» */
+  asking?: boolean
+  /** «Заметка» switched off in «Справа в строке» (v24): rows draw no note glyph; absent is on */
+  noteOff?: boolean
+}
+
+/** A mark in a body: bold, italic (drawn oblique) or a link */
+export interface BodyMark {
+  type: string
+  attrs?: { href?: string, [k: string]: unknown }
+}
+
+/**
+ * A node of a body (v23): the editor's JSON. Only what a body holds: doc, paragraph, heading (level 2), bulletList,
+ * orderedList, listItem, blockquote, horizontalRule, text and mention (`attrs.id`, `attrs.label` the name it had)
+ */
+export interface BodyNode {
+  type: string
+  attrs?: Record<string, unknown>
+  content?: BodyNode[]
+  text?: string
+  marks?: BodyMark[]
+}
+
+export interface BodyDoc extends BodyNode {
+  type: 'doc'
 }
 
 export type PageKind = 'page' | 'inbox' | 'today'
 
-export type TemplateKey = 'shop' | 'todo' | 'goal' | 'note'
+/** The starters of a page; 'week' (v24) makes a page whose first view collects «На неделе» from every page */
+export type TemplateKey = 'shop' | 'todo' | 'goal' | 'note' | 'week'
+
+/**
+ * A record template of a page (v24, И9): what «Сделать шаблоном» saved of a record, its body and its subitems'
+ * texts. It belongs to its page and is never a record: no row, count, Сегодня, Поиск or «@» sees it
+ */
+export interface RecTemplate {
+  id: Id
+  name: string
+  body: BodyDoc | null
+  /** The subitems, in order; a record made by the template gets them unticked */
+  subs: string[]
+}
 
 export interface Page {
   id: Id
   kind: PageKind
   title: string
   glyph: Glyph | null
-  color: PageColor
+  /** Chosen in «Значок и цвет»; null is «Без цвета» (read through `pageColor`: older data has a grey that means none) */
+  color: PageColor | null
   sectionId: Id | null
   order: number
-  /** Pages with «Готово» show checkboxes, the rest show a dot */
+  /** Pages with the checkbox (a «Сделано» view) show checkboxes, the rest show a dot */
   hasDone: boolean
-  /** «Описание для Авто»: what goes here; Авто reads it when filing */
+  /** «Что сюда класть»: the words that tell Авто what goes here (v23: never called «описание» on screen) */
   description: string
+  /** «Заметка к странице» (v23): the page's body, drawn between the title block and the view tabs; null or absent: none */
+  body?: BodyDoc | null
+  /** Records and pages the body mentions, read out of it on every change (they show in «Связано» of each) */
+  mentions?: Id[]
   props: PropDef[]
+  /** The order of «Свойства»: property ids with 'due' and 'note' among them. Without it the page's own come first */
+  propOrder?: (Id | BuiltinProp)[]
   views: ViewDef[]
   /** Position in Избранное, or null */
   favorite: number | null
@@ -79,6 +153,8 @@ export interface Page {
   /** Records are titles (books, films): the summary keeps their capital letter */
   titles?: boolean
   template?: TemplateKey
+  /** Record templates made here (v24); absent on older pages: none */
+  templates?: RecTemplate[]
   createdAt: number
   /** Last time the page was opened (search groups) */
   openedAt: number
@@ -97,16 +173,24 @@ export interface Rec {
   text: string
   done: boolean
   doneAt?: number
+  /** Last tick or untick: a row ticked while its page is open stays in place until the page is opened again */
+  tickedAt?: number
+  /** The plain «Заметка» from before v23: read as a one-paragraph body until the body is first written, then '' */
   note: string
+  /** The body (v23): the editor's JSON; null or absent: empty (or the old `note`) */
+  body?: BodyDoc | null
+  /** Records and pages the body mentions, read out of it on every change: «Связано» on both sides, apart from `links` */
+  mentions?: Id[]
   values: Record<Id, string | number | null>
   due: Due | null
   /** A record with its own icon shows its tile instead of the checkbox or dot */
   glyph?: Glyph | null
+  /** Not read since v23: a record's own tile is neutral (older demo data has one) */
   color?: PageColor | null
   tags: Tag[]
   /** Pages Авто would offer for a record tagged «уточнить» */
   guesses?: Id[]
-  /** «Связано»: records and pages this one is linked to. A link reads both ways: the other side lists it too */
+  /** «Связано»: records and pages this one is linked to by hand. A link reads both ways: the other side lists it too */
   links?: Id[]
   via: 'chat' | 'manual'
   addedAt: number
@@ -125,7 +209,7 @@ export interface Section {
 
 export type EntryKind = 'pending' | 'routed' | 'ask' | 'found' | 'undone' | 'offline'
 
-/** One line of the Чат journal: what was written and where it went */
+/** One line of the Журнал journal: what was written and where it went */
 export interface Entry {
   id: Id
   at: number
@@ -139,6 +223,30 @@ export interface Entry {
   hits?: Id[]
   /** A guessed name for «Новая страница «…»» */
   newName?: string | null
+  /** Авто made the page for this line from a template: «Отменить» and «Не туда» take the page back while it is empty */
+  made?: boolean
+  /** Filed when the network came back: the receipt says «разобрано, когда появилась сеть» */
+  resumed?: boolean
+  /** Its parts went to different pages (v22, U3): one receipt, a «→» on every row, no «Не туда» in the header */
+  split?: boolean
+  /**
+   * Why Авто filed it the plain way: `slow` the model did not answer in 10 s (the record waits in Входящие),
+   * `key` the key was refused (filed by the simple rules)
+   */
+  note?: 'slow' | 'key'
+  /** A question written down: up to three records like it, «Похожее в записях» under the receipt */
+  similar?: Id[]
+  /** Records of this send merged into an open one like them (v22, G3): the new record's id → the record it went into */
+  merged?: Record<Id, Id>
+  /** The page was chosen by hand (Уточнение, «Не туда», «Ещё…»): the receipt offers «Запомнить» (v22, U5) */
+  learn?: boolean
+  /** «Запомнить» was tapped: the line is an example in the page's «Что сюда класть» */
+  learned?: boolean
+  /**
+   * The names picked after «@» in the composer (v24, item 13): each record of the line links to those its own text holds
+   * with their marker («Позвонить @Стоматолог»), and «Отменить» gives them back as chips
+   */
+  links?: Id[]
 }
 
 export type ModelChoice = 'fast' | 'exact'
@@ -161,11 +269,25 @@ export interface Settings {
   dismissed: string[]
   /** Folded system sections on Главная: 'favorites', 'recent' (user sections keep their own flag) */
   folded: string[]
+  /** Keeping data: when a copy was last saved and when «Не сейчас» hid the reminder (0: never) */
+  copiedAt: number
+  copyHiddenAt: number
+  /** Records count towards the first reminder from here (the first run); 0 for a database older than the reminder */
+  startedAt: number
+  /** `navigator.storage.persist()` is asked once by itself, at the first record; then only by «Включить» */
+  persistAsked: boolean
 }
 
 /** The connection to a model stays in this browser: never in an export, kept through an import */
 export type ConnectionField = 'provider' | 'apiKey' | 'baseUrl' | 'modelId' | 'keyState'
 
+/** How this browser keeps the data: about this browser, not the data, so never in an export either */
+export type KeepingField = 'copiedAt' | 'copyHiddenAt' | 'startedAt' | 'persistAsked'
+
+/**
+ * Page glyphs in Lucide's stroke. The first 36 are what «Значок и цвет» offers (v23, M10; v24 adds the week); the last
+ * ones are kept so older pages still draw (Входящие's tray, and icons the picker offered before v23)
+ */
 export const GLYPHS = {
   basket: 'i-lucide-shopping-basket',
   check: 'i-lucide-square-check',
@@ -174,24 +296,42 @@ export const GLYPHS = {
   flag: 'i-lucide-flag',
   target: 'i-lucide-target',
   book: 'i-lucide-book',
-  inbox: 'i-lucide-inbox',
   gift: 'i-lucide-gift',
   cal: 'i-lucide-calendar',
+  // The calendar family's second glyph (v24 fixes, 13): Lucide's calendar with one row of three dots (app/assets/icons)
+  calweek: 'cer:calendar-week',
   doc: 'i-lucide-file-text',
+  bag: 'i-lucide-shopping-bag',
+  car: 'i-lucide-car',
+  plane: 'i-lucide-plane',
+  phone: 'i-lucide-smartphone',
+  pill: 'i-lucide-pill',
+  paw: 'i-lucide-paw-print',
+  plant: 'i-lucide-sprout',
+  tool: 'i-lucide-wrench',
+  key: 'i-lucide-key-round',
+  cup: 'i-lucide-coffee',
+  money: 'i-lucide-banknote',
+  // Lucide has no pram: the mockup's own, drawn in the same stroke (app/assets/icons)
+  stroller: 'cer:stroller',
+  music: 'i-lucide-music',
+  camera: 'i-lucide-camera',
   heart: 'i-lucide-heart',
+  gym: 'i-lucide-dumbbell',
+  work: 'i-lucide-briefcase',
+  pin: 'i-lucide-map-pin',
+  film: 'i-lucide-film',
+  sun: 'i-lucide-sun',
+  study: 'i-lucide-graduation-cap',
+  globe: 'i-lucide-globe',
+  food: 'i-lucide-utensils',
+  moon: 'i-lucide-moon',
+  hills: 'i-lucide-mountain',
+  inbox: 'i-lucide-inbox',
   star: 'i-lucide-star',
   run: 'i-lucide-footprints',
-  plane: 'i-lucide-plane',
-  car: 'i-lucide-car',
   wallet: 'i-lucide-wallet',
-  pill: 'i-lucide-pill',
-  music: 'i-lucide-music',
-  film: 'i-lucide-clapperboard',
-  work: 'i-lucide-briefcase',
-  study: 'i-lucide-graduation-cap',
   leaf: 'i-lucide-leaf',
-  paw: 'i-lucide-paw-print',
-  tool: 'i-lucide-wrench',
   cook: 'i-lucide-cooking-pot',
   people: 'i-lucide-users',
   pen: 'i-lucide-pen-line'
@@ -199,34 +339,45 @@ export const GLYPHS = {
 
 export type Glyph = keyof typeof GLYPHS
 
-/** Names read by screen readers in the icon picker */
-export const GLYPH_LABELS: Record<Glyph, string> = {
-  basket: 'Корзина покупок',
-  check: 'Галочка',
-  home: 'Дом',
-  bulb: 'Лампочка',
-  flag: 'Флаг',
-  target: 'Мишень',
-  book: 'Книга',
-  inbox: 'Входящие',
-  gift: 'Подарок',
-  cal: 'Календарь',
-  doc: 'Документ',
-  heart: 'Сердце',
-  star: 'Звезда',
-  run: 'Следы',
-  plane: 'Самолёт',
-  car: 'Машина',
-  wallet: 'Кошелёк',
-  pill: 'Таблетка',
-  music: 'Музыка',
-  film: 'Кино',
-  work: 'Портфель',
-  study: 'Учёба',
-  leaf: 'Лист',
-  paw: 'Лапа',
-  tool: 'Ключ',
-  cook: 'Кастрюля',
-  people: 'Люди',
-  pen: 'Ручка'
-}
+/**
+ * «Значок и цвет»: the icons offered, six to a row, each with the Russian words that find it; the first word is its
+ * name for screen readers (v23, A9, M10)
+ */
+export const GLYPH_WORDS: [Glyph, string][] = [
+  ['basket', 'Корзинка покупки магазин еда продукты'],
+  ['check', 'Дела задачи галочка список'],
+  ['home', 'Дом квартира ремонт дача'],
+  ['bulb', 'Идея лампочка мысль'],
+  ['flag', 'Флаг цель забег финиш'],
+  ['target', 'Мишень цель план'],
+  ['book', 'Книга чтение учёба'],
+  ['gift', 'Подарок праздник день рождения'],
+  ['cal', 'Календарь дата встреча'],
+  ['calweek', 'Неделя календарь план расписание'],
+  ['doc', 'Документ заметка текст файл'],
+  ['bag', 'Сумка магазин покупки одежда'],
+  ['car', 'Машина авто дорога ремонт'],
+  ['plane', 'Самолёт поездка отпуск путешествие'],
+  ['phone', 'Телефон звонок связь'],
+  ['pill', 'Таблетка лекарство здоровье врач аптека'],
+  ['paw', 'Лапа питомец кошка собака'],
+  ['plant', 'Растение цветы сад дача'],
+  ['tool', 'Инструмент ремонт мастер'],
+  ['key', 'Ключ квартира замок'],
+  ['cup', 'Чашка кофе чай кафе'],
+  ['money', 'Деньги бюджет финансы счета'],
+  ['stroller', 'Коляска ребёнок дети малыш'],
+  ['music', 'Музыка песни концерт'],
+  ['camera', 'Камера фото снимки'],
+  ['heart', 'Сердце любовь семья'],
+  ['gym', 'Гантели спорт тренировки зал'],
+  ['work', 'Портфель работа офис проект'],
+  ['pin', 'Место адрес карта'],
+  ['film', 'Плёнка кино фильмы сериалы'],
+  ['sun', 'Солнце лето отдых погода'],
+  ['study', 'Учёба школа курсы'],
+  ['globe', 'Глобус мир языки'],
+  ['food', 'Еда рецепты кухня ужин'],
+  ['moon', 'Луна сон ночь'],
+  ['hills', 'Горы поход природа']
+]

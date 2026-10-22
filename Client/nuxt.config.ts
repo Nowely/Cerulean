@@ -49,6 +49,14 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-01-15',
 
+  // The SPA shell is written to index.html at build time, so the service worker can precache it and the
+  // installed app starts without a network (the server renders it on the fly otherwise, and nothing is cached)
+  nitro: {
+    prerender: {
+      routes: ['/']
+    }
+  },
+
   hooks: {
     // No <link rel="prefetch"> for every lazy chunk: on a phone they compete with the first screen for
     // the network, and the service worker caches the whole app right after it anyway

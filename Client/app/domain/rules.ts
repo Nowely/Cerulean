@@ -1,5 +1,5 @@
 // Simple rules: file a line on the device, without a model. Clear cases only; the rest goes to Входящие.
-import type { Id, Page, PropDef } from './types'
+import type { Id, Page, PropDef, TemplateKey } from './types'
 import { fold, stems } from './text'
 
 type Topic = 'shop' | 'todo' | 'home' | 'goal' | 'idea' | 'note' | 'book' | 'film' | 'gift' | 'health' | 'travel'
@@ -51,12 +51,12 @@ const TITLE_TOPICS: [RegExp, Topic][] = ([
   ['(задач|дела|дел$)', 'todo']
 ] as const).map(([re, topic]) => [new RegExp(`(^|[^а-я])${re}`), topic])
 
-const TEMPLATE_TOPIC = { shop: 'shop', todo: 'todo', goal: 'goal', note: 'note' } as const
+const TEMPLATE_TOPIC: Partial<Record<TemplateKey, Topic>> = { shop: 'shop', todo: 'todo', goal: 'goal', note: 'note' }
 
 export function pageTopic(page: Page): Topic | null {
   const title = fold(page.title)
   for (const [re, topic] of TITLE_TOPICS) if (re.test(title)) return topic
-  return page.template ? TEMPLATE_TOPIC[page.template] : null
+  return page.template ? TEMPLATE_TOPIC[page.template] ?? null : null
 }
 
 /** A name in quotes is a title, not a topic: «прочитать «Мастер и Маргарита»» is about a book, not a repair man */
@@ -74,7 +74,19 @@ function hits(text: string, vocab: string[]): number {
   return vocab.filter(v => v.includes(' ') ? f.includes(` ${v}`) : ws.some(w => w.startsWith(v) && (v.length > 2 || w === v))).length
 }
 
+/** A typed prefix names the page: «идея: сад на балконе» is for Идеи, whatever «балкон» says (parse.dropPrefix) */
+const PREFIX_TOPICS: Record<string, Topic> = {
+  идея: 'idea', идеи: 'idea', мысль: 'idea', заметка: 'note', цель: 'goal', задача: 'todo', покупки: 'shop', купить: 'shop'
+}
+
+function prefixTopic(text: string): Topic | null {
+  const m = /^\s*([а-яё]+)\s*:/i.exec(text)
+  return m ? PREFIX_TOPICS[fold(m[1]!)] ?? null : null
+}
+
 export function textTopics(text: string): Topic[] {
+  const named = prefixTopic(text)
+  if (named) return [named]
   return (Object.keys(VOCAB) as Topic[])
     .map(t => [t, hits(text, VOCAB[t])] as const)
     .filter(([, n]) => n > 0)
@@ -90,9 +102,10 @@ export interface Ranked {
   score: number
 }
 
-/** Pages ranked for a line. Scores: topic word 3, a word shared with the page title or description 2, a taught word 4. */
+/** Pages ranked for a line. Scores: topic word 3, a word shared with the page title or description 2, a taught word 4, a typed prefix 10. */
 export function rank(text: string, pages: Page[], learned: Learned = {}): Ranked[] {
   const topics = textTopics(text)
+  const named = prefixTopic(text)
   const own = new Set(stems(unquoted(text)))
   return pages
     .filter(p => p.kind === 'page')
@@ -102,6 +115,7 @@ export function rank(text: string, pages: Page[], learned: Learned = {}): Ranked
       if (topic) {
         const n = hits(text, VOCAB[topic])
         score += n * 3
+        if (topic === named) score += 10
         if (!n && topics.length && topics.every(t => FALLBACK[t] === topic) && !pages.some(p => pageTopic(p) === topics[0])) score += 3
       }
       for (const s of stems(`${page.title} ${page.description}`)) if (own.has(s)) score += 2
@@ -131,7 +145,7 @@ const NEW_NAMES: [Topic, string][] = [
   ['goal', 'Цели'],
   ['home', 'Дом'],
   ['shop', 'Покупки'],
-  ['note', 'Заметки']
+  ['note', 'Идеи']
 ]
 
 /**
@@ -142,13 +156,56 @@ export function classify(text: string, pages: Page[], learned: Learned = {}, rec
   const ranked = rank(text, pages, learned)
   const best = ranked[0]
   const confident = !!best && best.score >= 3 && (ranked[1]?.score ?? 0) < best.score
-  const guesses = [...ranked.map(r => r.pageId), ...recent.filter(id => pages.some(p => p.id === id && p.kind === 'page'))]
+  const topic = textTopics(text)[0]
+  // Recent pages do not fill in for a line a starter fits: «позвонить маме» offers «Задачи», never Покупки
+  const filler = !ranked.length && templateFor(text, pages) ? [] : recent.filter(id => pages.some(p => p.id === id && p.kind === 'page'))
+  const guesses = [...ranked.map(r => r.pageId), ...filler]
     .filter((id, i, a) => a.indexOf(id) === i)
     .slice(0, 3)
-  const topic = textTopics(text)[0]
   const named = NEW_NAMES.find(([t]) => t === topic)?.[1] ?? null
   const taken = named && pages.some(p => fold(p.title) === fold(named))
   return { pageId: confident ? best.pageId : null, guesses, newName: confident || taken ? null : named }
+}
+
+/** The page that already has this name, in any case */
+export function pageNamed(name: string | null | undefined, pages: Page[]): Page | undefined {
+  const n = fold(name?.trim() ?? '')
+  return n ? pages.find(p => p.kind === 'page' && !p.deletedAt && fold(p.title.trim()) === n) : undefined
+}
+
+/**
+ * What an Уточнение offers besides «Ещё…»: the guesses, and «Новая страница «X»» only while no page is called X.
+ * When X exists, that page is offered after the guesses instead (v22, N23).
+ */
+export function placeOptions(guesses: Id[], newName: string | null | undefined, pages: Page[]): { pageIds: Id[], newName: string | null } {
+  const named = pageNamed(newName, pages)
+  if (!named) return { pageIds: guesses, newName: newName?.trim() || null }
+  return { pageIds: guesses.includes(named.id) ? guesses : [...guesses, named.id], newName: null }
+}
+
+/** Which starter a kind of line belongs to: calls, payments and visits are Задачи, thoughts are Идеи */
+const TOPIC_TEMPLATE: Partial<Record<Topic, TemplateKey>> = {
+  shop: 'shop',
+  todo: 'todo',
+  health: 'todo',
+  travel: 'todo',
+  home: 'todo',
+  goal: 'goal',
+  idea: 'note',
+  note: 'note'
+}
+
+/**
+ * Day one, or a kind of line no page holds yet: the starter that fits it, when no page of that kind exists
+ * (`classify` found no page). Books, films and gifts have no starter: they stay an Уточнение.
+ */
+export function templateFor(text: string, pages: Page[]): TemplateKey | null {
+  const topic = textTopics(text)[0]
+  const key = topic ? TOPIC_TEMPLATE[topic] : undefined
+  if (!key) return null
+  const own = pages.filter(p => p.kind === 'page')
+  if (own.some(p => p.template === key || pageTopic(p) === key)) return null
+  return key
 }
 
 /** Department for a shopping line, by the same word beginnings */

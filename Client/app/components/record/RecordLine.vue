@@ -1,25 +1,36 @@
 <script setup lang="ts">
 // A record shown outside its page (receipts, found cards, Поиск, Сегодня):
-// the text, and under it «в Задачи · сегодня, 10:00» (place first, then the date). The mark works everywhere.
+// the text, and under it «Задачи · сегодня, 10:00» (the bare place name first, then the date). The mark works everywhere.
 import { computed } from 'vue'
 import type { Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { formatDue, formatDueBrief, isOverdue } from '~/domain/dates'
-import { inPlace, splitMatch } from '~/domain/text'
+import { nb, splitMatch } from '~/domain/text'
+import { bodyOf, isEmptyDoc } from '~/domain/body'
 import RecordMark from '../common/RecordMark.vue'
 
 const props = withDefaults(defineProps<{
   rec: Rec
-  /** «в Задачи» on line 2; off where the place is already said (a receipt) */
+  /** «Задачи» on line 2; off where the place is already said (a receipt) */
   place?: boolean
-  /** Only the time for a date of today (inside «Сегодня») */
+  /** Only the time for a date of today (inside «Сегодня», whose «Просрочено» caption is its one warn signal) */
   brief?: boolean
   /** Highlight a search match */
   query?: string
   density?: 'card' | 'list'
   selected?: boolean
-}>(), { place: true, brief: false, query: '', density: 'card', selected: false })
+  /** Right of the text, 14 muted: the weekday under «На неделе» («ср», «завтра»); line 2 then names the place only */
+  end?: string
+  /** `end` is overdue («было вчера»): muted 500, as a collecting view's one warn word is its summary line's (v24) */
+  endLate?: boolean
+  /** A collecting view's row (v24): line 2 names the home page only, in muted, whatever `end` holds */
+  aside?: boolean
+  /** The note glyph on the right: with `end` unless said otherwise; a collecting view follows its «Заметка» switch */
+  note?: boolean
+  /** Why it is in «Связано» (v23), after the place in place of the date: «в тексте», ««Сначала дочитать …»» */
+  reason?: string
+}>(), { place: true, brief: false, query: '', density: 'card', selected: false, end: '', endLate: false, aside: false, note: undefined, reason: '' })
 
 const emit = defineEmits<{ open: [] }>()
 const data = useDataStore()
@@ -29,19 +40,20 @@ const page = computed(() => data.pages[props.rec.pageId])
 const where = computed(() => data.placeOf(props.rec).title)
 const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
 const when = computed(() => {
-  if (!props.rec.due) return ''
+  if (!props.rec.due || props.end || props.aside) return ''
   const d = props.brief ? formatDueBrief(props.rec.due, now.value) : formatDue(props.rec.due, now.value)
   return late.value ? `было ${d}` : d
 })
 const parts = computed(() => splitMatch(props.rec.text, props.query))
 const tag = computed(() => props.rec.tags.includes('offline') ? 'ждёт сети' : props.rec.tags.includes('clarify') ? 'уточнить' : '')
-const hasLine2 = computed(() => (props.place && where.value) || when.value || tag.value)
+const hasLine2 = computed(() => (props.place && where.value) || when.value || tag.value || props.reason)
+const hasNote = computed(() => (props.note ?? !!props.end) && !isEmptyDoc(bodyOf(props.rec)))
 </script>
 
 <template>
   <div
     class="flex items-center"
-    :class="density === 'card' ? 'min-h-11 pr-3 pl-0.5' : 'min-h-12 pr-3 pl-0.5 lg:min-h-11'"
+    :class="density === 'card' ? 'min-h-11 pr-3 pl-0.5' : 'min-h-11 pr-3'"
   >
     <RecordMark
       :rec="rec"
@@ -53,7 +65,7 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
     <button
       type="button"
       class="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col items-start justify-center gap-px rounded-item py-1 pr-1.5 text-left"
-      :class="[density === 'card' ? 'text-15' : 'text-body', selected ? 'bg-elevated' : '']"
+      :class="[density === 'card' ? 'text-15' : 'pl-0.5 text-record leading-[1.3]', selected ? 'bg-elevated' : '', { 'lg:py-1.25': aside }]"
       @click="emit('open')"
     >
       <span
@@ -61,22 +73,37 @@ const hasLine2 = computed(() => (props.place && where.value) || when.value || ta
         :class="{ 'text-dimmed line-through': rec.done }"
       >
         <template v-if="parts.mid">{{ parts.pre }}<mark class="rounded-[3px] bg-accent-soft font-semibold text-highlighted">{{ parts.mid }}</mark>{{ parts.post }}</template>
-        <template v-else>{{ rec.text }}</template>
+        <template v-else>{{ nb(rec.text) }}</template>
       </span>
       <span
         v-if="hasLine2"
         class="max-w-full truncate text-caption font-normal"
-        :class="late ? 'text-warn-ink' : 'text-toned'"
+        :class="[late && !brief && !reason && !end && !aside ? 'text-warn' : 'text-toned', { 'lg:text-13': aside }]"
       >
-        <template v-if="place && where">{{ inPlace(where) }}</template>
-        <template v-if="place && where && (when || tag)"> · </template>
-        <template v-if="when">{{ when }}</template>
-        <template v-if="when && tag"> · </template>
-        <span
-          v-if="tag"
-          :class="tag === 'уточнить' ? 'text-accent-ink' : ''"
-        >{{ tag }}</span>
+        <template v-if="reason">{{ place && where ? `${where} · ${reason}` : reason }}</template>
+        <template v-else>
+          <template v-if="place && where">{{ where }}</template>
+          <template v-if="place && where && (when || tag)"> · </template>
+          <template v-if="when">{{ when }}</template>
+          <template v-if="when && tag"> · </template>
+          <span
+            v-if="tag"
+            :class="tag === 'уточнить' ? 'text-accent-ink' : ''"
+          >{{ tag }}</span>
+        </template>
       </span>
     </button>
+    <span
+      v-if="end || hasNote"
+      class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned"
+      :class="{ 'font-medium': endLate }"
+    >
+      <UIcon
+        v-if="hasNote"
+        name="i-lucide-file-text"
+        class="size-4"
+        aria-label="есть заметка"
+      />{{ end }}
+    </span>
   </div>
 </template>
