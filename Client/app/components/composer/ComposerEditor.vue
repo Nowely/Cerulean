@@ -129,7 +129,8 @@ const editor = useEditor({
   onBlur: () => emit('focus', false)
 })
 
-watch([text, links], ([t, ids]) => {
+// Words set from outside, and those typed in the plain field while the editor was being made
+watch([text, links, editor], ([t, ids]) => {
   const ed = editor.value
   if (!ed || t === said) return
   said = t
@@ -158,7 +159,11 @@ onBeforeUnmount(() => editor.value?.destroy())
 defineExpose({
   mention,
   pick,
-  focus: () => editor.value?.commands.focus('end'),
+  // Tiptap focuses a frame later; the view takes the focus now, so no key falls between (and iOS keeps the keyboard)
+  focus: () => {
+    editor.value?.commands.focus('end')
+    editor.value?.view.focus()
+  },
   blur: () => editor.value?.commands.blur(),
   el: () => editor.value?.view.dom as HTMLElement | undefined
 })
