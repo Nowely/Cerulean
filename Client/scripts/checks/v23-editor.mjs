@@ -13,7 +13,7 @@ async function openRecord(p, text) {
   const id = await recId(p, text)
   expect(id, `no record «${text}»`)
   await open(p, `/r/${id}`)
-  await p.locator('.ProseMirror').first().waitFor({ timeout: 15000 })
+  await p.locator('.ProseMirror.body-text').first().waitFor({ timeout: 15000 })
   await p.waitForTimeout(200)
   return id
 }
@@ -26,10 +26,10 @@ async function openPage(p, title) {
 }
 
 /** The body being edited: the one with the caret, else the last one on screen (the panel's, when it is open) */
-const editorOf = p => p.locator('.ProseMirror').last()
+const editorOf = p => p.locator('.ProseMirror.body-text').last()
 const bar = p => p.getByRole('toolbar', { name: 'Текст' })
 const composer = p => p.getByRole('textbox', { name: /^(Новый подпункт|Новая запись)$/ })
-const focused = p => p.evaluate(() => !!document.activeElement?.closest('.ProseMirror'))
+const focused = p => p.evaluate(() => !!document.activeElement?.closest('.ProseMirror.body-text'))
 const bodyText = p => editorOf(p).evaluate(el => el.innerText)
 
 async function caretAfter(p, text) {
@@ -166,8 +166,8 @@ export default [
     const note = p.locator('.page-note')
     expect(await shows(note), 'no note on Дела по дому')
     // The editor takes over from the drawn text once it has loaded
-    await note.locator('.ProseMirror').waitFor({ timeout: 10000 })
-    const text = note.locator('.ProseMirror')
+    await note.locator('.ProseMirror.body-text').waitFor({ timeout: 10000 })
+    const text = note.locator('.ProseMirror.body-text')
     const folded = await text.evaluate(el => ({ h: el.getBoundingClientRect().height, full: el.scrollHeight }))
     // Four lines: the paragraph's two, the heading, a bullet (24 + 24 + 28 + 14 + 24 and the gaps)
     expect(folded.h < folded.full - 20, `the note is not folded (${folded.h} of ${folded.full})`)
@@ -308,7 +308,7 @@ export default [
     expect(await shows(bar(p)), 'no bar for the panel\'s body')
     // The bar sits in the panel that holds the body: their nearest common box is the panel, not the page
     const shared = await p.evaluate(() => {
-      const eds = document.querySelectorAll('.ProseMirror')
+      const eds = document.querySelectorAll('.ProseMirror.body-text')
       const ed = eds[eds.length - 1]
       const tools = document.querySelector('[role="toolbar"][aria-label="Текст"]')
       let a = ed
@@ -471,12 +471,12 @@ export default [
     expect(rows.some(r => r.startsWith('24 книги за год')), 'the hand link «24 книги за год» is missing')
     const habits = await recId(p, 'Атомные привычки')
     await open(p, `/r/${habits}`)
-    await p.locator('.ProseMirror').first().waitFor()
+    await p.locator('.ProseMirror.body-text').first().waitFor()
     rows = await related(p)
     expect(rows.some(r => r.startsWith('Вернуть книгу в библиотеку Задачи · «Сначала дочитать')), `the other side reads ${rows.join(' / ')}`)
     // Delete the chip: both rows go, the hand link stays
     await open(p, `/r/${id}`)
-    await p.locator('.ProseMirror').first().waitFor()
+    await p.locator('.ProseMirror.body-text').first().waitFor()
     await editorOf(p).click({ position: { x: 4, y: 4 } })
     await editorOf(p).locator('.mention').click()
     await p.keyboard.press('Backspace')
@@ -550,14 +550,14 @@ export default [
     await p.keyboard.type('Бородинский, нарезка')
     await p.waitForTimeout(700)
     await p.reload()
-    await p.locator('.ProseMirror').first().waitFor()
+    await p.locator('.ProseMirror.body-text').first().waitFor()
     await p.waitForTimeout(300)
     expect((await bodyText(p)).includes('Бородинский, нарезка'), 'the text was not there after reload')
     expect(!(await p.getByText(/сохранено/i).count()), 'something says «сохранено»')
     // Another tab changes it: this one shows the change
     const other = await p.context().newPage()
     await other.goto(`${BASE}/r/${id}`)
-    await other.locator('.ProseMirror').first().waitFor()
+    await other.locator('.ProseMirror.body-text').first().waitFor()
     await other.waitForTimeout(300)
     await store(other, (data, rid) => data.setBody({ kind: 'record', id: rid }, { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Из другой вкладки' }] }] }), id)
     await other.close()
