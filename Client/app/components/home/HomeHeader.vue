@@ -85,6 +85,7 @@ const items = computed<MenuItem[][]>(() => [
       title="Главная"
       label="Действия с Главной"
       headless
+      divided
     >
       <DotsButton
         label="Действия с Главной"

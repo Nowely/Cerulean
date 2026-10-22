@@ -52,12 +52,15 @@ async function select(page, text) {
   }, text)
 }
 
-/** The record scrolled to its end, as the mockup draws it: the title under the header, which then names the record */
-async function toEnd(page) {
-  await editorOf(page).evaluate((el) => {
-    let box = el.parentElement
+/** The record scrolled just past its title, as the mockup draws it: the properties start under the header, which
+ * then names the record */
+async function pastTitle(page) {
+  await page.evaluate(() => {
+    const title = document.querySelector('main [data-title-block]')
+    let box = title.parentElement
     while (box && !(box.scrollHeight > box.clientHeight && /auto|scroll/.test(getComputedStyle(box).overflowY))) box = box.parentElement
-    box?.scrollTo({ top: box.scrollHeight })
+    const top = Math.max(box.getBoundingClientRect().top, document.querySelector('main header')?.getBoundingClientRect().bottom ?? 0)
+    box.scrollTop += title.getBoundingClientRect().bottom - top
   })
 }
 
@@ -81,7 +84,7 @@ export default h => [
     await caretAfter(p, 'шакшука в субботу')
     await keyboardUp(p)
     await h.settle(p, 500)
-    await toEnd(p)
+    await pastTitle(p)
     await h.settle(p, 300)
   } },
   { name: 'MobileBodySelect', device: h.MOBILE, run: async (p) => {
@@ -90,7 +93,7 @@ export default h => [
     await select(p, 'Проверить, что ни одно не треснуло')
     await keyboardUp(p)
     await h.settle(p, 500)
-    await toEnd(p)
+    await pastTitle(p)
     await h.settle(p, 300)
   } },
   { name: 'MobileMention', device: h.MOBILE, run: async (p) => {

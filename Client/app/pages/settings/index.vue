@@ -366,11 +366,9 @@ onMounted(() => {
           opens
           @open="router.push('/settings/trash')"
         >
+          <!-- Desktop: the button alone, as drawn; the phone's line keeps the count as its value -->
           <UButton to="/settings/trash">
-            Открыть<span
-              v-if="trashCount"
-              class="inline-flex h-5 min-w-5 items-center justify-center rounded-badge bg-trk px-1.5 text-xs text-toned"
-            >{{ trashCount }}</span>
+            Открыть
           </UButton>
         </SettingRow>
         <SettingRow

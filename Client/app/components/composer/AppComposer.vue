@@ -278,7 +278,8 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex flex-col">
+  <!-- The guess line sits 4px over the pill, so its letters never touch the edge (`.dguess` in the dock's 8px gap) -->
+  <div class="flex flex-col gap-2">
     <p
       v-if="guessLine"
       class="-mb-1 h-5 truncate pl-4 text-13 leading-5 text-toned"

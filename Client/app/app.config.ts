@@ -63,11 +63,12 @@ export default {
           variant: 'outline',
           class: 'ring-0 bg-btn text-highlighted hover:bg-btn-pressed active:bg-btn-pressed aria-pressed:bg-btn-pressed aria-expanded:bg-btn-pressed'
         },
-        // Quiet icon and text buttons: muted ink, hover tint, pressed state
+        // Quiet icon and text buttons: muted ink, hover tint, pressed state; lit while open only on desktop, where
+        // its popover hangs from it (a phone's sheet covers the screen and nothing stays lit under it)
         {
           color: 'neutral',
           variant: 'ghost',
-          class: 'text-toned hover:bg-muted hover:text-highlighted active:bg-accented aria-expanded:bg-elevated aria-expanded:text-highlighted'
+          class: 'text-toned hover:bg-muted hover:text-highlighted active:bg-accented lg:aria-expanded:bg-elevated lg:aria-expanded:text-highlighted'
         },
         {
           color: 'neutral',

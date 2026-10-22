@@ -40,7 +40,7 @@ function openFull() {
 <template>
   <aside
     v-if="variant === 'panel'"
-    class="flex w-110 shrink-0 flex-col border-l border-default bg-default xl:w-120"
+    class="raised flex w-110 shrink-0 flex-col border-l border-default bg-default"
     aria-label="Превью"
   >
     <header class="flex h-12 shrink-0 items-center gap-1.5 border-b border-default pr-2 pl-3.5">

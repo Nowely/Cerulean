@@ -120,7 +120,8 @@ watch(() => data.entries.length, toBottom)
         :key="d.key"
         :aria-label="d.label"
       >
-        <h2 class="sticky top-0 z-1 bg-canvas pt-4 pb-1 text-cap text-toned">
+        <!-- The day scrolls with its entries: stuck to the top it cut the card under it in half (canvas 62, `.day`) -->
+        <h2 class="pt-4 pb-1 text-cap text-toned">
           {{ d.label }}
         </h2>
         <JournalEntry
