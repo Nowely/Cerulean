@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
 
 const NOW = new Date('2026-10-19T09:14:00+03:00')
-const plain = s => (s ?? '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim()
+const plain = s => (s ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim()
 const isDesk = p => p.viewportSize().width >= 1024
 const notice = p => p.locator('[data-notice]')
 
