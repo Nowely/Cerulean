@@ -1,9 +1,12 @@
 # Авто against a real model
 
-`cases.json` holds 51 lines a person might type into Чат, each with where it should go on the demo pages
-(Продукты, Задачи, Дела по дому, Цели, Идеи, Книги) and what the records should look like: the split of a
-shopping line, departments, quantities, dates and times, and a name for a new page when nothing fits.
-A list of allowed pages (with `null` for Уточнение) marks lines where more than one answer is reasonable.
+`cases.json` holds 56 lines a person might type into the field, each with where its records should go and what
+they should look like: the split of a line, departments, quantities, dates and times, and a record's text. Since
+the main flow (item 23) every record has its own page, and a record no page clearly fits goes to Входящие (`null`):
+nothing asks and no page is made. A list of allowed pages marks lines where more than one answer is reasonable, and
+an item's own `page` overrides the line's. Most lines are filed on the demo pages (Продукты, Задачи, Дела по дому,
+Цели, Идеи, Книги); lines with `"on": "first"` on the first run's (Покупки, Задачи, Идеи), plus the `extra` pages
+the person made, such as Подарки for «Купить сыр и пазл для Пети».
 
 ```bash
 EVAL_KEY=sk-… pnpm eval                          # OpenAI, GPT-6 Luna (Быстрая)
@@ -13,11 +16,14 @@ EVAL_PROVIDER=openrouter EVAL_KEY=sk-or-… EVAL_MODEL=openai/gpt-6-luna pnpm ev
 EVAL_PROVIDER=custom EVAL_BASE_URL=https://…/v1 EVAL_MODEL=… EVAL_KEY=… pnpm eval
 ```
 
-It sends every line the way the app does (`askModel` with the prompt from `app/domain/prompt.ts`, the demo
-pages, the clock on Monday 19 Oct 2026) and prints each answer with what was wrong, plus totals. It skips
+It sends every line the way the app does (`askModel` with the prompt from `app/domain/prompt.ts`, the pages
+without those that only collect, the clock on Monday 19 Oct 2026) and prints each answer with what was wrong, plus totals. It skips
 itself without `EVAL_KEY` and is not part of `pnpm test` or CI.
 
 ## Results so far
+
+The per-record contract of the main flow (one page per record, the record's text, Входящие for the unsure) has not
+been measured yet: no key was available when it landed. The table below is the contract before it.
 
 Claude Haiku stood in for the model: the same instructions and input, one answer per line.
 

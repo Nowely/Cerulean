@@ -76,8 +76,11 @@ defineExpose({ showing: computed(() => !!notice.value) })
         :class="[pad[place], { 'fixed z-10': over }]"
         :style="over ? at : undefined"
       >
+        <!-- A press on it keeps the caret and the text's session: the editing bar stays, so the notice does not move
+             from under the finger and the keys stay up (a record has no composer to hold the dock's height) -->
         <div
           data-notice
+          data-body-keep
           class="pointer-events-auto relative flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden rounded-card bg-inverted py-0.5 text-sm text-canvas shadow-float motion-safe:animate-rise lg:min-h-11 lg:max-w-full lg:flex-none lg:gap-1 lg:py-1.25 lg:pl-4"
           :class="notice.action ? 'pr-1 pl-3.5 lg:pr-1.25' : 'min-h-11 px-3.5 lg:pr-4'"
           @mouseenter="slot.hold('hover', true)"
@@ -110,6 +113,7 @@ defineExpose({ showing: computed(() => !!notice.value) })
             <button
               type="button"
               class="h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-item px-2.5 font-medium lg:h-8.5 lg:px-3 lg:underline lg:underline-offset-3 lg:hover:bg-canvas/10"
+              @mousedown.prevent
               @click="notice.action.run()"
             >
               {{ notice.action.label }}

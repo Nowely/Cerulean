@@ -51,8 +51,6 @@ async function tileIs(p, color) {
 }
 
 /** The composer chip's glyph */
-const chipGlyph = p => glyphColor(p.getByRole('button', { name: /^Куда/ }).first())
-
 /** Glyph colours of Главная's page rows (phone) or the sidebar's page rows (desktop), by title */
 async function rowColors(p, titles, where) {
   const out = {}
@@ -123,7 +121,8 @@ export default [
     expect(await pop.isVisible(), 'the popover closed after a click')
   } },
 
-  // 25: «Главная → only Покупки (green basket) and Книги (purple book) are coloured, every other glyph grey; …»
+  // 25: «Главная → only Покупки (green basket) and Книги (purple book) are coloured, every other glyph grey; …». The
+  // field's chip has no glyph since the main flow (item 5)
   { id: 'l-25-grey', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
@@ -136,7 +135,6 @@ export default [
     }
     await openPage(p, 'Задачи')
     expect(await tileIs(p, null), 'Задачи\'s tile is not neutral')
-    expect(await chipGlyph(p) === muted, 'the chip\'s glyph is not grey on Задачи')
     await pageMenu(p, 'Значок и цвет')
     const sheet = p.getByRole('dialog', { name: 'Значок и цвет' })
     const colour = n => sheet.getByRole('group', { name: 'Цвет' }).getByRole('button', { name: n })
@@ -144,7 +142,6 @@ export default [
     await colour('Синий').click()
     await p.waitForTimeout(300)
     expect(await tileIs(p, 'blue'), 'the tile did not turn blue')
-    expect(await chipGlyph(p) === await resolve(p, 'var(--c-blue)'), 'the chip\'s glyph did not turn blue')
     await colour('Без цвета').click()
     await p.waitForTimeout(300)
     expect(await tileIs(p, null), 'the tile is not neutral again')
@@ -153,12 +150,7 @@ export default [
     await p.goBack()
     await p.waitForTimeout(600)
     expect((await rowColors(p, ['Задачи'], home))['Задачи'] === await resolve(p, 'var(--c-blue)'), 'Задачи on Главная did not turn blue')
-    // The chip keeps its accent-ink label; Покупки shows its green basket
-    await openPage(p, 'Покупки')
-    expect(await chipGlyph(p) === await resolve(p, 'var(--c-green)'), 'the chip on Покупки is not green')
     // A Поиск hit keeps the muted glyph
-    // Back on Главная before the tap: under load the first tap could land on Покупки's header on its way out
-    await p.goBack()
     await p.waitForURL(u => new URL(u).pathname === '/')
     const box = p.getByRole('searchbox', { name: 'Найти' })
     await p.getByRole('button', { name: 'Найти' }).first().click()
@@ -182,7 +174,6 @@ export default [
     const colors = await rowColors(p, PAGES, side)
     for (const t of PAGES) expect(colors[t] === await want(t), `${t} in the sidebar is ${colors[t]}`)
     expect(await tileIs(p, null), 'Цели\'s tile is not neutral')
-    expect(await chipGlyph(p) === muted, 'the chip\'s glyph is not grey on Цели')
     await openPage(p, 'Книги')
     expect(await tileIs(p, 'purple'), 'Книги\'s tile is not purple')
     await pageMenu(p, 'Значок и цвет')
@@ -194,7 +185,6 @@ export default [
     await p.waitForTimeout(300)
     expect(await tileIs(p, null), 'the tile is not neutral after «Без цвета»')
     expect((await rowColors(p, ['Книги'], side))['Книги'] === muted, 'Книги in the sidebar is not grey')
-    expect(await chipGlyph(p) === muted, 'the chip is not grey')
   } },
 
   // 22: «Покупки → the captions … are yellow, blue, green and purple pills; …»
@@ -294,11 +284,11 @@ export default [
     expect(size === '13px', `the option is typed at ${size}`)
   } },
 
-  // 23: «Покупки «⋯» → the row «Что сюда класть» shows «еда, напитки, бытовая х…»; …»
+  // 23: «Покупки «⋯» → the row «Что сюда класть» shows «еда, напитки, бытовая х…»; …». Since the main flow the chip
+  // never reads «Авто» (item 5), a new page asks nothing (item 16) and the places list has no Авто row (item 6)
   { id: 'l-23-words', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
-    expect(await p.getByRole('button', { name: /^Куда: Авто/ }).count(), 'the chip on Главная does not read «Авто»')
     await noDescription(p, 'Главная')
     await openPage(p, 'Покупки')
     await p.getByRole('button', { name: 'Действия со страницей' }).first().click()
@@ -334,22 +324,6 @@ export default [
     await p.waitForURL(/descriptions/)
     await p.waitForTimeout(400)
     await noDescription(p, '«Что класть на страницы»')
-    // A new page asks «Что сюда класть?» with its one helper line
-    await open(p, '/')
-    await p.getByRole('button', { name: 'Действия с Главной' }).click()
-    await p.waitForTimeout(400)
-    await p.getByRole('dialog').getByRole('button', { name: 'Новая страница' }).click()
-    await p.waitForURL(/\/p\//)
-    expect(await shows(p.getByText('Что сюда класть?')), 'no «Что сюда класть?» on a new page')
-    // v24 fixes (4) reworded the helper line
-    expect(await p.getByText('Записи с этими словами Авто положит сюда.').count(), 'no helper line on a new page')
-    await noDescription(p, 'a new page')
-    // The picker of the composer: Авто «разложится по страницам» with nothing typed
-    await open(p, '/')
-    await p.getByRole('button', { name: /^Куда: / }).click()
-    await p.waitForTimeout(500)
-    expect(await shows(p.getByRole('dialog').getByText('разложится по страницам')), 'no «разложится по страницам» under Авто')
-    await noDescription(p, 'the page picker')
   } },
   // D5: «Покупки → the aside reads «Что сюда класть»; Настройки → the first group «Раскладка», «6 из 6 ›» → a page → «Что сюда класть: …»; …»
   { id: 'l-23-words-desk', device: DESKTOP, run: async (p) => {

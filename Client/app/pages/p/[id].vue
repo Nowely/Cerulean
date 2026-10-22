@@ -1,5 +1,7 @@
 <script setup lang="ts">
-// A page opened from navigation: full, with its composer
+// A page opened from navigation: full, with its field (main flow, item 12). A page with no records and no kind has
+// «Начать с» in the field's place while nothing is written (item 16); the editing bar takes the slot while its text has
+// the caret, and the «+ Новая запись» line takes it while that line is open
 import { computed, ref, useTemplateRef } from 'vue'
 import { useHead, useRoute } from '#imports'
 import { useDataStore } from '~/stores/data'
@@ -13,7 +15,8 @@ import PageView from '~/components/page/PageView.vue'
 import PageMenu from '~/components/page/PageMenu.vue'
 import PageAside from '~/components/page/PageAside.vue'
 import PageTile from '~/components/common/PageTile.vue'
-import ComposerDock from '~/components/composer/ComposerDock.vue'
+import FlowField from '~/components/composer/FlowField.vue'
+import PageStarters from '~/components/page/PageStarters.vue'
 import EditingBar from '~/components/body/EditingBar.vue'
 import { useBodyEditing } from '~/composables/useBodyEditing'
 import { onlyCollects } from '~/domain/collect'
@@ -24,7 +27,7 @@ const { isDesktop } = useScreen()
 const peek = usePeek()
 const page = computed(() => data.pages[route.params.id as string])
 const live = computed(() => page.value && !page.value.deletedAt)
-/** A new page's setup has focus: its fields stand in for the composer */
+/** The title of a page with no kind, or the «+ Новая запись» line, has the caret: the field steps aside */
 const editing = ref(false)
 /** The page note has focus: the editing bar takes the composer's slot (v23) */
 const body = useBodyEditing()
@@ -44,7 +47,7 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
       ref="screen"
     >
       <template #header>
-        <header class="relative flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
+        <header class="relative box-content flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
           <BackLink
             v-slot="{ label }"
             to="/"
@@ -132,7 +135,13 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
       </div>
 
       <template #dock>
-        <ComposerDock
+        <PageStarters
+          v-if="view?.undecided && !noting"
+          :page="page"
+          @picked="view?.startAdd()"
+        />
+        <FlowField
+          v-else
           v-show="!editing && !noting"
           :key="page.id"
           :mode="page.kind === 'today' ? 'today' : 'page'"
@@ -159,7 +168,7 @@ useHead({ title: computed(() => `${page.value?.title || 'Без названия
     <!-- Входящие and Сегодня have nothing to put there (PagesInbox, PagesWeek), nor a page that only collects (v24); a new
          page asks «Что сюда класть?» itself (PagesEmpty) -->
     <PageAside
-      v-if="isDesktop && live && page && page.kind === 'page' && !onlyCollects(page) && !peek.target.value && !view?.wide && !view?.setup"
+      v-if="isDesktop && live && page && page.kind === 'page' && !onlyCollects(page) && !peek.target.value && !view?.wide && !view?.undecided"
       :page="page"
     />
   </div>

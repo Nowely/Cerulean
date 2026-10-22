@@ -1,100 +1,191 @@
+// The main flow (first open → first record → its note): how the field reads a line, by the rules and with a model,
+// and what Главная's cards say. Each case is a «Check:» of handoff/main-flow-delta.md
 import { describe, expect, it } from 'vitest'
-import { nb } from '~/domain/text'
-import { weekday } from '~/domain/dates'
-import { demo } from '~/domain/seed'
-import { byAction, dueThisWeek, pageSubline, pageSummary, recordSummary, summaryText } from '~/domain/summary'
+import type { Page, Rec } from '~/domain/types'
+import { firstRun } from '~/domain/seed'
+import { fieldDate, readLine, readModel, type LineContext } from '~/domain/auto'
+import { readDue, splitParts } from '~/domain/parse'
+import { learnWord } from '~/domain/rules'
+import { cardLine } from '~/domain/summary'
 import { newRecord } from '~/domain/factory'
+import { onlyCollects } from '~/domain/collect'
 
 // Monday 19 October 2026, 9:14: the moment of the mockups
 const NOW = new Date(2026, 9, 19, 9, 14).getTime()
-const DAY = 86400000
+const TOMORROW = '2026-10-20'
 
-describe('one-letter words stay with the next one (v23, F9)', () => {
-  it('glues «в, к, с, у, о, и, а» with a no-break space', () => {
-    expect(nb('Вернуть книгу в библиотеку')).toBe('Вернуть книгу в библиотеку')
-    expect(nb('Кофе и сахар к чаю')).toBe('Кофе и сахар к чаю')
-    expect(nb('В субботу «в кино»')).toBe('В субботу «в кино»')
+function day() {
+  const pages = firstRun(NOW).pages
+  const by = (title: string) => pages.find(p => p.title === title)!
+  const inbox = pages.find(p => p.kind === 'inbox')!
+  const ctx = (extra: Partial<LineContext> = {}): LineContext => ({
+    pages: pages.filter(p => !onlyCollects(p)),
+    inboxId: inbox.id,
+    learned: {},
+    recent: [],
+    now: NOW,
+    ...extra
+  })
+  return { pages, by, inbox, ctx }
+}
+
+/** [title, page, by, due] of each record the field would add */
+const read = (title: string, ctx: LineContext, note = '') => readLine(title, note, ctx).drafts.map(d => [d.text, ctx.pages.find(p => p.id === d.pageId)!.title, d.by, d.due])
+
+describe('the field without a model (main flow, items 4–8)', () => {
+  it('shows the place Авто chose, and Входящие when it is unsure (item 5)', () => {
+    const { ctx } = day()
+    expect(read('Купить молоко', ctx())).toEqual([['Молоко', 'Покупки', 'auto', null]])
+    expect(read('Подарок Оле', ctx())).toEqual([['Подарок Оле', 'Входящие', 'auto', null]])
   })
 
-  it('glues two short words in a row', () => {
-    expect(nb('Ключи а в сумке').replace(/\s/g, m => m === ' ' ? ' ' : '_')).toBe('Ключи а_в_сумке')
+  it('learns a place picked by hand from the first word longer than two letters, «купить» skipped (item 5)', () => {
+    const { by, ctx } = day()
+    const ideas = by('Идеи')
+    const learned = learnWord({}, 'Подарок Оле', ideas.id)
+    expect(Object.values(learned)).toEqual([ideas.id])
+    expect(read('Подарок Пете', ctx({ learned }))).toEqual([['Подарок Пете', 'Идеи', 'auto', null]])
+    expect(Object.keys(learnWord({}, 'Купить сыр', ideas.id))).toHaveLength(1)
+    expect(learnWord({}, 'Купить', ideas.id)).toEqual({})
   })
 
-  it('leaves longer words, a word at the end and other letters alone', () => {
-    expect(nb('Позвонить во вторник')).toBe('Позвонить во вторник')
-    expect(nb('План Б и')).toBe('План Б и')
-    expect(nb('купить я сам')).toBe('купить я сам')
+  it('files to the place picked by hand, the place the page gives, and gives the note to the record (items 4, 12)', () => {
+    const { by, ctx } = day()
+    const ideas = by('Идеи')
+    expect(read('Подарок Оле', ctx({ place: { pageId: ideas.id, by: 'user' } }))).toEqual([['Подарок Оле', 'Идеи', 'user', null]])
+    const shop = by('Покупки')
+    const [milk] = readLine('Купить молоко', '2,5%, большую пачку', ctx({ place: { pageId: shop.id, by: 'page' } })).drafts
+    expect(milk).toMatchObject({ text: 'Молоко', note: '2,5%, большую пачку', by: 'page', pageId: shop.id })
   })
 
-  it('a saved title turns it back into a plain space', () => {
-    expect(nb('Вернуть книгу в библиотеку').replace(/\s+/g, ' ')).toBe('Вернуть книгу в библиотеку')
+  it('tints a date where it was typed, files it to Задачи, and keeps the words once the chip is tapped (item 7)', () => {
+    const { ctx } = day()
+    const title = 'Позвонить маме завтра в 10'
+    const date = fieldDate(title, NOW)!
+    expect(date.words).toBe('завтра в 10')
+    expect(date.spans.map(([a, b]) => title.slice(a, b + 1))).toEqual(['завтра в 10'])
+    expect(date.due).toEqual({ date: TOMORROW, time: '10:00' })
+    expect(read(title, ctx())).toEqual([['Позвонить маме', 'Задачи', 'auto', { date: TOMORROW, time: '10:00' }]])
+    expect(fieldDate(title, NOW, 'завтра в 10')).toBeNull()
+    expect(read(title, ctx({ noDate: 'завтра в 10' }))).toEqual([['Позвонить маме завтра в 10', 'Задачи', 'auto', null]])
+  })
+
+  it('reads «сегодня в 19» and «сегодня» as dates (item 17)', () => {
+    expect(readDue('Забрать посылку сегодня в 19', NOW).due).toEqual({ date: '2026-10-19', time: '19:00' })
+    expect(readDue('Оплатить интернет сегодня', NOW).due).toEqual({ date: '2026-10-19' })
+  })
+
+  it('splits a line into records, keeping a detail with its thing (item 8)', () => {
+    const { ctx } = day()
+    expect(read('Купить молоко, хлеб, яйца', ctx()).map(d => [d[0], d[1]])).toEqual([['Молоко', 'Покупки'], ['Хлеб', 'Покупки'], ['Яйца', 'Покупки']])
+    expect(read('Купить молоко 2,5%, большую пачку', ctx())).toHaveLength(1)
+    expect(splitParts('Купить молоко 2,5%, большую пачку')).toHaveLength(1)
+    expect(read('Сыр, позвонить бабушке', ctx()).map(d => [d[0], d[1]])).toEqual([['Сыр', 'Покупки'], ['Позвонить бабушке', 'Задачи']])
+  })
+
+  it('moves only the row whose chip was tapped, and keeps that pick for the same title (item 8)', () => {
+    const { by, ctx } = day()
+    const ideas = by('Идеи')
+    expect(read('Сыр, позвонить бабушке', ctx({ rows: { 'Позвонить бабушке': ideas.id } })).map(d => [d[0], d[1], d[2]]))
+      .toEqual([['Сыр', 'Покупки', 'auto'], ['Позвонить бабушке', 'Идеи', 'user']])
+  })
+
+  it('gives a record written on Сегодня today\'s date (item 12)', () => {
+    const { by, ctx } = day()
+    const todo = by('Задачи')
+    expect(read('Оплатить интернет', ctx({ place: { pageId: todo.id, by: 'page' }, today: true })))
+      .toEqual([['Оплатить интернет', 'Задачи', 'page', { date: '2026-10-19' }]])
   })
 })
 
-describe('summaries lead with what needs action (v23, B1)', () => {
-  const d = demo(NOW)
-  const page = (title: string) => d.pages.find(p => p.title === title)!
-  const top = (title: string) => d.records.filter(r => r.pageId === page(title).id && !r.parentId && !r.deletedAt)
-  const line = (title: string) => summaryText(pageSummary(page(title), top(title), NOW, d.records))
+describe('the field with a model (main flow, items 23–25)', () => {
+  const item = (text: string, pageId: string | null, more: Partial<{ note: string, date: string, time: string }> = {}) =>
+    ({ text, note: more.note ?? '', pageId, date: more.date ?? null, time: more.time ?? null, qty: null, option: null })
 
-  it('Задачи: overdue, then today, then the rest', () => {
-    expect(line('Задачи')).toBe('3 дела · оплатить интернет, позвонить стоматологу, вернуть книгу в библиотеку')
+  it('fills the note of one record and puts several each on its page (item 23)', () => {
+    const { by, ctx } = day()
+    const shop = by('Покупки')
+    const todo = by('Задачи')
+    const one = readModel({ kind: 'record', items: [item('Молоко', shop.id, { note: '2,5%, большую пачку' })] }, 'Купить молоко 2,5% большую пачку', '', ctx())
+    expect(one.map(d => [d.text, d.note, d.pageId, d.by])).toEqual([['Молоко', '2,5%, большую пачку', shop.id, 'auto']])
+    const two = readModel({ kind: 'record', items: [
+      item('Молоко', shop.id, { note: '2,5%, большую пачку' }),
+      item('Позвонить маме', todo.id, { date: TOMORROW, time: '10:00' })
+    ] }, 'Купить молоко 2,5% большую пачку и позвонить маме завтра в 10', '', ctx())
+    expect(two.map(d => [d.text, d.note, d.pageId, d.due])).toEqual([
+      ['Молоко', '2,5%, большую пачку', shop.id, null],
+      ['Позвонить маме', '', todo.id, { date: TOMORROW, time: '10:00' }]
+    ])
   })
 
-  it('Покупки: the new record first', () => {
-    expect(line('Покупки')).toBe('6 купить · хлеб, молоко, сыр +3')
+  it('sends what it is unsure of to Входящие, and one record to the place picked by hand (items 23, 25)', () => {
+    const { by, inbox, ctx } = day()
+    const ideas = by('Идеи')
+    expect(readModel({ kind: 'record', items: [item('Подарок Оле', null)] }, 'Подарок Оле', '', ctx())[0]!.pageId).toBe(inbox.id)
+    expect(readModel({ kind: 'record', items: [item('Подарок Оле', null)] }, 'Подарок Оле', '', ctx({ place: { pageId: ideas.id, by: 'user' } }))[0])
+      .toMatchObject({ pageId: ideas.id, by: 'user' })
+    expect(readModel({ kind: 'question', items: [] }, 'где ключи', '', ctx())).toEqual([])
   })
 
-  it('ranks overdue, today, new, then page order', () => {
-    const at = (text: string, extra = {}) => newRecord({ pageId: 'p', text, addedAt: NOW - 5 * DAY, ...extra }, NOW)
-    const later = at('позже', { due: { date: '2026-10-25' } })
-    const fresh = at('новое', { addedAt: NOW - 60_000 })
-    const today = at('сегодня', { due: { date: '2026-10-19' } })
-    const late = at('вчера', { due: { date: '2026-10-18' } })
-    const done = at('сделано', { due: { date: '2026-10-18' }, done: true })
-    const plain = at('просто')
-    expect(byAction([later, plain, done, fresh, today, late], NOW, NOW - DAY).map(r => r.text))
-      .toEqual(['вчера', 'сегодня', 'новое', 'позже', 'просто', 'сделано'])
-  })
-
-  it('«дальше» names what needs action first', () => {
-    const marathon = d.records.find(r => r.text === 'Полумарафон к маю')!
-    const subs = d.records.filter(r => r.parentId === marathon.id)
-    expect(summaryText(recordSummary(subs, NOW))).toBe('3 из 6 · дальше пробежка 6 км, 19:00')
-    const swapped = subs.map(s => s.text === 'Длинная пробежка 14 км' ? { ...s, order: -10 } : s)
-    expect(summaryText(recordSummary(swapped, NOW))).toBe('3 из 6 · дальше пробежка 6 км, 19:00')
-  })
-})
-
-describe('Сегодня (v23, B4, M15)', () => {
-  const d = demo(NOW)
-  const today = d.pages.find(p => p.kind === 'today')!
-
-  it('«На неделе» holds the six days after today, by date', () => {
-    // v24 fixes, 11: one demo world, Вызвать мастера on Friday and Длинная пробежка on Saturday
-    expect(dueThisWeek(d.records, NOW).map(r => r.text)).toEqual(['Поменять фильтр воды', 'Вызвать мастера', 'Длинная пробежка 14 км', 'Вернуть книгу в библиотеку'])
-  })
-
-  it('names the weekday on the right, tomorrow in a word', () => {
-    expect(weekday('2026-10-20', NOW)).toBe('завтра')
-    expect(weekday('2026-10-21', NOW)).toBe('ср')
-    expect(weekday('2026-10-25', NOW)).toBe('вс')
-  })
-
-  it('the header count is hidden with nothing today', () => {
-    const done = d.records.map(r => r.due && r.due.date <= '2026-10-19' ? { ...r, done: true } : r)
-    expect(pageSubline(today, [], NOW, done)).toBe('')
-    expect(pageSubline(today, [], NOW, d.records)).toBe('3 дела со всех страниц · 1 просрочено')
+  it('drops the model\'s date when the date chip was tapped away (item 7)', () => {
+    const { by, ctx } = day()
+    const todo = by('Задачи')
+    const title = 'Позвонить маме завтра в 10'
+    const d = readModel({ kind: 'record', items: [item('Позвонить маме', todo.id, { date: TOMORROW, time: '10:00' })] }, title, '', ctx({ noDate: 'завтра в 10' }))
+    expect(d[0]!.due).toBeNull()
   })
 })
 
-describe('Журнал demo (v23, B5)', () => {
-  it('yesterday holds two receipts, and their records were added then', () => {
-    const d = demo(NOW)
-    const yesterday = d.entries.filter(e => e.at < new Date(2026, 9, 19).getTime())
-    expect(yesterday.map(e => e.text)).toEqual(['бананы 1 кг, порошок', 'вызвать мастера', 'посмотреть тот сериал'])
-    const bananas = d.records.find(r => r.text === 'Бананы')!
-    expect(bananas.addedAt).toBe(yesterday[0]!.at)
-    expect(bananas.via).toBe('chat')
+describe('Главная\'s cards (main flow, item 17)', () => {
+  function week() {
+    const { pages, by } = day()
+    const todo = by('Задачи')
+    const shop = by('Покупки')
+    const today = pages.find(p => p.kind === 'today')!
+    // Written from Главная's field after the first open
+    let at = NOW + 60_000
+    const rec = (page: Page, text: string, due: Rec['due'] = null, extra: Partial<Rec> = {}) => newRecord({ pageId: page.id, text, due, addedAt: at++, via: 'chat', ...extra })
+    const records = [
+      ...['Молоко', 'Хлеб', 'Яйца', 'Сыр', 'Кофе', 'Порошок для стирки'].map(t => rec(shop, t)),
+      rec(todo, 'Позвонить маме', { date: TOMORROW, time: '10:00' }),
+      rec(todo, 'Забрать посылку', { date: '2026-10-19', time: '19:00' }),
+      rec(todo, 'Оплатить интернет', { date: '2026-10-19' }),
+      rec(todo, 'Записаться к стоматологу')
+    ]
+    return { todo, shop, today, records, by }
+  }
+
+  it('says what is in a page: dated first by day and time, then the newest; the open count on the right', () => {
+    const { todo, shop, today, records } = week()
+    const of = (p: Page) => records.filter(r => r.pageId === p.id)
+    expect(cardLine(todo, of(todo), NOW, records)).toMatchObject({
+      line: '19:00 забрать посылку, оплатить интернет, завтра 10:00 позвонить маме, записаться к стоматологу',
+      open: 4,
+      isNew: true
+    })
+    expect(cardLine(today, [], NOW, records)).toMatchObject({ line: '19:00 забрать посылку, оплатить интернет', open: 2, late: 0 })
+    expect(cardLine(shop, of(shop), NOW, records)).toMatchObject({ line: 'порошок для стирки, кофе, сыр, яйца, хлеб, молоко', open: 6 })
+  })
+
+  it('drops a ticked record, and the dot goes once the page is opened', () => {
+    const { shop, records } = week()
+    const own = records.filter(r => r.pageId === shop.id).map(r => r.text === 'Молоко' ? { ...r, done: true } : r)
+    const card = cardLine(shop, own, NOW, records)
+    expect(card.open).toBe(5)
+    expect(card.line).not.toContain('молоко')
+    expect(cardLine({ ...shop, seenAt: NOW + 120_000 }, own, NOW, records).isNew).toBe(false)
+  })
+
+  it('shows an empty page as its name alone, and a page of text its first line', () => {
+    const { by } = day()
+    expect(cardLine(by('Идеи'), [], NOW)).toEqual({ line: '', open: null, isNew: false, late: 0 })
+    const trip: Page = { ...by('Идеи'), body: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Билеты взять до 1 ноября' }] }] } as Page['body'] }
+    expect(cardLine(trip, [], NOW)).toMatchObject({ line: 'Билеты взять до 1 ноября', open: null })
+  })
+
+  it('is not new for a record written on its own page', () => {
+    const { shop } = week()
+    const own = [newRecord({ pageId: shop.id, text: 'Сыр', addedAt: NOW, via: 'manual' })]
+    expect(cardLine({ ...shop, seenAt: NOW - 1000 }, own, NOW).isNew).toBe(false)
   })
 })

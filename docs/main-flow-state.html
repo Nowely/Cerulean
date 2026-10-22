@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Основной путь Cerulean</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* The app next to its mockup, state by state. Colours are the approved Cerulean pair (light «Строгий, плоский», dark night). */
+:root {
+  --bg: #FCFCFB; --surface: #F1F1EF; --card: #FFFFFF; --trk: #EAEAE8; --hover: #F1F1EF;
+  --line: #E4E4E1; --line2: #CDCDC9; --ink: #161618; --text: #29292C; --muted: #4E4E52; --faint: #67676B;
+  --accent: #1F5F8B; --accent-ink: #1A4F75; --accent-soft: #E5EDF3;
+  --warn-ink: #8E3613; --warn-soft: #F6E7E0; --ok-ink: #2F5C3D; --ok-soft: #E4EFE6;
+  --show-l: block; --show-d: none; --sp-y: 0%;
+  --font: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161F26; --surface: #0D151A; --card: #1A2329; --trk: #212C33; --hover: #1E282F;
+    --line: #232D33; --line2: #33414A; --ink: #E9F0F2; --text: #D3DCE1; --muted: #A5B4BB; --faint: #8B9AA3;
+    --accent: #78B2DF; --accent-ink: #ADD3F3; --accent-soft: #153045;
+    --warn-ink: #F4B88D; --warn-soft: #3A2519; --ok-ink: #A6D6AF; --ok-soft: #1A3324;
+    --show-l: none; --show-d: block; --sp-y: -50%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161F26; --surface: #0D151A; --card: #1A2329; --trk: #212C33; --hover: #1E282F;
+  --line: #232D33; --line2: #33414A; --ink: #E9F0F2; --text: #D3DCE1; --muted: #A5B4BB; --faint: #8B9AA3;
+  --accent: #78B2DF; --accent-ink: #ADD3F3; --accent-soft: #153045;
+  --warn-ink: #F4B88D; --warn-soft: #3A2519; --ok-ink: #A6D6AF; --ok-soft: #1A3324;
+  --show-l: none; --show-d: block; --sp-y: -50%;
+  color-scheme: dark;
+}
+/* The screenshot switch wins over the page theme */
+:root[data-shots="light"] { --show-l: block; --show-d: none; --sp-y: 0%; }
+:root[data-shots="dark"] { --show-l: none; --show-d: block; --sp-y: -50%; }
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 64px); }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 16px/1.55 var(--font); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+a { color: var(--accent-ink); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--trk); color: var(--ink); padding: 0.1em 0.35em; border-radius: 5px; }
+h1, h2, h3 { color: var(--ink); text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.4rem, 1.1rem + 1vw, 1.8rem); font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
+h3 { font-size: 1rem; font-weight: 600; line-height: 1.3; }
+p { margin: 0; }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.prose { max-width: 68ch; display: grid; gap: 12px; }
+.prose ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+.prose li::marker { color: var(--accent); }
+
+.hero { padding-block: 48px 24px; display: grid; gap: 16px; }
+.eyebrow { font-size: 13px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); }
+.hero h1 { font-size: clamp(2.1rem, 1.4rem + 3vw, 3.3rem); font-weight: 600; letter-spacing: -0.025em; line-height: 1.05; }
+.lead { font-size: 1.1rem; color: var(--muted); max-width: 64ch; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 6px 0 0; }
+.facts div { background: var(--card); padding: 12px 16px; display: grid; gap: 2px; min-width: 0; }
+.facts dt { font-size: 13px; color: var(--faint); }
+.facts dd { margin: 0; color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding-block: 8px; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--trk); border-radius: 11px; }
+.seg button { font: inherit; font-size: 14px; color: var(--muted); background: none; border: 0; padding: 5px 11px; border-radius: 8px; cursor: pointer; min-height: 32px; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); font-weight: 500; }
+.ctl { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--faint); }
+
+section.block { padding-block: 40px 8px; }
+section.block > .wrap { display: grid; gap: 18px; }
+
+.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12.5px; font-weight: 500; white-space: nowrap; flex: none; }
+.tag.same { background: var(--trk); color: var(--muted); }
+.tag.better { background: var(--ok-soft); color: var(--ok-ink); }
+.tag.diff { background: var(--accent-soft); color: var(--accent-ink); }
+.tag.wait { background: var(--warn-soft); color: var(--warn-ink); }
+.tag.fail { background: var(--warn-ink); color: var(--bg); }
+
+.checks { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.checks table { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.45; min-width: 640px; }
+.checks th, .checks td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--line); }
+.checks thead th { border-top: 0; font-size: 12.5px; font-weight: 500; color: var(--faint); letter-spacing: 0.02em; }
+.checks tr.sub th { background: var(--surface); color: var(--ink); font-weight: 600; font-size: 13.5px; }
+.checks td.num { font-variant-numeric: tabular-nums; color: var(--faint); white-space: nowrap; }
+.checks td b { color: var(--ink); font-weight: 500; }
+.checks td:nth-child(3) { white-space: nowrap; }
+
+.group { padding-block: 36px 4px; }
+.group { max-width: calc(1160px); margin-inline: auto; }
+.group { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.group .lead { font-size: 1rem; }
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.card.desk { grid-column: 1 / -1; }
+.card header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.card.desk .pair { grid-template-columns: 1fr; }
+@media (min-width: 900px) { .card.desk .pair { grid-template-columns: 1fr 1fr; } }
+figure { margin: 0; min-width: 0; }
+figcaption { font-size: 12px; color: var(--faint); margin: 0 0 6px 2px; letter-spacing: 0.02em; }
+.card img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.card.desk img { border-radius: 6px; }
+.card .sp { display: block; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.card.desk .sp { border-radius: 6px; }
+.card .sp img { display: block; border: 0; border-radius: 0; transform: translateY(var(--sp-y)); }
+.miss { aspect-ratio: 390 / 844; display: grid; place-items: center; border: 1px dashed var(--line2); border-radius: 10px; color: var(--faint); font-size: 13px; }
+.card.desk .miss { aspect-ratio: 16 / 10; }
+.card p { font-size: 15px; }
+[data-dev-filter="phone"] .card.desk, [data-dev-filter="desk"] .card.phone { display: none; }
+.card.off { display: none; }
+.group.empty { display: none; }
+
+footer { padding-block: 48px 64px; color: var(--faint); font-size: 14px; }
+</style>
+</head>
+<body>
+<header class="wrap hero">
+  <p class="eyebrow">Cerulean · клиент · 22 октября 2026</p>
+  <h1>Основной путь: приложение рядом с макетом</h1>
+  <p class="lead">Одна история: первое открытие → первая запись → её заметка, на телефоне 390×844. Каждое состояние: слева макет (холст, версия 71, страница «Основной путь»), справа приложение, в светлой и тёмной теме. Ниже таблица проверок: 27 пунктов дельты <code>main-flow-delta.md</code>, четыре ошибки приложения, найденные старыми проверками, и смоук компьютера. У каждой строки свой скрипт в <code>scripts/checks/</code>. Общие отличия, здесь один раз: значки Lucide (корзина Покупок с сеткой вместо сумки); у подписи «Мои страницы» в приложении шеврон сворачивания; кадры приложения не показывают клавиатуру и каретку, поэтому карточка поля стоит там, где у макета верх клавиатуры; демо-часы у кадров разные.</p>
+  <dl class="facts">
+    <div><dt>Состояний</dt><dd>19</dd></div>
+    <div><dt>Кадров (светлая и тёмная)</dt><dd>76</dd></div>
+    <div><dt>Как в макете или лучше</dt><dd>14</dd></div>
+    <div><dt>Иначе, с причиной</dt><dd>5</dd></div>
+    <div><dt>Проверок пройдено</dt><dd>32 из 32</dd></div>
+  </dl>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <span class="ctl">Тема кадров
+      <span class="seg" data-ctl="shots">
+        <button type="button" data-v="auto" aria-pressed="true">Авто</button>
+        <button type="button" data-v="light" aria-pressed="false">Светлая</button>
+        <button type="button" data-v="dark" aria-pressed="false">Тёмная</button>
+      </span>
+    </span>
+    <span class="ctl">Экран
+      <span class="seg" data-ctl="dev">
+        <button type="button" data-v="all" aria-pressed="true">Все</button>
+        <button type="button" data-v="phone" aria-pressed="false">Телефон</button>
+        <button type="button" data-v="desk" aria-pressed="false">Компьютер</button>
+      </span>
+    </span>
+    <span class="ctl">Показать
+      <span class="seg" data-ctl="tag">
+        <button type="button" data-v="all" aria-pressed="true">Все</button>
+        <button type="button" data-v="diff" aria-pressed="false">Отличия</button>
+      </span>
+    </span>
+  </div>
+</div>
+
+<section class="block">
+  <div class="wrap prose">
+    <h2>Что сделано</h2>
+    <ul><li>Поле записи одно на весь путь: закрытое — пилюля 44 px с чипом места, примером и микрофоном; открытое — карточка над клавиатурой со строкой заголовка и строкой «Заметка». Три нажатия от первого открытия до «Молоко» с заметкой в Покупках (было шесть).</li><li>Чип показывает место, а не «Авто»: выбор Авто виден по тону, неуверенное уходит во Входящие молча, выбранное вручную запоминается без «Запомнить». Нет строки догадки, Уточнения, квитанции и «Не туда».</li><li>Список мест над чипом без поиска; дата подкрашивается в словах и становится чипом срока; несколько записей видны списком до отправки, деталь («2,5%», «большую пачку») остаётся со своей вещью.</li><li>После отправки поле остаётся открытым; карточка страницы получает тон и точку нового, над полем «Добавлено в … · Отменить».</li><li>Первый день: пустые Покупки, Задачи и Идеи; ни одной поясняющей строки на пути. Пустая страница — название и «+ Новая запись».</li><li>Запись — страница: свойства, текст на месте, «+ Подпункт» строкой, внизу ничего; «Связать» ушло в «⋯». На панели правки «H».</li><li>Новая страница лёгкая: «+» у «Мои страницы», название, текст и «Начать с» над клавиатурой; пустая страница при уходе удаляется.</li><li>Главная: карточки со сводкой из самих записей и числом открытых; «Компактный» — простой список; Журнал перешёл в «⋯».</li><li>С моделью: пример про две вещи, чтение на паузе 650 мс, устаревший разбор никогда не записывается, поздний разбор переписывает записи с теми же id, модель кладёт и на свои страницы.</li><li>Голос в то же поле; зоны нажатия от 44 px и safe areas iPhone.</li></ul>
+  </div>
+</section>
+
+<section class="block" id="checks">
+  <div class="wrap">
+    <h2>Проверки</h2>
+    <p class="lead">Каждый пункт дельты и каждый баг со своей проверкой: что нажать и что должно случиться. Пункт без пройденной проверки не сделан.</p>
+    <div class="checks"><table><thead><tr><th scope="col">№</th><th scope="col">Пункт и проверка</th><th scope="col">Итог</th><th scope="col">Как проверено</th></tr></thead><tbody><tr class="sub"><th colspan="4" scope="colgroup">Основной путь (телефон 390×844)</th></tr><tr><td class="num">1</td><td><b>Главная в первый день</b><br>Свежий профиль: «Входящие», «Сегодня», подпись «Мои страницы» с «+», затем Покупки, Задачи, Идеи одной строкой; в шапке ровно «Найти» и «⋯»; нигде нет «Начать с шаблона», «Подключить ИИ», «Пиши что угодно…», «Сюда попадает…», «Пока ничего на сегодня»; у Покупок отделы и виды шаблона, записей нет.</td><td><span class="tag better">Да</span></td><td>скрипт mf-1-day-one. <a href="#s-Flow">кадр</a></td></tr><tr><td class="num">2</td><td><b>Пустая страница</b><br>Во Входящих и Сегодня только название, «+ Новая запись» и поле; вкладок и другого текста нет.</td><td><span class="tag better">Да</span></td><td>скрипт mf-2-empty-pages. <a href="#s-Flow">кадр</a></td></tr><tr><td class="num">3</td><td><b>Поле, закрытое</b><br>«Входящие ⌄ · Позвонить маме в 10» и микрофон; после первой записи — «Новая запись»; «Купить сыр» без отправки остаётся в пилюле чернилами и открывается с кареткой в конце.</td><td><span class="tag better">Да</span></td><td>скрипт mf-3-closed. <a href="#s-Flow">кадр</a></td></tr><tr><td class="num">4</td><td><b>Поле, открытое</b><br>Карточка над клавиатурой, пустой заголовок с кареткой и «Заметка», микрофон вместо ↑; «Купить молоко» → ↑ и чип «Покупки»; «Заметка» → «2,5%, большую пачку» → ↑: три нажатия, у «Молоко» этот текст; фокус не увеличивает страницу.</td><td><span class="tag better">Да</span></td><td>скрипт mf-4-open: считает нажатия и проверяет размер шрифта 16 px и выше в обеих строках. <a href="#s-FlowNote">кадр</a></td></tr><tr><td class="num">5</td><td><b>Чип показывает место</b><br>«Купить молоко» → «Покупки» с тоном; «Подарок Оле» → «Входящие» без тона, ни карточки, ни строки; выбор «Идеи» и отправка, затем «Подарок Пете» → «Идеи» сам, с тоном; после отправки с Главной — снова «Входящие»; «Авто» нигде не подпись чипа.</td><td><span class="tag better">Да</span></td><td>скрипт mf-5-chip. <a href="#s-FlowTyping">кадр</a></td></tr><tr><td class="num">6</td><td><b>Список мест</b><br>«Подарок Оле» → «Входящие ⌄»: над чипом Входящие с галочкой, Покупки, Задачи, Идеи; нет поиска, «Сегодня» и «Авто», клавиатура остаётся; «Идеи» → чип «Идеи» без тона, каретка в конце.</td><td><span class="tag better">Да</span></td><td>скрипт mf-6-places. <a href="#s-FlowPlace">кадр</a></td></tr><tr><td class="num">7</td><td><b>Дата в словах</b><br>«Позвонить маме завтра в 10»: подсветка, «Задачи» с тоном, «завтра, 10:00 ×»; в Задачах «Позвонить маме» со сроком; повтор с нажатием на чип срока — без срока, слова как набраны.</td><td><span class="tag better">Да</span></td><td>скрипт mf-7-date. <a href="#s-FlowDate">кадр</a></td></tr><tr><td class="num">8</td><td><b>Несколько записей без модели</b><br>«Купить молоко, хлеб, яйца» → три строки с «Покупки», три записи; «Купить молоко 2,5%, большую пачку» → одна запись; «Сыр, позвонить бабушке» → две строки, чип второй → «Идеи» меняет только её.</td><td><span class="tag better">Да</span></td><td>скрипт mf-8-list. <a href="#s-FlowList">кадр</a></td></tr><tr><td class="num">9</td><td><b>После отправки</b><br>Поле открыто и пусто, «Входящие», «Новая запись»; карточка Покупок с тоном, «1», «молоко», точка; «Добавлено в Покупки · Отменить»; тон уходит к 5 с, уведомление к 6 с, точка остаётся; «Отменить» после «Купить хлеб» возвращает карточку; «Добавлено в Покупки и Задачи»; нажатие под Идеями закрывает поле; квитанции и «Не туда» нет.</td><td><span class="tag better">Да</span></td><td>скрипт mf-9-after-send (часы перематываются). <a href="#s-FlowFiled">кадр</a></td></tr><tr><td class="num">10</td><td><b>Новое, пока страницу не открыли</b><br>«Купить молоко» с Главной, открыть Задачи, вернуться, открыть Покупки: «Молоко» с тоном; на Главной точки Покупок нет.</td><td><span class="tag better">Да</span></td><td>скрипт mf-10-new. <a href="#s-FlowPage">кадр</a></td></tr><tr><td class="num">11</td><td><b>«+ Новая запись» в конце списка</b><br>Задачи → «+ Новая запись» → «Оплатить интернет» Enter: запись с тоном и новая строка с кареткой; «Записаться к стоматологу» и нажатие на название — запись сохранена, строка закрыта; пустая строка и уход — пустой записи нет.</td><td><span class="tag better">Да</span></td><td>скрипт mf-11-add-row. <a href="#s-FlowPage">кадр</a></td></tr><tr><td class="num">12</td><td><b>Поле на странице</b><br>Покупки: чип «Покупки», подсказки нет; «Сыр» появляется в списке с тоном, без уведомления, поле открыто; у «Молоко» вторая строка «2,5%, большую пачку»; на Сегодня «Оплатить интернет» в списке и в Задачах со сроком сегодня.</td><td><span class="tag better">Да</span></td><td>скрипт mf-12-page-field. <a href="#s-FlowPage">кадр</a></td></tr><tr><td class="num">13</td><td><b>Запись — это страница</b><br>«Молоко»: «Добавлено» со временем, «+ Свойство», «2,5%, большую пачку», «+ Подпункт», внизу ничего; в «⋯» «Связать»; без текста — бледная «Заметка»; «Подпунктов пока нет…» нигде.</td><td><span class="tag better">Да</span></td><td>скрипт mf-13-record. <a href="#s-FlowRec">кадр</a></td></tr><tr><td class="num">14</td><td><b>Текст записи</b><br>Нажатие на текст: каретка в конце, панель над клавиатурой с «H»; Enter и «- если нет, то 3,2%» — пункт списка; «Готово» убирает панель, на Покупках у «Молоко» прежняя вторая строка.</td><td><span class="tag better">Да</span></td><td>скрипт mf-14-body. <a href="#s-FlowBody">кадр</a></td></tr><tr><td class="num">15</td><td><b>«+ Подпункт» строкой</b><br>«+ Подпункт» → «Взять две, если по акции» Enter: подпись «Подпункты», подпункт и новая строка с кареткой; уход закрывает пустую строку.</td><td><span class="tag better">Да</span></td><td>скрипт mf-15-sub. <a href="#s-FlowSub">кадр</a></td></tr><tr><td class="num">16</td><td><b>Новая страница</b><br>«+» у «Мои страницы»: каретка в «Без названия», клавиатура, «Начать с: Список, Список покупок, Список дел», больше ничего; «Отпуск» Enter «Билеты взять до 1 ноября» — чипов нет, карточка показывает строку без числа; «Подарки» → «Список» — значок списка и строка «+ Новая запись» с кареткой; «+» и сразу «‹ Главная» — «Без названия» нет; в «⋯» Главной нет «Новая страница».</td><td><span class="tag better">Да</span></td><td>скрипт mf-16-new-page. <a href="#s-FlowNewPage">кадр</a></td></tr><tr><td class="num">17</td><td><b>«Со сводкой»: карточки</b><br>После пяти строк: Задачи «4» и «19:00 забрать посылку, оплатить интернет, завтра 10:00 позвонить маме, записаться к стоматологу» с «…»; Сегодня «2»; Покупки «6» и шесть имён; отметка «Молоко» — 5 и без «молоко»; нигде «купить ·», «+N», «новых», «уточнить».</td><td><span class="tag better">Да</span></td><td>скрипт mf-17-cards. <a href="#s-FlowWeek">кадр</a></td></tr><tr><td class="num">18</td><td><b>«Компактный»</b><br>В «⋯» «Компактный»: только значок и имя, у страницы с новым точка у правого края.</td><td><span class="tag better">Да</span></td><td>скрипт mf-18-compact. <a href="#s-FlowCompact">кадр</a></td></tr><tr><td class="num">19</td><td><b>Меню Главной</b><br>«⋯»: «Вид», «Со сводкой ✓», «Компактный», «Журнал», «Настройки», «Новая секция», «Корзина», без «Новая страница»; «Журнал» открывает Журнал.</td><td><span class="tag better">Да</span></td><td>скрипт mf-19-menu. <a href="#s-FlowMenu">кадр</a></td></tr><tr><td class="num">20</td><td><b>Журнал в «⋯»</b><br>В шапке Главной нет значка Журнала, Журнал открывается из «⋯».</td><td><span class="tag better">Да</span></td><td>скрипты mf-19-menu и mf-1-day-one (два значка в шапке). <a href="#s-FlowMenu">кадр</a></td></tr><tr><td class="num">21</td><td><b>Ничто не говорит о модели</b><br>С моделью Главная как в пункте 1, кроме примера.</td><td><span class="tag better">Да</span></td><td>скрипт mf-22-model-example; модель подменена в браузере (ключа в песочнице нет). <a href="#s-FlowAi">кадр</a></td></tr><tr><td class="num">22</td><td><b>Пример про две вещи</b><br>С моделью в первый день: «Входящие ⌄ · Купить хлеб и позвонить маме завтра».</td><td><span class="tag better">Да</span></td><td>скрипт mf-22-model-example; модель подменена. <a href="#s-FlowAi">кадр</a></td></tr><tr><td class="num">23</td><td><b>Модель читает, пока пишут</b><br>«Купить молоко 2,5% большую пачку» через 1 с: «Покупки», заметка «2,5%, большую пачку», списка нет, запись «Молоко»; «Купить молоко и позвонить маме завтра в 10» — две строки, ещё слово — список приглушён; «Купить сыр» со своей заметкой «на выходные» — «Сыр» и «на выходные».</td><td><span class="tag better">Да</span></td><td>скрипт mf-23-model-reads; модель подменена, ответы по тексту запроса. <a href="#s-FlowAiSplit">кадр</a></td></tr><tr><td class="num">24</td><td><b>Никогда не ждать</b><br>«Купить молоко и позвонить маме завтра» и сразу отправка: правила записали; пришёл разбор — «Молоко» в Покупках, «Позвонить маме» в Задачах со сроком, «Добавлено в Покупки и Задачи»; «Отменить» убирает обе.</td><td><span class="tag better">Да</span></td><td>скрипт mf-24-late; ответ модели задержан. <a href="#s-FlowAiFiled">кадр</a></td></tr><tr><td class="num">25</td><td><b>Свои страницы</b><br>Со страницей «Подарки»: «Купить сыр и пазл для Пети» → «Сыр» → Покупки, «Пазл для Пети» → Подарки.</td><td><span class="tag better">Да</span></td><td>скрипт mf-25-own-pages; модель подменена. <a href="#s-FlowAiWeek">кадр</a></td></tr><tr><td class="num">26</td><td><b>Safe areas и зоны нажатия</b><br>С вырезами iPhone ничего не под строкой статуса и индикатором; у каждого элемента пути elementFromPoint в 22 px от центра в каждую сторону возвращает его же.</td><td><span class="tag better">Да</span></td><td>скрипты mf-26-safe-areas (вырезы 47 и 34, как задаёт Safari) и mf-26-hit-areas. Точка ровно в 22 px от центра кнопки 44 px лежит на её границе и принадлежит соседу, поэтому скрипт проверяет 21 px. Эмуляция в Chromium; на настоящем телефоне — при приёмке. <a href="#s-Flow">кадр</a></td></tr><tr><td class="num">27</td><td><b>Голос в то же поле</b><br>Надиктованное «купить молоко» заполняет заголовок, чип становится «Покупки».</td><td><span class="tag better">Да</span></td><td>скрипт mf-27-voice; распознавание речи подменено. <a href="#s-Flow">кадр</a></td></tr><tr class="sub"><th colspan="4" scope="colgroup">Найдено старыми проверками (исправлено в этом PR)</th></tr><tr><td class="num">О1</td><td><b>«Отменить» в уведомлении на странице записи</b><br>Текст записи в правке, «Сделать подпунктом», нажатие «Отменить»: правка отменена.</td><td><span class="tag better">Да</span></td><td>скрипты e-6-to-sub-phone и e-6-to-sub-desktop. Нажатие на уведомление заканчивало сессию текста, панель правки уходила, и уведомление съезжало из-под пальца. Теперь нажатие на уведомление сохраняет каретку.</td></tr><tr><td class="num">О2</td><td><b>Чипы «@» под затемнением</b><br>В открытом поле «@сто»: имена в строке «@» нажимаются.</td><td><span class="tag better">Да</span></td><td>скрипты m24-12-pick, m24-d3-home. Строка «@» теперь над затемнением, вместе с карточкой поля.</td></tr><tr><td class="num">О3</td><td><b>Esc при открытой строке «@»</b><br>«@сто», Esc: закрывается только строка «@», поле остаётся с набранным; второй Esc сворачивает поле со словами.</td><td><span class="tag better">Да</span></td><td>скрипты m24-d2-keys, e-D2-mention-keys, v22-29-two-tabs, v22-27-persist. ProseMirror отмечает любой Esc как обработанный, поэтому строка «@» сама останавливает свой Esc, а поле сворачивается на любой другой.</td></tr><tr><td class="num">О4</td><td><b>Микрофон без сети</b><br>Без сети микрофон в пилюле бледный, нажатие говорит, почему не работает.</td><td><span class="tag better">Да</span></td><td>скрипт wt-dictate-offline (вес действий).</td></tr><tr class="sub"><th colspan="4" scope="colgroup">Компьютер (смоук, вид не проверялся по решению Джоша)</th></tr><tr><td class="num">Д</td><td><b>Путь мышью и клавишами на 1440</b><br>Поле, место, дата, отправка Enter, страница, запись и её текст работают; ничего не сломано.</td><td><span class="tag better">Да</span></td><td>скрипт mf-desk-smoke; плюс прежние проверки компьютера из v21–v24, которые остались в наборе.</td></tr></tbody></table></div>
+  </div>
+</section>
+
+
+    <section class="group" id="flow">
+      <h2>Путь: первое открытие → первая запись → её заметка</h2>
+      
+      <div class="cards">
+      <article id="s-Flow" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Первое открытие</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/Flow.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/Flow.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Главная в первый день: «Входящие» и «Сегодня» без подписи, «Мои страницы» с «+», под ними пустые Покупки, Задачи и Идеи одной строкой. В шапке только «Найти» и «⋯». Поле закрыто: «Входящие ⌄ · Позвонить маме в 10» и микрофон. Ни одной поясняющей строки.</p>
+      </article>
+      <article id="s-FlowTyping" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Пишет</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowTyping.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowTyping.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Поле поднялось карточкой над клавиатурой, Главная за ней приглушена. «Купить молоко»: чип стал «Покупки» с тоном (выбрал Авто), справа ↑. Под заголовком строка «Заметка».</p>
+      </article>
+      <article id="s-FlowNote" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Заметка</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowNote.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowNote.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Каретка в строке заметки: «2,5%, большую пачку». Клавиша ввода в заметке — «ввод» (новая строка), в заголовке — «Записать». Третье нажатие с первого открытия — ↑.</p>
+      </article>
+      <article id="s-FlowPlace" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Список мест</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowPlace.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowPlace.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>«Подарок Оле»: Авто не уверен, чип «Входящие» без тона. Нажатие на чип открывает список шириной 232 над полем: Входящие с галочкой, Покупки, Задачи, Идеи. Без поиска, без «Сегодня» и «Авто»; каретка остаётся в заголовке, клавиатура не уходит.</p>
+      </article>
+      <article id="s-FlowDate" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Дата в словах</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowDate.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowDate.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>«Позвонить маме завтра в 10»: «завтра в 10» подкрашено там, где набрано, чип «Задачи» с тоном, рядом чип срока «завтра, 10:00 ×». Нажатие на чип срока убирает срок и подсветку, слова остаются.</p>
+      </article>
+      <article id="s-FlowList" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Несколько записей</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowList.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowList.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>«Купить молоко, хлеб, яйца» без модели: под заголовком три строки с точкой и своим чипом «Покупки»; заметка и главный чип скрыты, пока виден список. Предпросмотр и отправка — одна функция, поэтому что видно, то и записывается.</p>
+      </article>
+      <article id="s-FlowFiled" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>После отправки</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowFiled.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowFiled.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Поле осталось открытым и пустым, чип снова «Входящие», подсказка «Новая запись», затемнение не вернулось. Карточка Покупок со свежим тоном: «1» справа, «молоко» под именем и точка нового. Над полем «Добавлено в Покупки · Отменить».</p>
+      </article>
+      <article id="s-FlowPage" class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Страница</h3><span class="tag diff">Иначе</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowPage.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowPage.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Покупки: «Молоко» со свежим тоном и второй строкой из текста записи «2,5%, большую пачку», последней строкой «+ Новая запись»; чип поля называет страницу, подсказки нет. Отличие: в приложении остаются подстрока страницы «1 купить», значки поиска и настройки вида справа от вкладок и подпись отдела «Молочное ⌄» над строкой — их дельта не убирает, а макет не рисует.</p>
+      </article>
+      <article id="s-FlowRec" class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Запись — это страница</h3><span class="tag diff">Иначе</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowRec.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowRec.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>«‹ Покупки» и «⋯», круг и название, «Добавлено · сегодня, 9:14», «+ Свойство», текст записи без подписи и «+ Подпункт»; внизу ничего не пристыковано. Отличие: строка «Отдел · Молочное» — отдел выставили правила Покупок, а макет его не показывает. Время другое, потому что у кадров разные часы.</p>
+      </article>
+      <article id="s-FlowBody" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Текст записи</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowBody.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowBody.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Каретка в тексте, панель правки над клавиатурой: ↶, «H» (буква вместо значка), списки, цитата и «Готово». «- если нет, то 3,2%» стало пунктом списка. В приложении на панели есть «@»: дельта (пункт 14) его оставляет, макет не рисует.</p>
+      </article>
+      <article id="s-FlowSub" class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Подпункт</h3><span class="tag diff">Иначе</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowSub.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowSub.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>«+ Подпункт» стал строкой с кругом и кареткой; после Enter появились подпись «Подпункты», подпункт «Взять две, если по акции» и новая пустая строка. Отличие: новый подпункт в приложении со свежим тоном, как любая только что добавленная строка (v22), в макете без тона.</p>
+      </article>
+      <article id="s-FlowNewPage" class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Новая страница</h3><span class="tag diff">Иначе</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowNewPage.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowNewPage.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>«+» у «Мои страницы» сразу открывает страницу: «‹ Главная», значок и «Без названия» с кареткой, под названием пустой текст; над клавиатурой «Начать с»: «Список», «Список покупок», «Список дел». Ни «Секции», ни строк-инструкций. Отличие: значок названия стоит на плашке, а между рядами чипов 8 px (в макете чипы почти вплотную).</p>
+      </article></div>
+    </section>
+    <section class="group" id="week">
+      <h2>Главная через неделю</h2>
+      
+      <div class="cards">
+      <article id="s-FlowWeek" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>«Со сводкой»: карточки</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowWeek.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowWeek.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Каждая страница — карточка: плашка со значком, имя, справа число открытых, под именем сводка из самих записей: сначала со сроком («19:00 забрать посылку, оплатить интернет»), затем остальные, обрезка многоточием в конце строки. У Покупок точка нового. Страница текста «Отпуск» показывает первую строку текста без числа.</p>
+      </article>
+      <article id="s-FlowMenu" class="card phone" data-tag="diff" data-dev="phone">
+        <header><h3>Меню Главной</h3><span class="tag diff">Иначе</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowMenu.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowMenu.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>«⋯»: подпись «Вид», «Со сводкой ✓», «Компактный», черта, «Журнал», «Настройки», а ниже «Новая секция» и «Корзина» — дельта (пункт 19) их оставляет, макет не рисует. «Новой страницы» в меню нет. Отличие: меню стоит выше, прямо под шапкой; в макете отступ сверху учтён дважды.</p>
+      </article>
+      <article id="s-FlowCompact" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>«Компактный»</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowCompact.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowCompact.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Строки по 44 px: значок 18 px без плашки и имя; у страницы с новым — точка у правого края. Ни чисел, ни сводки.</p>
+      </article></div>
+    </section>
+    <section class="group" id="ai">
+      <h2>Путь с моделью</h2>
+      
+      <div class="cards">
+      <article id="s-FlowAi" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Пример про две вещи</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowAi.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowAi.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>С ключом и сетью Главная та же, меняется только пример в поле: «Купить хлеб и позвонить маме завтра». Ни слова «ИИ», ни значка режима.</p>
+      </article>
+      <article id="s-FlowAiSplit" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Модель читает, пока пишут</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowAiSplit.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowAiSplit.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>«Купить молоко 2,5% большую пачку и позвонить маме завтра в 10» после паузы: «Молоко» с заметкой «2,5%, большую пачку» → Покупки и «Позвонить маме» со сроком «завтра, 10:00» → Задачи. Дата в словах подкрашена. Пока слова отличаются от прочитанных, список приглушён и его чипы не нажимаются.</p>
+      </article>
+      <article id="s-FlowAiFiled" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Поздний разбор</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowAiFiled.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowAiFiled.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Отправка не ждёт модель: правила записали сразу, а пришедший разбор заменил записи. Карточки Покупок и Задач со свежим тоном и точками, «Добавлено в Покупки и Задачи · Отменить»; «Отменить» убирает обе записи.</p>
+      </article>
+      <article id="s-FlowAiWeek" class="card phone" data-tag="same" data-dev="phone">
+        <header><h3>Свои страницы</h3><span class="tag same">Как в макете</span></header>
+        <div class="pair"><figure><figcaption>Макет</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/mock/FlowAiWeek.webp" alt="" loading="lazy" width="780" height="3376"></span></figure><figure><figcaption>Приложение</figcaption><span class="sp" style="aspect-ratio: 780 / 1688"><img src="main-flow-state/app/FlowAiWeek.webp" alt="" loading="lazy" width="780" height="3376"></span></figure></div>
+        <p>Есть своя страница «Подарки»: «Купить сыр и пазл для Пети» даёт «Сыр» → Покупки и «Пазл для Пети» → Подарки (правила положили бы оба в Покупки). «купить» отброшено у обеих.</p>
+      </article></div>
+    </section>
+
+<section class="block">
+  <div class="wrap prose">
+    <h2>Что дальше</h2>
+    <ul><li>Приёмка тредом макетов «Макеты: основной путь» по 27 проверкам и 19 состояниям на 390 px; вопросы по отличиям — в карточках выше.</li><li>Пункт 26 проверен в Chromium с эмуляцией вырезов iPhone; на настоящем телефоне — при приёмке.</li><li>Не в этом раунде (по дельте): вид на компьютере, поиск в длинном списке мест, просрочка на карточке, «+» у своих секций, экран Журнала, v25.</li></ul>
+  </div>
+</section>
+
+<footer class="wrap">Кадры сняты скриптом <code>scripts/shots/main-flow.mjs</code> с dev-сервера (390×844). Макеты: холст, версия 71, страница «Основной путь». Скриптовые проверки: <code>node scripts/checks.mjs</code>. Решения: <code>docs/decisions.md</code>. Исходники отчёта: <code>docs/report/</code>.</footer>
+
+<script>
+(() => {
+  const root = document.documentElement
+  const state = { dev: 'all', tag: 'all' }
+  function apply() {
+    root.dataset.devFilter = state.dev
+    document.querySelectorAll('.card').forEach(c => {
+      const t = c.dataset.tag
+      const off = state.tag === 'diff' ? !(t === 'diff' || t === 'better') : state.tag === 'wait' ? t !== 'wait' : false
+      c.classList.toggle('off', off)
+    })
+    document.querySelectorAll('.group').forEach(g => {
+      const shown = [...g.querySelectorAll('.card')].some(c => !c.classList.contains('off') && getComputedStyle(c).display !== 'none')
+      g.classList.toggle('empty', !shown)
+    })
+  }
+  document.querySelectorAll('.seg[data-ctl]').forEach(seg => {
+    seg.addEventListener('click', e => {
+      const b = e.target.closest('button')
+      if (!b) return
+      seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)))
+      const ctl = seg.dataset.ctl, v = b.dataset.v
+      if (ctl === 'shots') { if (v === 'auto') delete root.dataset.shots; else root.dataset.shots = v }
+      else { state[ctl] = v; apply() }
+    })
+  })
+  apply()
+})()
+</script>
+</body>
+</html>

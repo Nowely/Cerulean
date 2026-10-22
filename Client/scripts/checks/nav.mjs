@@ -99,12 +99,16 @@ export default [
     const side = await box(p.getByRole('complementary', { name: 'Навигация' }))
     expect(await p.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest('aside'), [side.x + 40, side.y + side.height / 2]), 'something covers the screen behind the picker')
     await p.keyboard.press('Escape')
-    // The composer chip: the popover opens above it
-    const chip = p.getByRole('button', { name: /^Куда: / })
+    // The field's chip: the places list opens right above it (main flow, item 6)
+    const chip = p.locator('[data-chip="closed"]')
     await chip.click()
-    const where = p.getByRole('dialog', { name: /Куда записать/ })
-    expect(await shows(where), 'no picker after the composer chip')
-    expect(at(await box(where), await box(chip)), 'the chip\'s picker is not at the chip')
+    const where = p.locator('[data-places]')
+    expect(await shows(where), 'no places list after the field\'s chip')
+    // On the open field's top edge, from its chip's side (the note line sits between the words and the chip)
+    const list = await box(where)
+    const field = await box(p.locator('[data-field="open"]'))
+    expect(Math.abs(list.y + list.height - field.y) <= 16 && Math.abs(list.x - field.x) <= 16, 'the places list is not on the field, at its chip')
+    await p.keyboard.press('Escape')
     await p.keyboard.press('Escape')
     // «Ещё…» on an Уточнение in Журнал: every page once, and «Новая страница «Подарки»» at the end
     await p.getByRole('link', { name: 'Журнал' }).first().click()
@@ -197,19 +201,6 @@ export default [
     await p.waitForTimeout(800)
     expect(await store(p, data => Object.values(data.records).some(r => /^гараж$/i.test(r.text) && !r.deletedAt)), '«гараж» was not written down')
   } },
-  // 20. The key row sits under the last section; an empty page reads «Нет записей»
-  { id: 'n-20-home-noise', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    const key = p.getByText('Подключить ИИ', { exact: true })
-    expect(await shows(key), 'no «Подключить ИИ» row')
-    const last = await store(p, data => data.sectionList.at(-1).name)
-    const section = p.locator('main section').filter({ has: p.getByRole('heading', { name: last }) }).last()
-    const [k, s] = [await box(key), await box(section)]
-    expect(k.y >= s.y + s.height, `the key row is above the end of «${last}»`)
-    await store(p, data => data.createPage({ title: 'Пустая' }))
-    await p.waitForTimeout(300)
-    expect(await shows(p.locator('main').getByRole('link', { name: /^Пустая/ }).getByText('Нет записей')), 'an empty page does not read «Нет записей»')
-  } },
   // 21. Deleting a section says where the pages go; «Отменить» brings it back with its pages
   { id: 'n-21-section-delete', device: MOBILE, run: async (p) => {
     await open(p, '/')
@@ -239,10 +230,11 @@ export default [
     await p.clock.install({ time: CLOCK })
     await open(p, '/')
     await send(p, 'хлеб')
+    // Main flow, item 17: the dot is «есть новое» to a screen reader, and no word on screen
     const row = p.locator('main').getByRole('link', { name: /^Покупки/ }).first()
-    expect(/^Покупки, \d+ новых/.test(await row.textContent()), 'screen readers do not hear «новых»')
-    expect(!(await shownWord(row, 'новых')), 'the row shows the word «новых»')
-    expect(await row.locator('span.rounded-full[aria-hidden="true"]').count(), 'no dot after Покупки')
+    expect((await row.textContent()).includes('есть новое'), 'screen readers do not hear «есть новое»')
+    expect(!(await shownWord(row, 'новых')) && !(await shownWord(row, 'есть новое')), 'the row shows a word for new')
+    expect(await row.locator('[data-new-dot]').count(), 'no dot on Покупки')
   } },
   { id: 'n-23-desk-dot', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: CLOCK })
@@ -258,18 +250,14 @@ export default [
     const row = p.locator('main').getByRole('link', { name: /^Покупки/ }).first()
     expect(!(await shownWord(row, 'новых')) && await row.locator('span.rounded-full[aria-hidden="true"]').count(), 'Главная: no dot, or the word «новых»')
   } },
-  // 32. With Избранное open only Сегодня says «просрочено»; folded, Задачи says it in warn
+  // 32. Only Сегодня says «просрочено» on Главная
   { id: 'n-32-overdue-once', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: CLOCK })
     await open(p, '/')
     const main = p.locator('main')
     const said = await main.getByText(/просрочено/).evaluateAll(els => els.filter(e => e.offsetParent).map(e => e.closest('a')?.textContent?.trim().slice(0, 12)))
+    // Сегодня is always at the top of Главная now (main flow, item 1), so it is the one place that says it
     expect(said.length === 1 && said[0].startsWith('Сегодня'), `«просрочено» shows on: ${said.join(', ')}`)
-    await main.getByRole('button', { name: /^Избранное/ }).first().click()
-    await p.waitForTimeout(300)
-    const tasks = main.getByRole('link', { name: /^Задачи/ }).first().getByText(/просрочено/)
-    expect(await shows(tasks), 'folded: Задачи does not say «просрочено»')
-    expect(await tasks.evaluate(e => e.classList.contains('text-warn')), '«просрочено» on Задачи is not in warn')
   } },
   // 42. Bare place names: «Задачи · вс, 25 окт», a page hit «Личное»
   { id: 'n-42-places', device: MOBILE, run: async (p) => {
@@ -340,7 +328,7 @@ export default [
       while (sc && !/auto|scroll/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement
       const tabs = document.querySelector('[role="tablist"]')
       sc.scrollTop += tabs.getBoundingClientRect().bottom - sc.getBoundingClientRect().top
-      const form = document.querySelector('[aria-label="Новая запись"]').closest('form')
+      const form = document.querySelector('[data-field="closed"]')
       return {
         area: form.getBoundingClientRect().top - sc.getBoundingClientRect().top,
         row: first.closest('li').getBoundingClientRect().height,

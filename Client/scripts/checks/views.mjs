@@ -123,13 +123,12 @@ export default [
     await p.getByRole('tab', { name: 'Календарь' }).click()
     await p.waitForTimeout(500)
     await p.getByRole('button', { name: /^25 октября/ }).click()
-    const field = p.getByRole('textbox', { name: 'Новая запись' })
-    // Since v24 (item 12) the field is an editor: its placeholder is aria-placeholder
-    const hint = await field.evaluate(e => e.getAttribute('aria-placeholder') ?? e.getAttribute('placeholder'))
-    expect(hint?.includes('Запись на вс, 25 окт'), `the field reads «${hint}»`)
-    await field.fill('купить подарок')
+    // The main flow's field (item 12) says nothing at rest: the selected day is given to the record, which lands under it
+    await p.locator('[data-field="closed"] button').nth(1).click()
+    await p.waitForTimeout(300)
+    await p.keyboard.type('купить подарок')
     await p.keyboard.press('Enter')
-    await field.blur()
+    await p.keyboard.press('Escape')
     await p.waitForTimeout(700)
     const due = await store(p, data => data.liveRecords.find(r => r.text === 'Купить подарок')?.due?.date)
     expect(due === '2026-10-25', `the record landed on ${due}`)

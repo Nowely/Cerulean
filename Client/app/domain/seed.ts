@@ -2,7 +2,7 @@
 import type { BodyDoc, BodyNode, Entry, Id, Page, PropDef, Rec, Section } from './types'
 import { addDays, dayKey, keyToDate } from './dates'
 import { newEntry, newPage, newRecord, newSection, systemPages } from './factory'
-import { listView, shoppingProps, WEEK_STARTER } from './templates'
+import { applyTemplate, listView, shoppingProps, WEEK_STARTER } from './templates'
 import { uid } from './ids'
 import { mentionIds } from './body'
 
@@ -25,10 +25,17 @@ export interface Dataset {
   entries: Entry[]
 }
 
+/**
+ * The first open (main flow, item 1): Входящие and Сегодня on top, and three empty pages in «Мои страницы» from their
+ * starters, Покупки, Задачи, Идеи in that order (the list is newest first, so they are made a moment apart)
+ */
 export function firstRun(now = Date.now()): Dataset {
-  const [inbox, today] = systemPages(now)
-  today!.favorite = 0
-  return { pages: [inbox!, today!], records: [], sections: [], entries: [] }
+  const own = (['shop', 'todo', 'note'] as const).map((key, i) => {
+    const at = now - i
+    const page = newPage({ order: i, createdAt: at, openedAt: at, seenAt: at }, now)
+    return { ...page, ...applyTemplate(page, key) }
+  })
+  return { pages: [...systemPages(now), ...own], records: [], sections: [], entries: [] }
 }
 
 /** Only Покупки (green) and Книги (purple) have a colour chosen; every other page is «Без цвета» (v23) */

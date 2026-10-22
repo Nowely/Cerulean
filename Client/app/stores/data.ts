@@ -10,7 +10,7 @@ import { TabSync, type Change } from '~/db/sync'
 import { mergeSnapshot, type Snapshot } from '~/domain/export'
 import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/factory'
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
-import { learn } from '~/domain/rules'
+import { learn, learnWord } from '~/domain/rules'
 import { doneIn, dropPlace, topOrder, type Group } from '~/domain/views'
 import { applyTemplate, readPage, TEMPLATES } from '~/domain/templates'
 import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
@@ -219,9 +219,9 @@ export const useDataStore = defineStore('data', () => {
     .filter(p => p.kind === 'page' && !p.sectionId && p.favorite === null)
     .sort((a, b) => b.createdAt - a.createdAt))
 
-  /** Избранное: pages and records with a position */
+  /** Избранное: pages and records with a position. Сегодня is not one: it sits at the top with Входящие (main flow, item 1) */
   const favorites = computed(() => [
-    ...livePages.value.filter(p => p.favorite !== null).map(page => ({ kind: 'page' as const, page, at: page.favorite! })),
+    ...livePages.value.filter(p => p.favorite !== null && p.kind !== 'today').map(page => ({ kind: 'page' as const, page, at: page.favorite! })),
     ...liveRecords.value.filter(r => r.favorite !== null).map(rec => ({ kind: 'record' as const, rec, at: rec.favorite! }))
   ].sort((a, b) => a.at - b.at))
 
@@ -761,6 +761,13 @@ export const useDataStore = defineStore('data', () => {
     saveMeta('learned', learned.value)
   }
 
+  /** A place picked by hand on send: Авто learns the title's first word for it, silently (main flow, item 5) */
+  function teach(title: string, pageId: Id) {
+    if (pages.value[pageId]?.kind !== 'page') return
+    learned.value = learnWord(learned.value, title, pageId)
+    saveMeta('learned', learned.value)
+  }
+
   function removeRecords(ids: Id[]) {
     const now = Date.now()
     for (const id of ids) {
@@ -1075,7 +1082,7 @@ export const useDataStore = defineStore('data', () => {
     init, setSettings, toggleFolded, clearWriteFailed, persist, hold, release, takeWaiting,
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     propUsage, addProp, updateProp, moveProp, removeOption, retypeProp, removeProp,
-    addRecord, updateRecord, toggleLink, toggleDone, moveRecords, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
+    addRecord, updateRecord, toggleLink, toggleDone, moveRecords, teach, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
     appendParagraph, templateOf, makeTemplate, updateTemplate, removeTemplate, fillFromTemplate,
     createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,

@@ -155,17 +155,18 @@ const inkCuts = p => p.evaluate(() => {
 
 export default [
   // 1: «open Яйца → under «+ Свойство · Связать» the text «Брать С0, десяток…» with the heading «На неделю» and two
-  // bullets; tap an empty record's body → the caret in a field with the faint «Заметка»»
+  // bullets; tap an empty record's body → the caret in a field with the faint «Заметка»». Since the main flow (item 13)
+  // the full page has the «+ Свойство» row, «Связать» is in its «⋯», and Подпункты end with «+ Подпункт»
   ...[['phone', MOBILE], ['desktop', DESKTOP]].map(([name, device]) => ({ id: `e-1-record-body-${name}`, device, run: async (p) => {
     await openRecord(p, 'Яйца')
     const ed = editorOf(p)
     expect((await bodyText(p)).startsWith('Брать С0, десяток'), `the body starts «${(await bodyText(p)).slice(0, 30)}»`)
     expect(await ed.locator('h2').innerText() === 'На неделю', 'no heading «На неделю»')
     expect(await ed.locator('ul > li').count() === 2, 'not two bullets')
-    const link = await p.getByRole('button', { name: /^Связать/ }).first().boundingBox()
+    const link = await p.locator('main [data-add-row]', { hasText: 'Свойство' }).boundingBox()
     const body = await ed.boundingBox()
-    expect(body.y > link.y + link.height - 1, 'the body is not under «+ Свойство · Связать»')
-    const subs = await p.getByRole('heading', { name: 'Подпункты' }).boundingBox()
+    expect(body.y > link.y + link.height - 1, 'the body is not under «+ Свойство»')
+    const subs = await p.getByRole('region', { name: 'Подпункты' }).boundingBox()
     expect(body.y + body.height < subs.y, 'the body is not before «Подпункты»')
     if (name === 'phone') {
       const linked = await p.getByText('Связано', { exact: true }).first().boundingBox()
@@ -281,34 +282,35 @@ export default [
   } },
 
   // 4: «tap Яйца's body → the composer becomes the bar, same width; tap «Готово» → the composer comes back; tap the
-  // title → the composer stays»
+  // title → the composer stays». Since the main flow (item 13) a record has no bottom field: the bar comes and goes alone,
+  // on the gutters
   { id: 'e-4-bar', device: MOBILE, run: async (p) => {
     await openRecord(p, 'Яйца')
-    const form = await composer(p).locator('xpath=ancestor::form[1]').boundingBox()
+    expect(!(await composer(p).count()), 'a record has a bottom field')
     await caretAfter(p, 'шакшука в субботу')
     expect(await shows(bar(p)), 'no editing bar')
-    expect(!(await composer(p).isVisible()), 'the composer stayed')
     const b = await bar(p).boundingBox()
-    expect(Math.abs(b.x - form.x) <= 1 && Math.abs(b.width - form.width) <= 1, `the bar is ${b.x}+${b.width}, the composer ${form.x}+${form.width}`)
+    expect(b.x >= 7 && b.x + b.width <= 390 - 7, `the bar is ${b.x}+${b.width}, off the gutters`)
     expect(Math.abs(b.height - 44) <= 1, `the bar is ${b.height} high`)
     const names = await bar(p).getByRole('button').evaluateAll(bs => bs.map(x => x.getAttribute('aria-label') || x.innerText.trim()))
     expect(names.join(' · ') === 'Отменить ввод · Заголовок · Список · Нумерованный список · Цитата · Упомянуть · Готово', `caret face: ${names.join(' · ')}`)
     expect(await bar(p).getByRole('button', { name: 'Список', exact: true }).getAttribute('aria-pressed') === 'true', '«Список» is not pressed in a bullet')
     await bar(p).getByRole('button', { name: 'Готово' }).click()
     await p.waitForTimeout(300)
-    expect(!(await bar(p).count()) && await composer(p).isVisible(), 'the composer did not come back after «Готово»')
+    expect(!(await bar(p).count()), 'the bar stayed after «Готово»')
     expect(!(await focused(p)), 'the body kept the caret after «Готово»')
     await p.getByRole('textbox', { name: 'Текст записи' }).click()
     await p.waitForTimeout(300)
-    expect(!(await bar(p).count()) && await composer(p).isVisible(), 'a focused title shows the bar')
+    expect(!(await bar(p).count()), 'a focused title shows the bar')
   } },
 
   // D1: «click Яйца's body → the composer becomes the bar, same width, the text does not move; hover «Ж» →
   // «Жирный · Ctrl B»; Esc → the composer is back; Журнал → click Молоко's body in the panel → the bar at the panel's
-  // foot, the page's composer still there»
+  // foot, the page's composer still there». Since the main flow (item 13) the record page has no composer: the bar takes
+  // the text column's width
   { id: 'e-D1-bar-desktop', device: DESKTOP, run: async (p) => {
     await openRecord(p, 'Яйца')
-    const form = await composer(p).locator('xpath=ancestor::form[1]').boundingBox()
+    const form = await editorOf(p).boundingBox()
     const line = () => editorOf(p).locator('p').first().boundingBox()
     const before = await line()
     await select(p, 'десяток')
@@ -316,7 +318,7 @@ export default [
     const after = await line()
     expect(Math.abs(after.y - before.y) < 0.5 && Math.abs(after.x - before.x) < 0.5, `the text moved from ${before.x},${before.y} to ${after.x},${after.y}`)
     const b = await bar(p).boundingBox()
-    expect(Math.abs(b.x - form.x) <= 1 && Math.abs(b.width - form.width) <= 1, `the bar is ${b.x}+${b.width}, the composer ${form.x}+${form.width}`)
+    expect(b.x >= form.x - 17 && b.x + b.width <= form.x + form.width + 17, `the bar is ${b.x}+${b.width}, the text ${form.x}+${form.width}`)
     const tool = await bar(p).getByRole('button', { name: 'Отменить ввод' }).boundingBox()
     expect(tool.width === 36 && tool.height === 36, `a tool is ${tool.width}×${tool.height}`)
     await bar(p).getByRole('button', { name: 'Жирный' }).hover()
@@ -327,7 +329,7 @@ export default [
     await p.mouse.move(0, 0)
     await p.keyboard.press('Escape')
     await p.waitForTimeout(300)
-    expect(!(await bar(p).count()) && await composer(p).isVisible(), 'Esc did not bring the composer back')
+    expect(!(await bar(p).count()), 'Esc did not put the bar away')
     // The right panel: Молоко from «Связано»
     await p.getByRole('button', { name: /^Молоко/ }).first().click()
     await p.waitForTimeout(700)
@@ -344,7 +346,6 @@ export default [
       return { width: a.getBoundingClientRect().width, left: a.getBoundingClientRect().left, composer: !!a.querySelector('[aria-label="Новый подпункт"]') }
     })
     expect(shared.width < 600 && !shared.composer, `the bar is not at the panel's foot (shared box ${shared.width}px wide)`)
-    expect(await composer(p).isVisible(), 'the page\'s composer went')
     await p.keyboard.type('Без лактозы')
     await p.waitForTimeout(600)
     const milk = await store(p, data => JSON.stringify(Object.values(data.records).find(r => r.text === 'Молоко').body))
@@ -563,7 +564,10 @@ export default [
   // 9: «In «Связать» a mention's ✓ row says «упомянуто в тексте»; untick turns the chip into plain words»
   { id: 'e-9-untick', device: MOBILE, run: async (p) => {
     const id = await openRecord(p, 'Вернуть книгу в библиотеку')
-    await p.getByRole('button', { name: /^Связать/ }).first().click()
+    // On the full page «Связать» is in the record's «⋯» (main flow, item 13)
+    await p.getByRole('button', { name: 'Действия с записью' }).first().click()
+    await p.waitForTimeout(400)
+    await p.getByRole('menuitem', { name: /^Связать/ }).or(p.getByRole('button', { name: /^Связать/ })).first().click()
     await p.waitForTimeout(600)
     const row = p.getByRole('list', { name: 'Что связать' }).getByRole('button', { name: /Атомные привычки/ })
     expect(await shows(row), 'no «Атомные привычки» in «Связать»')
@@ -754,14 +758,6 @@ export default [
       return o ? data.relatedOf(o.id).map(l => `${l.hit.kind === 'record' ? l.hit.rec.text : l.hit.page.title} ${l.why}`) : []
     }, name)
     expect(other.includes('Вернуть книгу в библиотеку quote'), `the other record's rows: ${other.join(' / ')}`)
-  } },
+  } }
 
-  // D7: «open «Вернуть книгу в библиотеку» → the caption and the long line; click its body → «Подпунктов пока нет.»»
-  ...[['phone', MOBILE], ['desktop', DESKTOP]].map(([name, device]) => ({ id: `e-D7-empty-subitems-${name}`, device, run: async (p) => {
-    await openRecord(p, 'Вернуть книгу в библиотеку')
-    expect(await shows(p.getByRole('heading', { name: 'Подпункты' })), 'no «Подпункты»')
-    expect(await shows(p.getByText('Подпунктов пока нет. Пиши внизу, и они появятся здесь.')), 'no long empty line')
-    await caretAfter(p, 'осталось две главы')
-    expect(await shows(p.getByText('Подпунктов пока нет.', { exact: true })), 'the short line did not show while the body has focus')
-  } }))
 ]

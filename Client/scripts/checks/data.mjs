@@ -9,9 +9,6 @@
 // Two tabs are two pages of one browser context: they share IndexedDB and BroadcastChannel like two real tabs.
 import { DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
 
-/** The words in the composer: since v24 (item 12) its field is an editor, not a textarea */
-const typed = field => field.evaluate(e => e.value ?? e.textContent)
-
 const DAY = 86400000
 
 export const breakStorage = page => page.addInitScript(() => {
@@ -185,13 +182,14 @@ export default [
     await other.goto(p.url())
     await other.waitForSelector('main')
     await other.waitForTimeout(500)
-    const field = p.getByRole('textbox', { name: 'Новая запись' })
-    await field.fill('несохранённый текст')
-    await field.blur()
+    // Words typed in the page's field and put away, not sent: the closed field keeps them
+    await p.locator('[data-field="closed"] button').nth(1).click()
+    await p.getByRole('textbox', { name: 'Запись', exact: true }).fill('несохранённый текст')
+    await p.keyboard.press('Escape')
     await other.getByRole('checkbox', { name: 'Отметить «Молоко»' }).click()
     await p.waitForTimeout(800)
     expect(await store(p, data => Object.values(data.records).find(r => r.text === 'Молоко').done), 'the tick did not reach the other tab')
-    expect(await typed(field) === 'несохранённый текст', 'the unsent text went')
+    expect(await shows(p.getByRole('button', { name: 'Продолжить: несохранённый текст' })), 'the unsent text went')
     await other.getByRole('checkbox', { name: 'Купить снова «Молоко»' }).click().catch(async () => {
       await store(other, data => data.toggleDone(Object.values(data.records).find(r => r.text === 'Молоко').id))
     })
@@ -224,16 +222,17 @@ export default [
     expect(failed, 'writeFailed is not set')
     expect(failed.reason === 'quota', `writeFailed.reason is ${failed.reason}`)
     expect(!(await store(p, data => data.storageError)), 'a full disk reads as storage unavailable')
-    // The writing loop: the card, the text back in the field, nothing that claims it was saved
-    expect(await shows(p.getByRole('alert').filter({ hasText: 'Не сохранилось. В браузере кончилось место, текст вернулся в поле.' })), 'no «Не сохранилось» card')
-    expect(await typed(p.getByRole('textbox', { name: 'Новая запись' })) === 'купить батарейки', 'the text is not back in the field')
+    // The field (main flow): a notice that says so with «Повторить», the words back in the field, nothing that claims it was saved
+    const notice = p.locator('[data-notice]')
+    expect(await shows(notice.filter({ hasText: 'Не сохранилось: в браузере нет места' })), 'no «Не сохранилось» notice')
+    expect(await shows(p.getByRole('button', { name: 'Продолжить: купить батарейки' })), 'the text is not back in the field')
     expect(!(await store(p, data => Object.values(data.records).some(r => /батарейки/i.test(r.text) && !r.deletedAt))), 'the refused record is still shown')
-    expect(!(await shows(p.getByText(/записи? → /))), 'a receipt still claims it was saved')
+    expect(!(await shows(p.getByText(/^Добавлено в /))), 'a notice still claims it was saved')
     // «Повторить» once there is room again
     await p.evaluate(() => {
       window.__storageFull = false
     })
-    await p.getByRole('button', { name: 'Повторить' }).click()
+    await notice.getByRole('button', { name: 'Повторить' }).click()
     await p.waitForTimeout(600)
     expect(await store(p, data => Object.values(data.records).some(r => /батарейки/i.test(r.text) && !r.deletedAt)), '«Повторить» did not write it')
   } }

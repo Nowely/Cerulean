@@ -314,6 +314,39 @@
   to { opacity: 0; }
 }
 
+/* The field's place chip when Авто changes its mind (main flow, item 5): the tint deepens for a moment, then settles */
+@utility place-flash {
+  animation: place-flash 0.9s ease-out;
+}
+
+@keyframes place-flash {
+  from { background: color-mix(in srgb, var(--accent) 30%, var(--accent-soft)); }
+  to { background: var(--accent-soft); }
+}
+
+/* A date read in the field's title line: tinted under the words where they were typed (item 7) */
+@utility date-mark {
+  --mark: color-mix(in srgb, var(--accent) 22%, var(--elev));
+  background: var(--mark);
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--mark);
+}
+
+/* Behind the open field on a phone: the screen dims to the canvas at 62% (item 4) */
+@utility field-wash {
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+}
+
+/* A row of the field's list comes in from 4px below (item 8) */
+@utility rise-in {
+  animation: rise-in 0.22s ease-out both;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* A strip that scrolls sideways fades over its last 32px instead of cutting a tab in half */
 @utility fade-end {
   mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);

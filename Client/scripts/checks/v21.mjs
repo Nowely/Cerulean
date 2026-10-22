@@ -2,18 +2,9 @@
 import { BASE, DESKTOP, MOBILE, expect, open, pageOf, send, shows, store } from './lib.mjs'
 
 export default [
-  { id: 'v21-1', device: MOBILE, run: async (p) => {
-    await open(p, '/', false)
-    await send(p, 'хлеб')
-    expect(await p.getByText(/1 запись → Покупки/).count(), 'no receipt «1 запись → Покупки»')
-    await p.getByRole('button', { name: /^Отменить/ }).first().click()
-    await p.waitForTimeout(400)
-    expect(!(await store(p, data => data.livePages.some(x => x.title === 'Покупки'))), 'Покупки is still there after «Отменить»')
-    await send(p, 'прочитать Канемана')
-    for (const t of ['Покупки', 'Задачи', 'Цели', 'Идеи']) expect(await p.getByRole('button', { name: new RegExp(t) }).count(), `no starter «${t}»`)
-  } },
+  // 2, 7: receipts stay on Журнал's composer, off the main flow
   { id: 'v21-2', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'молоко')
     await p.getByRole('button', { name: /^Отменить/ }).first().click()
     await p.waitForTimeout(400)
@@ -23,20 +14,8 @@ export default [
     await send(p, 'позвонить маме')
     expect(await pageOf(p, 'позвонить маме') === 'Задачи', `«позвонить маме» went to ${await pageOf(p, 'позвонить маме')}`)
   } },
-  { id: 'v21-3', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    await p.getByRole('link', { name: /^Покупки/ }).first().click()
-    await p.waitForURL(/\/p\//)
-    await p.getByRole('button', { name: /^Куда:/ }).click()
-    await p.waitForTimeout(400)
-    await p.getByRole('dialog').getByRole('button', { name: /^Авто/ }).click()
-    await p.waitForTimeout(300)
-    await send(p, 'позвонить маме')
-    expect(await p.getByText(/1 запись → Задачи/).count(), 'no docked receipt «1 запись → Задачи»')
-    expect(!(await p.locator('[data-notice]').count()), 'a toast showed')
-  } },
   { id: 'v21-7', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'позвонить стоматологу завтра в 10')
     await p.getByRole('button', { name: /^Срок: / }).first().click()
     await p.waitForTimeout(500)
@@ -116,8 +95,8 @@ export default [
   } },
   { id: 'B18', device: MOBILE, run: async (p) => {
     await open(p, '/')
-    await p.getByRole('button', { name: 'Действия с Главной' }).click()
-    await p.getByRole('dialog').getByRole('button', { name: 'Корзина' }).click()
+    await p.getByRole('button', { name: 'Меню Главной' }).click()
+    await p.locator('[data-home-menu]').getByRole('menuitem', { name: 'Корзина' }).click()
     await p.waitForURL(/trash/)
     expect(await shows(p.getByRole('link', { name: /Главная/ })), 'Корзина does not go back to Главная')
   } },

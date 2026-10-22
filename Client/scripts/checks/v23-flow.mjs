@@ -14,13 +14,6 @@ const openPage = async (p, title) => {
 /** Text as read, the glued short words (NBSP) read as plain spaces */
 const plain = s => (s ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim()
 
-/** The line under a page's name on Главная */
-const summaryOf = (p, title) => p.evaluate((t) => {
-  const row = [...document.querySelectorAll('main [role="listitem"]')].find(li => li.querySelector('a span.truncate')?.textContent.trim() === t)
-  const col = row?.querySelector('a span.flex-col')
-  return col && col.children.length > 1 ? col.lastElementChild.textContent : null
-}, title)
-
 /** The long list of MobileLong on Покупки, so it scrolls well past its title block */
 const longList = p => store(p, (data) => {
   const pg = data.livePages.find(x => x.title === 'Покупки')
@@ -43,17 +36,6 @@ const headerTitle = p => p.evaluate(() => [...document.querySelectorAll('header 
   .map(s => s.textContent.trim()).join(' | '))
 
 export default [
-  // 13: «Задачи reads «3 дела · оплатить интернет, позвонить стоматологу…» (overdue first, then today, then the rest);
-  // Покупки reads «6 купить · хлеб, молоко, сыр +3» (new first)»
-  // v24 item 17: a summary never cuts a name, so at 390 Задачи reads «3 дела · оплатить интернет +2»
-  { id: 'f-13-summary', device: MOBILE, run: async (p) => {
-    await p.clock.install({ time: NOW })
-    await open(p, '/')
-    const tasks = plain(await summaryOf(p, 'Задачи'))
-    expect(tasks === '3 дела · оплатить интернет +2', `Задачи reads «${tasks}»`)
-    const buy = plain(await summaryOf(p, 'Покупки'))
-    expect(buy === '6 купить · хлеб, молоко, сыр +3', `Покупки reads «${buy}»`)
-  } },
   // 14: «scroll Покупки → the header reads «Покупки · Купить»; scroll back up → the large title returns»
   { id: 'f-14-title-collapse', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
@@ -196,7 +178,8 @@ export default [
     await p.waitForTimeout(800)
     expect(await p.getByRole('button', { name: /^На неделе/ }).getAttribute('aria-expanded') === 'true', 'the week folded again after a reload')
   } },
-  // 16 / M15: «tick everything for today → the empty line and the open week»; no «0 дел»
+  // 16 / M15: «tick everything for today → the empty line and the open week»; no «0 дел». Since the main flow (item 2)
+  // an empty list is its «+ Новая запись» with no line
   { id: 'f-16-empty', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
@@ -211,7 +194,8 @@ export default [
     await p.getByRole('link', { name: 'Главная' }).first().click()
     await p.waitForTimeout(400)
     await openPage(p, 'Сегодня')
-    expect(await shows(p.getByText('На сегодня ничего, всё со сроком появится здесь.')), 'no empty line')
+    expect(!(await p.getByText('На сегодня ничего').count()), 'an empty line')
+    expect(await shows(p.locator('main [data-add-row]', { hasText: 'Новая запись' })), 'no «+ Новая запись»')
     expect(await p.getByRole('button', { name: /^На неделе/ }).getAttribute('aria-expanded') === 'true', 'the week is folded with nothing today')
     expect(await shows(p.getByText('Поменять фильтр воды')), 'the open week has no rows')
     expect(!(await p.getByText(/0 дел/).count()), 'the header says «0 дел»')
@@ -227,13 +211,13 @@ export default [
     expect(await shows(p.getByText('Вернуть книгу в библиотеку')), 'the open week has no «Вернуть книгу в библиотеку»')
   } },
   // 17: «open Журнал → the newest entries at the bottom; scroll up → «Вчера» receipts as single lines; tap one → the
-  // card with «Не туда»; the Главная header icon is the lines-with-clock glyph»; «Не туда» in the toast action style
+  // card with «Не туда»; the Главная header icon is the lines-with-clock glyph»; «Не туда» in the toast action style.
+  // Журнал is a plain row of Главная's «⋯» since the main flow (item 20), with no glyph
   { id: 'f-17-journal', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
-    const icon = await p.getByRole('link', { name: 'Журнал' }).first().locator('.iconify, svg').first().evaluate(el => el.outerHTML.slice(0, 300))
-    expect(/journal/.test(icon), `the Журнал glyph is ${icon.slice(0, 80)}`)
-    await p.getByRole('link', { name: 'Журнал' }).first().click()
+    await p.getByRole('button', { name: 'Меню Главной' }).click()
+    await p.locator('[data-home-menu]').getByRole('menuitem', { name: 'Журнал' }).click()
     await p.waitForURL(/journal/)
     await p.locator('main article').first().waitFor()
     await p.waitForTimeout(600)
@@ -384,7 +368,10 @@ export default [
     await sheetChecked('Свойства')
     const milk = await store(p, data => data.liveRecords.find(r => r.text === 'Молоко').id)
     await open(p, `/r/${milk}`)
-    await p.getByRole('button', { name: 'Связать' }).first().click()
+    // On the full page «Связать» is in the record's «⋯» (main flow, item 13)
+    await p.getByRole('button', { name: 'Действия с записью' }).first().click()
+    await p.waitForTimeout(500)
+    await p.getByRole('dialog').getByRole('button', { name: /^Связать/ }).or(p.getByRole('menuitem', { name: /^Связать/ })).first().click()
     await sheetChecked('Связать')
     await open(p, '/')
     await openPage(p, 'Входящие')

@@ -157,7 +157,7 @@ export function formatDayShort(t: number, now: number): string {
   return d.getFullYear() === new Date(now).getFullYear() ? dm : `${dm} ${d.getFullYear()}`
 }
 
-/** «Добавлено» always has a date: «с Главной · сегодня, 8:40», «вручную · 17 окт», «вручную · сейчас» for a record just made */
-export function formatAdded(via: 'chat' | 'manual', at: number, now: number): string {
-  return `${via === 'chat' ? 'с Главной' : 'вручную'} · ${now - at < 60_000 ? 'сейчас' : formatMoment(at, now)}`
+/** «Добавлено» is the moment only, never where from (main flow, item 13): «сегодня, 16:03», «вчера, 22:15», «16 окт» */
+export function formatAdded(at: number, now: number): string {
+  return formatMoment(at, now)
 }

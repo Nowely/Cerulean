@@ -43,13 +43,13 @@ export default [
     expect(goal?.whole, `«Полумарафон к маю» is cut (${JSON.stringify(goal)})`)
     const books = rows.find(r => r.text === '24 книги за год')
     expect(books && books.h <= 44.5, `«24 книги за год» is ${books?.h} high`)
-    await p.getByRole('textbox', { name: 'Новая запись' }).waitFor()
-    // Покупки's rows keep one line
+    await p.locator('[data-field="closed"]').waitFor()
+    // Покупки's rows keep one line, but for a row's text's first line under it (main flow, item 12)
     await open(p, '/')
     await p.getByRole('link', { name: /^Покупки/ }).first().click()
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(500)
-    const tall = await p.locator('[data-row-text]').evaluateAll(bs => bs.filter(b => b.parentElement.getBoundingClientRect().height > 44.5).map(b => b.textContent.trim()))
+    const tall = await p.locator('[data-row-text]').evaluateAll(bs => bs.filter(b => !b.querySelector('[data-row-note]') && b.parentElement.getBoundingClientRect().height > 44.5).map(b => b.textContent.trim()))
     expect(!tall.length, `Покупки rows on two lines: ${tall.join(', ')}`)
   } })),
   // Spec «Icons»: 14 in receipts; the head's glyph sits on the rows' 18px column

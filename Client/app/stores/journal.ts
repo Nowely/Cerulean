@@ -5,14 +5,22 @@ import type { Entry, Id, Page, Rec, Tag, TemplateKey } from '~/domain/types'
 import { useDataStore } from './data'
 import { askModel, isConnected, ModelError, type ModelResult } from '~/domain/model'
 import { classify, rank, templateFor } from '~/domain/rules'
-import { draftsFor, draftsFromModel, preview, splitRoute, type Draft, type Part, type Preview } from '~/domain/auto'
+import { draftsFor, preview, readModel, splitRoute, type Draft, type LineContext, type LineDraft, type Part, type Preview } from '~/domain/auto'
 import { cleanRecordText, dropPrefix, isQuestion, isSearch, parseDue } from '~/domain/parse'
 import { answer } from '~/domain/search'
 import { newEntry } from '~/domain/factory'
+import { noteDoc } from '~/domain/body'
 import { dayKey } from '~/domain/dates'
 import { addQty, duplicateOf, qtyProp } from '~/domain/merge'
 import { onlyCollects } from '~/domain/collect'
 import { menLinks } from '~/domain/mention'
+
+/** What one send of the field filed: its Журнал line, the records in order, the pages they went to */
+export interface Filed {
+  entryId: Id
+  ids: Id[]
+  pages: Id[]
+}
 
 /** A page, a new page (a starter's name makes it from that starter), a starter itself, or «Оставить там» */
 export type Choice = { pageId: Id } | { newPage: string } | { template: TemplateKey } | { keep: true }
@@ -40,13 +48,14 @@ export const useJournalStore = defineStore('journal', () => {
   }
 
   /** Records on a page in the order they were written (each goes on top, so they are added last first) */
-  function addDrafts(page: Page, drafts: Draft[], opts: { day?: string, via?: Rec['via'] } = {}): Id[] {
+  function addDrafts(page: Page, drafts: (Draft & { note?: string })[], opts: { day?: string, via?: Rec['via'] } = {}): Id[] {
     const now = Date.now()
     return [...drafts].reverse().map(d => data.addRecord({
       pageId: page.id,
       text: d.text,
       due: d.due ?? (opts.day ? { date: opts.day } : null),
       values: d.values,
+      body: noteDoc(d.note ?? ''),
       via: opts.via ?? 'chat',
       addedAt: now
     }).id).reverse()
@@ -83,8 +92,9 @@ export const useJournalStore = defineStore('journal', () => {
       if (!hasModel() || !isOnline()) return { drafts: [], part }
       try {
         const r = await askModel(data.settings, part.text, targets(), now)
-        const p = r.kind === 'record' ? validPage(r.pageId) : undefined
-        return p ? { page: p, drafts: draftsFromModel(r, p, now, part.text), part } : { drafts: [], part }
+        const read = readModel(r, part.text, '', lineContext(now))
+        const p = validPage(read[0]?.pageId ?? null)
+        return p ? { page: p, drafts: read.filter(d => d.pageId === p.id), part } : { drafts: [], part }
       } catch {
         return { drafts: [], part }
       }
@@ -93,12 +103,6 @@ export const useJournalStore = defineStore('journal', () => {
     data.updateEntry(entry.id, { kind: 'routed', pageId: data.records[ids[0]!]?.pageId, recordIds: ids, split: true, hits: undefined })
     fresh.value.add(entry.id)
     return entry
-  }
-
-  /** No page fits but a starter does (day one: «хлеб»): the page is made from it in «Мои страницы» and the line goes there */
-  function make(entry: Entry, key: TemplateKey, text: string, opts: { day?: string } = {}): Entry {
-    const page = data.createFromTemplate(key)
-    return place(entry, page, draftsFor(text, page, Date.now()), opts, true)
   }
 
   /** A page Авто made for a line goes with it while nothing else was put there */
@@ -185,8 +189,8 @@ export const useJournalStore = defineStore('journal', () => {
     const rules = classify(text, targets(), data.learned, data.recent)
     const rulePage = validPage(rules.pageId)
     if (rulePage && (!hasModel() || data.settings.rulesFirst)) return place(entry, rulePage, draftsFor(text, rulePage, now), opts)
-    const starter = rulePage ? null : templateFor(text, targets())
-    const unclear = (guesses: Id[], newName: string | null) => starter ? make(entry, starter, text, opts) : ask(entry, text, guesses, newName, opts.day)
+    // Авто never makes a page (main flow, item 5): an unclear line asks in Журнал, as before
+    const unclear = (guesses: Id[], newName: string | null) => ask(entry, text, guesses, newName, opts.day)
     if (!hasModel()) return unclear(rules.guesses, rules.newName)
     if (!isOnline()) return park(entry, text, opts.day)
 
@@ -207,10 +211,20 @@ export const useJournalStore = defineStore('journal', () => {
     }
     // Only an explicit search gives the found card: a question the model saw is written down like any line
     if (result.kind === 'question') return rulePage ? place(entry, rulePage, draftsFor(text, rulePage, now), opts) : unclear(rules.guesses, rules.newName)
-    const page = validPage(result.pageId)
-    if (result.kind === 'record' && page) return place(entry, page, draftsFromModel(result, page, now, text), opts)
-    const guesses = [...result.guesses.filter(id => validPage(id)), ...rules.guesses].filter((id, i, a) => a.indexOf(id) === i).slice(0, 3)
-    return unclear(guesses, result.newPageName?.trim() || rules.newName)
+    // Each record on the page the model put it; a line no page fits asks, as Журнал always did
+    const read = readModel(result, text, '', lineContext(now)).filter(d => validPage(d.pageId))
+    if (!read.length) return unclear(rules.guesses, rules.newName)
+    const pages = [...new Set(read.map(d => d.pageId))]
+    if (pages.length === 1) return place(entry, data.pages[pages[0]!]!, read, opts)
+    const ids = pages.flatMap(id => addDrafts(data.pages[id]!, read.filter(d => d.pageId === id), opts))
+    data.updateEntry(entry.id, { kind: 'routed', pageId: pages[0], recordIds: ids, split: true, hits: undefined })
+    fresh.value.add(entry.id)
+    return entry
+  }
+
+  /** What Авто reads a line against: the pages it files to, what it learned, the pages written to lately */
+  function lineContext(now: number): LineContext {
+    return { pages: targets(), inboxId: data.inbox.id, learned: data.learned, recent: data.recent, now }
   }
 
   /**
@@ -237,6 +251,74 @@ export const useJournalStore = defineStore('journal', () => {
       return entry
     }
     return decide(entry, t, { day, record: opts.record })
+  }
+
+  // ---------- the field of Главная and pages (main flow, items 9, 10, 24) ----------
+
+  /**
+   * Files what the field shows: each record on its page (in the order written, the note as its text), one line in
+   * Журнал for the send. `here`: the record shows where it was written (the page it was written on), so it is not new
+   */
+  function write(text: string, drafts: LineDraft[], opts: { here: (d: LineDraft) => boolean, links?: Id[] }): Filed {
+    const at = Date.now()
+    const ids = [...drafts].reverse().map(d => data.addRecord({
+      pageId: d.pageId,
+      text: d.text,
+      due: d.due,
+      values: d.values,
+      body: noteDoc(d.note),
+      via: opts.here(d) ? 'manual' : 'chat',
+      addedAt: at
+    }).id).reverse()
+    linkWords(ids, opts.links)
+    const pages = [...new Set(drafts.map(d => d.pageId))]
+    const entry = data.addEntry(newEntry({ at, text, kind: 'routed', pageId: pages[0], recordIds: ids, ...(pages.length > 1 ? { split: true } : {}), ...(opts.links?.length ? { links: opts.links } : {}) }))
+    return { entryId: entry.id, ids, pages }
+  }
+
+  /** A send filed by the rules while the model was still reading: what the model reads replaces it, keeping the ids */
+  function refile(filed: Filed, drafts: LineDraft[], opts: { here: (d: LineDraft) => boolean }): Filed | null {
+    const old = filed.ids.map(id => data.records[id])
+    if (!drafts.length || old.some(r => !r || r.deletedAt)) return null
+    const same = drafts.length === old.length && drafts.every((d, i) => {
+      const r = old[i]!
+      return r.pageId === d.pageId && r.text === d.text && docOf(r) === d.note && JSON.stringify(r.due) === JSON.stringify(d.due)
+    })
+    if (same) return null
+    const at = old[0]!.addedAt
+    const ids = drafts.map((d, i) => {
+      const fields = { pageId: d.pageId, text: d.text, due: d.due, values: d.values, body: noteDoc(d.note), via: opts.here(d) ? 'manual' as const : 'chat' as const, addedAt: at }
+      const r = old[i]
+      if (r) {
+        data.updateRecord(r.id, { ...fields, note: '', parentId: null })
+        return r.id
+      }
+      return data.addRecord(fields).id
+    })
+    data.purgeRecords(filed.ids.slice(drafts.length))
+    const pages = [...new Set(drafts.map(d => d.pageId))]
+    data.updateEntry(filed.entryId, { pageId: pages[0], recordIds: ids, split: pages.length > 1 || undefined })
+    return { entryId: filed.entryId, ids, pages }
+  }
+
+  const docOf = (r: Rec) => (r.body?.content ?? []).map(p => (p.content ?? []).map(n => n.text ?? '').join('')).join('\n')
+
+  /**
+   * The send did not wait for the model (item 24): it reads the same words now and, when it reads them otherwise, the
+   * records are filed again. `then` hears where they went, so the screen can light those pages and the notice follow
+   */
+  async function lateRead(filed: Filed, title: string, note: string, ctx: LineContext, opts: { here: (d: LineDraft) => boolean, keepTitle: (d: LineDraft) => LineDraft }, then: (f: Filed) => void) {
+    if (!hasModel() || !isOnline()) return
+    try {
+      const result = await askModel(data.settings, title, targets(), ctx.now)
+      const read = readModel(result, title, note, ctx)
+      const drafts = read.length === 1 ? [opts.keepTitle(read[0]!)] : read
+      const again = refile(filed, drafts, opts)
+      if (again) then(again)
+    } catch (e) {
+      const reason = e instanceof ModelError ? e.reason : 'other'
+      if (reason === 'key' || reason === 'model') data.setSettings({ keyState: 'bad' })
+    }
   }
 
   /** «Записать» on a found card: the same line becomes a record */
@@ -448,5 +530,5 @@ export const useJournalStore = defineStore('journal', () => {
     }
   }
 
-  return { fresh, hasModel, previewFor, send, linkWords, record, retry, choose, chooseOne, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume, remember, forget, duplicateFor, merge }
+  return { fresh, hasModel, targets, write, refile, lateRead, previewFor, send, linkWords, record, retry, choose, chooseOne, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume, remember, forget, duplicateFor, merge }
 })

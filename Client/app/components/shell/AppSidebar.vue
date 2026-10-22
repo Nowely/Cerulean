@@ -52,7 +52,8 @@ const recentShown = computed(() => recentOpen.value ? recent.value : recent.valu
  * Next to Главная the rows are bare (Главная says it all). Elsewhere: Сегодня in an open Избранное says every
  * «просрочено»; without it each page that holds one says it (v22, N3)
  */
-const todayShown = computed(() => !folded('favorites') && data.favorites.some(f => f.kind === 'page' && f.page.kind === 'today'))
+const today = computed(() => data.livePages.find(p => p.kind === 'today'))
+const todayShown = computed(() => !!today.value)
 const badgeOf = (p: Page): Badge | null => {
   if (onHome.value) return null
   const b = pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords, { late: !todayShown.value || p.kind === 'today' })
@@ -139,6 +140,25 @@ const vFocusOnMount = { mounted: (el: HTMLInputElement) => el.select() }
           v-if="badgeOf(data.inbox)"
           :badge="badgeOf(data.inbox)!"
           :class="{ 'ml-auto': badgeOf(data.inbox)!.tone !== 'new' }"
+        />
+      </NuxtLink>
+
+      <!-- Сегодня sits under Входящие, as on Главная (main flow, item 1) -->
+      <NuxtLink
+        v-if="today"
+        :to="`/p/${today.id}`"
+        class="side-row"
+        :aria-current="isCurrent(`/p/${today.id}`) ? 'page' : undefined"
+      >
+        <PageTile
+          :glyph="today.glyph"
+          :size="16"
+        />
+        <span class="min-w-0 truncate">{{ today.title || 'Сегодня' }}</span>
+        <CountBadge
+          v-if="badgeOf(today)"
+          :badge="badgeOf(today)!"
+          class="ml-auto"
         />
       </NuxtLink>
 

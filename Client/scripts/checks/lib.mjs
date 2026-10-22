@@ -8,10 +8,24 @@ export const DESKTOP = { viewport: { width: 1440, height: 900 }, deviceScaleFact
 export async function open(page, path, demo = true) {
   await page.goto(`${BASE}${path}${demo ? `${path.includes('?') ? '&' : '?'}demo` : ''}`)
   await page.waitForSelector('main', { timeout: 15000 })
+  // The dev server's devtools button sits over the docked field
+  await page.addStyleTag({ content: '#nuxt-devtools-container { display: none !important }' })
   await page.waitForTimeout(500)
 }
 
+/** Sends a line from the screen's field: the main flow's on Главная and pages (put away after), Журнал's composer elsewhere */
 export async function send(page, text) {
+  const pill = page.locator('[data-field="closed"] button').nth(1)
+  if (await pill.isVisible().catch(() => false)) {
+    await pill.click()
+    const title = page.getByRole('textbox', { name: 'Запись', exact: true })
+    await title.fill(text)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(300)
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(200)
+    return
+  }
   const field = page.getByRole('textbox', { name: 'Новая запись' })
   await field.fill(text)
   await page.keyboard.press('Enter')

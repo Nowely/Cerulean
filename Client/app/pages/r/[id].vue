@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// A record opened from navigation: full, with the composer for Подпункты. While its body has focus the editing bar
-// takes the composer's slot (v23); a focused title keeps the composer (Q1)
+// A record opened from navigation: full, with nothing docked at the bottom (main flow, item 13): its text is written in
+// place and subitems are added with «+ Подпункт». While the text has focus the editing bar is docked (v23)
 import { computed, onUnmounted, useTemplateRef, watch } from 'vue'
 import { useHead, useRoute } from '#imports'
 import { useDataStore } from '~/stores/data'
@@ -14,7 +14,6 @@ import BackLink from '~/components/shell/BackLink.vue'
 import RecordView from '~/components/record/RecordView.vue'
 import RecordLinks from '~/components/record/RecordLinks.vue'
 import RecordMenu from '~/components/record/RecordMenu.vue'
-import AppComposer from '~/components/composer/AppComposer.vue'
 import EditingBar from '~/components/body/EditingBar.vue'
 import { useBodyEditing } from '~/composables/useBodyEditing'
 
@@ -60,7 +59,7 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
       ref="screen"
     >
       <template #header>
-        <header class="relative flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
+        <header class="relative box-content flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
           <BackLink
             v-slot="{ label }"
             :to="back.to"
@@ -143,11 +142,6 @@ const changedElsewhere = computed(() => !!rec.value && !!data.waiting[rec.value.
       </div>
 
       <template #dock>
-        <AppComposer
-          v-show="!editing"
-          mode="record"
-          :record-id="rec.id"
-        />
         <EditingBar v-if="editing" />
       </template>
     </AppScreen>

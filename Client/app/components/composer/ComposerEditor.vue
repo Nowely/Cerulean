@@ -4,7 +4,9 @@
 // read «@Name», and what the chips point at as `links`; text set from outside («Отменить», a dictation) comes back in with
 // each linked «@Name» as its chip. The «@» row itself is drawn by the composer (MentionRow), fed from here.
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
-import { EditorContent, useEditor } from '@tiptap/vue-3'
+import { EditorContent, Extension, useEditor } from '@tiptap/vue-3'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion'
 import type { BodyDoc, Id } from '~/domain/types'
 import { mentionIds, mentionOptions, type MentionTarget } from '~/domain/body'
@@ -20,6 +22,9 @@ const props = defineProps<{
   /** A record's composer leaves the record itself out of the row */
   ownerId?: Id
   fieldClass: string
+  textClass: string
+  /** Runs of the words to tint, in the field's text (a chip counts as its «@Name») */
+  marks: [number, number][]
 }>()
 const text = defineModel<string>({ required: true })
 const links = defineModel<Id[]>('links', { required: true })
@@ -50,8 +55,10 @@ function onMention(p: SuggestionProps<MentionTarget> | null) {
   mention.value = p ? { query: p.query, items: p.items, hi: was && was.query === p.query ? Math.min(was.hi, Math.max(0, p.items.length - 1)) : 0 } : null
 }
 
-/** ↑/↓ move the mark and wrap; Esc is the suggestion's own: the row closes and the «@» stays typed */
+/** ↑/↓ move the mark and wrap; Esc is the suggestion's own: the row closes and the «@» stays typed. The field never
+ *  hears that Esc (ProseMirror marks every Esc handled, so the field cannot tell the row's from its own) */
 function onMentionKey({ event }: SuggestionKeyDownProps): boolean {
+  if (event.key === 'Escape') event.stopPropagation()
   const m = mention.value
   if (!m || !m.items.length || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')) return false
   const n = m.items.length
@@ -78,6 +85,43 @@ function pick(t: { id: Id, name: string }) {
   ]).run()
 }
 
+// ---------- the date's tint (main flow, item 7): runs of the text drawn over the words, which stay the words ----------
+
+const MARKS = new PluginKey('fieldMarks')
+const Marks = Extension.create({
+  name: 'fieldMarks',
+  addProseMirrorPlugins() {
+    return [new Plugin({
+      key: MARKS,
+      props: {
+        decorations: (state) => {
+          if (!props.marks.length) return DecorationSet.empty
+          // Where each text node starts in the field's words: lines joined by «\n», a chip read «@Name»
+          const runs: { at: number, pos: number, len: number }[] = []
+          let at = 0
+          state.doc.forEach((para, paraPos, i) => {
+            if (i > 0) at += 1
+            para.forEach((node, offset) => {
+              const len = node.isText ? node.text!.length : `@${data.nameOf(String(node.attrs.id ?? ''), node.attrs.label as string | undefined)}`.length
+              if (node.isText) runs.push({ at, pos: paraPos + 1 + offset, len })
+              at += len
+            })
+          })
+          const decos: Decoration[] = []
+          for (const [a, b] of props.marks) {
+            for (const r of runs) {
+              const from = Math.max(a, r.at)
+              const to = Math.min(b, r.at + r.len)
+              if (from < to) decos.push(Decoration.inline(r.pos + from - r.at, r.pos + to - r.at, { class: 'date-mark' }))
+            }
+          }
+          return DecorationSet.create(state.doc, decos)
+        }
+      }
+    })]
+  }
+})
+
 // ---------- the field ----------
 
 const named = (ids: Id[]) => ids.map(id => ({ id, name: data.nameOf(id) })).filter(l => l.name)
@@ -86,7 +130,7 @@ let said = text.value
 
 const editor = useEditor({
   content: fieldDoc(text.value, named(links.value)),
-  extensions: composerExtensions({
+  extensions: [...composerExtensions({
     nameOf: (id, label) => data.nameOf(id, label),
     mentionItems: query => rank(query),
     onMention,
@@ -101,13 +145,13 @@ const editor = useEditor({
       emit('enter')
       return true
     }
-  }),
+  }), Marks],
   injectCSS: false,
   enableInputRules: false,
   enablePasteRules: false,
   editorProps: {
     attributes: {
-      'class': `field-text no-scrollbar max-h-32 min-w-0 overflow-y-auto text-input leading-5.5 text-highlighted ${props.fieldClass}`,
+      'class': `field-text no-scrollbar max-h-32 min-w-0 overflow-y-auto text-highlighted ${props.textClass} ${props.fieldClass}`,
       'role': 'textbox',
       'aria-label': props.label,
       'aria-multiline': 'true',
@@ -137,6 +181,11 @@ watch([text, links, editor], ([t, ids]) => {
   ed.commands.setContent(fieldDoc(t, named(ids)), { emitUpdate: false })
   measure()
 })
+// The runs change after the words do: the decorations are drawn again
+watch(() => props.marks, () => {
+  const ed = editor.value
+  if (ed) ed.view.dispatch(ed.state.tr.setMeta(MARKS, true))
+}, { deep: true })
 watch(() => [props.label, props.placeholder], () => {
   const dom = editor.value?.view.dom
   dom?.setAttribute('aria-label', props.label)

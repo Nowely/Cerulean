@@ -13,8 +13,10 @@ const props = defineProps<{
   required?: boolean
   /** A done record: the title is struck through */
   struck?: boolean
+  /** The keyboard's Enter key: «next» where Enter goes on to the page's text or first record */
+  enterKey?: 'done' | 'next'
 }>()
-const emit = defineEmits<{ save: [value: string], focus: [boolean], draft: [value: string] }>()
+const emit = defineEmits<{ save: [value: string], focus: [boolean], draft: [value: string], enter: [] }>()
 
 const unglue = (s: string) => s.replace(/\u00a0/g, ' ')
 const draft = ref(nb(props.value))
@@ -52,6 +54,7 @@ function onKey(e: KeyboardEvent) {
   if (e.key === 'Enter' && !e.isComposing) {
     e.preventDefault()
     field.value?.blur()
+    emit('enter')
   } else if (e.key === 'Escape') {
     e.stopPropagation()
     editing = false
@@ -73,7 +76,7 @@ defineExpose({ focus: () => field.value?.focus() })
       ref="field"
       v-model="draft"
       rows="1"
-      enterkeyhint="done"
+      :enterkeyhint="enterKey ?? 'done'"
       :aria-label="label"
       :placeholder="placeholder"
       class="col-start-1 row-start-1 min-w-0 resize-none overflow-hidden bg-transparent text-title caret-accent outline-none placeholder:font-medium placeholder:text-placeholder-lg"

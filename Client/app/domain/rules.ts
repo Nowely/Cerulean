@@ -232,3 +232,13 @@ export function learn(learned: Learned, text: string, pageId: Id): Learned {
   for (const s of stems(text)) next[s] = pageId
   return next
 }
+
+/**
+ * A place picked by hand on send teaches Авто one word, silently (main flow, item 5): the title's first word longer
+ * than two letters, past «купить», by its stem. «Подарок Оле» → Идеи makes «Подарок Пете» go to Идеи as well
+ */
+export function learnWord(learned: Learned, title: string, pageId: Id): Learned {
+  const first = fold(title).replace(/^\s*(?:купить|докупить)(?:\s+|$)/, '').split(/[^a-zа-я0-9]+/).find(w => w.length > 2)
+  const stem = first ? stems(first)[0] : undefined
+  return stem ? { ...learned, [stem]: pageId } : learned
+}

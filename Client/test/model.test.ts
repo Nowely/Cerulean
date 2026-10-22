@@ -4,7 +4,7 @@ import { promptInput, readResult } from '~/domain/prompt'
 import { demo } from '~/domain/seed'
 import { challengeFor } from '~/domain/openrouter'
 
-const answer = { kind: 'record', pageId: 'p1', items: [{ text: 'Хлеб', date: null, time: null, qty: null, option: null }], guesses: [], newPageName: null }
+const answer = { kind: 'record', items: [{ text: 'Хлеб', note: '', pageId: 'p1', date: null, time: null, qty: null, option: null }] }
 const conn = (c: Partial<Connection>): Connection => ({ provider: 'openai', apiKey: 'k', baseUrl: '', modelId: '', model: 'fast', ...c })
 
 /** Every request the app makes, answered the way the service would */
@@ -36,7 +36,7 @@ describe('model connection', () => {
   it('asks OpenAI through the Responses API with a strict schema', async () => {
     const calls = serve(() => ({ id: 'r', object: 'response', output: [{ type: 'message', role: 'assistant', content: [{ type: 'output_text', text: JSON.stringify(answer) }] }] }))
     const result = await askModel(conn({}), 'хлеб', [], Date.now())
-    expect(result.pageId).toBe('p1')
+    expect(result.items[0]!.pageId).toBe('p1')
     expect(calls[0]!.url).toBe('https://api.openai.com/v1/responses')
     expect(calls[0]!.body).toMatchObject({ model: 'gpt-6-luna', reasoning: { effort: 'low' }, store: false, text: { format: { type: 'json_schema', strict: true } } })
   })
@@ -78,9 +78,23 @@ describe('model connection', () => {
   })
 
   it('reads a sloppy answer without failing', () => {
-    expect(readResult('not json')).toEqual({ kind: 'unclear', pageId: null, items: [], guesses: [], newPageName: null })
+    expect(readResult('not json')).toEqual({ kind: 'record', items: [] })
+    // An answer in the old shape (one pageId for every item) still files each item there
     expect(readResult({ kind: 'record', pageId: ' p2 ', items: [{ text: ' Сыр ' }, { text: '' }], guesses: ['a', 3] }))
-      .toEqual({ kind: 'record', pageId: 'p2', items: [{ text: 'Сыр', date: null, time: null, qty: null, option: null }], guesses: ['a'], newPageName: null })
+      .toEqual({ kind: 'record', items: [{ text: 'Сыр', note: '', pageId: 'p2', date: null, time: null, qty: null, option: null }] })
+    expect(readResult({ kind: 'question', items: [{ text: 'где ключи', pageId: null }] })).toEqual({ kind: 'question', items: [] })
+  })
+
+  it('reads several records, each with its own place and note (main flow, items 23, 25)', () => {
+    expect(readResult({ kind: 'record', items: [
+      { text: 'Молоко', note: '2,5%, большую пачку', pageId: 'shop', date: null, time: null, qty: null, option: null },
+      { text: 'Позвонить маме', note: '', pageId: 'todo', date: '2026-10-20', time: '10:00', qty: null, option: null },
+      { text: 'Подарок Оле', note: '', pageId: null, date: null, time: null, qty: null, option: null }
+    ] }).items.map(i => [i.text, i.note, i.pageId, i.date])).toEqual([
+      ['Молоко', '2,5%, большую пачку', 'shop', null],
+      ['Позвонить маме', '', 'todo', '2026-10-20'],
+      ['Подарок Оле', '', null, null]
+    ])
   })
 
   it('makes the PKCE challenge of RFC 7636', async () => {

@@ -334,7 +334,9 @@ export const GLYPHS = {
   leaf: 'i-lucide-leaf',
   cook: 'i-lucide-cooking-pot',
   people: 'i-lucide-users',
-  pen: 'i-lucide-pen-line'
+  pen: 'i-lucide-pen-line',
+  // «Начать с» → «Список» (main flow, item 16): a plain list; not among the picker's words
+  list: 'i-lucide-list'
 } as const
 
 export type Glyph = keyof typeof GLYPHS

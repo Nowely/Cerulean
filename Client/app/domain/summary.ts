@@ -1,9 +1,11 @@
-// One line per page: «6 купить · хлеб, молоко, сыр +3», and the badge on the title line
-import type { Page, Rec } from './types'
-import { addDays, dayKey, formatDueBrief } from './dates'
+// One line per page. Главная's cards (main flow, item 17): what is in the page as content, «19:00 забрать посылку,
+// завтра 10:00 позвонить маме», and how many are open; elsewhere «6 купить · хлеб, молоко, сыр +3» and a badge
+import type { Due, Page, Rec } from './types'
+import { addDays, dayKey, daysBetween, formatDueBrief, keyToDate } from './dates'
 import { count, lowerFirst, plural } from './text'
 import { filterRecords, sortRecords } from './views'
 import { collectLead, collected, firstCollects } from './collect'
+import { bodyOf, docText } from './body'
 
 export interface Summary {
   /** Counter or sentence: «6 купить», «3 из 6», «Всё сделано» */
@@ -169,8 +171,9 @@ export function pageSubline(page: Page, records: Rec[], now: number, today: Rec[
     return [`${count(due.length, DEAL)} со всех страниц`, late ? `${late} просрочено` : ''].filter(Boolean).join(' · ')
   }
   if (page.kind === 'inbox') {
+    // Nothing to clarify: the count, as on any page; «Всё разложено» described an empty page (main flow, item 2)
     const ask = records.filter(r => !r.done && r.tags.includes('clarify')).length
-    return ask ? `${ask} уточнить` : 'Всё разложено'
+    if (ask) return `${ask} уточнить`
   }
   if (firstCollects(page)) {
     const rows = collected(page.views[0]!, today, now)
@@ -187,4 +190,78 @@ export function pageSubline(page: Page, records: Rec[], now: number, today: Rec[
     low ? `${low} ${plural(low, ENDING)}` : '',
     late ? `${late} просрочено` : ''
   ].filter(Boolean).join(' · ')
+}
+
+// ---------- Главная's cards (main flow, items 10, 17) ----------
+
+export interface CardLine {
+  /** What is in the page, cut by the screen where it ends (never «+3»); a page of text shows its first line */
+  line: string
+  /** How many are open: the grey number on the right; null on a page of text or an empty page */
+  open: number | null
+  /** Records written from elsewhere since the page was last opened: the dot */
+  isNew: boolean
+  /** Сегодня keeps its warn signal in the number's place: «1 просрочено» */
+  late: number
+}
+
+const SHORT_DAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
+const SHORT_MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+
+/** The day in front of a dated name: nothing for today, «завтра», a weekday within the week, else «21 окт» */
+function dayWord(date: string, now: number): string {
+  const diff = daysBetween(dayKey(now), date)
+  if (diff === 0) return ''
+  if (diff === 1) return 'завтра'
+  if (diff === 2) return 'послезавтра'
+  if (diff === -1) return 'вчера'
+  const d = keyToDate(date)
+  return Math.abs(diff) <= 6 ? SHORT_DAYS[d.getDay()]! : `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`
+}
+
+/** Dated records by day, a timed one before the untimed of its day; then the rest, newest first */
+function cardOrder(records: Rec[]): Rec[] {
+  const key = (due: Due) => {
+    const [h, m] = (due.time ?? '').split(':').map(Number)
+    return `${due.date} ${String(due.time ? h! * 60 + m! : 1500).padStart(4, '0')}`
+  }
+  return [...records].sort((a, b) => {
+    if (a.due && b.due) return key(a.due) < key(b.due) ? -1 : key(a.due) > key(b.due) ? 1 : b.addedAt - a.addedAt
+    if (a.due || b.due) return a.due ? -1 : 1
+    return b.addedAt - a.addedAt
+  })
+}
+
+/** A name as the card says it: lower case first, with its day and time when dated («завтра 10:00 позвонить маме») */
+function cardName(rec: Rec, now: number): string {
+  const name = lowerFirst(rec.text)
+  if (!rec.due) return name
+  const pre = [dayWord(rec.due.date, now), rec.due.time ?? ''].filter(Boolean).join(' ')
+  return pre ? `${pre} ${name}` : name
+}
+
+/** A record is new on Главная while it was written from elsewhere after its page was last opened */
+export function isNewRecord(rec: Rec, page: Page): boolean {
+  return !rec.done && !rec.deletedAt && rec.via === 'chat' && rec.addedAt > page.seenAt
+}
+
+/**
+ * A card's line (spec «Summary formula»): the open records' names, the dated ones first by day and time, then the
+ * newest; how many are open; the dot. Сегодня is made of what is due today and overdue, from every page; a page of
+ * text with no records shows its first line and no number; an empty page is its name alone
+ */
+export function cardLine(page: Page, records: Rec[], now: number, all: Rec[] = []): CardLine {
+  if (page.kind === 'today') {
+    const due = dueToday(all, now).filter(r => !r.done)
+    return { line: cardOrder(due).map(r => cardName(r, now)).join(', '), open: due.length || null, isNew: false, late: overdue(due, now).length }
+  }
+  const own = records.filter(r => !r.parentId && !r.deletedAt)
+  const list = firstCollects(page) ? collected(page.views[0]!, all, now) : own
+  const open = list.filter(r => !r.done)
+  const isNew = own.some(r => isNewRecord(r, page))
+  if (!own.length && !firstCollects(page)) {
+    const text = docText(bodyOf(page)).split('\n').find(l => l.trim())?.trim() ?? ''
+    return { line: text, open: null, isNew, late: 0 }
+  }
+  return { line: cardOrder(open).map(r => cardName(r, now)).join(', '), open: open.length || null, isNew, late: 0 }
 }

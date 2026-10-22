@@ -71,7 +71,7 @@ export default [
       return e.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2))
     }), 'the notice is under the dialog\'s scrim')
     expect(await t.evaluate(e => !e.closest('[aria-hidden="true"]')), 'the notice is hidden from screen readers')
-    const form = await p.locator('form').filter({ has: p.getByRole('textbox', { name: 'Новая запись' }) }).boundingBox()
+    const form = await p.locator('[data-field="closed"]').boundingBox()
     const at = await t.boundingBox()
     expect(at.y + at.height <= form.y && Math.abs(at.x + at.width - form.x - form.width) <= 1, 'the notice is not at the right above the composer')
     await t.getByRole('button', { name: 'Отменить' }).click()
