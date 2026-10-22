@@ -12,7 +12,10 @@ import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { usePeek } from '~/composables/usePeek'
 import { usePropSheets } from '~/composables/usePropSheets'
-import { pageSubline, dueToday, dueThisWeek } from '~/domain/summary'
+import { pageSubline, dueToday, dueThisWeek, overdue } from '~/domain/summary'
+import { collectLead, collected, collects, togglePicked } from '~/domain/collect'
+import { useCollecting } from '~/composables/useCollecting'
+import { useScreen } from '~/composables/useScreen'
 import { weekday } from '~/domain/dates'
 import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView, nameForLayout } from '~/domain/templates'
@@ -26,6 +29,7 @@ import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import ListLayout from './layouts/ListLayout.vue'
 import ViewTabs from './ViewTabs.vue'
 import RecordLine from '../record/RecordLine.vue'
+import CollectRow from '../record/CollectRow.vue'
 import PageNote from '../body/PageNote.vue'
 
 // A list is what most pages show; the other views and the settings load when a page needs them
@@ -33,6 +37,7 @@ const BoardLayout = defineAsyncComponent(() => import('./layouts/BoardLayout.vue
 const TableLayout = defineAsyncComponent(() => import('./layouts/TableLayout.vue'))
 const CalendarLayout = defineAsyncComponent(() => import('./layouts/CalendarLayout.vue'))
 const ViewSettings = defineAsyncComponent(() => import('./ViewSettings.vue'))
+const ViewFilter = defineAsyncComponent(() => import('./ViewFilter.vue'))
 const NewPageSetup = defineAsyncComponent(() => import('./NewPageSetup.vue'))
 
 const props = withDefaults(defineProps<{ page: Page, container?: 'full' | 'preview' | 'glance' }>(), { container: 'full' })
@@ -49,8 +54,22 @@ const peek = usePeek()
 const full = computed(() => props.container === 'full')
 const records = computed(() => data.recordsOf(props.page.id))
 const today = computed(() => props.page.kind === 'today')
-const setup = computed(() => full.value && props.page.kind === 'page' && !records.value.length && !data.liveRecords.some(r => r.pageId === props.page.id))
-const subline = computed(() => pageSubline(props.page, records.value, now.value, data.liveRecords))
+const empty = computed(() => full.value && props.page.kind === 'page' && !records.value.length && !data.liveRecords.some(r => r.pageId === props.page.id))
+/**
+ * A page whose views collect holds nothing of its own (v24, И10): it has no setup, unless it was made on this visit
+ * and «На неделе» was just picked among the starters, which stay so another one can be picked instead
+ */
+const gathers = computed(() => props.page.views.some(collects))
+const madeHere = ref(false)
+watch(() => props.page.id, () => {
+  madeHere.value = empty.value && !gathers.value
+}, { immediate: true })
+const setup = computed(() => empty.value && (!gathers.value || madeHere.value))
+/** The line under the title; on a collecting view «7 дел со всех страниц» and its one warn word, «1 просрочено» (v24) */
+const subline = computed(() => collecting.value
+  ? collectLead(props.page, view.value, collectedAll.value.length)
+  : pageSubline(props.page, records.value, now.value, data.liveRecords))
+const sublineLate = computed(() => collecting.value ? overdue(collectedAll.value, now.value).length : 0)
 
 // A new page named like one there is says so under its title (v22, G3): «Открыть» goes to that page, and this one,
 // still empty, goes away
@@ -95,6 +114,23 @@ watch(() => props.page.id, () => {
 })
 
 /**
+ * A view that collects records (v24, И10): one list by date from every page or the chosen ones, through its
+ * «Фильтр»; the rows open as a preview over this page. The page's composer follows it (useCollecting)
+ */
+const collecting = computed(() => !today.value && collects(view.value))
+const collectedAll = computed(() => collecting.value ? collected(view.value, data.liveRecords, now.value, openedAt.value) : [])
+const collectedRows = computed(() => query.value.trim() ? collectedAll.value.filter(r => matchesQuery(r, query.value)) : collectedAll.value)
+const collectingNow = useCollecting()
+watch([() => props.page.id, () => view.value.id, collecting, full], ([pageId, id, on, isFull]) => {
+  if (!isFull) return
+  if (on) collectingNow.value = { pageId, viewId: id }
+  else if (collectingNow.value?.pageId === pageId) collectingNow.value = null
+}, { immediate: true })
+onBeforeUnmount(() => {
+  if (full.value && collectingNow.value?.pageId === props.page.id) collectingNow.value = null
+})
+
+/**
  * «Новый вид» (view menu or «Настроить вид»): right after the current tab, with its filter, named after its type;
  * it is selected and «Настроить вид» opens on it, the name first
  */
@@ -108,6 +144,69 @@ function addView() {
 }
 
 const settingsOpen = ref(false)
+const { isDesktop } = useScreen()
+/** Desktop: «Фильтр» is the second level of the same popover, with ‹ (v24, D5); Esc goes back, a click outside closes */
+const settingsLevel = ref<'main' | 'filter'>('main')
+/** Phone: «Фильтр» is a sheet of its own with no ‹; closing it brings «Настроить вид» back (v24 fixes, 21) */
+const filterOpen = ref(false)
+/** Desktop: the page «⋯» it was opened from, where the 420px popover stands (D1); else the view bar's button */
+const settingsAnchor = ref<HTMLElement | null>(null)
+const menuSlot = useTemplateRef<HTMLElement>('menuSlot')
+const settingsButton = useTemplateRef<{ $el?: HTMLElement }>('settingsButton')
+
+/** «Настроить вид» from the page «⋯»: on desktop at that «⋯», which has focus back once its menu is gone */
+async function openSettingsFromMenu() {
+  if (isDesktop.value) {
+    await nextTick()
+    const el = document.activeElement
+    const dots = el instanceof HTMLElement && el !== document.body && el.isConnected ? el.closest<HTMLElement>('button') : null
+    settingsAnchor.value = dots ?? menuSlot.value?.querySelector<HTMLElement>('button') ?? null
+  }
+  settingsOpen.value = true
+}
+
+function openFilter() {
+  if (isDesktop.value) {
+    settingsLevel.value = 'filter'
+    return
+  }
+  afterSettings = () => {
+    filterOpen.value = true
+  }
+  settingsOpen.value = false
+}
+
+/**
+ * «Страницы» of «Выбранные» (v24 fixes, 15): the page picker «Откуда записи» in its multi-pick mode, a sheet on the
+ * phone, on desktop a popover at the same anchor; closing it brings «Настроить вид» back
+ */
+function pickPages() {
+  const pageId = props.page.id
+  const viewId = view.value.id
+  const anchor = isDesktop.value ? settingsAnchor.value ?? settingsButton.value?.$el ?? null : null
+  const own = data.liveRecords.some(r => r.pageId === pageId)
+  const current = () => data.pages[pageId]?.views.find(v => v.id === viewId)
+  afterSettings = () => ui.pick({
+    title: 'Откуда записи',
+    subtitle: `вид «${current()?.name ?? view.value.name}»`,
+    anchor,
+    multi: {
+      picked: () => current()?.pages ?? [],
+      toggle: (id) => {
+        const page = data.pages[pageId]
+        const v = current()
+        if (page && v) data.updatePage(pageId, { views: page.views.map(x => x.id === viewId ? { ...x, pages: togglePicked(v, id) } : x) })
+      },
+      // A page without records of its own is not offered to itself
+      skip: own ? [] : [pageId]
+    },
+    onClose: () => {
+      settingsOpen.value = true
+    },
+    run: () => {}
+  })
+  settingsOpen.value = false
+}
 
 /** «Новое свойство» in «Настроить вид»: the editor takes the sheet's place, and after «Создать» the sheet is back with it switched on */
 const propSheets = usePropSheets()
@@ -130,18 +229,23 @@ function newProp() {
 function settingsClosed() {
   const run = afterSettings
   afterSettings = null
-  run?.()
+  settingsLevel.value = 'main'
+  if (run) run()
+  else settingsAnchor.value = null
 }
 /** Board and table want the whole width of the main column on desktop */
 const wide = computed(() => view.value.layout === 'board' || view.value.layout === 'table')
 /** What the header names once the title block has scrolled under it (v23, B2, F14): the open tab too, as the tabs went with it */
 const heading = computed(() => nb(`${props.page.title || 'Без названия'}${!today.value && !setup.value && views.value.length > 1 ? ` · ${view.value.name}` : ''}`))
-defineExpose({ openSettings: () => settingsOpen.value = true, toggleSearch: () => toggleSearch(), wide, heading })
+defineExpose({ openSettings: () => void openSettingsFromMenu(), toggleSearch: () => toggleSearch(), wide, heading })
 
 // Search inside the page
 const searching = ref(false)
-/** The view bar (tabs, search, «Настроить вид»); Сегодня shows it only while searching */
-const bar = computed(() => !glance.value && !setup.value && (!today.value || searching.value))
+/**
+ * The view bar (tabs, search, «Настроить вид»); Сегодня shows it only while searching; a collecting page always. It
+ * stays while «Настроить вид» is open, so a page that stops collecting there («Эта страница») keeps its sheet
+ */
+const bar = computed(() => !glance.value && (!setup.value || gathers.value || settingsOpen.value || filterOpen.value) && (!today.value || searching.value))
 const query = ref('')
 const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
 async function toggleSearch() {
@@ -312,6 +416,7 @@ const emptyText = computed(() => {
         <!-- Desktop: «⋯» ends the title row (a phone has it in the header) -->
         <span
           v-if="full && $slots.menu"
+          ref="menuSlot"
           class="hidden shrink-0 self-start lg:block"
         >
           <slot name="menu" />
@@ -332,10 +437,12 @@ const emptyText = computed(() => {
         </button>
       </p>
       <p
-        v-else-if="subline"
+        v-else-if="subline || sublineLate"
         class="mt-0.5 text-meta text-toned lg:mt-1.5 lg:text-sm"
       >
-        {{ subline }}
+        {{ subline }}<template v-if="sublineLate">
+          · <span class="font-medium text-warn-ink">{{ sublineLate }} просрочено</span>
+        </template>
       </p>
     </div>
 
@@ -399,11 +506,16 @@ const emptyText = computed(() => {
       <AdaptiveOverlay
         v-if="!today && full"
         v-model:open="settingsOpen"
-        title="Настроить вид"
+        :title="settingsLevel === 'filter' ? 'Фильтр' : 'Настроить вид'"
+        :subtitle="settingsLevel === 'filter' ? `вид «${view.name}»` : undefined"
+        width="w-105"
+        :anchor="settingsAnchor"
+        :back="settingsLevel === 'filter' ? () => settingsLevel = 'main' : undefined"
         @closed="settingsClosed"
       >
         <template #trigger>
           <UButton
+            ref="settingsButton"
             icon="i-lucide-sliders-horizontal"
             variant="ghost"
             square
@@ -412,12 +524,33 @@ const emptyText = computed(() => {
             class="self-center"
           />
         </template>
+        <ViewFilter
+          v-if="settingsLevel === 'filter'"
+          :page="page"
+          :view="view"
+        />
         <ViewSettings
+          v-else
           :page="page"
           :view="view"
           @remove="settingsOpen = false; tabs?.remove(view)"
           @add="addView"
           @new-prop="newProp"
+          @filter="openFilter"
+          @pick-pages="pickPages"
+        />
+      </AdaptiveOverlay>
+      <AdaptiveOverlay
+        v-if="!today && full && !isDesktop"
+        v-model:open="filterOpen"
+        title="Фильтр"
+        :subtitle="`вид «${view.name}»`"
+        stacked
+        @closed="settingsOpen = true"
+      >
+        <ViewFilter
+          :page="page"
+          :view="view"
         />
       </AdaptiveOverlay>
     </div>
@@ -491,6 +624,25 @@ const emptyText = computed(() => {
           </template>
         </section>
       </template>
+      <div
+        v-else-if="collecting && layout === 'list'"
+        :class="glance ? 'pt-3' : bar ? '' : 'lg:pt-1'"
+      >
+        <CollectRow
+          v-for="r in collectedRows"
+          :key="r.id"
+          :rec="r"
+          :view="view"
+          :readonly="!full"
+          @open="peek.peek({ kind: 'record', id: r.id })"
+        />
+        <p
+          v-if="!collectedRows.length"
+          class="px-5 py-6 text-meta text-toned lg:px-2.5"
+        >
+          {{ query.trim() ? 'Ничего не нашлось' : 'Под этот фильтр пока ничего не подходит.' }}
+        </p>
+      </div>
       <template v-else-if="layout === 'list'">
         <ListLayout
           :page="page"
@@ -514,7 +666,7 @@ const emptyText = computed(() => {
         v-else-if="layout === 'board'"
         :page="page"
         :view="view"
-        :records="shown"
+        :records="collecting ? collectedRows : shown"
         :readonly="!full"
         @open="openRecord"
       />
@@ -522,14 +674,14 @@ const emptyText = computed(() => {
         v-else-if="layout === 'table'"
         :page="page"
         :view="view"
-        :records="shown"
+        :records="collecting ? collectedRows : shown"
         @open="openRecord"
       />
       <CalendarLayout
         v-else
         :page="page"
         :view="view"
-        :records="shown"
+        :records="collecting ? collectedRows : shown"
         :readonly="!full"
         @open="openRecord"
       />

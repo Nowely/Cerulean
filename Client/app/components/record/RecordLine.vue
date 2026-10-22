@@ -22,9 +22,15 @@ const props = withDefaults(defineProps<{
   selected?: boolean
   /** Right of the text, 14 muted: the weekday under «На неделе» («ср», «завтра»); line 2 then names the place only */
   end?: string
+  /** `end` is overdue («было вчера»): muted 500, as a collecting view's one warn word is its summary line's (v24) */
+  endLate?: boolean
+  /** A collecting view's row (v24): line 2 names the home page only, in muted, whatever `end` holds */
+  aside?: boolean
+  /** The note glyph on the right: with `end` unless said otherwise; a collecting view follows its «Заметка» switch */
+  note?: boolean
   /** Why it is in «Связано» (v23), after the place in place of the date: «в тексте», ««Сначала дочитать …»» */
   reason?: string
-}>(), { place: true, brief: false, query: '', density: 'card', selected: false, end: '', reason: '' })
+}>(), { place: true, brief: false, query: '', density: 'card', selected: false, end: '', endLate: false, aside: false, note: undefined, reason: '' })
 
 const emit = defineEmits<{ open: [] }>()
 const data = useDataStore()
@@ -34,14 +40,14 @@ const page = computed(() => data.pages[props.rec.pageId])
 const where = computed(() => data.placeOf(props.rec).title)
 const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
 const when = computed(() => {
-  if (!props.rec.due || props.end) return ''
+  if (!props.rec.due || props.end || props.aside) return ''
   const d = props.brief ? formatDueBrief(props.rec.due, now.value) : formatDue(props.rec.due, now.value)
   return late.value ? `было ${d}` : d
 })
 const parts = computed(() => splitMatch(props.rec.text, props.query))
 const tag = computed(() => props.rec.tags.includes('offline') ? 'ждёт сети' : props.rec.tags.includes('clarify') ? 'уточнить' : '')
 const hasLine2 = computed(() => (props.place && where.value) || when.value || tag.value || props.reason)
-const hasNote = computed(() => !isEmptyDoc(bodyOf(props.rec)))
+const hasNote = computed(() => (props.note ?? !!props.end) && !isEmptyDoc(bodyOf(props.rec)))
 </script>
 
 <template>
@@ -72,7 +78,7 @@ const hasNote = computed(() => !isEmptyDoc(bodyOf(props.rec)))
       <span
         v-if="hasLine2"
         class="max-w-full truncate text-caption font-normal"
-        :class="late && !brief && !reason ? 'text-warn-ink' : 'text-toned'"
+        :class="late && !brief && !reason && !end && !aside ?'text-warn-ink' : 'text-toned'"
       >
         <template v-if="reason">{{ place && where ? `${where} · ${reason}` : reason }}</template>
         <template v-else>
@@ -88,8 +94,9 @@ const hasNote = computed(() => !isEmptyDoc(bodyOf(props.rec)))
       </span>
     </button>
     <span
-      v-if="end"
+      v-if="end || hasNote"
       class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned"
+      :class="{ 'font-medium': endLate }"
     >
       <UIcon
         v-if="hasNote"

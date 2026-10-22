@@ -78,12 +78,13 @@ export function togglePicked(view: ViewDef, id: Id): Id[] {
 
 /**
  * The right column of a collected row (v24): an overdue record «было вчера» (`late`: muted 500, v24 fixes, 12), today
- * «сегодня, 10:00», the weekday under a «На неделе» filter («завтра», «ср»), else the date; nothing for a done one
+ * «сегодня, 10:00», the weekday under a «На неделе» filter («завтра», «ср»), else the date. Line 2 is always the
+ * record's home page, so the date never goes there
  */
 export function rowEnd(rec: Rec, view: ViewDef, now: number): { text: string, late: boolean } {
   const due = rec.due
-  if (!due || rec.done) return { text: '', late: false }
-  if (isOverdue(due, now)) return { text: `было ${formatDue(due, now)}`, late: true }
+  if (!due) return { text: '', late: false }
+  if (!rec.done && isOverdue(due, now)) return { text: `было ${formatDue(due, now)}`, late: true }
   const today = due.date === dayKey(now)
   if (!today && view.dues?.includes('week') && inWeek(due, now)) return { text: weekday(due.date, now), late: false }
   return { text: formatDue(due, now), late: false }

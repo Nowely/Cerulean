@@ -121,9 +121,9 @@ const stock = computed(() => {
   return { prop, value, norm: typeof norm === 'number' ? norm : null, low: typeof norm === 'number' && value < norm }
 })
 
-/** The body's first line on the right when «Заметка» is shown, else a glyph saying there is one */
+/** «Заметка» of «Справа в строке» is the note glyph, on unless the view switched it off (v24 fixes, 14) */
 const noteText = computed(() => docText(bodyOf(props.rec), data.nameOf))
-const notePreview = computed(() => (props.view?.shown ?? []).includes('note') ? noteText.value.split('\n')[0] : '')
+const noteGlyph = computed(() => !!noteText.value && !props.view?.noteOff)
 
 function step(by: number) {
   if (!stock.value) return
@@ -313,10 +313,6 @@ const inboxMenu = computed<MenuItem[][]>(() => [
             :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
           >{{ nb(rec.text) }}</span>
           <span
-            v-if="notePreview"
-            class="truncate text-caption font-normal text-toned"
-          >{{ notePreview }}</span>
-          <span
             v-if="stock && (stock.low || stock.norm !== null)"
             class="flex items-center gap-1 text-13 text-toned"
           >
@@ -329,7 +325,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
         </button>
 
         <span
-          v-if="waiting || subs.length || (noteText && !notePreview) || right.length"
+          v-if="waiting || subs.length || noteGlyph || right.length"
           class="ml-2 flex shrink-0 items-center gap-2.5 text-meta text-toned tabular-nums"
         >
           <span v-if="waiting">ждёт сети</span>
@@ -338,7 +334,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
             :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
           >{{ subsDone }}/{{ subs.length }}</span>
           <UIcon
-            v-if="noteText && !notePreview"
+            v-if="noteGlyph"
             name="i-lucide-file-text"
             class="size-4"
             aria-label="есть заметка"
