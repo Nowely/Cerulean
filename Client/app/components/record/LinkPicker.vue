@@ -25,6 +25,8 @@ const props = defineProps<{
   ownerId?: Id
   /** The composer's «@» row opens it as «Связать» (v24, item 12); the editing bar's «Ещё…» as «Упомянуть» */
   heading?: string
+  /** Desktop: where it stands when it has no button of its own (the record's «⋯») */
+  anchor?: HTMLElement | null
 }>()
 const emit = defineEmits<{ pick: [Hit], closed: [] }>()
 const data = useDataStore()
@@ -79,6 +81,7 @@ const groups = computed(() => {
     v-model:open="open"
     :title="heading ?? (mention ? 'Упомянуть' : 'Связать')"
     :align="mention ? 'end' : 'start'"
+    :anchor="anchor"
     @closed="emit('closed')"
   >
     <template #trigger>

@@ -14,29 +14,6 @@ const edges = locator => locator.first().evaluate((e) => {
 })
 
 export default [
-  // 1. «в Журнале ›» stays on the docked card after the 15 s of «Отменить»
-  { id: 'acc-1-journal-link', device: MOBILE, run: async (p) => {
-    await p.clock.install()
-    await open(p, '/')
-    await send(p, 'молоко, яблоки')
-    expect(await shows(p.getByRole('button', { name: /^Отменить/ })), 'no «Отменить» right after the send')
-    await p.clock.fastForward(16_000)
-    await p.waitForTimeout(400)
-    expect(!(await p.getByRole('button', { name: /^Отменить/ }).count()), '«Отменить» is still there after 15 s')
-    expect(await shows(p.getByText('в Журнале')), '«в Журнале ›» went with «Отменить»')
-    expect(await shows(p.getByRole('button', { name: 'Не туда' })), '«Не туда» went')
-  } },
-  // 2. B9: the docked receipt survives a visit to a page
-  { id: 'acc-2-dock-kept', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    await send(p, 'позвонить маме')
-    expect(await shows(p.getByText(/1 запись → Задачи/)), 'no receipt')
-    await shop(p)
-    await p.getByRole('link', { name: /Главная/ }).first().click()
-    await p.waitForURL(u => new URL(u).pathname === '/')
-    await p.waitForTimeout(400)
-    expect(await shows(p.getByText(/1 запись → Задачи/)), 'the receipt is gone after coming back to Главная')
-  } },
   // 3. B4: a send on a long page shows its row
   { id: 'acc-3-long-page-send', device: MOBILE, run: async (p) => {
     // The demo's day: its records are written up to 8:41, so before that hour they would be in the future
@@ -93,29 +70,10 @@ export default [
     expect(Math.abs(after.x - before) <= 1, `the name moved by ${Math.round(after.x - before)} px`)
     expect(await row.getByRole('checkbox').first().isVisible(), 'the mark left the screen')
   } },
-  // 6. Day one: the guess line names the page the template makes
-  { id: 'acc-6-day-one-guess', device: MOBILE, run: async (p) => {
-    await open(p, '/', false)
-    await p.getByRole('textbox', { name: 'Новая запись' }).fill('хлеб')
-    await p.waitForTimeout(500)
-    expect(await shows(p.getByText('→ Покупки', { exact: true })), 'the guess line does not say «→ Покупки»')
-    await p.keyboard.press('Enter')
-    expect(await shows(p.getByText(/1 запись → Покупки/)), 'the send did not go to Покупки')
-  } },
   // 7–8. The composer chip is accent-ink; chips on a page sit on `trk`
   { id: 'acc-7-8-chips', device: MOBILE, run: async (p) => {
+    // The field's chip is the place, plain or tinted (main flow, item 5, in main-flow.mjs); Входящие's chips sit on trk
     await open(p, '/')
-    await shop(p)
-    const chip = p.getByRole('button', { name: /^Куда:/ })
-    const ink = await p.evaluate(() => {
-      const probe = document.createElement('span')
-      probe.className = 'text-accent-ink'
-      document.body.append(probe)
-      const c = getComputedStyle(probe).color
-      probe.remove()
-      return c
-    })
-    expect(await chip.evaluate(e => getComputedStyle(e).color) === ink, 'the chip is not accent-ink')
     const inbox = await store(p, data => data.inbox.id)
     await open(p, `/p/${inbox}`)
     const trk = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--trk').trim())
@@ -137,7 +95,7 @@ export default [
     await open(p, '/')
     await shop(p)
     const tabs = await edges(p.getByRole('tablist'))
-    const form = await edges(p.locator('form').filter({ has: p.getByRole('textbox', { name: 'Новая запись' }) }))
+    const form = await edges(p.locator('[data-field="closed"]'))
     expect(Math.abs(tabs[0] - form[0]) <= 1, `tabs start at ${tabs[0]}, the composer at ${form[0]}`)
     const row = await edges(p.locator('main li').first())
     expect(Math.abs(row[0] - form[0]) <= 1 && Math.abs(row[1] - form[1]) <= 1, `rows ${row} vs composer ${form}`)

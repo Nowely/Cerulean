@@ -35,7 +35,7 @@ useHead({ title: computed(() => `${found.value?.tpl.name ?? 'Шаблон'} · C
       ref="screen"
     >
       <template #header>
-        <header class="relative flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
+        <header class="relative box-content flex h-11 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1.5 pl-1 lg:hidden">
           <BackLink
             v-slot="{ label }"
             :to="back.to"

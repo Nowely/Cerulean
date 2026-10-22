@@ -16,6 +16,10 @@ defineProps<{
   ownerId?: Id
   /** The field's own padding (a record's composer has no chip before it) */
   fieldClass: string
+  /** Size and leading of the words: 16/22 in the pill, 17/24 in the open field (main flow, item 4) */
+  textClass?: string
+  /** Runs of the words to tint, as [start, end) in the text: the date read there (main flow, item 7) */
+  marks?: [number, number][]
 }>()
 const text = defineModel<string>({ required: true })
 const links = defineModel<Id[]>('links', { required: true })
@@ -107,6 +111,8 @@ defineExpose({
         :mentions="mentions"
         :owner-id="ownerId"
         :field-class="fieldClass"
+        :text-class="textClass ?? 'text-input leading-5.5'"
+        :marks="marks ?? []"
         class="col-start-1 row-start-1"
         :class="{ 'opacity-0': !ready }"
         :aria-hidden="ready ? undefined : 'true'"
@@ -116,16 +122,16 @@ defineExpose({
       />
       <span
         v-if="empty && ready"
-        class="pointer-events-none col-start-1 row-start-1 truncate text-input leading-5.5 text-dimmed"
-        :class="fieldClass"
+        class="pointer-events-none col-start-1 row-start-1 truncate text-dimmed"
+        :class="[fieldClass, textClass ?? 'text-input leading-5.5']"
         aria-hidden="true"
       >{{ placeholder }}</span>
     </template>
     <template v-if="!ready">
       <span
         ref="mirror"
-        class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words text-input leading-5.5"
-        :class="fieldClass"
+        class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words"
+        :class="[fieldClass, textClass ?? 'text-input leading-5.5']"
         aria-hidden="true"
       >{{ text }}&#8203;</span>
       <textarea
@@ -137,8 +143,8 @@ defineExpose({
         autocapitalize="sentences"
         :placeholder="placeholder"
         :aria-label="label"
-        class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent text-input leading-5.5 text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
-        :class="fieldClass"
+        class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
+        :class="[fieldClass, textClass ?? 'text-input leading-5.5']"
         @keydown="onKey"
         @focus="emit('focus', true)"
         @blur="emit('focus', false)"

@@ -69,11 +69,6 @@ const menuRows = p => isDesk(p)
   : p.getByRole('dialog').last().locator('button').evaluateAll(els => els.map(e => [...e.querySelectorAll('span')].filter(s => !s.querySelector('span') && s.textContent.trim()).map(s => s.textContent.trim()).join(' · ') || e.textContent.trim()))
 const menuRow = (p, name) => isDesk(p) ? p.getByRole('menuitem', { name }) : p.getByRole('dialog').last().getByRole('button', { name })
 
-/** The composer chip: its words and its glyph («i-cer:ring», «i-cer:stamp») */
-const chipOf = p => p.locator('form button[aria-label^="Куда"]').first().evaluate(b => ({
-  text: b.querySelector('.truncate')?.textContent.trim(),
-  icon: [...b.querySelector('.iconify')?.classList ?? []].find(c => c.startsWith('i-')) ?? ''
-}))
 /** The composer's field: the plain field until the editor takes over (item 12), then the editor */
 const field = p => p.locator('form').getByRole('textbox').first()
 
@@ -84,85 +79,8 @@ const bodyBlocks = p => p.locator('main .body-text').filter({ visible: true }).f
 const templatesLayer = p => p.getByRole('dialog', { name: /^Шаблоны/ })
 
 export default [
-  // 3: «В заметку» in the record composer chip
-  ...[MOBILE, DESKTOP].map(device => ({ id: `t24-03-to-note${device === DESKTOP ? '-desktop' : ''}`, device, run: async (p) => {
-    await p.clock.install({ time: NOW })
-    await open(p, '/')
-    await openRecord(p, 'Яйца')
-    let chip = await chipOf(p)
-    expect(chip.text === 'Подпункт' && chip.icon === 'i-cer:ring', `the chip reads «${chip.text}» with ${chip.icon}`)
-    const subsBefore = await store(p, (data, id) => data.subitemsOf(id).map(s => s.text), await recordId(p, 'Яйца'))
-    await p.locator('form button[aria-label^="Куда"]').first().click()
-    const sheet = p.getByRole('dialog', { name: 'Куда записать' })
-    expect(await shows(sheet), 'no «Куда записать»')
-    await p.waitForTimeout(500)
-    expect(plain(await sheet.locator('h2 + p:visible').first().textContent()) === 'Яйца', 'the record\'s name is not under the title')
-    const rows = await sheet.locator('li button').evaluateAll(bs => bs.map(b => ({ text: [...b.querySelectorAll('span.truncate, span.shrink-0.text-meta')].map(s => s.textContent.trim()).join(' · '), on: b.getAttribute('aria-current') === 'true' })))
-    expect(rows.length === 2, `${rows.length} rows`)
-    expect(rows[0].text === 'Подпункт · строкой в «Подпунктах»' && rows[0].on, `row 1 reads «${rows[0].text}»${rows[0].on ? '' : ', no check'}`)
-    expect(rows[1].text === 'В заметку · абзацем в конце заметки' && !rows[1].on, `row 2 reads «${rows[1].text}»`)
-    expect(!(await sheet.locator('input').count()), 'the sheet has a search field')
-    const box = await sheet.evaluate((el) => {
-      const r = el.getBoundingClientRect()
-      const last = [...el.querySelectorAll('li button')].at(-1).getBoundingClientRect()
-      const scroller = el.querySelector('.overflow-y-auto')
-      return { under: r.bottom - last.bottom, width: r.width, bottom: r.bottom, scrolls: scroller ? scroller.scrollHeight > scroller.clientHeight + 1 : false }
-    })
-    if (isDesk(p)) {
-      // D1: 400px right above the chip, sized to its two rows with no scroll
-      const chipTop = await p.locator('form button[aria-label^="Куда"]').first().evaluate(b => b.getBoundingClientRect().top)
-      expect(Math.abs(box.width - 400) <= 2, `the popover is ${box.width}px wide`)
-      expect(box.bottom <= chipTop && chipTop - box.bottom < 16, `the popover ends ${chipTop - box.bottom}px above the chip`)
-      expect(!box.scrolls, 'the popover scrolls')
-      // D2: Esc closes it; Enter on a row picks it
-      await p.keyboard.press('Escape')
-      await p.waitForTimeout(400)
-      expect(!(await sheet.count()), 'Esc does not close «Куда записать»')
-      await p.locator('form button[aria-label^="Куда"]').first().click()
-      await p.waitForTimeout(500)
-      await sheet.getByRole('button', { name: /^В заметку/ }).focus()
-      await p.keyboard.press('Enter')
-    } else {
-      expect(Math.abs(box.under - 22) <= 3, `the sheet ends ${box.under}pt under the second row`)
-      await sheet.getByRole('button', { name: /^В заметку/ }).click()
-    }
-    await p.waitForTimeout(700)
-    expect(!(await sheet.count()), 'the pick does not close the sheet')
-    const hint = await field(p).evaluate(e => e.getAttribute('aria-placeholder') ?? e.getAttribute('placeholder'))
-    expect(hint === 'Новый абзац', `placeholder «${hint}»`)
-    await field(p).fill('мама просила ещё перепелиные, если будут.')
-    if (isDesk(p)) expect(await p.locator('form button[type="submit"]').getAttribute('aria-label') === 'Добавить абзац', 'the send button keeps its old name')
-    await p.keyboard.press('Enter')
-    await p.waitForTimeout(600)
-    let blocks = await bodyBlocks(p)
-    expect(blocks.at(-1) === 'Мама просила ещё перепелиные, если будут.', `the last paragraph reads «${blocks.at(-1)}»`)
-    expect(await shows(p.locator('main .fresh-tint')), 'the paragraph is not tinted fresh')
-    expect(await field(p).evaluate(e => e.value ?? e.textContent) === '', 'the field keeps the text')
-    expect(await field(p).evaluate(el => el === document.activeElement), 'the field lost the focus (the keyboard went down)')
-    chip = await chipOf(p)
-    expect(chip.text === 'В заметку' && chip.icon === 'i-cer:note', `after the send the chip reads «${chip.text}»`)
-    await field(p).fill('и ещё один абзац')
-    await p.keyboard.press('Enter')
-    await p.waitForTimeout(600)
-    blocks = await bodyBlocks(p)
-    expect(blocks.at(-2) === 'Мама просила ещё перепелиные, если будут.' && blocks.at(-1) === 'И ещё один абзац', `the body ends «${blocks.slice(-2).join(' / ')}»`)
-    const subsAfter = await store(p, (data, id) => data.subitemsOf(id).map(s => s.text), await recordId(p, 'Яйца'))
-    expect(JSON.stringify(subsAfter) === JSON.stringify(subsBefore), '«Подпункты» changed')
-    // ↶ in the editing bar (Ctrl Z on desktop) takes the last paragraph back
-    await p.locator('main .ProseMirror').first().getByText('Брать С0').click()
-    await p.waitForTimeout(400)
-    if (isDesk(p)) await p.keyboard.press('Control+z')
-    else await p.getByRole('button', { name: 'Отменить' }).first().click()
-    await p.waitForTimeout(500)
-    blocks = await bodyBlocks(p)
-    expect(blocks.at(-1) === 'Мама просила ещё перепелиные, если будут.', `after ↶ the body ends «${blocks.at(-1)}»`)
-    // The next record opened: «Подпункт» again
-    await p.goBack()
-    await p.waitForTimeout(400)
-    await openRecord(p, 'Молоко')
-    chip = await chipOf(p)
-    expect(chip.text === 'Подпункт', `Молоко's chip reads «${chip.text}»`)
-  } })),
+  // 3: «В заметку» in the record composer chip went with the record's composer (main flow, item 13): its text is
+  // written in place
 
   // 4: «Сделать шаблоном» (and 29: the toasts without quotes on the page)
   ...[MOBILE, DESKTOP].map(device => ({ id: `t24-04-make${device === DESKTOP ? '-desktop' : ''}`, device, run: async (p) => {
@@ -300,43 +218,10 @@ export default [
   } })),
 
   // 6: a record by template (and D7 on desktop: the 36px «+» with its tooltip)
+  // Since the main flow the places list holds pages only (item 6): a template is aimed by «⋯» → «Шаблоны» → «+», and the
+  // field's chip names it
   ...[MOBILE, DESKTOP].map(device => ({ id: `t24-06-by-template${device === DESKTOP ? '-desktop' : ''}`, device, run: async (p) => {
     await withTemplate(p)
-    await p.locator('form button[aria-label^="Куда"]').first().click()
-    const picker = p.getByRole('dialog').last()
-    await p.waitForTimeout(600)
-    const lines = await picker.evaluate(el => [...el.querySelectorAll('ul > li > button, section > h3, section')].map((n) => {
-      if (n.tagName === 'SECTION') return null
-      if (n.tagName === 'H3') return `# ${n.textContent.trim()}`
-      return [...n.querySelectorAll('span.truncate')].map(s => s.textContent.trim()).join(' · ') + (n.querySelector('.i-lucide\\:check') ? ' ✓' : '')
-    }).filter(Boolean))
-    const top = lines.slice(0, 5)
-    expect(top[0] === 'Эта страница · Задачи ✓' && /^Авто · /.test(top[1]) && top[2] === '# Шаблоны' && top[3] === 'Встреча · текст и 3 подпункта' && top[4]?.startsWith('# '), `the picker reads ${JSON.stringify(lines.slice(0, 6))}`)
-    await picker.getByRole('button', { name: /^Встреча/ }).click()
-    await p.waitForTimeout(500)
-    let chip = await chipOf(p)
-    expect(chip.text === 'По шаблону' && chip.icon === 'i-cer:stamp', `the chip reads «${chip.text}» with ${chip.icon}`)
-    await field(p).fill('созвон с Лизой')
-    await p.waitForTimeout(300)
-    expect(await shows(p.getByText('→ Задачи · по шаблону «Встреча», только эта запись')), 'no guess line «→ Задачи · по шаблону «Встреча», только эта запись»')
-    await p.keyboard.press('Enter')
-    await p.waitForTimeout(700)
-    const first = p.locator('main li').first()
-    const row = plain(await first.textContent())
-    const name = plain(await first.locator('[data-row-text]').first().textContent())
-    expect(name.startsWith('Созвон с Лизой') && row.includes('0/3'), `the top row reads «${row}»`)
-    expect(await first.locator('.fresh-tint').count(), 'the new row is not fresh')
-    expect(await first.locator('[class*="i-cer:note"], [class*="file-text"]').count(), 'the new row has no note glyph')
-    expect(await shows(p.getByText('5 дел · 1 просрочено')), 'the header does not read «5 дел · 1 просрочено»')
-    chip = await chipOf(p)
-    expect(chip.text === 'Задачи', `after the send the chip reads «${chip.text}»`)
-    expect(!(await notice(p).count()), `a toast: «${plain(await notice(p).first().textContent().catch(() => ''))}»`)
-    const made = await store(p, (data) => {
-      const r = data.liveRecords.find(x => x.text === 'Созвон с Лизой')
-      return { body: JSON.stringify(r.body ?? null), subs: data.subitemsOf(r.id).map(s => `${s.text}${s.done ? '+' : ''}`) }
-    })
-    expect(made.body.includes('Повестка') && made.subs.join('|') === 'Разослать повестку|Записать решения|Отправить итоги', `the record holds ${JSON.stringify(made)}`)
-    // «⋯» → «Шаблоны» → «+»
     await dots(p, 'Действия со страницей')
     await menuRow(p, /^Шаблоны/).click()
     const sheet = templatesLayer(p)
@@ -352,20 +237,30 @@ export default [
     await plus.click()
     await p.waitForTimeout(1000)
     expect(!(await sheet.count()), 'the sheet stays open')
-    chip = await chipOf(p)
-    expect(chip.text === 'По шаблону' && chip.icon === 'i-cer:stamp', `after «+» the chip reads «${chip.text}»`)
-    expect(await field(p).evaluate(el => el === document.activeElement), 'the caret is not in the field')
-    if (isDesk(p)) expect(await shows(p.getByText('→ Задачи · по шаблону «Встреча», только эта запись')), 'no guess line after «+»')
-    // Сегодня (no templates there); На неделе too once the collecting slice brings it
-    for (const title of ['Сегодня', 'На неделе']) {
-      const id = await store(p, (data, t) => data.livePages.find(x => x.title === t)?.id, title)
-      if (!id) continue
-      await go(p, `/p/${id}`)
-      await p.locator('form button[aria-label^="Куда"]').first().click()
-      await p.waitForTimeout(600)
-      expect(!(await p.getByRole('dialog').last().getByRole('heading', { name: 'Шаблоны' }).count()), `${title}'s chip lists templates`)
-      await p.keyboard.press('Escape')
-    }
+    const title = p.getByRole('textbox', { name: 'Запись', exact: true })
+    expect(await title.evaluate(el => el === document.activeElement), 'the caret is not in the field')
+    const chip = () => p.locator('[data-chip="main"]').innerText().then(plain)
+    expect(await chip() === 'Встреча', `after «+» the chip reads «${await chip()}»`)
+    await p.keyboard.type('созвон с Лизой')
+    await p.waitForTimeout(300)
+    await p.keyboard.press('Enter')
+    await p.waitForTimeout(700)
+    const first = p.locator('main li').first()
+    const row = plain(await first.textContent())
+    const name = plain(await first.locator('[data-row-text]').first().textContent())
+    expect(name.startsWith('Созвон с Лизой') && row.includes('0/3'), `the top row reads «${row}»`)
+    expect(await first.locator('.fresh-tint').count(), 'the new row is not fresh')
+    // The note glyph is the text's first line under the row (main flow, item 12)
+    expect(plain(await first.locator('[data-row-note]').textContent().catch(() => '')) === 'Повестка', 'the new row has no note line')
+    // Main flow, acceptance 1: no count or source line under the title, only the warn word
+    expect(await shows(p.locator('main p.text-warn').filter({ hasText: /^\s*1 просрочено\s*$/ })) && !(await p.getByText(/^5 дел/).count()), 'the header is not «1 просрочено» alone')
+    expect(await chip() === 'Задачи', `after the send the chip reads «${await chip()}»`)
+    expect(!(await notice(p).count()), `a toast: «${plain(await notice(p).first().textContent().catch(() => ''))}»`)
+    const made = await store(p, (data) => {
+      const r = data.liveRecords.find(x => x.text === 'Созвон с Лизой')
+      return { body: JSON.stringify(r.body ?? null), subs: data.subitemsOf(r.id).map(s => `${s.text}${s.done ? '+' : ''}`) }
+    })
+    expect(made.body.includes('Повестка') && made.subs.join('|') === 'Разослать повестку|Записать решения|Отправить итоги', `the record holds ${JSON.stringify(made)}`)
   } })),
 
   // 28: «Переместить на другую страницу», and no UI string says «в другую страницу»
@@ -376,8 +271,8 @@ export default [
     const rows = (await menuRows(p)).map(plain)
     expect(rows.some(r => /^Переместить на другую страницу\s?·?\s?Покупки$/.test(r)), `Яйца «⋯» reads ${JSON.stringify(rows)}`)
     await p.keyboard.press('Escape')
-    // The receipt's «Не туда» chips are the group «Переместить на другую страницу»
-    await go(p, '/')
+    // The receipt's «Не туда» chips are the group «Переместить на другую страницу» (receipts stay on Журнал)
+    await go(p, '/journal')
     await send(p, 'купить батарейки')
     await p.getByRole('button', { name: 'Не туда' }).first().click()
     await p.waitForTimeout(400)
@@ -388,7 +283,8 @@ export default [
     expect(!hits.length, `«в другую страницу» in ${hits.join(', ')}`)
   } })),
 
-  // 29 and D8: the template toasts name the page without quotes; on desktop the toast sits above the composer, at its right end
+  // 29 and D8: the template toasts name the page without quotes; on desktop the toast sits above the composer, at its right
+  // end. A record has no composer since the main flow (item 13): the toast is at the foot of its column, at the right
   { id: 't24-29-toast-words-desktop', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
@@ -399,9 +295,9 @@ export default [
     const toast = notice(p).filter({ hasText: 'Шаблон «Встреча» сохранён в Задачи' })
     expect(await shows(toast), 'no «Шаблон «Встреча» сохранён в Задачи»')
     const t = await toast.boundingBox()
-    const c = await p.locator('form').first().boundingBox()
-    expect(t.y + t.height <= c.y + 1 && c.y - (t.y + t.height) < 24, 'the toast is not right above the composer')
-    expect(Math.abs(t.x + t.width - (c.x + c.width)) <= 2, `the toast ends ${c.x + c.width - t.x - t.width}px left of the composer's right end`)
+    const c = await p.locator('[data-notice-slot]').filter({ has: toast }).boundingBox()
+    expect(900 - (t.y + t.height) <= 40, `the toast ends ${900 - t.y - t.height}px above the foot`)
+    expect(Math.abs(t.x + t.width - (c.x + c.width)) <= 2, `the toast ends ${c.x + c.width - t.x - t.width}px left of its column's right end`)
   } },
 
   // D2: template subitems keep on Enter or leaving, Esc puts back, Alt+↑/↓ moves

@@ -27,11 +27,12 @@ export default [
     expect(Math.abs(after.y - before.y) <= 1, `the row moved by ${Math.round(after.y - before.y)} px`)
     expect(!(await notice(p).count()), 'a tick shows a notice')
   } },
-  // Write, light: «send «хлеб» and type the next one at once»
+  // Write, light: «send «хлеб» and type the next one at once» (the main flow's field stays open, item 9)
   { id: 'wt-write-next', device: MOBILE, run: async (p) => {
     await open(p, '/')
-    const field = p.getByRole('textbox', { name: 'Новая запись' })
-    await field.fill('хлеб')
+    await p.locator('[data-field="closed"] button').nth(1).click()
+    const field = p.getByRole('textbox', { name: 'Запись', exact: true })
+    await p.keyboard.type('хлеб')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(100)
     expect(await typed(field) === '', 'the field did not empty')
@@ -79,11 +80,10 @@ export default [
     expect(fill === warn, `the action is ${fill}, not warn ${warn}`)
     expect(!(await action.evaluate(e => e === document.activeElement)), 'the action has focus, so Enter would run it')
   } },
-  // Create a page, light: «from «⋯» of Главная: one tap to typing»
+  // Create a page, light: «from «⋯» of Главная: one tap to typing» (the «+» at «Мои страницы» since the main flow, item 16)
   { id: 'wt-create-page', device: MOBILE, run: async (p) => {
     await open(p, '/')
-    await p.getByRole('button', { name: 'Действия с Главной' }).click()
-    await p.getByRole('button', { name: 'Новая страница' }).or(p.getByRole('menuitem', { name: 'Новая страница' })).first().click()
+    await p.getByRole('button', { name: 'Новая страница' }).click()
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(300)
     const title = p.getByRole('textbox', { name: 'Название страницы' })

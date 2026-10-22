@@ -1,22 +1,20 @@
 <script setup lang="ts">
-// Главная: Входящие, then sections as quiet folding captions: Избранное, Мои страницы (pages without a section),
-// the user's sections. Write at the bottom; what was written shows above the composer.
+// Главная (main flow, items 1, 9, 16–20): Входящие and Сегодня at the top with no caption, then Избранное once a page
+// of the person's own is starred, «Мои страницы» with its «+», and the person's sections, as quiet folding captions.
+// Nothing describes anything: an empty page is its name. The field is docked at the bottom; after a send it stays open
+// for the next record and a tap on Главная's free space puts it away.
 import { computed, ref, useTemplateRef } from 'vue'
-import { useHead, useRouter } from '#imports'
-import type { Id, Page, Rec } from '~/domain/types'
+import { useHead } from '#imports'
+import type { Id } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
-import { useNow } from '~/composables/useNow'
 import { useFind } from '~/composables/useFind'
 import { useCreatePage } from '~/composables/useCreatePage'
-import { useScreen } from '~/composables/useScreen'
-import { pageBadge, type Badge } from '~/domain/summary'
-import { TEMPLATES } from '~/domain/templates'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import HomeHeader from '~/components/home/HomeHeader.vue'
 import HomeRow from '~/components/home/HomeRow.vue'
 import HomeCaption from '~/components/home/HomeCaption.vue'
-import ComposerDock from '~/components/composer/ComposerDock.vue'
+import FlowField from '~/components/composer/FlowField.vue'
 import StoreWarning from '~/components/home/StoreWarning.vue'
 import CopyRow from '~/components/home/CopyRow.vue'
 
@@ -25,52 +23,32 @@ useHead({ title: 'Главная · Cerulean' })
 const RECENT_SHOWN = 5
 
 const data = useDataStore()
-const now = useNow()
-const router = useRouter()
+const ui = useUiStore()
 const find = useFind()
 const { create } = useCreatePage()
-const { isDesktop } = useScreen()
 const screen = useTemplateRef<InstanceType<typeof AppScreen>>('screen')
+const field = useTemplateRef<InstanceType<typeof FlowField>>('field')
 
 const compact = computed(() => data.settings.homeRows === 'compact')
 const folded = (key: string) => data.settings.folded.includes(key)
-const userPages = computed(() => data.livePages.filter(p => p.kind === 'page'))
 const pagesOf = (sectionId: Id) => data.livePages.filter(p => p.sectionId === sectionId)
-/** «Подключить ИИ»: a phone row under the sections; desktop Главная has no key row (spec, Desktop v22) */
-const showKey = computed(() => !isDesktop.value && !data.settings.apiKey && !data.settings.dismissed.includes('key-card'))
-const showStart = computed(() => !userPages.value.length && !data.settings.dismissed.includes('start-card'))
-const dismiss = (id: string) => data.setSettings({ dismissed: [...data.settings.dismissed, id] })
+const today = computed(() => data.livePages.find(p => p.kind === 'today'))
 
-/** The key row steps aside while a card is docked above the composer */
-const docked = ref(false)
 const recentOpen = ref(false)
 const recent = computed(() => data.recentlyMade)
 const recentShown = computed(() => recentOpen.value ? recent.value : recent.value.slice(0, RECENT_SHOWN))
+const sections = computed(() => data.sectionList.map(s => ({ section: s, pages: pagesOf(s.id) })))
 
-const ui = useUiStore()
 function addSection() {
   ui.renameSection = data.createSection('Новая секция').id
 }
 
-// ---------- statuses: overdue is flagged once per screen, at its highest place ----------
-
-/** Сегодня in an open Избранное says every «просрочено»; without it each page that holds one says it (v22, N3) */
-const todayOnScreen = computed(() => !folded('favorites') && data.favorites.some(f => f.kind === 'page' && f.page.kind === 'today'))
-const quiet = (p: Page | Rec) => todayOnScreen.value && !('kind' in p && p.kind === 'today')
-const badgeOf = (p: Page) => pageBadge(p, data.recordsOf(p.id), now.value, data.liveRecords, { late: !quiet(p) })
-const RANK = { warn: 3, accent: 2, new: 1 } as const
-
-/** A folded caption's status: the strongest of its pages, «1 просрочено» or «2 уточнить» (new records are not said there) */
-function foldStatus(pages: Page[]): Badge | null {
-  let best: Badge | null = null
-  for (const p of pages) {
-    const b = badgeOf(p)
-    if (b && b.tone !== 'new' && (!best || RANK[b.tone] > RANK[best.tone])) best = b
-  }
-  return best
+/** A tap on Главная's free space, not on a card, puts the open field away with the keyboard (item 9) */
+function tapFree(e: MouseEvent) {
+  const t = e.target as Element | null
+  if (t?.closest('a, button, input, textarea, [role="listitem"], [contenteditable]')) return
+  if (field.value?.isOpen) field.value.close()
 }
-
-const sections = computed(() => data.sectionList.map(s => ({ section: s, pages: pagesOf(s.id) })))
 
 // ---------- pull down opens Поиск, the title scrolls to the top ----------
 
@@ -100,7 +78,9 @@ function toTop() {
     </template>
 
     <div
-      class="mx-auto w-full pr-1.5 pb-4 pl-2 lg:max-w-196 lg:px-8"
+      class="mx-auto min-h-full w-full px-2 pb-4 lg:max-w-196 lg:px-8"
+      data-home
+      @click="tapFree"
       @touchstart.passive="touchStart"
       @touchend.passive="touchEnd"
     >
@@ -112,7 +92,11 @@ function toTop() {
         <HomeRow
           :page="data.inbox"
           :compact="compact"
-          :quiet="quiet(data.inbox)"
+        />
+        <HomeRow
+          v-if="today"
+          :page="today"
+          :compact="compact"
         />
       </div>
 
@@ -140,86 +124,27 @@ function toTop() {
               v-if="f.kind === 'page'"
               :page="f.page"
               :compact="compact"
-              :quiet="quiet(f.page)"
             />
             <HomeRow
               v-else
               :rec="f.rec"
               :compact="compact"
-              :quiet="quiet(f.rec)"
             />
           </template>
         </div>
       </section>
 
-      <!-- First run: templates as actions, then the key row -->
-      <section
-        v-if="showStart"
-        aria-labelledby="cap-start"
-      >
-        <div class="mt-4 flex h-6 items-center">
-          <h2
-            id="cap-start"
-            class="flex-1 px-2 text-cap text-toned"
-          >
-            Начать с шаблона
-          </h2>
-          <button
-            type="button"
-            class="hit-44 relative mr-0.5 flex size-9 cursor-pointer items-center justify-center rounded-item text-dimmed hover:text-highlighted"
-            aria-label="Скрыть шаблоны"
-            @click="dismiss('start-card')"
-          >
-            <UIcon
-              name="i-lucide-x"
-              class="size-4.5"
-            />
-          </button>
-        </div>
-        <div role="list">
-          <div
-            v-for="t in TEMPLATES"
-            :key="t.key"
-            role="listitem"
-          >
-            <button
-              type="button"
-              class="flex w-full cursor-pointer items-center gap-3 rounded-card px-2 text-left hover:bg-muted active:bg-pressed lg:rounded-chip"
-              :class="compact ? 'min-h-8' : 'min-h-12 py-0.75'"
-              @click="create({ template: t.key, stay: true })"
-            >
-              <UIcon
-                name="i-lucide-plus"
-                class="size-4.5 shrink-0 text-toned"
-              />
-              <span class="flex min-w-0 flex-1 flex-col gap-px">
-                <span
-                  class="truncate"
-                  :class="compact ? 'text-15 text-toned' : 'text-base text-default lg:text-sm'"
-                >{{ t.name }}</span>
-                <span
-                  v-if="!compact"
-                  class="truncate text-sm text-toned lg:text-13"
-                >{{ t.description }}</span>
-              </span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Мои страницы: pages without a section, newest first, five rows and «Ещё N» -->
-      <section
-        v-if="recent.length"
-        aria-labelledby="cap-recent"
-      >
+      <!-- Мои страницы: pages without a section, newest first, five rows and «Ещё N»; «+» makes a page (item 16) -->
+      <section aria-labelledby="cap-recent">
         <HomeCaption
           id="recent"
           name="Мои страницы"
           :folded="folded('recent')"
           :count="recent.length"
-          :status="foldStatus(recent)"
           :compact="compact"
+          add
           @toggle="data.toggleFolded('recent')"
+          @add="create()"
         />
         <template v-if="!folded('recent')">
           <div role="list">
@@ -228,13 +153,13 @@ function toTop() {
               :key="p.id"
               :page="p"
               :compact="compact"
-              :quiet="quiet(p)"
             />
           </div>
           <button
             v-if="recent.length > RECENT_SHOWN"
             type="button"
-            class="flex min-h-8 w-full cursor-pointer items-center gap-1 rounded-card pr-2 pl-9.5 text-left text-sm text-toned hover:bg-muted active:bg-pressed lg:rounded-chip"
+            class="flex min-h-8 w-full cursor-pointer items-center gap-1 rounded-card pr-2 pl-15 text-left text-sm text-toned hover:bg-muted active:bg-pressed"
+            :class="{ 'pl-9.5': compact }"
             :aria-expanded="recentOpen"
             @click="recentOpen = !recentOpen"
           >
@@ -258,7 +183,6 @@ function toTop() {
           :name="s.name"
           :folded="s.collapsed"
           :count="pages.length"
-          :status="foldStatus(pages)"
           :compact="compact"
           :section="s"
           :editing="ui.renameSection === s.id"
@@ -274,7 +198,6 @@ function toTop() {
             :key="p.id"
             :page="p"
             :compact="compact"
-            :quiet="quiet(p)"
           />
           <div
             v-if="!pages.length"
@@ -282,68 +205,26 @@ function toTop() {
           >
             <button
               type="button"
-              class="flex w-full cursor-pointer items-center gap-3 rounded-card px-2 text-left hover:bg-muted active:bg-pressed lg:rounded-chip"
-              :class="compact ? 'min-h-8 text-15 text-toned' : 'min-h-11 text-base text-default lg:text-sm'"
+              class="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-card px-2 text-left text-base text-toned hover:bg-muted active:bg-pressed"
               @click="create({ sectionId: s.id })"
             >
               <UIcon
-                name="i-lucide-square-pen"
-                class="size-4.5 shrink-0 text-toned"
+                name="i-lucide-plus"
+                class="size-4.5 shrink-0 text-dimmed"
               />Новая страница
             </button>
           </div>
         </div>
       </section>
 
-      <!-- The key row sits under the last section, 12px below it, never between pages (v22, D4, V11) -->
-      <div
-        v-if="showKey && !docked"
-        class="mt-3 flex items-center rounded-card hover:bg-muted lg:rounded-chip"
-      >
-        <button
-          type="button"
-          class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-card px-2 text-left active:bg-pressed lg:rounded-chip"
-          :class="compact ? 'min-h-8' : 'min-h-12 py-0.75'"
-          @click="router.push('/settings?key')"
-        >
-          <UIcon
-            name="i-lucide-key-round"
-            class="size-4.5 shrink-0 text-toned"
-          />
-          <span class="flex min-w-0 flex-1 flex-col gap-px">
-            <span
-              class="truncate"
-              :class="compact ? 'text-15 text-toned' : 'text-base text-default lg:text-sm'"
-            >Подключить ИИ</span>
-            <span
-              v-if="!compact"
-              class="truncate text-sm text-toned lg:text-13"
-            >Пока Авто работает по правилам</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          class="hit-44 relative mr-1.5 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed hover:text-highlighted"
-          aria-label="Скрыть строку про ключ"
-          @click="dismiss('key-card')"
-        >
-          <UIcon
-            name="i-lucide-x"
-            class="size-4.5"
-          />
-        </button>
-      </div>
-
-      <CopyRow
-        v-if="!docked"
-        :compact="compact"
-      />
+      <!-- A month after the last copy, while the browser may clear the data (v22 item 27); never on day one -->
+      <CopyRow :compact="compact" />
     </div>
 
     <template #dock>
-      <ComposerDock
-        :intro="!data.entries.length"
-        @docked="v => docked = v"
+      <FlowField
+        ref="field"
+        mode="home"
       />
     </template>
   </AppScreen>

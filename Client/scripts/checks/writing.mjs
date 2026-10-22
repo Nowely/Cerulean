@@ -40,13 +40,13 @@ export default [
     await p.clock.install({ time: new Date('2026-10-19T09:14:00+03:00') })
     await open(p, '/')
     await shop(p)
-    const field = p.getByRole('textbox', { name: 'Новая запись' })
-    await field.focus()
-    await field.fill('кефир')
+    await p.locator('[data-field="closed"] button').nth(1).click()
+    const field = p.getByRole('textbox', { name: 'Запись', exact: true })
+    await p.keyboard.type('кефир')
     await deleteRow(p)
     expect(await shows(notice(p).filter({ hasText: 'Запись в корзине' })), 'no notice after a delete')
     const t = await box(notice(p))
-    const form = await box(p.locator('form').filter({ has: field }))
+    const form = await box(p.locator('[data-field="open"]'))
     const list = await box(p.locator('main .scroll-fade'))
     expect(t.bottom <= form.top, `the notice (bottom ${t.bottom}) covers the composer (top ${form.top})`)
     expect(t.top >= list.bottom - 1, `the notice (top ${t.top}) covers the list (bottom ${list.bottom})`)
@@ -94,7 +94,7 @@ export default [
     await p.getByRole('button', { name: 'Удалить «Молоко»' }).click()
     expect(await shows(notice(p)), 'no notice after a delete')
     const t = await box(notice(p))
-    const form = await box(p.locator('form').filter({ has: p.getByRole('textbox', { name: 'Новая запись' }) }))
+    const form = await box(p.locator('[data-field="closed"]'))
     expect(t.bottom <= form.top && Math.abs(t.right - form.right) <= 1, `the notice ${JSON.stringify(t)} is not at the right above the composer ${JSON.stringify(form)}`)
     expect(await notice(p).locator('[data-drain]').evaluate(e => getComputedStyle(e).display !== 'none'), 'no drain line')
     await notice(p).hover()
@@ -105,24 +105,11 @@ export default [
     await p.waitForTimeout(200)
     expect(!(await notice(p).count()), 'the notice stayed past its 8 s')
   } },
-  // 12. Docked Уточнение: the question, one row of chips that scrolls and fades, the footnote, about 150px
-  { id: 'w-12-ask-docked', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    await send(p, 'подарок Лене на новоселье')
-    const card = p.locator('div.border-accent').filter({ hasText: 'Куда положить' })
-    expect(await shows(card), 'no docked Уточнение')
-    const { height } = await box(card)
-    expect(height <= 170, `the card is ${Math.round(height)}px tall`)
-    const row = card.locator('button').first().locator('..')
-    const tops = await row.evaluate(e => [...e.children].map(c => Math.round(c.getBoundingClientRect().top)))
-    expect(new Set(tops).size === 1, `the chips wrap: ${tops}`)
-    expect(await row.evaluate(e => e.scrollWidth > e.clientWidth && getComputedStyle(e).overflowX === 'auto'), 'the chips do not scroll sideways')
-    expect(await row.evaluate(e => /gradient/.test(getComputedStyle(e).maskImage || getComputedStyle(e).webkitMaskImage)), 'the chips do not fade at the edge')
-    expect(await shows(card.getByText('Пока лежит во Входящих с меткой «уточнить».')), 'no footnote')
-  } },
+  // 12–39: receipts, Уточнение and their notes stay on Журнал's composer, off the main flow (12, the docked Уточнение,
+  // went with Главная's dock)
   // 22. Desktop: a question is filed with «Похожее в записях»; a similar row opens in the right panel
   { id: 'w-22-similar-desk', device: DESKTOP, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'когда менять фильтр?')
     expect(await shows(p.getByText(/1 запись → Дела по дому/)), 'no receipt to Дела по дому')
     expect(await shows(p.getByText('Похожее в записях')), 'no «Похожее в записях»')
@@ -133,7 +120,7 @@ export default [
   } },
   // 22. Phone: a similar row opens the preview sheet
   { id: 'w-22-similar-phone', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'когда менять фильтр?')
     await p.getByText('Похожее в записях').waitFor({ timeout: 5000 })
     await p.getByRole('button', { name: /Поменять фильтр воды/ }).last().click()
@@ -141,20 +128,17 @@ export default [
   } },
   // 22 / 35. The model never answers: «ИИ не ответил…» · «Повторить»; a second miss says «ИИ снова не ответил»
   { id: 'w-22-retry-again', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await fakeAI(p, 'fail')
     await send(p, 'батарейки для пульта')
     expect(await shows(p.getByText('ИИ не ответил, запись ждёт во Входящих.')), 'no slow note')
     await p.getByRole('button', { name: 'Повторить' }).click()
     expect(await shows(notice(p).filter({ hasText: 'ИИ снова не ответил' })), 'no «ИИ снова не ответил»')
     expect(await p.getByText('ИИ не ответил, запись ждёт во Входящих.').count(), 'the receipt went with the notice')
-    const t = await box(notice(p))
-    const card = await box(p.locator('div.raised').filter({ hasText: 'ИИ не ответил' }))
-    expect(t.bottom <= card.top, 'the notice is not above the docked card')
   } },
   // 25. «молоко 1 л» on Главная, «Объединить»: one Молоко, «3 л», the receipt changes in place
   { id: 'w-25-merge', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'молоко 1 л')
     expect(await shows(p.getByText('уже есть в списке, 2 л')), 'no «уже есть в списке, 2 л»')
     await p.getByRole('button', { name: 'Объединить с «Молоко, 2 л»' }).click()
@@ -168,7 +152,7 @@ export default [
     expect(milk.length === 1 && milk[0] === '3 л', `Молоко on Покупки: ${JSON.stringify(milk)}`)
   } },
   { id: 'w-25-merge-desk', device: DESKTOP, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'молоко 1 л')
     await p.getByRole('button', { name: 'Объединить с «Молоко, 2 л»' }).click()
     expect(await shows(p.getByText('объединено с записью в списке')), 'no «объединено с записью в списке»')
@@ -194,9 +178,10 @@ export default [
   } },
   // 26. Задачи chosen for «подарок Лене на новоселье», «Запомнить»: the line is in its description; «Отменить» removes it
   { id: 'w-26-remember', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'подарок Лене на новоселье')
-    await p.locator('div.border-accent').getByRole('button', { name: 'Задачи', exact: true }).click()
+    // Журнал keeps older cards above: the newest is the last
+    await p.locator('div.border-accent').last().getByRole('button', { name: 'Задачи', exact: true }).click()
     const line = p.getByText('Запомнить: такое класть в «Задачи».')
     expect(await shows(line), 'no «Запомнить» line')
     await line.locator('..').getByRole('button', { name: 'Запомнить' }).click()
@@ -209,10 +194,10 @@ export default [
     expect(await shows(line), 'the line did not turn back to «Запомнить»')
   } },
   { id: 'w-26-remember-desk', device: DESKTOP, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'позвонить маме')
-    await p.getByRole('button', { name: 'Не туда' }).click()
-    await p.getByRole('button', { name: 'Ещё…' }).click()
+    await p.getByRole('button', { name: 'Не туда' }).last().click()
+    await p.getByRole('button', { name: 'Ещё…' }).last().click()
     await p.getByRole('dialog').getByRole('button', { name: /^Дела по дому/ }).first().click()
     const line = p.getByText('Запомнить: такое класть в «Дела по дому».')
     expect(await shows(line), 'no «Запомнить» line after «Не туда»')
@@ -224,7 +209,7 @@ export default [
   } },
   // 35. Plain words: the AI notes and their verbs; no «модель» outside Настройки
   { id: 'w-35-plain-words', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await fakeAI(p, 'refuse')
     await send(p, 'батарейки')
     expect(await shows(p.getByText('Разложено по простым правилам: ключ не принят.')), 'no key note')
@@ -245,7 +230,7 @@ export default [
   } },
   // 39. With a page «Подарки», a line Авто cannot place offers «Подарки», not «Новая страница «Подарки»»
   { id: 'w-39-existing-page', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await store(p, data => data.createPage({ title: 'Подарки' }))
     await fakeAI(p, { kind: 'unclear', pageId: null, items: [], guesses: [], newPageName: 'Подарки' })
     await send(p, 'что-нибудь для Лены')
@@ -255,7 +240,7 @@ export default [
     expect(!(await card.getByText(/Новая страница «Подарки»/).count()), 'the card offers «Новая страница «Подарки»»')
   } },
   { id: 'w-39-existing-page-desk', device: DESKTOP, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await store(p, data => data.createPage({ title: 'Подарки' }))
     await fakeAI(p, { kind: 'unclear', pageId: null, items: [], guesses: [], newPageName: 'Подарки' })
     await send(p, 'что-нибудь для Лены')

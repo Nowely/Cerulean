@@ -14,18 +14,21 @@ import { useScreen } from '~/composables/useScreen'
 import { usePeek } from '~/composables/usePeek'
 import { usePropSheets } from '~/composables/usePropSheets'
 import { useNotify } from '~/composables/useNotify'
-import { pageSubline, dueToday, dueThisWeek, overdue } from '~/domain/summary'
-import { collectLead, collected, collects, togglePicked } from '~/domain/collect'
+import { dueToday, dueThisWeek, overdue } from '~/domain/summary'
+import { collected, collects, onlyCollects, togglePicked } from '~/domain/collect'
 import { useCollecting } from '~/composables/useCollecting'
 import { weekday } from '~/domain/dates'
+import { bodyOf, docText } from '~/domain/body'
 import { groupByDue, matchesQuery } from '~/domain/views'
 import { listView, nameForLayout } from '~/domain/templates'
+import { readLine } from '~/domain/auto'
 import { pageNamed } from '~/domain/rules'
 import { pageColor } from '~/domain/look'
 import { nb } from '~/domain/text'
 import PageTile from '../common/PageTile.vue'
 import TitleField from '../common/TitleField.vue'
 import GlyphPicker from './GlyphPicker.vue'
+import AddRow from '../common/AddRow.vue'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import ListLayout from './layouts/ListLayout.vue'
 import ViewTabs from './ViewTabs.vue'
@@ -39,8 +42,6 @@ const TableLayout = defineAsyncComponent(() => import('./layouts/TableLayout.vue
 const CalendarLayout = defineAsyncComponent(() => import('./layouts/CalendarLayout.vue'))
 const ViewSettings = defineAsyncComponent(() => import('./ViewSettings.vue'))
 const ViewFilter = defineAsyncComponent(() => import('./ViewFilter.vue'))
-const NewPageSetup = defineAsyncComponent(() => import('./NewPageSetup.vue'))
-const PageManual = defineAsyncComponent(() => import('./PageManual.vue'))
 
 const props = withDefaults(defineProps<{ page: Page, container?: 'full' | 'preview' | 'glance' }>(), { container: 'full' })
 const emit = defineEmits<{ editing: [boolean] }>()
@@ -58,27 +59,25 @@ const { isDesktop } = useScreen()
 const full = computed(() => props.container === 'full')
 const records = computed(() => data.recordsOf(props.page.id))
 const today = computed(() => props.page.kind === 'today')
-const empty = computed(() => full.value && props.page.kind === 'page' && !records.value.length && !data.liveRecords.some(r => r.pageId === props.page.id))
-/**
- * A page whose views collect holds nothing of its own (v24, И10): it has no setup, unless it was made on this visit
- * and «На неделе» was just picked among the starters, which stay so another one can be picked instead
- */
+/** Any record of its own, done or not: the page's views (its tabs) show from the first one (main flow, item 2) */
+const hasOwn = computed(() => data.liveRecords.some(r => r.pageId === props.page.id))
 const gathers = computed(() => props.page.views.some(collects))
-const madeHere = ref(false)
-watch(() => props.page.id, () => {
-  madeHere.value = empty.value && !gathers.value
-}, { immediate: true })
-const setup = computed(() => empty.value && (!gathers.value || madeHere.value))
 /**
- * A page with no records is its own manual (v24, И9, И13): never on a record, Сегодня, Входящие or in a preview, and
- * (item 7) never on a page whose views collect records
+ * A page with no records and no kind yet (no template, no glyph) is its title and its text (main flow, item 16, as a
+ * new page in Notion): the text fills the screen, and with nothing written «Начать с» offers a kind over the keyboard
  */
-const manual = computed(() => setup.value && !gathers.value)
-/** The line under the title; on a collecting view «7 дел со всех страниц» and its one warn word, «1 просрочено» (v24) */
-const subline = computed(() => collecting.value
-  ? collectLead(props.page, view.value, collectedAll.value.length)
-  : pageSubline(props.page, records.value, now.value, data.liveRecords))
-const sublineLate = computed(() => collecting.value ? overdue(collectedAll.value, now.value).length : 0)
+const textual = computed(() => full.value && props.page.kind === 'page' && !hasOwn.value && !props.page.template && !props.page.glyph && !gathers.value)
+const bodyText = computed(() => docText(bodyOf(props.page)).trim())
+const undecided = computed(() => textual.value && !bodyText.value)
+/**
+ * Under the title only the warn word «1 просрочено» (main flow, acceptance 1): no count and no source line. The list
+ * shows itself, and the count is on Главная's card
+ */
+const late = computed(() => {
+  if (collecting.value) return overdue(collectedAll.value, now.value).length
+  if (today.value) return overdue(dueToday(data.liveRecords, now.value), now.value).length
+  return overdue(records.value, now.value).length
+})
 
 // A new page named like one there is says so under its title (v22, G3): «Открыть» goes to that page, and this one,
 // still empty, goes away
@@ -86,7 +85,7 @@ const titleDraft = ref(props.page.title)
 watch(() => props.page.title, (t) => {
   titleDraft.value = t
 })
-const taken = computed(() => setup.value ? pageNamed(titleDraft.value, data.livePages.filter(p => p.id !== props.page.id)) : undefined)
+const taken = computed(() => textual.value ? pageNamed(titleDraft.value, data.livePages.filter(p => p.id !== props.page.id)) : undefined)
 const takenText = computed(() => {
   const p = taken.value
   const section = p?.sectionId ? data.sections[p.sectionId]?.name : undefined
@@ -100,14 +99,18 @@ async function openTaken() {
   if (data.pages[self] && !data.liveRecords.some(r => r.pageId === self)) data.purgePages([self])
 }
 
-// Opening a page sets what counts as «новых» on Главная from now on. A row ticked after this moment stays in
-// place, struck through, until the page is opened again
+// Opening a page clears its dot on Главная: what was written from elsewhere since the last visit takes the fresh tint
+// here instead (main flow, item 10). A row ticked after this moment stays in place, struck through, until the page is
+// opened again
 const openedAt = ref(Date.now())
-onMounted(() => data.visitPage(props.page.id))
+const seen = ref(props.page.seenAt)
+onMounted(() => {
+  seen.value = data.visitPage(props.page.id) || seen.value
+})
 watch(() => props.page.id, (id, old) => {
   if (id === old) return
   openedAt.value = Date.now()
-  data.visitPage(id)
+  seen.value = data.visitPage(id)
 })
 
 // Views: the tabs under the title. «Сегодня» has one built-in view.
@@ -153,26 +156,7 @@ function addView() {
 }
 
 const settingsOpen = ref(false)
-/**
- * Whose «Настроить вид» is open: the view bar's, or the manual's at «Как показывать». An empty page can have both
- * mounted (the bar stays while a page stops collecting), so only the one it was opened from shows; once the manual goes
- * (the first record, or the page starts collecting) the bar's takes over
- */
-const settingsAt = ref<'bar' | 'manual'>('bar')
-const barSettings = computed({
-  get: () => settingsOpen.value && (settingsAt.value === 'bar' || !manual.value),
-  set: (v: boolean) => {
-    if (v) settingsAt.value = 'bar'
-    settingsOpen.value = v
-  }
-})
-const manualSettings = computed({
-  get: () => settingsOpen.value && settingsAt.value === 'manual' && manual.value,
-  set: (v: boolean) => {
-    if (v) settingsAt.value = 'manual'
-    settingsOpen.value = v
-  }
-})
+const barSettings = settingsOpen
 /** Desktop: «Фильтр» is the second level of the same popover, with ‹ (v24, D5); Esc goes back, a click outside closes */
 const settingsLevel = ref<'main' | 'filter'>('main')
 /** Phone: «Фильтр» is a sheet of its own with no ‹; closing it brings «Настроить вид» back (v24 fixes, 21) */
@@ -275,8 +259,7 @@ function removeView() {
 /** Board and table want the whole width of the main column on desktop */
 const wide = computed(() => view.value.layout === 'board' || view.value.layout === 'table')
 /** What the header names once the title block has scrolled under it (v23, B2, F14): the open tab too, as the tabs went with it */
-const heading = computed(() => nb(`${props.page.title || 'Без названия'}${!today.value && !setup.value && views.value.length > 1 ? ` · ${view.value.name}` : ''}`))
-defineExpose({ openSettings: () => void openSettingsFromMenu(), toggleSearch: () => toggleSearch(), wide, heading, setup })
+const heading = computed(() => nb(`${props.page.title || 'Без названия'}${!today.value && hasOwn.value && views.value.length > 1 ? ` · ${view.value.name}` : ''}`))
 
 // Search inside the page
 const searching = ref(false)
@@ -284,7 +267,7 @@ const searching = ref(false)
  * The view bar (tabs, search, «Настроить вид»); Сегодня shows it only while searching; a collecting page always. It
  * stays while «Настроить вид» is open, so a page that stops collecting there («Эта страница») keeps its sheet
  */
-const bar = computed(() => !glance.value && (!setup.value || gathers.value || barSettings.value || filterOpen.value) && (!today.value || searching.value))
+const bar = computed(() => !glance.value && (hasOwn.value || gathers.value || barSettings.value || filterOpen.value || searching.value) && (!today.value || searching.value))
 const query = ref('')
 const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
 async function toggleSearch() {
@@ -316,8 +299,13 @@ const titleInput = useTemplateRef<InstanceType<typeof TitleField>>('titleInput')
 const titleFocused = ref(false)
 function onTitleFocus(v: boolean) {
   titleFocused.value = v
-  // A focused title keeps the composer under it (v23, Q1); a new page's setup stands in for it
-  if (setup.value || !v) emit('editing', v)
+  // A focused title keeps the field under it (v23, Q1); on a page with no kind yet «Начать с» stands in for it
+  if (undecided.value || !v) emit('editing', v)
+}
+/** Enter in the title goes on to the page's text (Notion); a list with nothing in it goes on to its first record */
+function titleEnter() {
+  if (textual.value) note.value?.focus()
+  else if (canAdd.value && !hasOwn.value) adder.value?.start()
 }
 const glyphOpen = ref(false)
 /** Desktop: «Значок и цвет» opened from the page «⋯» stands at that «⋯» */
@@ -362,28 +350,63 @@ function choose(rec: Rec, choice: Id | 'more' | 'new') {
   actions.place(rec, { pageId: choice })
 }
 
-// A page made by an accidental «+» and left untouched goes away on leaving it. A title still being typed is kept:
-// this runs before the field's own blur would save it, so «Назад» right after typing kept nothing
+// A page with no title, no text and no records goes away on leaving it, silently, as in Notion (main flow, item 16). A
+// title still being typed is kept: this runs before the field's own blur would save it
 onBeforeUnmount(() => {
   const typed = titleDraft.value.replace(/\s+/g, ' ').trim()
   if (full.value && data.pages[props.page.id] && typed && typed !== props.page.title) data.updatePage(props.page.id, { title: typed })
   const p = data.pages[props.page.id]
-  if (full.value && p && p.kind === 'page' && !p.title.trim() && !p.description.trim() && !p.glyph && !data.liveRecords.some(r => r.pageId === p.id)) {
+  if (full.value && p && p.kind === 'page' && !p.title.trim() && !p.description.trim() && !docText(bodyOf(p)).trim() && !data.liveRecords.some(r => r.pageId === p.id)) {
     data.purgePages([p.id])
   }
 })
 
+/** Nothing describes an empty page (main flow, item 2): only a search or a view of ticked records says it found nothing */
 const emptyText = computed(() => {
   if (query.value.trim()) return 'Ничего не нашлось'
   const done = view.value.filter.find(r => r.field === 'done')
-  if (done?.value === true) return 'Пока ничего не отмечено.'
+  if (done?.value === true) return records.value.length ? 'Пока ничего не отмечено.' : ''
   if (done?.value === false && records.value.length) return 'Всё сделано.'
-  if (props.page.kind === 'inbox') return 'Всё разложено. Сюда попадает то, что не удалось разложить'
   if (!full.value) return 'Нет записей'
-  // Beside the manual no hint: the composer's «Первая запись» says it (v24 fixes, 4)
-  if (manual.value) return ''
-  if (!records.value.length && titleFocused.value) return 'Назови страницу, потом пиши внизу.'
-  return 'Пиши внизу: первая запись появится здесь.'
+  return ''
+})
+
+// ---------- «+ Новая запись» (main flow, item 11): the last row of the open view ----------
+
+const adder = useTemplateRef<InstanceType<typeof AddRow>>('adder')
+const note = useTemplateRef<InstanceType<typeof PageNote>>('note')
+const openView = computed(() => !view.value.filter.some(r => r.field === 'done' && r.value === true))
+const canAdd = computed(() => full.value && !glance.value && !query.value.trim() && (today.value || (layout.value === 'list' && !collecting.value && openView.value && !textual.value)))
+/** On the page, at the end of its list; on Сегодня into Задачи, due today, so it shows where it was written */
+/**
+ * «+ Новая запись» reads the line as the field does (acceptance 1): the date becomes Срок, a quantity the quantity, a
+ * thing to buy gets its department, and a list splits. The place is always this page; on Сегодня, Задачи with today
+ */
+function addHere(text: string) {
+  const to = today.value ? data.livePages.find(p => p.kind === 'page' && p.template === 'todo' && !onlyCollects(p)) ?? data.inbox : props.page
+  const now = Date.now()
+  const { drafts } = readLine(text, '', {
+    pages: [to, ...journal.targets().filter(p => p.id !== to.id)],
+    inboxId: data.inbox.id,
+    learned: data.learned,
+    recent: data.recent,
+    now,
+    place: { pageId: to.id, by: 'page' },
+    today: today.value
+  })
+  // At the end of the list, in the order typed
+  let order = data.recordsOf(to.id).reduce((m, r) => Math.max(m, r.order), -1) + 1
+  for (const d of drafts) data.addRecord({ pageId: to.id, text: d.text, due: d.due, values: d.values, order: order++, addedAt: now })
+}
+
+defineExpose({
+  openSettings: () => void openSettingsFromMenu(),
+  toggleSearch: () => toggleSearch(),
+  /** «Начать с» picked a kind: the «+ Новая запись» line opens with the caret */
+  startAdd: () => void nextTick(() => adder.value?.start()),
+  wide,
+  heading,
+  undecided
 })
 </script>
 
@@ -397,26 +420,10 @@ const emptyText = computed(() => {
       class="px-4 pt-1 lg:px-0"
       :class="!full ? 'lg:px-4' : 'lg:pt-px'"
     >
-      <!-- A phone has «Добавить значок» above the title; desktop a dashed tile in the glyph's place (v24 fixes desktop, 4) -->
-      <GlyphPicker
-        v-if="full && setup && !page.glyph && !isDesktop"
-        v-model:open="glyphOpen"
-        :glyph="page.glyph"
-        :color="pageColor(page)"
-        :title="page.title || 'Без названия'"
-        :anchor="glyphAnchor"
-        @change="p => data.updatePage(page.id, p)"
-      >
-        <button
-          type="button"
-          class="-ml-1 mb-1 flex h-11 cursor-pointer items-center gap-2.5 rounded-chip pr-2 pl-1 text-15 text-toned hover:text-highlighted lg:h-9"
-        >
-          <span class="size-6 rounded-tile border-[1.5px] border-dashed border-ring" />Добавить значок
-        </button>
-      </GlyphPicker>
+      <!-- The glyph on its tile, the doc glyph until a kind or a glyph is chosen; no «Добавить значок» (main flow, item 16) -->
       <div class="flex items-center gap-2.5 lg:gap-3.5">
         <GlyphPicker
-          v-if="full && (page.glyph || !setup || isDesktop) && page.kind === 'page'"
+          v-if="full && page.kind === 'page'"
           v-model:open="glyphOpen"
           :glyph="page.glyph"
           :color="pageColor(page)"
@@ -424,19 +431,7 @@ const emptyText = computed(() => {
           :anchor="glyphAnchor"
           @change="p => data.updatePage(page.id, p)"
         >
-          <UTooltip
-            v-if="setup && !page.glyph"
-            text="Добавить значок"
-          >
-            <button
-              type="button"
-              class="size-9 shrink-0 cursor-pointer rounded-tile border-[1.5px] border-dashed border-ring hover:bg-hover"
-              aria-label="Добавить значок"
-              aria-haspopup="dialog"
-            />
-          </UTooltip>
           <button
-            v-else
             type="button"
             class="flex shrink-0 cursor-pointer rounded-tile-md lg:rounded-tile-lg"
             aria-label="Значок страницы"
@@ -462,9 +457,11 @@ const emptyText = computed(() => {
           :value="page.title"
           label="Название страницы"
           placeholder="Без названия"
+          enter-key="next"
           @save="t => data.updatePage(page.id, { title: t })"
           @focus="onTitleFocus"
           @draft="t => titleDraft = t"
+          @enter="titleEnter"
         />
         <h1
           v-else
@@ -497,58 +494,25 @@ const emptyText = computed(() => {
         </button>
       </p>
       <p
-        v-else-if="subline || sublineLate"
-        class="mt-0.5 text-meta text-toned lg:mt-1.5 lg:text-sm"
+        v-else-if="late"
+        class="mt-0.5 text-meta font-medium text-warn lg:mt-1.5 lg:text-sm"
       >
-        {{ subline }}<template v-if="sublineLate">
-          · <span class="font-medium text-warn">{{ sublineLate }} просрочено</span>
-        </template>
+        {{ late }} просрочено
       </p>
     </div>
 
-    <!-- «Заметка к странице» (v23): between the title block and the tabs, drawn once it has text -->
+    <!-- The page's text (v23 «Заметка к странице»): between the title block and the tabs, drawn once it has text. A page
+         with no records and no kind is its text, which fills the screen with no placeholder (main flow, item 16) -->
     <PageNote
       v-if="page.kind === 'page'"
+      ref="note"
       :page="page"
       :editable="full"
+      :fill="textual && !taken"
     />
 
-    <NewPageSetup
-      v-if="setup"
-      :page="page"
-      @focus="v => emit('editing', v)"
-    >
-      <!-- «Как показывать» opens «Настроить вид» of the first view at its line; the tabs are not there yet -->
-      <PageManual
-        v-if="manual"
-        v-model:settings="manualSettings"
-        :page="page"
-        :title="settingsLevel === 'filter' ? 'Фильтр' : 'Настроить вид'"
-        :subtitle="settingsLevel === 'filter' ? `вид «${view.name}»` : undefined"
-        :back="settingsLevel === 'filter' ? () => settingsLevel = 'main' : undefined"
-        @how="viewId = null"
-        @closed="settingsClosed"
-      >
-        <ViewFilter
-          v-if="settingsLevel === 'filter'"
-          :page="page"
-          :view="view"
-        />
-        <ViewSettings
-          v-else
-          :page="page"
-          :view="view"
-          @remove="removeView"
-          @add="addView"
-          @new-prop="newProp"
-          @filter="openFilter"
-          @pick-pages="pickPages"
-        />
-      </PageManual>
-    </NewPageSetup>
-
-    <!-- Views: underlined tabs; search and «Настроить вид» on the right. A page with no records yet has none:
-         views come from «⋯ → Настроить вид» -->
+    <!-- Views: underlined tabs; search and «Настроить вид» on the right. A page with no records yet has none (main flow,
+         item 2): views come from «⋯ → Настроить вид» -->
     <div
       v-if="bar"
       class="mt-1 flex items-end pr-0.5 pl-1 lg:px-0"
@@ -649,12 +613,6 @@ const emptyText = computed(() => {
       data-rows
     >
       <template v-if="today">
-        <p
-          v-if="!todayGroups.length"
-          class="px-4 pt-5 text-15 leading-5.75 text-toned lg:px-2.5"
-        >
-          На сегодня ничего, всё со сроком появится здесь.
-        </p>
         <section
           v-for="g in todayGroups"
           :key="g.key"
@@ -739,6 +697,7 @@ const emptyText = computed(() => {
           :since="openedAt"
           :readonly="!full"
           :clearable="!query.trim()"
+          :seen="full ? seen : undefined"
           :class="glance ? 'pt-3' : bar ? '' : 'lg:pt-1'"
           @open="openRecord"
           @choose="choose"
@@ -775,6 +734,14 @@ const emptyText = computed(() => {
         :records="collecting ? collectedRows : shown"
         :readonly="!full"
         @open="openRecord"
+      />
+      <AddRow
+        v-if="canAdd"
+        ref="adder"
+        label="Новая запись"
+        :class="today ? 'pt-1' : hasOwn ? '' : 'pt-1.5'"
+        @add="addHere"
+        @open="v => emit('editing', v)"
       />
     </div>
   </div>

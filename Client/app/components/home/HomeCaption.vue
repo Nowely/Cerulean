@@ -2,6 +2,7 @@
 // A section on Главная is a quiet caption: 12/500 muted, a chevron that turns right when folded, «⋯» for
 // user sections. Folded, it shows the count and the strongest status of its pages («Личное · 4 · 1 просрочено»;
 // in compact a dot instead of the words). Captions are sticky, so a long list always says whose pages these are.
+// «Мои страницы» has a «+» at its right: a new page (main flow, item 16; Notion's «+» beside «Private»).
 import { nextTick, ref, useTemplateRef, watch } from 'vue'
 import type { Section } from '~/domain/types'
 import type { Badge } from '~/domain/summary'
@@ -19,8 +20,10 @@ const props = defineProps<{
   /** A user section: «⋯», rename */
   section?: Section
   editing?: boolean
+  /** «+» at the right: «Новая страница» */
+  add?: boolean
 }>()
-const emit = defineEmits<{ toggle: [], done: [] }>()
+const emit = defineEmits<{ toggle: [], done: [], add: [] }>()
 const data = useDataStore()
 const renaming = ref(false)
 const draft = ref(props.name)
@@ -50,7 +53,10 @@ function cancel() {
 </script>
 
 <template>
-  <div class="sticky top-0 z-2 mt-4 flex h-6 items-center bg-canvas">
+  <div
+    class="sticky top-0 z-2 mt-4 flex items-center bg-canvas"
+    :class="add ? 'h-8' : 'h-6'"
+  >
     <input
       v-if="renaming"
       ref="input"
@@ -97,6 +103,19 @@ function cancel() {
         />
       </button>
     </h2>
+    <button
+      v-if="add && !renaming"
+      type="button"
+      class="relative mr-0.5 flex h-8 w-10 shrink-0 cursor-pointer items-center justify-center rounded-item text-toned after:absolute after:-inset-x-0.5 after:-inset-y-1.5 hover:text-highlighted active:bg-pressed"
+      aria-label="Новая страница"
+      data-new-page
+      @click="emit('add')"
+    >
+      <UIcon
+        name="i-lucide-plus"
+        class="size-5"
+      />
+    </button>
     <span
       v-if="section && !renaming"
       class="mr-0.5 flex"

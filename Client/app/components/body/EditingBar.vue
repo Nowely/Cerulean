@@ -173,7 +173,14 @@ function more(h: Hit) {
             :aria-pressed="st.kind === k.kind"
             @click="act?.toggle(k.kind)"
           >
+            <!-- The heading is the letter «H» (main flow, item 14): the glyph read as a menu -->
+            <span
+              v-if="k.kind === 'heading'"
+              class="text-15 leading-none font-bold"
+              aria-hidden="true"
+            >H</span>
             <UIcon
+              v-else
               :name="k.icon"
               class="ebg"
             />

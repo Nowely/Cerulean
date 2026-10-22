@@ -59,7 +59,7 @@ export function modelOf(c: Connection): string {
  * service refused, a model it does not have, or anything else
  */
 export class ModelError extends Error {
-  constructor(readonly reason: 'offline' | 'timeout' | 'key' | 'model' | 'other', cause?: unknown) {
+  constructor(readonly reason: 'offline' | 'timeout' | 'key' | 'model' | 'aborted' | 'other', cause?: unknown) {
     super(cause instanceof Error ? cause.message : reason, { cause })
   }
 }
@@ -68,7 +68,7 @@ export class ModelError extends Error {
 const TIMEOUT = 10_000
 
 /** OpenAI, OpenRouter and «Другой» go through the OpenAI SDK, loaded only when Авто actually calls a model */
-async function viaOpenAI<T>(c: Connection, run: (client: OpenAI) => Promise<T>): Promise<T> {
+async function viaOpenAI<T>(c: Connection, run: (client: OpenAI) => Promise<T>, signal?: AbortSignal): Promise<T> {
   let SDK: typeof OpenAI
   try {
     SDK = (await import('openai')).default
@@ -79,6 +79,7 @@ async function viaOpenAI<T>(c: Connection, run: (client: OpenAI) => Promise<T>):
   try {
     return await run(new SDK({ apiKey: c.apiKey, baseURL, dangerouslyAllowBrowser: true, maxRetries: 0, timeout: TIMEOUT }))
   } catch (e) {
+    if (signal?.aborted || e instanceof SDK.APIUserAbortError) throw new ModelError('aborted', e)
     if (e instanceof SDK.APIConnectionTimeoutError) throw new ModelError('timeout', e)
     if (e instanceof SDK.APIConnectionError) throw new ModelError('offline', e)
     if (e instanceof SDK.AuthenticationError || e instanceof SDK.PermissionDeniedError) throw new ModelError('key', e)
@@ -88,7 +89,7 @@ async function viaOpenAI<T>(c: Connection, run: (client: OpenAI) => Promise<T>):
 }
 
 /** Anthropic's Messages API answers browsers that say so in a header; no SDK needed for one call */
-async function viaAnthropic(c: Connection, body: object): Promise<{ content?: { type: string, input?: unknown }[] }> {
+async function viaAnthropic(c: Connection, body: object, signal?: AbortSignal): Promise<{ content?: { type: string, input?: unknown }[] }> {
   let res: Response
   try {
     res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -100,9 +101,10 @@ async function viaAnthropic(c: Connection, body: object): Promise<{ content?: { 
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT)
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT)]) : AbortSignal.timeout(TIMEOUT)
     })
   } catch (e) {
+    if (signal?.aborted) throw new ModelError('aborted', e)
     throw new ModelError(e instanceof DOMException && e.name === 'TimeoutError' ? 'timeout' : 'offline', e)
   }
   if (res.status === 401 || res.status === 403) throw new ModelError('key')
@@ -111,7 +113,8 @@ async function viaAnthropic(c: Connection, body: object): Promise<{ content?: { 
   return res.json()
 }
 
-export async function askModel(c: Connection, text: string, pages: Page[], now: number): Promise<ModelResult> {
+/** `signal` cancels a reading the person typed past: it fails with ModelError('aborted') (main flow, item 23) */
+export async function askModel(c: Connection, text: string, pages: Page[], now: number, signal?: AbortSignal): Promise<ModelResult> {
   const model = modelOf(c)
   const input = promptInput(text, pages, now)
 
@@ -124,7 +127,7 @@ export async function askModel(c: Connection, text: string, pages: Page[], now: 
       messages: [{ role: 'user', content: input }],
       tools: [{ name: 'file_line', description: 'Files the line into the organiser', input_schema: SCHEMA }],
       tool_choice: { type: 'tool', name: 'file_line' }
-    })
+    }, signal)
     return readResult(res.content?.find(b => b.type === 'tool_use')?.input)
   }
 
@@ -137,7 +140,7 @@ export async function askModel(c: Connection, text: string, pages: Page[], now: 
       input,
       text: { format: { type: 'json_schema', name: 'filing', strict: true, schema: SCHEMA } },
       store: false
-    }))
+    }, { signal }), signal)
     return readResult(res.output_text)
   }
 
@@ -146,7 +149,7 @@ export async function askModel(c: Connection, text: string, pages: Page[], now: 
     model,
     messages: [{ role: 'system', content: INSTRUCTIONS }, { role: 'user', content: input }],
     response_format: { type: 'json_schema', json_schema: { name: 'filing', strict: true, schema: SCHEMA } }
-  }))
+  }, { signal }), signal)
   return readResult(res.choices[0]?.message?.content)
 }
 
@@ -161,7 +164,7 @@ export async function checkConnection(c: Connection): Promise<'ok' | 'key' | 'mo
   } catch (e) {
     if (!(e instanceof ModelError)) return 'other'
     if (e.reason === 'offline') throw e
-    return e.reason === 'timeout' ? 'other' : e.reason
+    return e.reason === 'timeout' || e.reason === 'aborted' ? 'other' : e.reason
   }
 }
 

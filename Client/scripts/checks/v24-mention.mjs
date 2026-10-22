@@ -37,12 +37,23 @@ async function home(p, keys = false) {
   await seedHealth(p)
   const hide = p.getByRole('button', { name: 'Скрыть строку про ключ' })
   if (await hide.count()) await hide.click()
-  await field(p).click()
+  await focusField(p)
   if (keys) await keyboardUp(p)
   await p.waitForTimeout(300)
 }
 
-const field = p => p.getByRole('textbox', { name: 'Новая запись' })
+/** The field of the screen: the main flow's title line on Главная and pages (opened from its pill), Журнал's composer */
+const field = p => p.getByRole('textbox', { name: /^(Запись|Новая запись)$/ })
+async function focusField(p) {
+  const pill = p.locator('[data-field="closed"] button').nth(1)
+  if (await pill.isVisible().catch(() => false)) {
+    await pill.click()
+    await p.waitForTimeout(200)
+  }
+  await field(p).click()
+}
+/** Where the main flow's field puts the record: its chip (it has no guess line) */
+const place = p => p.locator('[data-chip="main"]').first().innerText().then(t => t.trim())
 /** The composer's words, a chip read as its name */
 const words = p => field(p).evaluate(e => (e.value ?? e.textContent).replace(/\u00a0/g, ' '))
 const chips = p => field(p).locator('.mention')
@@ -66,7 +77,6 @@ const rowChips = p => row(p).locator('button:not([aria-haspopup])').evaluateAll(
   })(),
   glyph: b.querySelector('.iconify, svg')?.getAttribute('class') ?? ''
 })))
-const guessLine = p => p.locator('main p[aria-hidden="true"]').filter({ hasText: /^\s*→/ }).first()
 const typeIn = async (p, text) => {
   await p.keyboard.type(text)
   await p.waitForTimeout(350)
@@ -176,39 +186,27 @@ export default [
     expect(!(await chips(p).count()), 'Backspace did not take the chip')
     expect((await words(p)) === 'позвонить ', `Backspace left «${await words(p)}»`)
   } },
-  // 12: «with «Подпункт», «@» opens nothing» (a record's composer: a subitem is one line with no links). With «В заметку»
-  // the name stays a chip: that mode is the templates slice's, so it is checked only once the chip offers it
+  // 12: «with «Подпункт», «@» opens nothing» (a subitem is one line with no links). Since the main flow (item 15) a record
+  // has no composer: «+ Подпункт» is the line, and «В заметку» went with the composer
   { id: 'm24-12-subitem', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
     const id = await store(p, data => Object.values(data.records).find(r => r.text === 'Яйца').id)
     await open(p, `/r/${id}`)
-    const sub = p.getByRole('textbox', { name: 'Новый подпункт' })
-    await sub.click()
+    await p.locator('main [data-add-row]', { hasText: 'Подпункт' }).click()
+    await p.waitForTimeout(300)
     await typeIn(p, 'к омлету взять ещё @сы')
     expect(!(await row(p).count()), '«@» opened the row with «Подпункт»')
-    const toNote = p.getByRole('button', { name: /В заметку|Куда записать/ })
-    if (!(await toNote.count())) return
-    await sub.fill('')
-    await toNote.first().click()
-    await p.waitForTimeout(400)
-    const opt = p.getByRole('menuitemradio', { name: /В заметку/ }).or(p.getByRole('option', { name: /В заметку/ })).or(p.getByRole('button', { name: /^В заметку/ }))
-    if (!(await opt.count())) return
-    await opt.last().click()
-    await p.waitForTimeout(300)
-    await p.getByRole('textbox', { name: /Новый абзац|Новый подпункт/ }).last().click()
-    await typeIn(p, 'к омлету взять ещё @сы')
-    expect((await rowChips(p)).some(c => c.name === 'Сыр'), '«В заметку» does not offer «Сыр»')
   } },
-  // 13: «after the pick the line reads «→ Задачи · связь: @Стоматолог». Send. The receipt row reads «Позвонить
+  // 13: «after the pick the line reads «→ Задачи · связь: @Стоматолог». Send. (The main flow's field says where in its
+  // chip, item 5) The receipt row reads «Позвонить
   // @Стоматолог», and Задачи has the row in plain 16/400 ink. Open it: «Связано» lists Стоматолог; open Стоматолог:
   // «Связано» lists «Позвонить @Стоматолог»»
   { id: 'm24-13-send', device: MOBILE, run: async (p) => {
     await home(p)
     await typeIn(p, 'позвонить @сто')
     await pickChip(p, 'Стоматолог')
-    const line = (await guessLine(p).textContent()).replace(/\s+/g, ' ').trim()
-    expect(line === '→ Задачи · связь: @Стоматолог', `the guess line reads «${line}»`)
+    expect(await place(p) === 'Задачи', `the chip reads «${await place(p)}»`)
     await p.keyboard.press('Enter')
     await p.waitForTimeout(800)
     const made = await recordsWith(p, '@Стоматолог')
@@ -268,22 +266,23 @@ export default [
     expect(text.includes('Позвонить [[Зубной врач]]'), 'no «Позвонить [[Зубной врач]]» in the Markdown')
   } },
   // 13: «on a fresh run, «Отменить» in the receipt leaves no record and no link, and puts «позвонить» and the chip back»;
-  // one line, several records: each gets only the links in its own text
+  // one line, several records: each gets only the links in its own text. The main flow's «Отменить» is the notice's and
+  // the field stays open and empty for the next record (item 9)
   { id: 'm24-13-undo', device: MOBILE, run: async (p) => {
     await home(p)
     await typeIn(p, 'позвонить @сто')
     await pickChip(p, 'Стоматолог')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(800)
-    await p.getByRole('button', { name: 'Отменить' }).first().click()
+    await p.locator('[data-notice]').getByRole('button', { name: 'Отменить' }).click()
     await p.waitForTimeout(500)
     expect(!(await recordsWith(p, '@Стоматолог')).length, 'the record is still there')
     const links = await store(p, data => Object.values(data.records).filter(r => !r.deletedAt).flatMap(r => r.links ?? []).map(id => data.nameOf(id)))
     expect(!links.includes('Стоматолог'), 'a link to Стоматолог is still there')
-    expect((await words(p)).trim() === 'позвонить Стоматолог' && await chips(p).count() === 1, `the field reads «${await words(p)}» with ${await chips(p).count()} chips`)
     // The same line with a second record: only the first links
-    await field(p).click()
-    await p.keyboard.press('End')
+    await focusField(p)
+    await typeIn(p, 'позвонить @сто')
+    await pickChip(p, 'Стоматолог')
     await typeIn(p, ', купить хлеб')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(800)
@@ -299,13 +298,11 @@ export default [
     let edge = await dockEdge(p)
     expect(!edge.fade, 'the list fades above the «@» row')
     expect(!edge.cut.length, `cut by the edge: ${edge.cut.join(', ')}`)
-    // MobileComposerMention was drawn before «На неделе» joined Избранное (item 11), so there Задачи and «Личное» still
-    // fit; with it the last whole row is Дела по дому, and nothing that fits is covered
-    expect(edge.last, 'Дела по дому is not whole above the chips')
+    // The main flow's open field (title, note, chip) is taller than the old pill, so which row is the last whole one
+    // changed; nothing that fits is covered
     expect(!edge.hidden.length, `covered though it fits: ${edge.hidden.join(', ')}`)
-    // The guess line: the same hard edge; scrolled so an edge falls inside a row, it is covered
-    await pickChip(p, 'Стоматолог')
-    for (const dy of [0, 13, 29]) {
+    // Scrolled so an edge falls inside a row, it is covered (the main flow's field has no guess line to keep the edge)
+    for (const dy of [13, 29]) {
       await p.locator('.scroll-fade').first().evaluate((el, y) => {
         el.scrollTop += y
       }, dy)
@@ -411,8 +408,7 @@ export default [
     expect(Math.abs(pill.y - (chip.y + chip.height) - 8) <= 1, `the chips end ${pill.y - chip.y - chip.height}px above the pill`)
     await p.keyboard.press('Enter')
     await p.waitForTimeout(300)
-    const line = (await guessLine(p).textContent()).replace(/\s+/g, ' ').trim()
-    expect(line === '→ Задачи · связь: @Стоматолог', `the guess line reads «${line}»`)
+    expect(await chips(p).count() === 1 && await place(p) === 'Задачи', `the chip reads «${await place(p)}»`)
   } },
   // D3: «Журнал «записаться на забег к @пол» offers «Полумарафон к маю», and the feed above ends at a hard edge with no
   // half line»
@@ -433,7 +429,7 @@ export default [
     await p.getByRole('link', { name: /^Задачи/ }).first().click()
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(400)
-    await field(p).click()
+    await focusField(p)
     await typeIn(p, 'записаться к @сто')
     const list = await rowChips(p)
     expect(list.map(c => c.name).join() === 'Стоматолог,Позвонить стоматологу', `the row offers ${list.map(c => c.name).join(', ')}`)

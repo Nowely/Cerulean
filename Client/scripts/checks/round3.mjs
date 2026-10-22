@@ -1,5 +1,5 @@
 // PR #15 acceptance round 2: what did not land (design/app-qa/acceptance-pr15-round2.md, «What did not land» 3–18)
-import { BASE, DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
+import { BASE, DESKTOP, MOBILE, expect, open, pageOf, send, shows, store } from './lib.mjs'
 
 const DEMO_TIME = new Date('2026-10-19T09:14:00+03:00')
 
@@ -72,17 +72,6 @@ export default [
     expect(await p.evaluate(() => document.activeElement?.hasAttribute('data-row-text')), 'Delete sent the focus to the page')
     expect((await focused(p)) === 'Сыр', 'Delete did not move on to the next row')
   } },
-  // 7: over the desktop property editor the notice rises over the scrim (props-weight-option-desk)
-  // 9: the phone found card's × does not cover its line
-  { id: 'r3-9-found-x', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    await send(p, 'где молоко')
-    const close = p.getByRole('button', { name: 'Скрыть' })
-    expect(await shows(close), 'no × on the docked found card')
-    const x = await close.boundingBox()
-    const line = await p.getByText(/^Это поиск, поэтому ничего не записано/).boundingBox()
-    expect(line.x + line.width <= x.x, 'the × covers the line')
-  } },
   // 10: the page menu: Переименовать, Добавить в избранное, Что сюда класть (v23), Значок и цвет…; no section caption
   { id: 'r3-10-page-menu', device: MOBILE, run: async (p) => {
     await open(p, '/')
@@ -144,15 +133,18 @@ export default [
   // 15: desktop: «Запись изменили в другой вкладке» under the title (PageTwoTabs); the phone keeps it above (MobileTwoTabs)
   { id: 'r3-15-two-tabs-desk', device: DESKTOP, run: p => twoTabs(p, 'under') },
   { id: 'r3-15-two-tabs', device: MOBILE, run: p => twoTabs(p, 'above') },
-  // 16: a typed «идея:» names the page over a topic word of another one
+  // 16: a typed «идея:» names the page over a topic word of another one (the main flow files it with no receipt)
   { id: 'r3-16-prefix', device: MOBILE, run: async (p) => {
     await open(p, '/')
     await send(p, 'идея: сад на балконе')
-    expect(await shows(p.getByText(/1 запись → Идеи/)), '«идея: сад на балконе» did not go to Идеи')
+    const where = await pageOf(p, 'сад на балконе')
+    expect(where === 'Идеи', `«идея: сад на балконе» went to ${where}`)
   } },
+  // 17, 18: receipts stay on Журнал's composer, off the main flow
+
   // 17: in a series only the row that waited for the network says «разобрано, когда появилась сеть»
   { id: 'r3-17-resumed-row', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     const pid = await store(p, data => data.livePages.find(x => x.title === 'Покупки').id)
     await p.route('**/fake-ai/v1/**', async (route) => {
       const line = JSON.parse(route.request().postData() ?? '{}').messages?.at(-1)?.content ?? ''
@@ -172,7 +164,7 @@ export default [
   } },
   // 18: «Проверить ключ ›»; the import question is an alertdialog
   { id: 'r3-18-key-chevron', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await p.route('**/fake-ai/v1/**', route => route.fulfill({ status: 401, json: { error: { message: 'bad key' } } }))
     await store(p, (data, base) => data.setSettings({ provider: 'custom', baseUrl: base, modelId: 'test', apiKey: 'sk-test', keyState: 'ok', rulesFirst: false }), `${BASE}/fake-ai/v1`)
     await send(p, 'батарейки')

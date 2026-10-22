@@ -3,7 +3,6 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import type { PropDef } from '~/domain/types'
-import { placeOptions } from '~/domain/rules'
 import { applyView } from '~/domain/views'
 import { bodyOf, docText } from '~/domain/body'
 
@@ -13,10 +12,7 @@ vi.mock('~/domain/model', async (orig) => {
     ...real,
     askModel: vi.fn(async (_c: unknown, text: string, pages: { id: string, title: string }[]) => ({
       kind: 'record',
-      pageId: pages.find(p => p.title === 'Покупки')!.id,
-      items: [{ text: text.replace(/ для пульта/, ''), date: null, time: null, qty: '4 шт', option: 'Прочее' }],
-      guesses: [],
-      newPageName: null
+      items: [{ text: text.replace(/ для пульта/, ''), note: '', pageId: pages.find(p => p.title === 'Покупки')!.id, date: null, time: null, qty: '4 шт', option: 'Прочее' }]
     }))
   }
 })
@@ -43,10 +39,16 @@ const online = (value: boolean) => Object.defineProperty(globalThis.navigator, '
 beforeEach(() => online(true))
 
 describe('data store', () => {
-  it('starts with Входящие and Сегодня on the first run', async () => {
+  it('starts with Входящие, Сегодня and empty Покупки, Задачи and Идеи on the first run (main flow, item 1)', async () => {
     const { data } = await fresh()
-    expect(data.livePages.map(p => p.title)).toEqual(['Входящие', 'Сегодня'])
-    expect(data.favorites.map(f => f.kind === 'page' && f.page.title)).toEqual(['Сегодня'])
+    expect(data.livePages.map(p => p.title)).toEqual(['Входящие', 'Сегодня', 'Покупки', 'Задачи', 'Идеи'])
+    expect(data.recentlyMade.map(p => [p.title, p.template])).toEqual([['Покупки', 'shop'], ['Задачи', 'todo'], ['Идеи', 'note']])
+    expect(data.liveRecords).toEqual([])
+    // Сегодня sits at the top with Входящие: Избранное is only the person's own stars
+    expect(data.favorites).toEqual([])
+    const shop = data.recentlyMade[0]!
+    expect(shop.props.find(p => p.type === 'select')?.options?.map(o => o.name)).toContain('Молочное')
+    expect(shop.views.map(v => v.name)).toEqual(['Купить', 'Куплено'])
   })
 
   it('writes reactive objects to IndexedDB (the DataCloneError on main)', async () => {
@@ -235,37 +237,17 @@ describe('Авто without a key', () => {
   })
 })
 
-describe('day one (v21 F1)', () => {
-  it('makes a page from a starter when no page fits, and «Отменить» takes it back', async () => {
+describe('day one (main flow)', () => {
+  it('files into the pages there are and never makes one (decision 1)', async () => {
     const { data, journal } = await fresh()
     const e = await journal.send('хлеб', 'auto')
-    const page = data.pages[e.pageId!]!
-    expect(e).toMatchObject({ kind: 'routed', made: true })
-    expect(page).toMatchObject({ title: 'Покупки', template: 'shop', sectionId: null })
-    expect(data.recentlyMade.map(p => p.title)).toEqual(['Покупки'])
-    journal.undo(e.id)
-    expect(data.livePages.some(p => p.title === 'Покупки')).toBe(false)
-  })
-
-  it('files calls into Дела and asks about a book with the starters to choose from', async () => {
-    const { data, journal } = await fresh()
+    expect(data.pages[e.pageId!]).toMatchObject({ title: 'Покупки', template: 'shop' })
     const call = await journal.send('позвонить маме', 'auto')
     expect(data.pages[call.pageId!]!.title).toBe('Задачи')
-    const book = await journal.send('прочитать Канемана', 'auto')
-    expect(book.kind).toBe('ask')
-    expect(data.livePages.filter(p => p.kind === 'page').map(p => p.title)).toEqual(['Задачи'])
-    const page = journal.choose(book.id, { template: 'note' })!
-    expect(page).toMatchObject({ title: 'Идеи', template: 'note' })
-    expect(data.recordsOf(page.id).map(r => r.text)).toEqual(['Прочитать Канемана'])
-  })
-
-  it('«Не туда» drops the page Авто made while it is empty', async () => {
-    const { data, journal } = await fresh()
-    const e = await journal.send('хлеб', 'auto')
-    const made = e.pageId!
-    journal.choose(e.id, { newPage: 'Дача' })
-    expect(data.pages[made]).toBeUndefined()
-    expect(data.pages[e.pageId!]!.title).toBe('Дача')
+    await journal.send('прочитать Канемана', 'auto')
+    expect(data.livePages.filter(p => p.kind === 'page').map(p => p.title)).toEqual(['Покупки', 'Задачи', 'Идеи'])
+    journal.undo(e.id)
+    expect(data.recordsOf(data.pages[e.pageId!]!.id)).toEqual([])
   })
 
   it('takes a choice in Входящие back with its Чат line', async () => {
@@ -400,18 +382,15 @@ describe('duplicates, «Запомнить», existing pages (v22)', () => {
     expect(ask.learn).toBeFalsy()
   })
 
-  it('a new page named like one there is becomes that page in the Уточнение (N23)', async () => {
+  it('files what the model is unsure of to Входящие and makes no page (main flow, item 23)', async () => {
     const { data, journal } = await fresh({ demo: true })
-    const gifts = data.createPage({ title: 'Подарки' })
     data.setSettings({ apiKey: 'sk-test', keyState: 'ok', rulesFirst: false })
     const { askModel } = await import('~/domain/model')
-    vi.mocked(askModel).mockResolvedValueOnce({ kind: 'unclear', pageId: null, items: [], guesses: [], newPageName: 'подарки' })
+    const before = data.livePages.length
+    vi.mocked(askModel).mockResolvedValueOnce({ kind: 'record', items: [{ text: 'Что-нибудь для Лены', note: '', pageId: null, date: null, time: null, qty: null, option: null }] })
     const e = await journal.send('что-нибудь для Лены', 'auto')
-    expect(e.kind).toBe('ask')
-    const rec = data.records[e.recordIds![0]!]!
-    const offer = placeOptions(journal.guessesFor(rec), e.newName, data.livePages)
-    expect(offer.pageIds).toContain(gifts.id)
-    expect(offer.newName).toBeNull()
+    expect(e.pageId).toBe(data.inbox.id)
+    expect(data.livePages.length).toBe(before)
   })
 })
 

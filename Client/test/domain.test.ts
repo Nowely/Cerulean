@@ -37,7 +37,8 @@ describe('dates', () => {
     expect(formatDue({ date: '2027-05-18' }, NOW)).toBe('18 мая 2027')
     expect(formatDueLong({ date: '2027-05-18' }, NOW)).toBe('18 мая 2027 · через 7 месяцев')
     expect(formatDay(NOW, NOW)).toBe('Сегодня, 19 октября')
-    expect(formatAdded('chat', new Date(2026, 9, 19, 8, 40).getTime(), NOW)).toBe('с Главной · сегодня, 8:40')
+    // «Добавлено» is when, never from where (main flow, item 13)
+    expect(formatAdded(new Date(2026, 9, 19, 8, 40).getTime(), NOW)).toBe('сегодня, 8:40')
   })
 
   it('names the calendar\'s selected day for the composer, and an undated send lands on it (v22, G6)', () => {

@@ -27,6 +27,8 @@ const props = defineProps<{
   readonly?: boolean
   /** «Очистить купленное» under a view of ticked records (not while searching the page) */
   clearable?: boolean
+  /** When the page was opened before this visit: records written from elsewhere after it take the fresh tint */
+  seen?: number
 }>()
 const emit = defineEmits<{ open: [rec: Rec], choose: [rec: Rec, pageId: Id | 'more' | 'new'] }>()
 const data = useDataStore()
@@ -191,6 +193,7 @@ function clearDone() {
             :view="view"
             :readonly="readonly"
             :reveal="r.addedAt >= (since ?? Number.POSITIVE_INFINITY)"
+            :tint="seen !== undefined && r.via === 'chat' && r.addedAt > seen"
             :lifted="drag.lifted.value === r.id"
             :grip="readonly ? undefined : drag.handle(r.id)"
             @open="emit('open', r)"

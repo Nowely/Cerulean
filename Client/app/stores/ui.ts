@@ -102,6 +102,11 @@ export const useUiStore = defineStore('ui', () => {
    * and comes back with it, until it is replaced or dismissed (B9)
    */
   const docks = ref<Record<string, { ids: Id[], shown: boolean }>>({})
+  /**
+   * Главная's cards that just got a record from the field (main flow, item 9): the moment, so the card's fresh tint
+   * (4 s, then a 1 s fade) starts again on every send
+   */
+  const freshPages = ref<Record<Id, number>>({})
 
   return {
     picker,
@@ -116,6 +121,7 @@ export const useUiStore = defineStore('ui', () => {
     refill,
     notice,
     docks,
+    freshPages,
     pick: (p: Picker) => {
       picker.value = { ...p, anchor: p.anchor === undefined ? anchorNow() : p.anchor }
     },

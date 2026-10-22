@@ -1,7 +1,7 @@
 // v22 delta: the «Check:» lines of Josh's points and the writing loop and pages (items 1, 4–10, 13, 15, 22, 24, 31, 33,
 // 34). Data (27–29, 9) is in data.mjs, properties (30) in props.mjs, the writing loop's notices in writing.mjs,
 // navigation in nav.mjs.
-import { DESKTOP, MOBILE, expect, open, pageOf, send, shows, store } from './lib.mjs'
+import { DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
 
 const NOW = new Date('2026-10-19T09:14:00+03:00')
 
@@ -11,10 +11,9 @@ const openPage = async (p, title) => {
   await p.waitForTimeout(400)
 }
 
-/** Rows of the page on screen that end above the composer */
+/** Rows of the page on screen that end above the field */
 const rowsInView = p => p.evaluate(() => {
-  const form = [...document.querySelectorAll('form')].find(f => f.querySelector('[aria-label="Новая запись"]'))
-  const top = form.getBoundingClientRect().top
+  const top = document.querySelector('[data-field="closed"]').getBoundingClientRect().top
   return [...document.querySelectorAll('main li')].filter((li) => {
     const r = li.getBoundingClientRect()
     return li.querySelector('[role="checkbox"]') && r.top >= 0 && r.bottom <= top + 1
@@ -85,19 +84,17 @@ export default [
       await p.waitForTimeout(300)
     }
   } },
-  // 4, day one: Главная with two pages made from templates
+  // 4, day one: Главная with its three pages (main flow, item 1) and each of them
   { id: 'v22-4-no-tips-day-one', device: MOBILE, run: async (p) => {
     const tip = /смахни|смахнуть|удерживай|подержи|наведи|подсказка|совет:/i
     await open(p, '/', false)
-    // One from a template (the templates then step aside), one made by hand
-    await p.getByRole('button', { name: /^Покупки/ }).first().click()
-    await p.waitForTimeout(600)
-    await store(p, data => data.createPage({ title: 'Задачи' }))
-    await p.reload()
-    await p.waitForSelector('main')
-    await p.waitForTimeout(600)
-    expect(await store(p, data => data.livePages.filter(x => x.kind === 'page').length) === 2, 'not two pages')
-    expect(!tip.test(await p.evaluate(() => document.body.innerText)), 'a tip on Главная with two pages')
+    expect(!tip.test(await p.evaluate(() => document.body.innerText)), 'a tip on Главная on day one')
+    for (const t of ['Покупки', 'Задачи', 'Идеи']) {
+      await openPage(p, t)
+      expect(!tip.test(await p.evaluate(() => document.body.innerText)), `a tip on ${t}`)
+      await p.goBack()
+      await p.waitForTimeout(300)
+    }
   } },
   // 5: «on Покупки send «молоко 2 л»: the row shows «2 л» at once and no «только что»» (кефир: Молоко is in the demo)
   { id: 'v22-5-props-not-time', device: MOBILE, run: async (p) => {
@@ -124,26 +121,10 @@ export default [
     await p.waitForTimeout(300)
     expect(!(await mark.isChecked()), 'a second tap did not untick')
   } },
-  // 7: «on Главная send «сыр, позвонить бабушке» → Сыр in Покупки, the call in Задачи, one receipt; «Отменить» removes both»
-  { id: 'v22-7-split', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    await p.getByRole('textbox', { name: 'Новая запись' }).fill('сыр, позвонить бабушке')
-    await p.waitForTimeout(500)
-    expect(await shows(p.getByText('→ Покупки 1, Задачи 1')), 'the guess line does not count per page')
-    await p.keyboard.press('Enter')
-    await p.getByRole('textbox', { name: 'Новая запись' }).blur()
-    await p.waitForTimeout(500)
-    expect(await pageOf(p, 'сыр') === 'Покупки' || await store(p, data => Object.values(data.records).filter(r => /^сыр$/i.test(r.text) && !r.deletedAt).length === 2), 'Сыр did not go to Покупки')
-    expect(await pageOf(p, 'позвонить бабушке') === 'Задачи', `the call went to ${await pageOf(p, 'позвонить бабушке')}`)
-    expect(await shows(p.getByText(/2 записи → Покупки, Задачи/)), 'no one receipt «2 записи → Покупки, Задачи»')
-    expect(!(await p.getByRole('button', { name: 'Не туда' }).count()), 'a split receipt has «Не туда» in its header')
-    await p.getByRole('button', { name: /^Отменить/ }).first().click()
-    await p.waitForTimeout(400)
-    expect(!(await pageOf(p, 'позвонить бабушке')), '«Отменить» left the call')
-  } },
+  // 8, 10, 22, 33, 34: receipts, series and found cards stay on Журнал's composer, off the main flow
   // 8: an expanded series receipt gives each row its own «→»
   { id: 'v22-8-series-rows', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     // Not on Покупки yet: a duplicate row offers «Объединить» in place of its «→» (item 25)
     await send(p, 'сметана')
     await send(p, 'творог')
@@ -153,9 +134,10 @@ export default [
   } },
   // 10: «type «где паспорт?» on Главная, «Записать»: the record reads «Где паспорт?»»; «идея:» is dropped
   { id: 'v22-10-as-typed', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'где паспорт?')
-    await p.getByRole('button', { name: /^Записать/ }).first().click()
+    // Журнал keeps an older found card above: the newest is the last
+    await p.getByRole('button', { name: /^Записать/ }).last().click()
     await p.waitForTimeout(500)
     expect(await store(p, data => Object.values(data.records).some(r => r.text === 'Где паспорт?' && !r.deletedAt)), 'no record «Где паспорт?»')
     await send(p, 'идея: календарь для кота')
@@ -189,7 +171,7 @@ export default [
   // 22: «send «когда менять фильтр?»: a receipt to Дела по дому, the record reads «Когда менять фильтр?», and
   // «Поменять фильтр воды» shows under it»
   { id: 'v22-22-question', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'когда менять фильтр?')
     expect(await shows(p.getByText(/1 запись → Дела по дому/)), 'no receipt to Дела по дому')
     expect(await store(p, data => Object.values(data.records).some(r => r.text === 'Когда менять фильтр?')), 'the record lost its «?»')
@@ -199,37 +181,26 @@ export default [
     expect(await shows(p.getByText(/^Нашлось|Нашёл|нашлось/)), 'an explicit search gives no found card')
   } },
   { id: 'v22-22-question-desk', device: DESKTOP, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'когда менять фильтр?')
     expect(await shows(p.getByText(/1 запись → Дела по дому/)), 'no receipt to Дела по дому')
     expect(await shows(p.getByText('Похожее в записях')), 'no «Похожее в записях»')
   } },
-  // 24: «pick Задачи in the chip: its checkbox glyph shows before «Задачи»»; Авто shows its fork
-  { id: 'v22-24-chip-glyph', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    const chip = p.getByRole('button', { name: /^Куда:/ })
-    expect(await chip.locator('svg, [class*="i-"], span.iconify').count(), 'the Авто chip has no glyph')
-    await openPage(p, 'Задачи')
-    const glyph = p.getByRole('button', { name: /^Куда:/ }).locator('svg, span[class*="i-"]').first()
-    const text = p.getByRole('button', { name: /^Куда:/ }).getByText('Задачи', { exact: true })
-    expect((await glyph.boundingBox()).x < (await text.boundingBox()).x, 'the glyph is not before «Задачи»')
-  } },
-  // 31: renames
+  // 31: renames; day one's pages are Покупки, Задачи and Идеи (main flow, item 1), Журнал is in Главная's «⋯» (item 20)
   { id: 'v22-31-renames', device: MOBILE, run: async (p) => {
     await open(p, '/', false)
-    for (const t of ['Покупки', 'Задачи', 'Цели', 'Идеи']) expect(await shows(p.getByRole('button', { name: new RegExp(`^${t}`) })), `no template «${t}»`)
-    await p.getByRole('button', { name: /^Задачи/ }).first().click()
-    await p.waitForTimeout(500)
-    expect(await store(p, data => data.livePages.some(x => x.title === 'Задачи')), 'the template «Задачи» made another name')
+    const names = await store(p, data => data.livePages.filter(x => x.kind === 'page').map(x => x.title).join(', '))
+    expect(names === 'Покупки, Задачи, Идеи', `day one's pages are ${names}`)
     await open(p, '/')
-    await p.getByRole('link', { name: 'Журнал' }).first().click()
+    await p.getByRole('button', { name: 'Меню Главной' }).click()
+    await p.locator('[data-home-menu]').getByRole('menuitem', { name: 'Журнал' }).click()
     await p.waitForURL(/\/journal/)
     expect(await shows(p.getByRole('heading', { name: 'Журнал' })), 'Журнал has no «Журнал» title')
     for (const word of ['Недавнее', 'Чат', 'из чата', 'Продукты']) expect(!(await p.getByText(word, { exact: true }).count()), `«${word}» is on screen`)
   } },
   // 33: «send «сыр, позвонить бабушке» on Главная: each row has its page glyph and no checkbox»
   { id: 'v22-33-receipt-rows', device: MOBILE, run: async (p) => {
-    await open(p, '/')
+    await open(p, '/journal')
     await send(p, 'сыр, позвонить бабушке')
     const card = p.locator('section, article, div').filter({ hasText: /^2 записи → Покупки, Задачи/ }).last()
     expect(!(await p.getByRole('checkbox', { name: /Сыр|Позвонить бабушке/ }).count()), 'a receipt row has a checkbox')
@@ -239,7 +210,7 @@ export default [
   { id: 'v22-34-pending', device: MOBILE, run: async (p) => {
     await p.clock.setSystemTime(NOW)
     await p.route('**/api.openai.com/**', () => {})
-    await open(p, '/')
+    await open(p, '/journal')
     await store(p, data => data.setSettings({ provider: 'openai', apiKey: 'sk-demo-0000000000000000000000000000000000007Qa2', keyState: 'ok', rulesFirst: false }))
     await send(p, 'кефир и сметана')
     expect(await shows(p.getByText('Разбирается…')), 'no «Разбирается…»')

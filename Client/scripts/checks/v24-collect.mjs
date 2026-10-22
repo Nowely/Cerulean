@@ -4,7 +4,6 @@
 import { DESKTOP, MOBILE, expect, open, shows, store } from './lib.mjs'
 
 const NOW = new Date('2026-10-19T09:14:00+03:00')
-const PHONE_320 = { ...MOBILE, viewport: { width: 320, height: 640 } }
 
 /** Text as read, the glued short words (NBSP) read as plain spaces */
 const plain = s => (s ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim()
@@ -13,6 +12,12 @@ const desktop = p => p.viewportSize().width >= 1024
 async function start(p, path = '/') {
   await p.clock.install({ time: NOW })
   await open(p, path)
+}
+
+/** Opens the main flow's field from its pill: the caret in its title */
+async function openField(p) {
+  await p.locator('[data-field="closed"] button').nth(1).click()
+  await p.waitForTimeout(300)
 }
 
 async function openPage(p, title) {
@@ -68,22 +73,6 @@ const SEVEN = [
   ['Длинная пробежка 14 км', 'Полумарафон к маю', 'сб'],
   ['Вернуть книгу в библиотеку', 'Задачи', 'вс']
 ]
-
-/** The summary under a page's name on Главная */
-const summaryOf = (p, title) => p.evaluate((t) => {
-  const row = [...document.querySelectorAll('main [role="listitem"]')].find(li => li.querySelector('a span.truncate')?.textContent.trim() === t)
-  const col = row?.querySelector('a span.flex-col')
-  const line = col && col.children.length > 1 ? col.lastElementChild : null
-  return line ? { text: line.textContent, cut: [...line.querySelectorAll('span')].some(s => s.scrollWidth > s.clientWidth + 1) } : null
-}, title)
-
-const SUMMARIES_390 = {
-  'Сегодня': '3 дела · оплатить интернет +2',
-  'Задачи': '3 дела · оплатить интернет +2',
-  'На неделе': '7 дел · оплатить интернет +6',
-  'Покупки': '6 купить · хлеб, молоко, сыр +3',
-  'Дела по дому': '2 дела · поменять фильтр воды, вызвать мастера'
-}
 
 /** The collecting view of На неделе, from the store */
 const weekView = p => store(p, d => d.livePages.find(x => x.title === 'На неделе').views[0])
@@ -189,24 +178,24 @@ export default [
   // дому» · «завтра» shows right after «Пробежка 6 км», the header counts «8 дел со всех страниц», and Дела по дому has
   // the record due завтра». The mockups type «купить лампочки», which this app's rules file to Покупки: «повесить
   // полку» is a line they file to Дела по дому
+  // Since the main flow the field says where in its chip (Авто's choice, tinted, item 5), with no line above it; the
+  // screen's own day is given with no chip, as on Сегодня: the row lands by its date in the list in front of you. The
+  // places list has no «Авто» row (item 6)
   { id: 'c24-10-composer', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
-    const field = p.getByRole('textbox', { name: 'Новая запись' })
-    const hint = await field.evaluate(e => e.getAttribute('aria-placeholder') ?? e.getAttribute('placeholder'))
-    expect(hint === 'Запись на неделю', `placeholder «${hint}»`)
-    const chip = p.getByRole('button', { name: /^Куда: / })
-    expect(plain(await chip.innerText()) === 'Авто', `the chip reads «${await chip.innerText()}»`)
-    await chip.click()
-    await p.waitForTimeout(900)
-    const picker = p.getByRole('dialog')
-    expect(!(await picker.getByRole('button', { name: /^Эта страница/ }).count()), 'the picker offers «Эта страница»')
-    expect(!(await picker.getByText('Шаблоны').count()), 'the picker offers «Шаблоны»')
-    expect(!(await picker.getByRole('button', { name: /^На неделе/ }).count()), 'the picker offers На неделе itself')
-    await closeTop(p)
-    await field.fill('повесить полку')
+    await openField(p)
+    await p.locator('[data-chip="main"]').click()
+    await p.waitForTimeout(500)
+    const places = p.locator('[data-places]')
+    expect(await shows(places), 'no places list')
+    const names = (await places.getByRole('button').allInnerTexts()).map(plain)
+    expect(!names.some(n => /^(Эта страница|Шаблоны|На неделе)/.test(n)), `the places list offers ${names.join(', ')}`)
+    await p.keyboard.press('Escape')
+    await p.waitForTimeout(300)
+    await p.keyboard.type('повесить полку')
     await p.waitForTimeout(600)
-    const line = p.locator('form').locator('xpath=preceding-sibling::p').last()
-    expect(plain(await line.innerText()) === '→ Дела по дому · завтра', `the line reads «${await line.innerText()}»`)
+    const chip = plain(await p.locator('[data-chip="main"]').innerText())
+    expect(chip === 'Дела по дому', `the chip reads «${chip}»`)
     await p.keyboard.press('Enter')
     await p.waitForTimeout(1200)
     const rows = await collectRows(p)
@@ -214,8 +203,8 @@ export default [
     expect(at === 3 && rows[2].text === 'Пробежка 6 км', `Повесить полку is row ${at}: ${rows.map(r => r.text)}`)
     expect(rows[at].home === 'Дела по дому' && rows[at].end === 'завтра', `the row reads ${JSON.stringify(rows[at])}`)
     expect(await p.locator('[data-collect-row].fresh-tint').count() === 1, 'the new row has no fresh tint')
-    const head = plain(await p.locator('h1 + * , p.text-meta').filter({ hasText: 'со всех страниц' }).first().innerText())
-    expect(head.startsWith('8 дел со всех страниц'), `the header reads «${head}»`)
+    // Main flow, acceptance 1: no count or source line under the title, only the warn word
+    expect(!(await p.getByText(/со всех страниц/).count()), 'a source line under the title')
     const rec = await store(p, (d) => {
       const r = Object.values(d.records).find(x => x.text === 'Повесить полку')
       return r && { page: d.pages[r.pageId].title, due: r.due?.date }
@@ -225,84 +214,41 @@ export default [
   // 10: «A day named in the text wins over the filter's: «забрать посылку в четверг» shows «чт»»
   { id: 'c24-10-own-day', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
-    const field = p.getByRole('textbox', { name: 'Новая запись' })
-    await field.fill('забрать посылку в четверг')
+    await openField(p)
+    await p.keyboard.type('забрать посылку в четверг')
+    await p.waitForTimeout(400)
     await p.keyboard.press('Enter')
     await p.waitForTimeout(1500)
     const row = (await collectRows(p)).find(r => r.text.startsWith('Забрать посылку'))
     expect(row?.end === 'чт', `the row reads ${JSON.stringify(row)}`)
   } },
-  // 11: «On «Ремонт на кухне» tap the «На неделе» starter. … «Что сюда класть?» go, the header reads «7 дел со всех
-  // страниц · 1 просрочено», the chip reads «Авто». Tap «Задачи» instead: the lines and the field are back»
-  { id: 'c24-11-starter', device: MOBILE, run: async (p) => {
-    await start(p)
-    const id = await store(p, d => d.createPage({ title: 'Ремонт на кухне' }).id)
-    await open(p, `/p/${id}`, false)
-    await p.waitForTimeout(400)
-    expect(await shows(p.getByText('Что сюда класть?')), 'a new page has no «Что сюда класть?»')
-    await p.getByRole('button', { name: 'На неделе', exact: true }).click()
-    await p.waitForTimeout(700)
-    expect(!(await p.getByText('Что сюда класть?').count()), '«Что сюда класть?» stays on a collecting page')
-    const head = plain(await p.locator('p').filter({ hasText: 'со всех страниц' }).first().innerText())
-    expect(head === '7 дел со всех страниц · 1 просрочено', `the header reads «${head}»`)
-    expect(plain(await p.getByRole('button', { name: /^Куда: / }).innerText()) === 'Авто', 'the chip is not «Авто»')
-    expect(await store(p, (d, pid) => d.pages[pid].title, id) === 'Ремонт на кухне', 'the title changed')
-    await p.getByRole('button', { name: 'Задачи', exact: true }).click()
-    await p.waitForTimeout(700)
-    expect(await shows(p.getByText('Что сюда класть?')), 'the field is not back after «Задачи»')
-    expect(!(await p.locator('[data-collect-row]').count()), 'Задачи still collects')
-  } },
   // 11: «Главная: Избранное lists Сегодня, Полумарафон к маю, На неделе. На неделе's row reads «7 дел · оплатить
-  // интернет +6», with no status word beside its name»
+  // интернет +6», with no status word beside its name». Since the main flow Сегодня sits over the captions with Входящие
+  // (item 1) and a card is its content with the count at the right (item 17)
   { id: 'c24-11-home', device: MOBILE, run: async (p) => {
     await start(p)
     const fav = await p.evaluate(() => {
       const sec = [...document.querySelectorAll('main section')].find(s => s.querySelector('h2, h3, button')?.textContent.includes('Избранное'))
       return [...(sec?.querySelectorAll('[role="listitem"] a span.flex-col > span:first-child > span:first-child') ?? [])].map(s => s.textContent.trim()).filter(Boolean)
     })
-    expect(JSON.stringify(fav.slice(0, 3)) === JSON.stringify(['Сегодня', 'Полумарафон к маю', 'На неделе']), `Избранное: ${fav}`)
-    const week = await summaryOf(p, 'На неделе')
-    expect(plain(week?.text) === '7 дел · оплатить интернет +6', `На неделе reads «${week?.text}»`)
+    expect(JSON.stringify(fav.slice(0, 2)) === JSON.stringify(['Полумарафон к маю', 'На неделе']), `Избранное: ${fav}`)
     const badge = await p.evaluate(() => {
-      const row = [...document.querySelectorAll('main [role="listitem"]')].find(li => li.querySelector('a span.truncate')?.textContent.trim() === 'На неделе')
-      return row.querySelector('a span.flex-col > span:first-child').textContent.replace(/\s+/g, ' ').trim()
+      const row = [...document.querySelectorAll('main [role="listitem"]')].find(li => li.querySelector('[data-name]')?.textContent.trim() === 'На неделе')
+      return { open: row.querySelector('[data-open]')?.textContent.replace(/\s+/g, ' ').trim(), late: /просрочено/.test(row.textContent) }
     })
-    expect(badge === 'На неделе', `a status beside На неделе: «${badge}»`)
+    expect(badge.open === 'открытых: 7' && !badge.late, `beside На неделе: ${JSON.stringify(badge)}`)
   } },
   // 17: «Главная at 390 reads: Сегодня «3 дела · оплатить интернет +2»; Задачи …; На неделе …; Покупки …; Дела по
-  // дому …. No summary ends in «…», at 390 or at 320. Сегодня's own page reads «3 дела со всех страниц · 1 просрочено»»
+  // дому …. No summary ends in «…», at 390 or at 320. Сегодня's own page reads «3 дела со всех страниц · 1 просрочено»».
+  // Главная's cards are their content since the main flow (item 17, mf-17-cards); Сегодня's page keeps its line
   { id: 'c24-17-summaries', device: MOBILE, run: async (p) => {
     await start(p)
-    for (const [title, want] of Object.entries(SUMMARIES_390)) {
-      const got = await summaryOf(p, title)
-      expect(plain(got?.text) === want && !got.cut, `${title} reads «${got?.text}»${got?.cut ? ', cut' : ''}`)
-    }
     await p.getByRole('link', { name: /^Сегодня/ }).first().click()
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(500)
-    const sub = plain(await p.locator('p').filter({ hasText: 'со всех страниц' }).first().innerText())
-    expect(sub === '3 дела со всех страниц · 1 просрочено', `Сегодня reads «${sub}»`)
-  } },
-  { id: 'c24-17-summaries-320', device: PHONE_320, run: async (p) => {
-    await start(p)
-    const cut = await p.evaluate(() => [...document.querySelectorAll('main [role="listitem"] a span.flex-col > span:last-child')]
-      .filter(l => [...l.querySelectorAll('span')].some(s => s.scrollWidth > s.clientWidth + 1) || l.textContent.includes('…'))
-      .map(l => l.textContent))
-    expect(!cut.length, `cut at 320: ${cut}`)
-  } },
-  // D4: «Сегодня reads «3 дела · оплатить интернет, позвонить стоматологу, пробежка 6 км». На неделе reads «7 дел ·
-  // оплатить интернет, позвонить стоматологу, пробежка 6 км +4». Задачи reads «3 дела · …, вернуть книгу в библиотеку»»
-  { id: 'c24-d4-summaries', device: DESKTOP, run: async (p) => {
-    await start(p)
-    const want = {
-      'Сегодня': '3 дела · оплатить интернет, позвонить стоматологу, пробежка 6 км',
-      'На неделе': '7 дел · оплатить интернет, позвонить стоматологу, пробежка 6 км +4',
-      'Задачи': '3 дела · оплатить интернет, позвонить стоматологу, вернуть книгу в библиотеку'
-    }
-    for (const [title, line] of Object.entries(want)) {
-      const got = await summaryOf(p, title)
-      expect(plain(got?.text) === line && !got.cut, `${title} reads «${got?.text}»`)
-    }
+    // Main flow, acceptance 1: no count or source line under the title, only the warn word
+    const sub = plain(await p.locator('main p.text-warn').first().innerText())
+    expect(sub === '1 просрочено' && !(await p.getByText(/со всех страниц/).count()), `Сегодня reads «${sub}»`)
   } },
   // 18: «Сегодня shows «На неделе · 4 ›». Open it: ср, пт, сб, вс in that order, each with its home page on line 2.
   // Дела по дому: «Поменять фильтр воды · ср, 21 окт», «Вызвать мастера · пт, 23 окт»»
@@ -377,7 +323,7 @@ export default [
   { id: 'c24-21-one-warn', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
     const look = await p.evaluate(() => {
-      const warn = document.querySelector('main p .text-warn')
+      const warn = document.querySelector('main p.text-warn')
       const row = document.querySelector('[data-collect-row]')
       const home = row.querySelector('button.flex-col').children[1]
       const end = row.querySelector('button.flex-col + span')
@@ -424,8 +370,9 @@ export default [
   // off and the glyph goes. Задачи's own «Сортировка» stays «Вручную»»
   { id: 'c24-23-note', device: MOBILE, run: async (p) => {
     await openPage(p, 'Задачи')
-    const glyph = () => p.locator('[data-row-text]').filter({ hasText: 'Вернуть книгу' }).locator('xpath=..').locator('[aria-label="есть заметка"]').count()
-    expect(await glyph() === 1, 'Вернуть книгу shows no note glyph')
+    // The note glyph is the text's first line under the row since the main flow (item 12)
+    const glyph = () => p.locator('[data-row-text]').filter({ hasText: 'Вернуть книгу' }).locator('[data-row-note]').count()
+    expect(await glyph() === 1, 'Вернуть книгу shows no note line')
     await pageMenu(p, 'Настроить вид')
     const sw = p.getByRole('switch', { name: 'Заметка' })
     expect(await sw.getAttribute('aria-checked') === 'true', '«Заметка» is off')
@@ -487,8 +434,8 @@ export default [
     await p.waitForTimeout(800)
     expect(plain(await p.getByRole('button', { name: /^Страницы/ }).innerText()) === 'Страницы 2', 'the row does not count two')
     await closeTop(p)
-    const head = plain(await p.locator('p').filter({ hasText: 'страниц' }).first().innerText())
-    expect(head.startsWith('5 дел с 2 страниц'), `the header reads «${head}»`)
+    // Main flow, acceptance 1: no count or source line under the title, only the warn word
+    expect(!(await p.getByText(/дел с \d страниц/).count()), 'a source line under the title')
   } },
   // 25: «На неделе «⋯» has no «Что сюда класть». Switch its view to «Эта страница»: the row is back with «не задано».
   // Задачи «⋯» has the row»
@@ -505,20 +452,6 @@ export default [
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(500)
     expect((await menuRows(p)).some(r => r.startsWith('Что сюда класть')), 'Задачи has no «Что сюда класть»')
-  } },
-  // 26: «На неделе at rest: «Авто · без дня — на завтра» above the pill, with no arrow. … Задачи and Сегодня at rest:
-  // no line above the pill»
-  { id: 'c24-26-rule', device: MOBILE, run: async (p) => {
-    await openPage(p, 'На неделе')
-    const line = () => p.locator('form').locator('xpath=preceding-sibling::p').allInnerTexts()
-    expect((await line()).map(plain).join() === 'Авто · без дня — на завтра', `at rest: ${await line()}`)
-    for (const title of ['Задачи', 'Сегодня']) {
-      await open(p, '/')
-      await p.getByRole('link', { name: new RegExp(`^${title}`) }).first().click()
-      await p.waitForURL(/\/p\//)
-      await p.waitForTimeout(500)
-      expect(!(await line()).length, `${title} at rest: ${await line()}`)
-    }
   } },
   // 27: «The «Фильтр» sheet reads «Фильтр» / «вид «Список»», and the Метка row is «Ждут уточнения»; no chip reads
   // «уточнить». On a view with «Все страницы» and Срок «Любой», tap «Ждут уточнения»: only Подарок маме на др and
@@ -616,7 +549,7 @@ export default [
     expect(!(await p.getByRole('dialog').locator('[data-notice]').count()), 'the notice is inside the popover')
     const where = await p.evaluate(() => {
       const n = document.querySelector('[data-notice]').getBoundingClientRect()
-      const form = document.querySelector('form').getBoundingClientRect()
+      const form = document.querySelector('[data-field="closed"]').getBoundingClientRect()
       return { above: n.bottom <= form.top + 1, right: Math.abs(n.right - form.right) < 4 }
     })
     expect(where.above && where.right, `the notice is not above the composer at its right: ${JSON.stringify(where)}`)

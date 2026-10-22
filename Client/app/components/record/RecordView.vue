@@ -1,5 +1,7 @@
 <script setup lang="ts">
-// Every record is a page: its properties, its body edited in place (v23), «Связано», Подпункты.
+// Every record is a page: its properties, its body edited in place (v23), «Связано», Подпункты, and no bottom field
+// (main flow, items 13–15): the text is written in place and subitems are added with «+ Подпункт». On the full page
+// «Связать» is in the record's «⋯».
 // Same component full (from navigation) and as a preview (from a link). A preview reads and ticks, and keeps
 // the record's properties, «+ Свойство» and «Связать» (spec, Preview); the phone's sheet and the desktop panel (edit)
 // also take the body. The title stays for «Открыть». A glance (the preview in Поиск) only reads: values as plain
@@ -26,6 +28,7 @@ import PropValue from './PropValue.vue'
 import RecordLinks from './RecordLinks.vue'
 import LinkPicker from './LinkPicker.vue'
 import BodyField from '../body/BodyField.vue'
+import AddRow from '../common/AddRow.vue'
 import { bodyOf } from '~/domain/body'
 
 const props = withDefaults(defineProps<{
@@ -69,8 +72,6 @@ watch([() => ui.focusTitle, titleField], async ([id, field]) => {
   await nextTick()
   field.focus()
 }, { immediate: true })
-/** The body has the caret: an empty «Подпункты» stops pointing at the composer the bar replaced (M8) */
-const bodyFocused = ref(false)
 const bodyBox = useTemplateRef<HTMLElement>('bodyBox')
 const tail = useFreshTail(() => full.value ? props.rec.id : undefined, bodyBox)
 
@@ -81,12 +82,13 @@ watch(() => props.rec.id, () => {
   added.value = []
 })
 const listed = computed(() => page.value ? propList(page.value, { norms: true }) : [])
+/** «Добавлено» leads, then «Срок», then the page's properties in its order (main flow, item 13) */
 const rows = computed(() => listed.value.filter((p) => {
   if (p.key === 'note') return false
   // On desktop the empty Срок row offers «Добавить срок»
   if (p.key === 'due') return !!props.rec.due || added.value.includes('due') || (isDesktop.value && !glance.value)
   return hasValue(props.rec.values[p.key]) || added.value.includes(p.key)
-}))
+}).sort((a, b) => Number(b.key === 'due') - Number(a.key === 'due')))
 /** «+ Свойство» lists what the record does not show yet; Заметка has its own row, «Норма» goes with its number */
 const addable = computed(() => listed.value.filter(p => p.key !== 'note' && !rows.value.includes(p) && !(p.prop && isNorm(page.value!, p.prop))))
 
@@ -114,10 +116,23 @@ function newProp() {
   afterPick = () => propSheets.create(pageId, { from: 'record', onBack: p => p && void reveal(p.id) })
   picking.value = false
 }
+/** Nothing of the page's to add: the tap opens «Новое свойство» at once, with no sheet that says so (acceptance 1) */
+function openPicker(open: boolean) {
+  if (open && !addable.value.length) {
+    propSheets.create(props.rec.pageId, { from: 'record', onBack: p => p && void reveal(p.id) })
+    return
+  }
+  picking.value = open
+}
 function picked() {
   const run = afterPick
   afterPick = null
   run?.()
+}
+
+/** «+ Подпункт»: the subitem goes to the end of the list, with the fresh tint */
+function addSub(text: string) {
+  data.addRecord({ pageId: props.rec.pageId, parentId: props.rec.id, text })
 }
 
 function openSub(r: Rec) {
@@ -199,11 +214,19 @@ function openPlace() {
       />
     </div>
 
-    <!-- Properties in the page's order: empty ones are hidden -->
+    <!-- «Добавлено», «Срок», then the properties in the page's order: empty ones are hidden -->
     <dl
       class="mt-2.5 px-4 text-15 lg:mt-5 lg:px-0"
       :class="!full ? 'lg:px-4' : ''"
     >
+      <div class="flex min-h-10 items-center">
+        <dt class="w-28 shrink-0 text-toned">
+          Добавлено
+        </dt>
+        <dd class="text-highlighted">
+          {{ formatAdded(rec.addedAt, now) }}
+        </dd>
+      </div>
       <div
         v-for="p in rows"
         :key="p.key"
@@ -256,29 +279,32 @@ function openPlace() {
           уточнить
         </dd>
       </div>
-      <div class="flex min-h-10 items-center">
-        <dt class="w-28 shrink-0 text-toned">
-          Добавлено
-        </dt>
-        <dd class="text-highlighted">
-          {{ formatAdded(rec.via, rec.addedAt, now) }}
-        </dd>
-      </div>
       <div
         v-if="!glance"
-        class="-ml-1 flex gap-3"
+        class="flex gap-3"
+        :class="full ? '-mx-4 lg:mx-0' : '-ml-1'"
       >
-        <!-- «+ Свойство»: only what the record does not show yet, and «Новое свойство…» (B12) -->
+        <!-- «+ Свойство»: only what the record does not show yet, and «Новое свойство…» (B12); on the full page the
+             shared add row (main flow, item 13) -->
         <AdaptiveOverlay
-          v-model:open="picking"
+          v-if="addable.length || page?.kind === 'page'"
+          :open="picking"
           title="Добавить свойство"
           :subtitle="rec.text"
           width="w-72"
           align="start"
+          @update:open="openPicker"
           @closed="picked"
         >
           <template #trigger>
+            <AddRow
+              v-if="full"
+              label="Свойство"
+              :line="false"
+              class="flex-1"
+            />
             <button
+              v-else
               type="button"
               class="flex h-11 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted lg:h-10"
               :aria-expanded="picking"
@@ -304,14 +330,11 @@ function openPlace() {
               <span class="min-w-0 flex-1 truncate text-highlighted">{{ p.name }}</span>
               <span class="shrink-0 text-sm text-toned">{{ TYPE_NAMES[p.type] }}</span>
             </button>
-            <p
-              v-if="!addable.length"
-              class="px-3 pt-1 pb-2.5 text-sm text-toned"
-            >
-              Все свойства страницы уже есть у записи.
-            </p>
             <template v-if="page?.kind === 'page'">
-              <div class="mx-3 my-1.5 border-t border-default" />
+              <div
+                v-if="addable.length"
+                class="mx-3 my-1.5 border-t border-default"
+              />
               <button
                 type="button"
                 class="flex min-h-12.5 w-full cursor-pointer items-center gap-3 rounded-chip px-3 text-left text-base text-highlighted hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
@@ -326,7 +349,10 @@ function openPlace() {
             </template>
           </div>
         </AdaptiveOverlay>
-        <LinkPicker :rec="rec">
+        <LinkPicker
+          v-if="!full"
+          :rec="rec"
+        >
           <button
             type="button"
             class="flex h-11 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted lg:h-10"
@@ -362,7 +388,6 @@ function openPlace() {
         label="Заметка"
         :context="rec.text"
         :editable="editable"
-        @focus="v => bodyFocused = v"
       />
     </div>
 
@@ -387,15 +412,17 @@ function openPlace() {
       />
     </section>
 
-    <!-- Подпункты always have the checkbox -->
+    <!-- Подпункты always have the checkbox; the caption only once there are some, then «+ Подпункт» (main flow, item 15) -->
     <section
       v-if="subs.length || full"
       class="lg:mt-2"
-      aria-labelledby="subs-title"
+      :aria-labelledby="subs.length ? 'subs-title' : undefined"
+      :aria-label="subs.length ? undefined : 'Подпункты'"
     >
       <h2
+        v-if="subs.length"
         id="subs-title"
-        class="px-4 pt-3 text-cap leading-6 text-toned lg:px-0 lg:pb-1 lg:leading-5"
+        class="px-4 pt-4.5 text-cap leading-6 text-toned lg:px-0 lg:pt-3 lg:pb-1 lg:leading-5"
         :class="!full ? 'lg:px-4' : ''"
       >
         Подпункты
@@ -429,12 +456,12 @@ function openPlace() {
           :class="{ 'rotate-90': doneShown }"
         />
       </button>
-      <p
-        v-else-if="!subs.length"
-        class="px-4 pt-1 text-15 leading-[1.5] text-toned lg:mt-0.5 lg:px-0 lg:pt-0 lg:leading-9 lg:text-dimmed"
-      >
-        {{ full && !bodyFocused ? 'Подпунктов пока нет. Пиши внизу, и они появятся здесь.' : 'Подпунктов пока нет.' }}
-      </p>
+      <AddRow
+        v-if="full"
+        label="Подпункт"
+        :class="subs.length ? 'pt-0.5' : 'pt-2'"
+        @add="addSub"
+      />
     </section>
   </div>
 </template>

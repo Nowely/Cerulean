@@ -41,7 +41,9 @@ const props = withDefaults(defineProps<{
   lifted?: boolean
   /** Desktop: the ⋮⋮ handle's bindings (`useDragSort().handle`) */
   grip?: Record<string, unknown>
-}>(), { readonly: false, selected: false, wrap: false, reveal: false, day: false, lifted: false, grip: undefined })
+  /** Written from elsewhere since the page was last opened: the fresh tint as the page opens (main flow, item 10) */
+  tint?: boolean
+}>(), { readonly: false, selected: false, wrap: false, reveal: false, day: false, lifted: false, grip: undefined, tint: false })
 
 const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'], shift: [by: -1 | 1] }>()
 
@@ -69,7 +71,7 @@ function openMenu() {
 const subs = computed(() => data.subitemsOf(props.rec.id))
 const subsDone = computed(() => subs.value.filter(s => s.done).length)
 // The rows of the latest send carry the fresh tint, which fades by itself (fresh-tint); nothing says «только что»
-const fresh = computed(() => Date.now() - props.rec.addedAt < 5000 && !props.rec.done)
+const fresh = computed(() => (props.tint || Date.now() - props.rec.addedAt < 5000) && !props.rec.done)
 // A row just written here comes into view, wherever its group puts it (B4: a long page sorted by Отдел)
 onMounted(() => {
   if (props.reveal && fresh.value) el.value?.scrollIntoView({ block: 'nearest' })
@@ -123,9 +125,11 @@ const stock = computed(() => {
   return { prop, value, norm: typeof norm === 'number' ? norm : null, low: typeof norm === 'number' && value < norm }
 })
 
-/** «Заметка» of «Справа в строке» is the note glyph, on unless the view switched it off (v24 fixes, 14) */
-const noteText = computed(() => docText(bodyOf(props.rec), data.nameOf))
-const noteGlyph = computed(() => !!noteText.value && !props.view?.noteOff)
+/**
+ * The record's text shows as the row's second line, its first line cut with an ellipsis (main flow, item 12, as in
+ * Mail and Notes): it replaces the note glyph of «Справа в строке», and the view can still switch it off (v24 fixes, 14)
+ */
+const noteLine = computed(() => props.view?.noteOff ? '' : docText(bodyOf(props.rec), data.nameOf).split('\n').find(l => l.trim())?.trim() ?? '')
 
 function step(by: number) {
   if (!stock.value) return
@@ -319,6 +323,11 @@ const inboxMenu = computed<MenuItem[][]>(() => [
               :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
             >{{ nb(rec.text) }}</span>
             <span
+              v-if="noteLine && !stock"
+              class="truncate text-sm leading-4.75 text-toned"
+              data-row-note
+            >{{ noteLine }}</span>
+            <span
               v-if="stock && (stock.low || stock.norm !== null)"
               class="flex items-center gap-1 text-13 text-toned"
             >
@@ -331,7 +340,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
           </button>
 
           <span
-            v-if="waiting || subs.length || noteGlyph || right.length"
+            v-if="waiting || subs.length || right.length"
             class="flex shrink-0 items-center gap-2.5 pl-0.5 text-meta text-toned tabular-nums max-lg:min-h-7"
           >
             <span v-if="waiting">ждёт сети</span>
@@ -339,12 +348,6 @@ const inboxMenu = computed<MenuItem[][]>(() => [
               v-if="subs.length"
               :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
             >{{ subsDone }}/{{ subs.length }}</span>
-            <UIcon
-              v-if="noteGlyph"
-              name="i-lucide-file-text"
-              class="size-4"
-              aria-label="есть заметка"
-            />
             <template
               v-for="r in right"
               :key="r.key"

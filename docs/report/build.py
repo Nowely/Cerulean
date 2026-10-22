@@ -1,12 +1,15 @@
 # Builds docs/ui-current-state.html and docs/ui-state/{app,mock}/*.webp (light over dark in one file): the app next to the mockup for every
 # state, light and dark, and the check table (each handoff item and bug with its check and result).
-# Usage: python3 docs/report/build.py <app shots dir> <mockup shots dir> docs docs/report/data.json
+# Usage: python3 docs/report/build.py <app shots dir> <mockup shots dir> docs docs/report/data.json [page name] [frames dir]
+# A round's own report takes its own names: … docs/report/main-flow.json main-flow-state main-flow-state
 import json, html, os, shutil, sys
 from PIL import Image
 
 app_dir, mock_dir, docs, data_path = sys.argv[1:5]
+page_name = sys.argv[5] if len(sys.argv) > 5 else 'ui-current-state'
+frames_dir = sys.argv[6] if len(sys.argv) > 6 else 'ui-state'
 data = json.load(open(data_path))
-out = os.path.join(docs, 'ui-state')
+out = os.path.join(docs, frames_dir)
 shutil.rmtree(out, ignore_errors=True)
 for sub in ('app', 'mock'):
     os.makedirs(os.path.join(out, sub))
@@ -45,7 +48,7 @@ for group in data['groups']:
             srcs = [os.path.join(folder, f'{name}-{theme}.png') for theme in ('light', 'dark')]
             if not all(os.path.exists(x) for x in srcs):
                 continue
-            dst = f'ui-state/{kind}/{name}.webp'
+            dst = f'{frames_dir}/{kind}/{name}.webp'
             imgs[kind] = (dst, sprite(srcs, os.path.join(docs, dst), desktop))
             frames += 2
         label, cls = TAGS[s['tag']]
@@ -103,7 +106,8 @@ page = (tpl
         .replace('@@SAME@@', str(counts.get('same', 0) + counts.get('better', 0)))
         .replace('@@DIFF@@', str(counts.get('diff', 0)))
         .replace('@@WAIT@@', str(counts.get('wait', 0))))
-for k, v in data['fill'].items():
+fill = {'TITLE': 'Состояние фронта Cerulean', 'HEADING': 'Приложение рядом с макетом', **data['fill']}
+for k, v in fill.items():
     page = page.replace('@@' + k + '@@', v)
-open(os.path.join(docs, 'ui-current-state.html'), 'w').write(page)
+open(os.path.join(docs, f'{page_name}.html'), 'w').write(page)
 print('states', states, 'frames', frames, counts)
