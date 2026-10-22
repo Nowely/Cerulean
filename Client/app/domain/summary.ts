@@ -107,7 +107,7 @@ export function pageSummary(page: Page, records: Rec[], now: number, today: Rec[
     const left = open(records)
     if (!left.length) return { lead: 'Сюда попадает то, что не удалось разложить', names: '', more: 0 }
     // In the page's own order, the newest on top, as Входящие lists them
-    return { lead: '', ...names(byAction(sortRecords(left, 'manual'), now, page.seenAt), page, 2) }
+    return { lead: '', ...names(byAction(sortRecords(left, 'manual'), now, page.seenAt), page) }
   }
   if (!records.length) {
     return { lead: page.title.trim() ? 'Нет записей' : 'Новая страница', names: '', more: 0 }

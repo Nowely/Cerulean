@@ -62,11 +62,16 @@ export default ({ MOBILE, DESKTOP, settle, open, openPage, data, keyed }) => {
     { name: 'MobileTodayEmpty', device: MOBILE, run: async (p) => {
       // What was due today and overdue is done; the week ahead is still there
       await open(p, '/')
+      // The demo may still be loading: wait for its records, or the update finds none (the dark frame showed Сегодня as is)
+      await p.waitForFunction(() => document.querySelector('#__nuxt')?.__vue_app__?.config.globalProperties.$pinia._s.get('data')?.liveRecords.length > 0)
       await data(p, (d) => {
         const today = new Date().toISOString().slice(0, 10)
         for (const r of d.liveRecords) if (r.due && r.due.date <= today && !r.done) d.updateRecord(r.id, { done: true })
       })
-      await openPage(p, 'Сегодня', false)
+      // In the app, not by a reload: a reload would reopen the demo before every write is stored
+      await p.getByRole('link', { name: /Сегодня/ }).first().click()
+      await p.waitForURL(/\/p\//)
+      await settle(p, 400)
     } },
     { name: 'MobileChatPast', device: MOBILE, run: past },
     { name: 'MobileTrashMenu', device: MOBILE, run: async (p) => {

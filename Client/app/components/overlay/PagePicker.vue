@@ -146,8 +146,8 @@ const row = 'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-chip
   >
     <template #content>
       <div
-        class="flex max-h-[85dvh] flex-col"
-        :class="anchor ? 'max-h-[min(30rem,var(--reka-popover-content-available-height))] px-2 pt-3 pb-2' : 'lg:max-h-[70dvh]'"
+        class="flex flex-col"
+        :class="anchor ? 'max-h-[min(30rem,var(--reka-popover-content-available-height))] px-2 pt-3 pb-2' : 'max-h-[85dvh] max-lg:h-[85dvh] lg:max-h-[70dvh]'"
       >
         <!-- No × (v23, F18): a tap outside, a swipe down or Esc closes it -->
         <div

@@ -246,12 +246,13 @@ const indexOf = (h: Hit) => flat.value.indexOf(h)
                   </span>
                 </template>
                 <template v-else>
+                  <!-- The mark takes the glyph's 18px column, its hit box overhanging, so every name starts at one x -->
                   <RecordMark
                     :rec="h.rec"
                     :page="data.pages[h.rec.pageId]"
                     size="sm"
                     area="tight"
-                    class="-mx-0.5"
+                    class="-mx-2.75 lg:-mx-2.25"
                     @toggle="data.toggleDone(h.rec.id)"
                   />
                   <span class="flex min-w-0 flex-1 flex-col py-1">

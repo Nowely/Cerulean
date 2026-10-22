@@ -15,7 +15,17 @@ import { coverHeight, DOCK_LINE } from '~/composables/useDockEdge'
 /** The dock's column: Главная 720, Журнал 640, pages 680 */
 const props = withDefaults(defineProps<{ wide?: boolean, chat?: boolean }>(), { wide: false, chat: false })
 const scroller = useTemplateRef<HTMLElement>('scroller')
-const { arrivedState } = useScroll(scroller)
+const { arrivedState, measure: measureEnds } = useScroll(scroller)
+// The ends move without a scroll too: the dock grows (a receipt docks, the keys come up) or rows come and go. useScroll
+// only looks again on a scroll, so a list that fitted kept «at the bottom» and lost its fade
+let resized: ResizeObserver | null = null
+watch(scroller, (el) => {
+  resized?.disconnect()
+  if (!el) return
+  resized = new ResizeObserver(() => measureEnds())
+  resized.observe(el)
+  for (const child of el.children) resized.observe(child)
+}, { immediate: true, flush: 'post' })
 const body = useBodyEditing()
 const hard = computed(() => body.on('main'))
 const fadeTop = computed(() => !arrivedState.top && !hard.value)
@@ -51,6 +61,7 @@ watch([dockLine, scroller], ([on, el]) => {
   void nextTick(measure)
 })
 onBeforeUnmount(() => {
+  resized?.disconnect()
   cancelAnimationFrame(frame)
   sized?.disconnect()
   scroller.value?.removeEventListener('scroll', measure)

@@ -121,11 +121,13 @@ async function replace() {
           <p class="mx-1 -mt-0.5 mb-2 text-center text-13 text-toned">
             {{ MERGE }}
           </p>
+          <!-- The phone's «Заменить всё» is warn text (spec, Import); `warn-ink` is the desktop dialog's -->
           <UButton
             color="error"
             variant="outline"
             size="xl"
             block
+            class="text-warn"
             @click="step = 'confirm'"
           >
             Заменить всё
