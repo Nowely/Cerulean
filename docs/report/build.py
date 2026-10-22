@@ -1,4 +1,4 @@
-# Builds docs/ui-current-state.html and docs/ui-state/{app,mock}/*.webp: the app next to the mockup for every
+# Builds docs/ui-current-state.html and docs/ui-state/{app,mock}/*.webp (light over dark in one file): the app next to the mockup for every
 # state, light and dark, and the check table (each handoff item and bug with its check and result).
 # Usage: python3 docs/report/build.py <app shots dir> <mockup shots dir> docs docs/report/data.json
 import json, html, os, shutil, sys
@@ -11,12 +11,21 @@ shutil.rmtree(out, ignore_errors=True)
 for sub in ('app', 'mock'):
     os.makedirs(os.path.join(out, sub))
 
-def webp(src, dst, desktop):
-    im = Image.open(src).convert('RGB')
+def sprite(srcs, dst, desktop):
+    """Light over dark in one file (an artifact holds at most 511 files); the page shows the half of the chosen theme"""
     w = 1440 if desktop else 780
-    if im.width != w:
-        im = im.resize((w, round(im.height * w / im.width)), Image.LANCZOS)
-    im.save(dst, 'WEBP', quality=78, method=6)
+    ims = []
+    for src in srcs:
+        im = Image.open(src).convert('RGB')
+        if im.width != w:
+            im = im.resize((w, round(im.height * w / im.width)), Image.LANCZOS)
+        ims.append(im)
+    h = ims[0].height
+    sheet = Image.new('RGB', (w, h * 2))
+    for i, im in enumerate(ims):
+        sheet.paste(im if im.height == h else im.resize((w, h), Image.LANCZOS), (0, h * i))
+    sheet.save(dst, 'WEBP', quality=78, method=6)
+    return w, h
 
 TAGS = {
     'same': ('Как в макете', 'same'),
@@ -32,24 +41,22 @@ for group in data['groups']:
     for s in group['states']:
         desktop = s.get('desktop', False)
         imgs = {}
-        for theme in ('light', 'dark'):
-            for kind, folder, name in (('mock', mock_dir, s['mock']), ('app', app_dir, s['app'])):
-                src = os.path.join(folder, f'{name}-{theme}.png')
-                if not os.path.exists(src):
-                    continue
-                dst = f'ui-state/{kind}/{name}-{theme}.webp'
-                webp(src, os.path.join(docs, dst), desktop)
-                imgs[(kind, theme)] = dst
-                frames += 1
+        for kind, folder, name in (('mock', mock_dir, s['mock']), ('app', app_dir, s['app'])):
+            srcs = [os.path.join(folder, f'{name}-{theme}.png') for theme in ('light', 'dark')]
+            if not all(os.path.exists(x) for x in srcs):
+                continue
+            dst = f'ui-state/{kind}/{name}.webp'
+            imgs[kind] = (dst, sprite(srcs, os.path.join(docs, dst), desktop))
+            frames += 2
         label, cls = TAGS[s['tag']]
-        def pic(kind, theme):
-            p = imgs.get((kind, theme))
-            if not p:
+        def pic(kind):
+            got = imgs.get(kind)
+            if not got:
                 return '<div class="miss">нет кадра</div>'
-            w, h = (1440, 900) if desktop else (390, 844)
-            return f'<img src="{p}" alt="" loading="lazy" width="{w}" height="{h}" class="t-{theme}">'
+            p, (w, h) = got
+            return f'<span class="sp" style="aspect-ratio: {w} / {h}"><img src="{p}" alt="" loading="lazy" width="{w}" height="{h * 2}"></span>'
         shots = ''.join(
-            f'<figure><figcaption>{cap}</figcaption>{pic(kind, "light")}{pic(kind, "dark")}</figure>'
+            f'<figure><figcaption>{cap}</figcaption>{pic(kind)}</figure>'
             for kind, cap in (('mock', 'Макет'), ('app', 'Приложение'))
         )
         items.append(f'''
