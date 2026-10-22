@@ -83,7 +83,7 @@ export default (h) => {
     await h.settle(p, 600)
     await p.getByRole('dialog', { name: 'Куда записать' }).getByRole('button', { name: /^В заметку/ }).click()
     await h.settle(p, 600)
-    await p.locator('form textarea').first().fill('мама просила ещё перепелиные, если будут.')
+    await p.locator('form').getByRole('textbox').first().fill('мама просила ещё перепелиные, если будут.')
     await p.keyboard.press('Enter')
     await h.settle(p, 900)
   }
@@ -95,7 +95,7 @@ export default (h) => {
     await h.settle(p, 700)
     await p.getByRole('dialog').last().getByRole('button', { name: /^Встреча/ }).click()
     await h.settle(p, 500)
-    await p.locator('form textarea').first().fill('созвон с Лизой')
+    await p.locator('form').getByRole('textbox').first().fill('созвон с Лизой')
     await h.settle(p, 400)
   }
 

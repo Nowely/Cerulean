@@ -16,7 +16,13 @@ import { bodyOf, isEmptyDoc } from '~/domain/body'
 import { LAYOUT_NAMES } from '~/domain/templates'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 
-const props = defineProps<{ page: Page }>()
+const props = defineProps<{
+  page: Page
+  /** The overlay's head, so «Фильтр» can be its second level as in the bar's (v24, D5) */
+  title: string
+  subtitle?: string
+  back?: () => void
+}>()
 // `how`: the page shows its first view, whose settings open here; `closed`: the settings are gone and focus is back
 const emit = defineEmits<{ how: [], closed: [] }>()
 /** «Настроить вид» opened from this manual */
@@ -89,7 +95,9 @@ const row = 'flex h-11 w-full cursor-pointer items-center gap-2.5 text-left text
     </button>
     <AdaptiveOverlay
       v-model:open="settings"
-      title="Настроить вид"
+      :title="title"
+      :subtitle="subtitle"
+      :back="back"
       align="start"
       @closed="emit('closed')"
     >

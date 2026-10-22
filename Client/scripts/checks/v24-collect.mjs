@@ -192,7 +192,8 @@ export default [
   { id: 'c24-10-composer', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
     const field = p.getByRole('textbox', { name: 'Новая запись' })
-    expect(await field.getAttribute('placeholder') === 'Запись на неделю', `placeholder «${await field.getAttribute('placeholder')}»`)
+    const hint = await field.evaluate(e => e.getAttribute('aria-placeholder') ?? e.getAttribute('placeholder'))
+    expect(hint === 'Запись на неделю', `placeholder «${hint}»`)
     const chip = p.getByRole('button', { name: /^Куда: / })
     expect(plain(await chip.innerText()) === 'Авто', `the chip reads «${await chip.innerText()}»`)
     await chip.click()

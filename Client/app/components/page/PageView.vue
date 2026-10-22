@@ -153,6 +153,26 @@ function addView() {
 }
 
 const settingsOpen = ref(false)
+/**
+ * Whose «Настроить вид» is open: the view bar's, or the manual's at «Как показывать». An empty page can have both
+ * mounted (the bar stays while a page stops collecting), so only the one it was opened from shows; once the manual goes
+ * (the first record, or the page starts collecting) the bar's takes over
+ */
+const settingsAt = ref<'bar' | 'manual'>('bar')
+const barSettings = computed({
+  get: () => settingsOpen.value && (settingsAt.value === 'bar' || !manual.value),
+  set: (v: boolean) => {
+    if (v) settingsAt.value = 'bar'
+    settingsOpen.value = v
+  }
+})
+const manualSettings = computed({
+  get: () => settingsOpen.value && settingsAt.value === 'manual' && manual.value,
+  set: (v: boolean) => {
+    if (v) settingsAt.value = 'manual'
+    settingsOpen.value = v
+  }
+})
 /** Desktop: «Фильтр» is the second level of the same popover, with ‹ (v24, D5); Esc goes back, a click outside closes */
 const settingsLevel = ref<'main' | 'filter'>('main')
 /** Phone: «Фильтр» is a sheet of its own with no ‹; closing it brings «Настроить вид» back (v24 fixes, 21) */
@@ -170,7 +190,7 @@ async function openSettingsFromMenu() {
     const dots = el instanceof HTMLElement && el !== document.body && el.isConnected ? el.closest<HTMLElement>('button') : null
     settingsAnchor.value = dots ?? menuSlot.value?.querySelector<HTMLElement>('button') ?? null
   }
-  settingsOpen.value = true
+  barSettings.value = true
 }
 
 function openFilter() {
@@ -264,7 +284,7 @@ const searching = ref(false)
  * The view bar (tabs, search, «Настроить вид»); Сегодня shows it only while searching; a collecting page always. It
  * stays while «Настроить вид» is open, so a page that stops collecting there («Эта страница») keeps its sheet
  */
-const bar = computed(() => !glance.value && (!setup.value || gathers.value || settingsOpen.value || filterOpen.value) && (!today.value || searching.value))
+const bar = computed(() => !glance.value && (!setup.value || gathers.value || barSettings.value || filterOpen.value) && (!today.value || searching.value))
 const query = ref('')
 const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
 async function toggleSearch() {
@@ -501,17 +521,28 @@ const emptyText = computed(() => {
       <!-- «Как показывать» opens «Настроить вид» of the first view at its line; the tabs are not there yet -->
       <PageManual
         v-if="manual"
-        v-model:settings="settingsOpen"
+        v-model:settings="manualSettings"
         :page="page"
+        :title="settingsLevel === 'filter' ? 'Фильтр' : 'Настроить вид'"
+        :subtitle="settingsLevel === 'filter' ? `вид «${view.name}»` : undefined"
+        :back="settingsLevel === 'filter' ? () => settingsLevel = 'main' : undefined"
         @how="viewId = null"
         @closed="settingsClosed"
       >
+        <ViewFilter
+          v-if="settingsLevel === 'filter'"
+          :page="page"
+          :view="view"
+        />
         <ViewSettings
+          v-else
           :page="page"
           :view="view"
           @remove="removeView"
           @add="addView"
           @new-prop="newProp"
+          @filter="openFilter"
+          @pick-pages="pickPages"
         />
       </PageManual>
     </NewPageSetup>
@@ -531,7 +562,7 @@ const emptyText = computed(() => {
         :current="view"
         :readonly="!full || today"
         @select="id => viewId = id"
-        @settings="settingsOpen = true"
+        @settings="barSettings = true"
         @add="addView"
       />
       <div
@@ -562,7 +593,7 @@ const emptyText = computed(() => {
       <!-- A preview is for reading and ticking (MobileSheet): views are set on the page itself -->
       <AdaptiveOverlay
         v-if="!today && full"
-        v-model:open="settingsOpen"
+        v-model:open="barSettings"
         :title="settingsLevel === 'filter' ? 'Фильтр' : 'Настроить вид'"
         :subtitle="settingsLevel === 'filter' ? `вид «${view.name}»` : undefined"
         width="w-105"
@@ -577,7 +608,7 @@ const emptyText = computed(() => {
             variant="ghost"
             square
             aria-label="Настроить вид"
-            :aria-expanded="settingsOpen"
+            :aria-expanded="barSettings"
             class="self-center"
           />
         </template>

@@ -113,7 +113,9 @@ async function threeLines(p) {
   expect(first.y >= sec.y + sec.height - 1, 'the lines are not under «Секция · Дом»')
   expect(!(await p.getByText(/Пиши внизу/).count()), 'a «Пиши внизу…» line shows beside the manual')
   const field = p.getByRole('textbox', { name: 'Новая запись' })
-  expect(await field.getAttribute('placeholder') === 'Первая запись', `the composer reads «${await field.getAttribute('placeholder')}»`)
+  // The field is an editor since item 12: its placeholder is aria-placeholder
+  const hint = await field.evaluate(e => e.getAttribute('aria-placeholder') ?? e.getAttribute('placeholder'))
+  expect(hint === 'Первая запись', `the composer reads «${hint}»`)
   // Faint, in rows of 44 (40 on desktop) with 18px glyphs; 16 (15 on desktop)
   const [faint, muted] = [await resolve(p, 'var(--faint)', 'color'), await resolve(p, 'var(--muted)', 'color')]
   const look = await lines(p).evaluateAll(bs => bs.map(b => ({ h: b.getBoundingClientRect().height, size: getComputedStyle(b).fontSize, color: getComputedStyle(b).color, icon: b.querySelector('.iconify').getBoundingClientRect().width })))

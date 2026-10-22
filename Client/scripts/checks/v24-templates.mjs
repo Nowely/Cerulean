@@ -74,7 +74,8 @@ const chipOf = p => p.locator('form button[aria-label^="Куда"]').first().eva
   text: b.querySelector('.truncate')?.textContent.trim(),
   icon: [...b.querySelector('.iconify')?.classList ?? []].find(c => c.startsWith('i-')) ?? ''
 }))
-const field = p => p.locator('form textarea').first()
+/** The composer's field: the plain field until the editor takes over (item 12), then the editor */
+const field = p => p.locator('form').getByRole('textbox').first()
 
 /** The body's blocks as read */
 const bodyBlocks = p => p.locator('main .body-text').filter({ visible: true }).first().evaluate(el => [...el.children].map(c => c.textContent.replace(/\s+/g, ' ').trim()))
@@ -127,7 +128,8 @@ export default [
     }
     await p.waitForTimeout(700)
     expect(!(await sheet.count()), 'the pick does not close the sheet')
-    expect(await field(p).getAttribute('placeholder') === 'Новый абзац', `placeholder «${await field(p).getAttribute('placeholder')}»`)
+    const hint = await field(p).evaluate(e => e.getAttribute('aria-placeholder') ?? e.getAttribute('placeholder'))
+    expect(hint === 'Новый абзац', `placeholder «${hint}»`)
     await field(p).fill('мама просила ещё перепелиные, если будут.')
     if (isDesk(p)) expect(await p.locator('form button[type="submit"]').getAttribute('aria-label') === 'Добавить абзац', 'the send button keeps its old name')
     await p.keyboard.press('Enter')
@@ -135,7 +137,7 @@ export default [
     let blocks = await bodyBlocks(p)
     expect(blocks.at(-1) === 'Мама просила ещё перепелиные, если будут.', `the last paragraph reads «${blocks.at(-1)}»`)
     expect(await shows(p.locator('main .fresh-tint')), 'the paragraph is not tinted fresh')
-    expect(await field(p).inputValue() === '', 'the field keeps the text')
+    expect(await field(p).evaluate(e => e.value ?? e.textContent) === '', 'the field keeps the text')
     expect(await field(p).evaluate(el => el === document.activeElement), 'the field lost the focus (the keyboard went down)')
     chip = await chipOf(p)
     expect(chip.text === 'В заметку' && chip.icon === 'i-cer:note', `after the send the chip reads «${chip.text}»`)
