@@ -3,8 +3,11 @@
 // Compact is its own list: 32px rows, no status text, only a dot on the glyph where the status would be loud.
 // The row's right end belongs to the page «⋯» (hover and keyboard focus on desktop); on a phone a long press
 // opens the same menu.
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useRouter } from '#imports'
+import { useElementSize } from '@vueuse/core'
+import { useTextFit } from '~/composables/useTextFit'
+import { fitNames } from '~/domain/fit'
 import type { Page, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
@@ -37,6 +40,21 @@ const summary = computed<Summary>(() => props.page
 const badge = computed<Badge | null>(() => props.page
   ? pageBadge(props.page, data.recordsOf(props.page.id), now.value, data.liveRecords, { late: !props.quiet })
   : recordBadge(data.subitemsOf(props.rec!.id), now.value, { late: !props.quiet }))
+/**
+ * The summary measured against its own column (v24 fixes, 9, 10): whole names go from the end until the line fits,
+ * «+N» counts every name not shown, and with no room for one name the count stands alone. Up to three names on offer
+ */
+const summaryEl = useTemplateRef<HTMLElement>('summaryEl')
+const { width } = useElementSize(summaryEl)
+const fit = useTextFit()
+const summaryLine = computed(() => {
+  const s = summary.value
+  const el = summaryEl.value
+  if (!s.list?.length || !el || !width.value) return null
+  void fit.fonts.value
+  const measure = fit.measurer(el)
+  return fitNames(s.lead, s.list, s.total ?? s.list.length, line => measure(line) <= width.value + 0.5)
+})
 /** Compact: the one signal left is a dot on the glyph's corner, only where the status would be coloured */
 const dot = computed(() => props.compact && badge.value && badge.value.tone !== 'new' ? badge.value.tone : null)
 
@@ -116,25 +134,32 @@ function click(e: MouseEvent) {
         </span>
         <span
           v-if="!compact && (summary.lead || summary.names)"
+          ref="summaryEl"
           class="flex min-w-0 text-sm leading-4.75 text-toned lg:text-13 lg:leading-4.5"
         >
           <span
-            v-if="summary.lead"
+            v-if="summaryLine !== null"
+            class="min-w-0 truncate"
+          >{{ summaryLine }}</span>
+          <span
+            v-else-if="summary.lead"
             class="shrink-0"
             :class="{ 'min-w-0 truncate': !summary.names }"
           >{{ summary.lead }}</span>
-          <span
-            v-if="summary.lead && summary.names"
-            class="shrink-0"
-          >&nbsp;·&nbsp;</span>
-          <span
-            v-if="summary.names"
-            class="min-w-0 truncate"
-          >{{ summary.names }}</span>
-          <span
-            v-if="summary.more"
-            class="shrink-0"
-          >&nbsp;+{{ summary.more }}</span>
+          <template v-if="summaryLine === null">
+            <span
+              v-if="summary.lead && summary.names"
+              class="shrink-0"
+            >&nbsp;·&nbsp;</span>
+            <span
+              v-if="summary.names"
+              class="min-w-0 truncate"
+            >{{ summary.names }}</span>
+            <span
+              v-if="summary.more"
+              class="shrink-0"
+            >&nbsp;+{{ summary.more }}</span>
+          </template>
         </span>
       </span>
     </a>
