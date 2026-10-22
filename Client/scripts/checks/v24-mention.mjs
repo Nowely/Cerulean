@@ -109,7 +109,14 @@ const dockEdge = p => p.evaluate(() => {
     const el = [...box.querySelectorAll('*')].find(e => e.children.length === 0 && e.textContent.trim() === text)
     return !!el && el.getBoundingClientRect().bottom <= edge + 1
   }
-  return { edge, cut, fade: box.hasAttribute('data-fade-bottom'), tasks: whole('Задачи'), personal: whole('Личное') }
+  // What fits wholly above the dock's own line stays: the cover never hides a whole row (a caption left with no row
+  // under it is covered on purpose)
+  const line = dock.getBoundingClientRect().top + 6
+  const hidden = [...box.querySelectorAll('[role="listitem"]')].filter((e) => {
+    const r = e.getBoundingClientRect()
+    return r.height > 0 && r.top >= bb.top && r.bottom <= line + 1 && r.bottom > edge + 1
+  }).map(e => e.textContent.trim().slice(0, 20))
+  return { edge, cut, hidden, fade: box.hasAttribute('data-fade-bottom'), last: whole('Дела по дому') }
 })
 
 export default [
@@ -292,7 +299,10 @@ export default [
     let edge = await dockEdge(p)
     expect(!edge.fade, 'the list fades above the «@» row')
     expect(!edge.cut.length, `cut by the edge: ${edge.cut.join(', ')}`)
-    expect(edge.tasks && edge.personal, `${edge.tasks ? '' : 'Задачи '}${edge.personal ? '' : '«Личное» '}not whole above the chips`)
+    // MobileComposerMention was drawn before «На неделе» joined Избранное (item 11), so there Задачи and «Личное» still
+    // fit; with it the last whole row is Дела по дому, and nothing that fits is covered
+    expect(edge.last, 'Дела по дому is not whole above the chips')
+    expect(!edge.hidden.length, `covered though it fits: ${edge.hidden.join(', ')}`)
     // The guess line: the same hard edge; scrolled so an edge falls inside a row, it is covered
     await pickChip(p, 'Стоматолог')
     for (const dy of [0, 13, 29]) {
@@ -301,7 +311,7 @@ export default [
       }, dy)
       await p.waitForTimeout(250)
       edge = await dockEdge(p)
-      expect(!edge.fade && !edge.cut.length, `scrolled ${dy}: ${edge.fade ? 'a fade' : `cut: ${edge.cut.join(', ')}`}`)
+      expect(!edge.fade && !edge.cut.length && !edge.hidden.length, `scrolled ${dy}: ${edge.fade ? 'a fade' : `cut: ${edge.cut.join(', ')}; covered: ${edge.hidden.join(', ')}`}`)
     }
     await clear(p)
     await p.waitForTimeout(300)

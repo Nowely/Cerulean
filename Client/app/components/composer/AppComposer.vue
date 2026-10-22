@@ -398,6 +398,7 @@ async function submit(opts: { record?: boolean } = {}) {
     today: props.mode === 'today' && aimed === 'auto',
     day: firstDayKey.value ?? undefined,
     record: opts.record,
+    links: linked,
     onStart: (e) => {
       lastSend = { text: t, aim: aimed, links: linked, entryId: e.id, ids: () => data.entries.find(x => x.id === e.id)?.recordIds ?? [] }
       emit('sent', e)

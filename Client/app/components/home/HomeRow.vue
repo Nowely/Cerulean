@@ -170,9 +170,11 @@ function click(e: MouseEvent) {
       home
       :bare="!isDesktop"
     >
+      <!-- In compact the 36px button overhangs the 32px row instead of making it taller -->
       <DotsButton
         label="Действия со страницей"
         class="mr-1 opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 aria-expanded:opacity-100"
+        :class="{ '-my-0.5': compact }"
       />
     </PageMenu>
   </div>
