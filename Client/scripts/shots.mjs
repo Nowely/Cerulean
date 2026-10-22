@@ -528,15 +528,17 @@ const scenarios = [
     await settle(p, 1400)
   } },
   { name: 'MainPropAdd', device: DESKTOP, run: async (p) => {
+    // Яйца, as drawn: a record that still lacks some of its page's properties
     await open(p, '/journal')
-    await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
+    await p.getByRole('button', { name: /^Яйца/ }).first().click()
     await settle(p, 400)
     await p.getByRole('button', { name: 'Свойство', exact: true }).click()
     await settle(p, 500)
   } },
   { name: 'MainPropNew', device: DESKTOP, run: async (p) => {
+    // Яйца, as drawn: a record that still lacks some of its page's properties
     await open(p, '/journal')
-    await p.getByRole('button', { name: /^Позвонить стоматологу/ }).first().click()
+    await p.getByRole('button', { name: /^Яйца/ }).first().click()
     await settle(p, 400)
     await p.getByRole('button', { name: 'Свойство', exact: true }).click()
     await settle(p, 400)
