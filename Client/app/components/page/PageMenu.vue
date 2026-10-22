@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // «⋯» of a page: Переименовать, Значок и цвет, Избранное, «Что сюда класть», section, view settings, «Свойства», copy, delete.
 // From Главная «Переименовать» and «Значок и цвет» open the page with its title or icon picker ready.
-import { computed, defineAsyncComponent, ref } from 'vue'
+import { computed, defineAsyncComponent, ref, shallowRef } from 'vue'
 import { useRouter } from '#imports'
 import type { Page } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
@@ -18,6 +18,7 @@ import SectionSheet from './SectionSheet.vue'
 import PageTile from '../common/PageTile.vue'
 
 const DescriptionDialog = defineAsyncComponent(() => import('./DescriptionDialog.vue'))
+const TemplatesSheet = defineAsyncComponent(() => import('./TemplatesSheet.vue'))
 
 const props = defineProps<{
   page: Page
@@ -68,6 +69,18 @@ const noteWords = computed(() => {
   return words.length < text.length ? `${words}…` : words
 })
 
+/** «Шаблоны» (v24): a sheet on a phone; on desktop a popover at the «⋯» the menu gave the focus back to */
+const templating = ref(false)
+/** Mounted on first use and kept, so it can close with its animation and hand the focus on */
+const templatesUsed = ref(false)
+const templatesAt = shallowRef<HTMLElement | null>(null)
+function openTemplates() {
+  const el = document.activeElement
+  templatesAt.value = el instanceof HTMLElement && el !== document.body ? el : null
+  templatesUsed.value = true
+  templating.value = true
+}
+
 /** The page takes it from here: its title in focus, or its icon picker open */
 function edit(what: 'title' | 'glyph') {
   if (what === 'title') ui.focusTitle = props.page.id
@@ -95,6 +108,8 @@ const items = computed<MenuItem[][]>(() => {
   if (props.page.kind !== 'today' && !props.home) first.push({ label: 'Настроить вид', icon: 'i-lucide-sliders-horizontal', onSelect: () => emit('settings') })
   // Their number counts Срок and Заметка too, so it matches the rows of the list
   if (own) first.push({ label: 'Свойства', icon: 'i-lucide-list', value: String(propList(props.page).length), onSelect: () => propSheets.list(props.page.id) })
+  // v24 (И9): only once the page has a template, right before «Скопировать как текст»; its «+» needs the page's composer
+  if (own && !props.home && props.page.templates?.length) first.push({ label: 'Шаблоны', icon: 'cer:stamp', value: String(props.page.templates.length), onSelect: openTemplates })
   first.push({ label: 'Скопировать как текст', icon: 'i-lucide-copy', onSelect: copy })
   return system.value ? [first] : [first, [{ label: 'Удалить', icon: 'i-lucide-trash-2', danger: true, onSelect: remove }]]
 })
@@ -133,5 +148,12 @@ const items = computed<MenuItem[][]>(() => {
   <SectionSheet
     v-model:open="moving"
     :page="page"
+  />
+
+  <TemplatesSheet
+    v-if="templatesUsed"
+    v-model:open="templating"
+    :page="page"
+    :anchor="templatesAt"
   />
 </template>

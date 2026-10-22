@@ -19,17 +19,26 @@ import { useCalendarDay } from '~/composables/useCalendarDay'
 import { useNow } from '~/composables/useNow'
 import { capitalize, count, RECORD_FORMS } from '~/domain/text'
 import { useLater } from '~/composables/useLater'
+import { useTemplates } from '~/composables/useTemplates'
+import { templateBrings } from '~/domain/recordTemplates'
+import type { BodyOwner } from '~/domain/body'
 import DestChip from './DestChip.vue'
+import RecordDest, { type RecordDestKind } from './RecordDest.vue'
 
 const props = withDefaults(defineProps<{
-  /** auto: Главная and Журнал · page: a page's own composer · record: adds Подпункты · today: Авто with today's date */
+  /**
+   * auto: Главная and Журнал · page: a page's own composer · record: a subitem or a paragraph «В заметку» of a record,
+   * or of a template (`templateId`) · today: Авто with today's date
+   */
   mode: 'auto' | 'page' | 'record' | 'today'
   pageId?: Id
   recordId?: Id
+  /** A template's own page (v24): the record composer writes into the template */
+  templateId?: Id
   placeholder?: string
   /** Day one on Главная: the guess line says what the composer is for until the first record */
   intro?: boolean
-}>(), { pageId: undefined, recordId: undefined, placeholder: undefined, intro: false })
+}>(), { pageId: undefined, recordId: undefined, templateId: undefined, placeholder: undefined, intro: false })
 
 const emit = defineEmits<{ sent: [entry: Entry | null], focus: [boolean], failed: [reason: 'quota' | 'error'] }>()
 
@@ -116,20 +125,25 @@ const guess = computed(() => {
 /** The line on the pill: the guess while there is text, the day-one hint before the first record */
 const guessLine = computed(() => {
   if (props.mode === 'record') return null
+  if (template.value) return { text: `→ ${templateGuess.value}`, hint: false }
   if (guess.value && (text.value.trim() || once.value)) return { text: `→ ${guess.value}`, hint: false }
   if (props.intro && !text.value && dest.value === 'auto' && !speech.listening.value) return { text: 'Пиши что угодно: разложится по страницам', hint: true }
   return null
 })
 
 const chip = computed(() => {
+  if (props.mode === 'record') return recordChip.value
+  if (template.value) return { label: 'По шаблону', icon: 'cer:stamp', page: true, color: null }
   if (destPage.value) {
     return { label: untitled.value ? 'Эта страница' : destPage.value.title || 'Без названия', icon: GLYPHS[destPage.value.glyph ?? 'doc'], page: true, color: pageColor(destPage.value) }
   }
   return { label: 'Авто', icon: 'cer:auto' }
 })
-const chipLabel = computed(() => once.value
-  ? `Куда записать: «${chip.value.label}», только эта запись. Выбрать другое`
-  : `Куда: ${chip.value.label}${guess.value ? `, похоже → ${guess.value}` : ''}`)
+const chipLabel = computed(() => props.mode === 'record' || template.value
+  ? chipAim.value
+  : once.value
+    ? `Куда записать: «${chip.value.label}», только эта запись. Выбрать другое`
+    : `Куда: ${chip.value.label}${guess.value ? `, похоже → ${guess.value}` : ''}`)
 
 function openPicker() {
   void later.load()
@@ -138,7 +152,8 @@ function openPicker() {
     subtitle: text.value.trim() || undefined,
     auto: props.mode === 'record' ? undefined : { picks: guess.value || undefined, chosen: dest.value === 'auto', run: () => choose('auto') },
     thisPage: props.mode === 'page' ? props.pageId : undefined,
-    chosen: dest.value === 'auto' ? undefined : dest.value,
+    chosen: dest.value === 'auto' || template.value ? undefined : dest.value,
+    templates: templateChoices(),
     newName: text.value.trim() ? null : undefined,
     run: (c) => {
       if ('pageId' in c) return choose(c.pageId)
@@ -151,7 +166,77 @@ function openPicker() {
 function choose(d: 'auto' | Id) {
   dest.value = d
   once.value = false
+  byTemplate.value = null
   void nextTick(() => field.value?.focus())
+}
+
+// ---------- v24: a record by a page's template, and a record's two places ----------
+
+const templates = useTemplates()
+/** A template of this page picked in «Куда записать» or by «+» in «Шаблоны»: it holds for one record (v24, item 6) */
+const byTemplate = ref<Id | null>(null)
+const template = computed(() => props.mode === 'page' && byTemplate.value && dest.value === props.pageId
+  ? page.value?.templates?.find(t => t.id === byTemplate.value) ?? null
+  : null)
+const templateGuess = computed(() => `${page.value?.title || 'Без названия'} · по шаблону «${template.value?.name}», только эта запись`)
+watch(() => props.pageId, () => {
+  byTemplate.value = null
+})
+// «+» on a «Шаблоны» row of this page: the chip takes the template and the caret goes to the field
+watch(templates.aim, (a) => {
+  if (!a || props.mode !== 'page' || a.pageId !== props.pageId) return
+  templates.aim.value = null
+  pickTemplate(a.id)
+}, { immediate: true })
+
+function pickTemplate(id: Id) {
+  dest.value = home()
+  once.value = false
+  byTemplate.value = id
+  void nextTick(() => field.value?.focus())
+}
+
+/** «Шаблоны» in the page's «Куда записать», after «Эта страница» and Авто; never on Сегодня or a page elsewhere */
+function templateChoices() {
+  const list = props.mode === 'page' ? page.value?.templates ?? [] : []
+  if (!list.length) return undefined
+  return {
+    list: list.map(t => ({ id: t.id, name: t.name, brings: templateBrings(t) })),
+    chosen: template.value?.id,
+    run: pickTemplate
+  }
+}
+
+/** On a record: a subitem, or with «В заметку» a paragraph at the end of its body; kept while the record is open */
+const recordDest = ref<RecordDestKind>('sub')
+watch(() => [props.recordId, props.templateId], () => {
+  recordDest.value = 'sub'
+})
+const recordOwner = computed<BodyOwner | null>(() => props.templateId
+  ? { kind: 'template', id: props.templateId }
+  : props.recordId ? { kind: 'record', id: props.recordId } : null)
+const recordName = computed(() => props.templateId ? data.templateOf(props.templateId)?.tpl.name ?? '' : data.records[props.recordId ?? '']?.text ?? '')
+const recordChip = computed(() => recordDest.value === 'note'
+  ? { label: 'В заметку', icon: 'cer:note', page: true, color: null }
+  : { label: 'Подпункт', icon: 'cer:ring', page: true, color: null })
+const chipAim = computed(() => props.mode === 'record'
+  ? `Куда записать: «${recordChip.value.label}». Выбрать другое`
+  : `Куда записать: «${page.value?.title || 'Без названия'}», по шаблону «${template.value?.name}». Выбрать другое`)
+
+/** A subitem as a line of «Подпункты», or a paragraph «В заметку» tinted fresh, with the field ready for the next */
+function writeOnRecord(t: string) {
+  const owner = recordOwner.value
+  if (!owner) return
+  if (recordDest.value === 'note') {
+    data.appendParagraph(owner, t)
+    templates.noted(owner.id)
+  } else if (owner.kind === 'template') {
+    const tpl = data.templateOf(owner.id)?.tpl
+    if (tpl) data.updateTemplate(owner.id, { subs: [...tpl.subs, capitalize(t)] })
+  } else {
+    const parent = data.records[owner.id]
+    if (parent) data.addRecord({ pageId: parent.pageId, parentId: parent.id, text: capitalize(t) })
+  }
 }
 
 /** The day this page's calendar has selected, while the composer writes into the page itself (v22, G6) */
@@ -164,7 +249,7 @@ const onCalendar = computed(() => {
 
 const hint = computed(() => props.placeholder ?? (
   props.mode === 'record'
-    ? 'Подпункт'
+    ? (recordDest.value === 'note' ? 'Новый абзац' : 'Новый подпункт')
     : props.mode === 'today'
       ? 'Запись на сегодня'
       : onCalendar.value
@@ -222,18 +307,21 @@ async function submit(opts: { record?: boolean } = {}) {
     dest.value = home()
     once.value = false
   }
-  if (props.mode === 'record' && props.recordId) {
-    const parent = data.records[props.recordId]
-    if (parent) data.addRecord({ pageId: parent.pageId, parentId: parent.id, text: capitalize(t) })
+  if (props.mode === 'record') {
+    writeOnRecord(t)
     emit('sent', null)
     return
   }
-  // Writing on a page into the page itself: plain records, no journal line
+  // Writing on a page into the page itself: plain records, no journal line; by a template each record gets its
+  // body and subitems, with no toast and no receipt (v24, item 6), and the chip is the page again
   const target = aimed === 'auto' ? undefined : data.pages[aimed]
   if (props.mode === 'page' && target && target.id === props.pageId) {
     const p = target
+    const by = template.value?.id
+    byTemplate.value = null
     const drafts = p.kind === 'inbox' ? [{ text: capitalize(t), due: null, values: {} }] : onDay(draftsFor(t, p, Date.now()), onCalendar.value)
     const ids = [...drafts].reverse().map(d => data.addRecord({ pageId: p.id, text: d.text, due: d.due, values: d.values, via: 'manual' }).id)
+    if (by) for (const id of ids) data.fillFromTemplate(id, by)
     lastSend = { text: t, aim: aimed, ids: () => ids }
     emit('sent', null)
     return
@@ -293,8 +381,20 @@ defineExpose({
       :class="multi ? 'rounded-pill-grown' : 'rounded-pill'"
       @submit.prevent="submit()"
     >
+      <RecordDest
+        v-if="mode === 'record'"
+        v-model="recordDest"
+        :name="recordName"
+        @picked="field?.focus()"
+      >
+        <DestChip
+          v-bind="chip"
+          :aria-label="chipLabel"
+          aria-haspopup="dialog"
+        />
+      </RecordDest>
       <DestChip
-        v-if="mode !== 'record'"
+        v-else
         v-bind="chip"
         :aria-label="chipLabel"
         @click="openPicker"
@@ -340,8 +440,7 @@ defineExpose({
       >
         <span
           ref="mirror"
-          class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words text-input leading-5.5"
-          :class="mode === 'record' ? 'py-1.75 pr-1 pl-3' : 'py-1.75 pr-1 pl-1'"
+          class="invisible col-start-1 row-start-1 max-h-32 overflow-hidden whitespace-pre-wrap break-words py-1.75 pr-1 pl-1 text-input leading-5.5"
           aria-hidden="true"
         >{{ text }}&#8203;</span>
         <textarea
@@ -352,9 +451,8 @@ defineExpose({
           autocomplete="off"
           autocapitalize="sentences"
           :placeholder="hint"
-          :aria-label="mode === 'record' ? 'Новый подпункт' : 'Новая запись'"
-          class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent text-input leading-5.5 text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
-          :class="mode === 'record' ? 'py-1.75 pr-1 pl-3' : 'py-1.75 pr-1 pl-1'"
+          :aria-label="mode === 'record' ? (recordDest === 'note' ? 'Новый абзац' : 'Новый подпункт') : 'Новая запись'"
+          class="no-scrollbar col-start-1 row-start-1 max-h-32 min-w-0 resize-none overflow-y-auto bg-transparent py-1.75 pr-1 pl-1 text-input leading-5.5 text-highlighted outline-none placeholder:truncate placeholder:text-dimmed"
           @keydown="onKey"
           @focus="emit('focus', true)"
           @blur="emit('focus', false)"
@@ -375,7 +473,7 @@ defineExpose({
         type="submit"
         :disabled="!canSend"
         class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent text-on-accent transition-opacity hover:bg-accent/90 disabled:cursor-default disabled:opacity-40"
-        aria-label="Отправить"
+        :aria-label="mode === 'record' ? (recordDest === 'note' ? 'Добавить абзац' : 'Добавить подпункт') : 'Отправить'"
         @pointerdown.prevent
       >
         <UIcon

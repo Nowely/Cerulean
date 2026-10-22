@@ -13,6 +13,7 @@ import { useNow } from '~/composables/useNow'
 import { usePeek } from '~/composables/usePeek'
 import { useScreen } from '~/composables/useScreen'
 import { usePropSheets } from '~/composables/usePropSheets'
+import { useFreshTail } from '~/composables/useTemplates'
 import { formatAdded } from '~/domain/dates'
 import { nb } from '~/domain/text'
 import { hasValue, isNorm, propList, TYPE_ICONS, TYPE_NAMES } from '~/domain/props'
@@ -70,6 +71,8 @@ watch([() => ui.focusTitle, titleField], async ([id, field]) => {
 }, { immediate: true })
 /** The body has the caret: an empty «Подпункты» stops pointing at the composer the bar replaced (M8) */
 const bodyFocused = ref(false)
+const bodyBox = useTemplateRef<HTMLElement>('bodyBox')
+const tail = useFreshTail(() => full.value ? props.rec.id : undefined, bodyBox)
 
 // Properties in the page's order. Empty ones are hidden, except one just picked in «+ Свойство»: it stays
 // while the record is open, even empty (B12: never every empty property at once)
@@ -339,9 +342,18 @@ function openPlace() {
 
     <!-- The body (v23): after «+ Свойство · Связать», never folded; empty, the faint «Заметка» -->
     <div
-      class="mt-3 mb-1.5 lg:mt-3.5"
+      ref="bodyBox"
+      class="relative isolate mt-3 mb-1.5 lg:mt-3.5"
       :class="[!full ? 'px-4 lg:mx-4 lg:px-0' : 'mx-4 lg:mx-0', { 'body-target': editable }]"
     >
+      <!-- The paragraph just sent «В заметку» (v24, И3) -->
+      <span
+        v-if="tail"
+        :key="tail.key"
+        class="fresh-tint pointer-events-none absolute -inset-x-1.5 -z-1 rounded-item"
+        :style="tail.style"
+        aria-hidden="true"
+      />
       <BodyField
         :key="rec.id"
         :owner="{ kind: 'record', id: rec.id }"

@@ -6,6 +6,7 @@ import type { Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useRecordActions } from '~/composables/useRecordActions'
+import { useTemplates } from '~/composables/useTemplates'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 
 const props = defineProps<{ rec: Rec }>()
@@ -13,14 +14,21 @@ const data = useDataStore()
 const ui = useUiStore()
 const router = useRouter()
 const actions = useRecordActions()
+const templates = useTemplates()
 const place = computed(() => data.placeOf(props.rec).title)
 
 const items = computed<MenuItem[][]>(() => [
   [
     { label: 'Переименовать', icon: 'i-lucide-pencil', onSelect: () => ui.focusTitle = props.rec.id },
     { label: props.rec.favorite === null ? 'Добавить в избранное' : 'Убрать из избранного', icon: 'i-lucide-star', onSelect: () => actions.favorite(props.rec) },
-    ...(props.rec.parentId ? [] : [{ label: 'Переместить', icon: 'i-lucide-arrow-right', value: place.value, onSelect: () => actions.move([props.rec.id]) }]),
-    { label: 'Скопировать текст', icon: 'i-lucide-copy', onSelect: () => actions.copy(props.rec) }
+    // v24 fixes (20): «на другую страницу»; «Сделать шаблоном» right after it (v24, И9), on a record of a page
+    ...(props.rec.parentId
+      ? []
+      : [
+          { label: 'Переместить на другую страницу', icon: 'i-lucide-arrow-right', value: place.value, onSelect: () => actions.move([props.rec.id]) },
+          { label: 'Сделать шаблоном', icon: 'cer:stamp', onSelect: () => templates.make(props.rec) }
+        ]),
+    { label: 'Скопировать как текст', icon: 'i-lucide-copy', onSelect: () => actions.copyAsText(props.rec) }
   ],
   [
     {

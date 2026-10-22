@@ -24,6 +24,8 @@ export interface Picker {
   thisPage?: Id
   /** The page the composer is aimed at now: a check on its row */
   chosen?: Id
+  /** A page's composer chip (v24): the page's record templates under «Шаблоны»; a pick holds for one record */
+  templates?: { list: { id: Id, name: string, brings: string }[], chosen?: Id, run: (id: Id) => void }
   /** Desktop: the button it opens at, as a popover (without one, a dialog). By default the one that was just pressed */
   anchor?: HTMLElement | null
   run: (choice: PageChoice) => void

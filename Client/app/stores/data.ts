@@ -1,7 +1,7 @@
 // Everything the user has, in memory, written through to IndexedDB on every change
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import type { BodyDoc, Entry, Id, Page, PropDef, PropType, Rec, Section, Settings, TemplateKey } from '~/domain/types'
+import type { BodyDoc, BodyNode, Entry, Id, Page, PropDef, PropType, Rec, RecTemplate, Section, Settings, TemplateKey } from '~/domain/types'
 import type { Learned } from '~/domain/rules'
 import type { Hit } from '~/domain/search'
 import { bodyOf, isEmptyDoc, mentionIds, mentionReason, unmention, type BodyOwner } from '~/domain/body'
@@ -15,6 +15,7 @@ import { doneIn, dropPlace, topOrder, type Group } from '~/domain/views'
 import { applyTemplate, readPage, TEMPLATES } from '~/domain/templates'
 import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
 import { uid } from '~/domain/ids'
+import { copyDoc, findTemplate, withParagraph } from '~/domain/recordTemplates'
 
 const TRASH_DAYS = 30
 
@@ -657,9 +658,17 @@ export const useDataStore = defineStore('data', () => {
    */
   function setBody(owner: BodyOwner, doc: BodyDoc | null) {
     const body = isEmptyDoc(doc) ? null : doc
+    // A template's mentions link nothing until a record is made by it
+    if (owner.kind === 'template') return updateTemplate(owner.id, { body })
     const mentions = mentionIds(body).filter(id => id !== owner.id)
     if (owner.kind === 'record') updateRecord(owner.id, { body, mentions, note: '' })
     else updatePage(owner.id, { body, mentions })
+  }
+
+  /** «В заметку» (v24, И3): a paragraph at the end of a record's or a template's body, as typed but for a capital */
+  function appendParagraph(owner: BodyOwner, words: string | BodyNode[]) {
+    const holder = owner.kind === 'template' ? templateOf(owner.id)?.tpl : owner.kind === 'record' ? records.value[owner.id] : pages.value[owner.id]
+    if (holder) setBody(owner, withParagraph(bodyOf(holder), words))
   }
 
   /** The mentions of `targetId` in the body of `holderId` become plain words */
@@ -816,6 +825,61 @@ export const useDataStore = defineStore('data', () => {
     const limit = Date.now() - TRASH_DAYS * 86400000
     purgePages(Object.values(pages.value).filter(p => p.deletedAt && p.deletedAt < limit).map(p => p.id))
     purgeRecords(Object.values(records.value).filter(r => r.deletedAt && r.deletedAt < limit).map(r => r.id))
+  }
+
+  // record templates (v24, И9, И7): kept on their page, never records
+
+  /** A template and the page it belongs to */
+  function templateOf(id: Id) {
+    return findTemplate(livePages.value, id)
+  }
+
+  /** The page's templates, with `tpl` put in or taken out at its place */
+  function placeTemplate(pageId: Id, tpl: RecTemplate, at: number | null) {
+    const list = (pages.value[pageId]?.templates ?? []).filter(t => t.id !== tpl.id)
+    if (at !== null) list.splice(Math.min(at, list.length), 0, tpl)
+    updatePage(pageId, { templates: list })
+  }
+
+  /**
+   * «Сделать шаблоном»: the record's body and its subitems, unticked, become a template of its page named after it; a
+   * template of that name is updated instead. The record stays as it is. `undo` takes exactly that back
+   */
+  function makeTemplate(recId: Id): { tpl: RecTemplate, page: Page, updated: boolean, undo: () => void } | null {
+    const rec = records.value[recId]
+    const page = rec && pages.value[rec.pageId]
+    if (!rec || !page) return null
+    const list = page.templates ?? []
+    const at = list.findIndex(t => t.name === rec.text)
+    const had = list[at]
+    const tpl: RecTemplate = { id: had?.id ?? uid('t'), name: rec.text, body: copyDoc(bodyOf(rec)), subs: subitemsOf(rec.id).map(s => s.text) }
+    placeTemplate(page.id, tpl, had ? at : list.length)
+    return { tpl, page, updated: !!had, undo: () => placeTemplate(page.id, had ?? tpl, had ? at : null) }
+  }
+
+  function updateTemplate(id: Id, patch: Partial<Omit<RecTemplate, 'id'>>) {
+    const found = templateOf(id)
+    if (!found) return
+    updatePage(found.page.id, { templates: found.page.templates!.map(t => t.id === id ? { ...t, ...patch } : t) })
+  }
+
+  /** «Удалить шаблон» (medium): it goes at once and `undo` puts it back in its place; records made by it stay */
+  function removeTemplate(id: Id): { tpl: RecTemplate, page: Page, undo: () => void } | null {
+    const found = templateOf(id)
+    if (!found) return null
+    const at = found.page.templates!.findIndex(t => t.id === id)
+    placeTemplate(found.page.id, found.tpl, null)
+    return { ...found, undo: () => placeTemplate(found.page.id, found.tpl, at) }
+  }
+
+  /** A record made by a template (v24, item 6) gets a copy of its body and its subitems, unticked */
+  function fillFromTemplate(recId: Id, tplId: Id) {
+    const found = templateOf(tplId)
+    const rec = records.value[recId]
+    if (!found || !rec) return
+    const body = copyDoc(found.tpl.body)
+    if (body) setBody({ kind: 'record', id: rec.id }, body)
+    for (const text of found.tpl.subs) addRecord({ pageId: rec.pageId, parentId: rec.id, text, via: rec.via })
   }
 
   // sections
@@ -989,6 +1053,7 @@ export const useDataStore = defineStore('data', () => {
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     propUsage, addProp, updateProp, moveProp, removeOption, retypeProp, removeProp,
     addRecord, updateRecord, toggleLink, toggleDone, moveRecords, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
+    appendParagraph, templateOf, makeTemplate, updateTemplate, removeTemplate, fillFromTemplate,
     createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,
     snapshot, importSnapshot, addSnapshot, takeBack, wipe,

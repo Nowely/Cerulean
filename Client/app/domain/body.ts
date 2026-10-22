@@ -9,9 +9,9 @@ export interface HasBody {
   note?: string
 }
 
-/** Whose body it is */
+/** Whose body it is: a record, a page, or a page's record template (v24) */
 export interface BodyOwner {
-  kind: 'record' | 'page'
+  kind: 'record' | 'page' | 'template'
   id: Id
 }
 

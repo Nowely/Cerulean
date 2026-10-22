@@ -96,6 +96,18 @@ export type PageKind = 'page' | 'inbox' | 'today'
 
 export type TemplateKey = 'shop' | 'todo' | 'goal' | 'note'
 
+/**
+ * A record template of a page (v24, И9): what «Сделать шаблоном» saved of a record, its body and its subitems'
+ * texts. It belongs to its page and is never a record: no row, count, Сегодня, Поиск or «@» sees it
+ */
+export interface RecTemplate {
+  id: Id
+  name: string
+  body: BodyDoc | null
+  /** The subitems, in order; a record made by the template gets them unticked */
+  subs: string[]
+}
+
 export interface Page {
   id: Id
   kind: PageKind
@@ -124,6 +136,8 @@ export interface Page {
   /** Records are titles (books, films): the summary keeps their capital letter */
   titles?: boolean
   template?: TemplateKey
+  /** Record templates made here (v24); absent on older pages: none */
+  templates?: RecTemplate[]
   createdAt: number
   /** Last time the page was opened (search groups) */
   openedAt: number

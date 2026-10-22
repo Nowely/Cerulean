@@ -4,6 +4,7 @@ import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useJournalStore, type Choice } from '~/stores/journal'
 import { count, RECORD_FORMS } from '~/domain/text'
+import { bodyMarkdown, bodyOf } from '~/domain/body'
 import { useNotify } from './useNotify'
 
 export function useRecordActions() {
@@ -57,10 +58,22 @@ export function useRecordActions() {
     }
   }
 
+  /** «Скопировать как текст» of a record page: its name, its body as Markdown and its subitems */
+  async function copyAsText(rec: Rec) {
+    const subs = data.subitemsOf(rec.id).map(s => `- [${s.done ? 'x' : ' '}] ${s.text}`).join('\n')
+    const text = [rec.text, bodyMarkdown(bodyOf(rec), data.nameOf), subs].filter(Boolean).join('\n\n')
+    try {
+      await navigator.clipboard.writeText(text)
+      notify('Запись скопирована как текст', undefined, 3000)
+    } catch {
+      notify('Не удалось скопировать', undefined, 3000)
+    }
+  }
+
   function favorite(rec: Rec) {
     data.toggleFavorite({ kind: 'record', id: rec.id })
     notify(rec.favorite === null ? 'Убрано из избранного' : 'Добавлено в избранное', undefined, 3000)
   }
 
-  return { remove, move, place, copy, favorite }
+  return { remove, move, place, copy, copyAsText, favorite }
 }
