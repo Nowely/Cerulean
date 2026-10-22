@@ -592,7 +592,8 @@ async function recentPages(page) {
   }
   for (const title of Object.keys(lines)) {
     if (title.startsWith('Отпуск')) {
-      await data(page, (d, t) => d.createFromTemplate('todo', { title: t, sectionId: null }), title)
+      // The template names the page after itself; the title comes after
+      await data(page, (d, t) => d.updatePage(d.createFromTemplate('todo', { sectionId: null }).id, { title: t }), title)
       continue
     }
     await homeMenu(page, 'Новая страница')
@@ -600,6 +601,8 @@ async function recentPages(page) {
     await page.getByRole('textbox', { name: 'Название страницы' }).fill(title)
     await page.goBack()
     await page.waitForURL(u => new URL(u).pathname === '/')
+    // The page saves its title as it unmounts, once the way back has finished
+    await settle(page, 500)
   }
   await data(page, (d, all) => {
     for (const [title, texts] of Object.entries(all)) {
