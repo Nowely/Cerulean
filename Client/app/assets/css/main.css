@@ -53,8 +53,8 @@
   --text-30--line-height: 1.2;
 
   /* Roles from «Шрифт» in the doc: mobile value here, desktop value in the lg block */
-  --text-title: 24px;
-  --text-title--line-height: 1.25;
+  --text-title: 20px;
+  --text-title--line-height: 26px;
   --text-title--letter-spacing: -0.015em;
   --text-title--font-weight: 600;
   --text-sheet: 20px;
@@ -102,10 +102,17 @@
   --animate-drain: drain 15s linear forwards;
   --animate-rise: rise 0.2s var(--ease-out-soft);
   --animate-wave: wave 1.1s ease-in-out infinite;
+  /* A ticked row leaves its list after 1.5 s, the last 0.2 s a fade (Josh 28 Oct, 12) */
+  --animate-leave: leave 1.5s linear forwards;
 
   @keyframes drain {
     from { transform: scaleX(1); }
     to { transform: scaleX(0); }
+  }
+
+  @keyframes leave {
+    0%, 86% { opacity: 1; }
+    100% { opacity: 0; }
   }
 
   @keyframes wave {
@@ -258,7 +265,6 @@
   /* Digits stay proportional in running text; times, counts and quantities that line up set tabular-nums */
   body {
     @apply bg-canvas text-default font-sans;
-    overscroll-behavior-y: none;
   }
 
   ::selection {
@@ -384,5 +390,10 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* A ticked row still leaves after its moment, without the fade */
+  .animate-leave {
+    animation: none !important;
   }
 }

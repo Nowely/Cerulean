@@ -1,5 +1,5 @@
 // PR #15 acceptance round 2: what did not land (design/app-qa/acceptance-pr15-round2.md, «What did not land» 3–18)
-import { BASE, DESKTOP, MOBILE, expect, open, pageOf, send, shows, store } from './lib.mjs'
+import { BASE, DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
 
 const DEMO_TIME = new Date('2026-10-19T09:14:00+03:00')
 
@@ -9,7 +9,8 @@ async function page(p, title) {
   await p.waitForTimeout(500)
 }
 
-const focused = p => p.evaluate(() => document.activeElement?.closest('li')?.innerText.split('\n')[0] ?? document.activeElement?.tagName)
+/** The focused row's name; its line holds the quantity too (main flow 2, item 12) */
+const focused = p => p.evaluate(() => document.activeElement?.closest('li')?.querySelector('[data-row-text] > span')?.firstChild?.textContent ?? document.activeElement?.tagName)
 
 export default [
   // 3: a row ticked on «Купить» stays there, struck, and never shows up on «Запасы»
@@ -27,12 +28,14 @@ export default [
     await open(p, '/')
     await store(p, data => data.updateRecord(Object.values(data.records).find(r => r.text === 'Подарок маме на др').id, { text: 'Подарок маме на день рождения: большой набор для вышивания крестиком и рамка' }))
     await page(p, 'Входящие')
-    await p.locator('main li', { hasText: 'Подарок маме' }).first().getByRole('button', { name: 'Переместить в «Задачи»' }).click()
+    // Main flow 2, item 10: the row's move button, then the place; the notice names the place
+    await p.locator('main li', { hasText: 'Подарок маме' }).first().locator('[data-move]').click()
+    await p.locator('[data-places]').getByRole('button', { name: 'Задачи', exact: true }).click()
     const n = p.locator('[data-notice]').first()
     expect(await shows(n), 'no notice after the move')
-    const where = n.getByText('→ Задачи')
-    expect(await shows(where), '«→ Задачи» is not in the notice')
-    expect(await where.evaluate(e => e.getBoundingClientRect().right <= e.closest('[data-notice]').getBoundingClientRect().right), '«→ Задачи» is cut off')
+    const where = n.getByText('Перемещено в Задачи')
+    expect(await shows(where), '«Перемещено в Задачи» is not in the notice')
+    expect(await where.evaluate(e => e.getBoundingClientRect().right <= e.closest('[data-notice]').getBoundingClientRect().right), '«Перемещено в Задачи» is cut off')
     expect(await n.evaluate(e => e.scrollHeight <= e.clientHeight + 1), 'a third line peeks out')
   } },
   // 5: the «новых» dot sits right after the name in the sidebar; text statuses stay at the end
@@ -133,13 +136,8 @@ export default [
   // 15: desktop: «Запись изменили в другой вкладке» under the title (PageTwoTabs); the phone keeps it above (MobileTwoTabs)
   { id: 'r3-15-two-tabs-desk', device: DESKTOP, run: p => twoTabs(p, 'under') },
   { id: 'r3-15-two-tabs', device: MOBILE, run: p => twoTabs(p, 'above') },
-  // 16: a typed «идея:» names the page over a topic word of another one (the main flow files it with no receipt)
-  { id: 'r3-16-prefix', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    await send(p, 'идея: сад на балконе')
-    const where = await pageOf(p, 'сад на балконе')
-    expect(where === 'Идеи', `«идея: сад на балконе» went to ${where}`)
-  } },
+  // 16 retired in main flow 2 (item 4): without a model the field sorts nothing, so «идея:» stays in Входящие. The prefix
+  // rule still serves the model's path and Журнал (`classify` in test/domain.test.ts)
   // 17, 18: receipts stay on Журнал's composer, off the main flow
 
   // 17: in a series only the row that waited for the network says «разобрано, когда появилась сеть»

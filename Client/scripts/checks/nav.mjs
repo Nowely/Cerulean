@@ -225,17 +225,8 @@ export default [
     expect(Math.abs(title.x + title.width / 2 - 195) <= 3, `«Журнал» is not centred (${Math.round(title.x + title.width / 2)})`)
     expect(back.x < 40, '«‹ Главная» is not on the left')
   } },
-  // 23. Send «хлеб»: Покупки gets a dot, no word; screen readers hear «новых»
-  { id: 'n-23-dot', device: MOBILE, run: async (p) => {
-    await p.clock.install({ time: CLOCK })
-    await open(p, '/')
-    await send(p, 'хлеб')
-    // Main flow, item 17: the dot is «есть новое» to a screen reader, and no word on screen
-    const row = p.locator('main').getByRole('link', { name: /^Покупки/ }).first()
-    expect((await row.textContent()).includes('есть новое'), 'screen readers do not hear «есть новое»')
-    expect(!(await shownWord(row, 'новых')) && !(await shownWord(row, 'есть новое')), 'the row shows a word for new')
-    expect(await row.locator('[data-new-dot]').count(), 'no dot on Покупки')
-  } },
+  // 23. n-23-dot retired in main flow 2 (item 2): Главная has no dot for new; the send's tint is the only sign.
+  // The desktop sidebar keeps its dot (its look is not that round)
   { id: 'n-23-desk-dot', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: CLOCK })
     await open(p, '/')
@@ -248,7 +239,7 @@ export default [
     await p.getByRole('link', { name: 'Главная' }).first().click()
     await p.waitForTimeout(500)
     const row = p.locator('main').getByRole('link', { name: /^Покупки/ }).first()
-    expect(!(await shownWord(row, 'новых')) && await row.locator('span.rounded-full[aria-hidden="true"]').count(), 'Главная: no dot, or the word «новых»')
+    expect(!(await shownWord(row, 'новых')) && !(await row.locator('[data-new-dot]').count()), 'Главная: a dot, or the word «новых»')
   } },
   // 32. Only Сегодня says «просрочено» on Главная
   { id: 'n-32-overdue-once', device: MOBILE, run: async (p) => {

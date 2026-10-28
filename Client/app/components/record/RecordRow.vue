@@ -3,10 +3,12 @@
 // carries it) and letting go without moving opens its «⋯» sheet. Desktop: the same actions appear on hover after
 // the row's values, a right click opens all of them, and a ⋮⋮ handle in the left gutter drags the row.
 // The row is one Tab stop, its text: ↑/↓ between rows, Space ticks, Enter opens, Delete deletes,
-// Shift+F10 opens «⋯», Alt+↑/↓ moves the row. The right side shows properties, never when it was made (v22).
+// Shift+F10 opens «⋯», Alt+↑/↓ moves the row. The right side shows properties, never when it was made (v22); the
+// quantity sits right after the name (Josh 28 Oct, 7). In Входящие every open row ends with a move button that opens the
+// places list at the row (Josh 28 Oct, 10). A ticked row leaves its list after a moment, fading (Josh 28 Oct, 12).
 import { computed, nextTick, onMounted, ref, useTemplateRef, type FunctionalComponent } from 'vue'
 import { LazyUContextMenu, LazyUDropdownMenu, LazyUTooltip } from '#components'
-import { GLYPHS, type Id, type Page, type PageColor, type Rec, type ViewDef } from '~/domain/types'
+import type { Id, Page, PageColor, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import { useNow } from '~/composables/useNow'
@@ -15,14 +17,17 @@ import { useSwipe } from '~/composables/useSwipe'
 import { useRecordActions } from '~/composables/useRecordActions'
 import { useTemplates } from '~/composables/useTemplates'
 import { useLater } from '~/composables/useLater'
+import { useNotify } from '~/composables/useNotify'
+import { usePlaces } from '~/composables/usePlaces'
+import { useCreatePage } from '~/composables/useCreatePage'
 import { formatDue, isOverdue } from '~/domain/dates'
 import { nb } from '~/domain/text'
 import { formatValue, optionOf } from '~/domain/props'
 import { bodyOf, docText } from '~/domain/body'
 import RecordMark from '../common/RecordMark.vue'
-import ChipButton from '../common/ChipButton.vue'
 import OptionPill from '../common/OptionPill.vue'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
+import PlacesPopover from '../composer/PlacesPopover.vue'
 
 const props = withDefaults(defineProps<{
   rec: Rec
@@ -43,9 +48,11 @@ const props = withDefaults(defineProps<{
   grip?: Record<string, unknown>
   /** Written from elsewhere since the page was last opened: the fresh tint as the page opens (main flow, item 10) */
   tint?: boolean
-}>(), { readonly: false, selected: false, wrap: false, reveal: false, day: false, lifted: false, grip: undefined, tint: false })
+  /** A tick is taking the row out of its list: it fades in the moment's last 0.2 s */
+  leaving?: boolean
+}>(), { readonly: false, selected: false, wrap: false, reveal: false, day: false, lifted: false, grip: undefined, tint: false, leaving: false })
 
-const emit = defineEmits<{ open: [], choose: [pageId: Id | 'more' | 'new'], shift: [by: -1 | 1] }>()
+const emit = defineEmits<{ open: [], shift: [by: -1 | 1] }>()
 
 const data = useDataStore()
 const journal = useJournalStore()
@@ -70,19 +77,24 @@ function openMenu() {
 
 const subs = computed(() => data.subitemsOf(props.rec.id))
 const subsDone = computed(() => subs.value.filter(s => s.done).length)
-// The rows of the latest send carry the fresh tint, which fades by itself (fresh-tint); nothing says «только что»
-const fresh = computed(() => (props.tint || Date.now() - props.rec.addedAt < 5000) && !props.rec.done)
+// The rows of the latest send carry the fresh tint, which fades by itself (fresh-tint); nothing says «только что».
+// «Быстрый старт» was made by the first run, not written, so it never lights up
+const fresh = computed(() => (props.tint || (!props.rec.seed && Date.now() - props.rec.addedAt < 5000)) && !props.rec.done)
 // A row just written here comes into view, wherever its group puts it (B4: a long page sorted by Отдел)
 onMounted(() => {
   if (props.reveal && fresh.value) el.value?.scrollIntoView({ block: 'nearest' })
 })
 const late = computed(() => !props.rec.done && isOverdue(props.rec.due, now.value))
 const inbox = computed(() => props.page.kind === 'inbox')
-const asking = computed(() => inbox.value && props.rec.tags.includes('clarify') && !props.rec.done)
 /** Waiting for the network: a state on the right, not a tag */
 const waiting = computed(() => inbox.value && props.rec.tags.includes('offline'))
-/** A Входящие row that still needs a place: its guess chip and «⋯» end the row (a preview only reads) */
-const choosing = computed(() => (asking.value || waiting.value) && !props.readonly)
+/** The quantity, right after the name: «Яйца 10 шт» */
+const qtyProp = computed(() => props.page.props.find(p => p.name === 'Количество' && (props.view?.shown ?? []).includes(p.id)))
+const qty = computed(() => {
+  const prop = qtyProp.value
+  const value = prop ? props.rec.values[prop.id] : null
+  return prop && value !== null && value !== undefined && value !== '' ? formatValue(prop, value, now.value) : ''
+})
 
 /** «Справа в строке»: the view's chosen properties, empty ones hidden; a «Выбор» value is its pill (v23) */
 const right = computed(() => {
@@ -97,7 +109,7 @@ const right = computed(() => {
       else if (due.time) out.push({ key, text: due.time })
       continue
     }
-    if (key === 'note') continue
+    if (key === 'note' || key === qtyProp.value?.id) continue
     const prop = props.page.props.find(p => p.id === key)
     const value = props.rec.values[key]
     if (!prop || value === null || value === undefined || value === '') continue
@@ -126,10 +138,11 @@ const stock = computed(() => {
 })
 
 /**
- * The record's text shows as the row's second line, its first line cut with an ellipsis (main flow, item 12, as in
- * Mail and Notes): it replaces the note glyph of «Справа в строке», and the view can still switch it off (v24 fixes, 14)
+ * The record's text shows under the name, up to two lines and then «…» (main flow, item 12; Josh 28 Oct, 13, as in iOS
+ * Mail and Telegram), its lines joined by a space: it replaces the note glyph of «Справа в строке», and the view can
+ * still switch it off (v24 fixes, 14)
  */
-const noteLine = computed(() => props.view?.noteOff ? '' : docText(bodyOf(props.rec), data.nameOf).split('\n').find(l => l.trim())?.trim() ?? '')
+const noteLine = computed(() => props.view?.noteOff ? '' : docText(bodyOf(props.rec), data.nameOf).split('\n').map(l => l.trim()).filter(Boolean).join(' '))
 
 function step(by: number) {
   if (!stock.value) return
@@ -195,24 +208,33 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
-/**
- * Входящие (v23, B1, F13): one chip with the strongest guess, worked out again from the pages there are now; the
- * faint «⋯» has the other guesses, «Переместить…» and «Удалить», so every swipe on the row is in it too
- */
-const guesses = computed(() => journal.guessesFor(props.rec).slice(0, 3).map(id => data.pages[id]).filter((p): p is Page => !!p))
-const inboxMenu = computed<MenuItem[][]>(() => [
-  guesses.value.slice(1).map(g => ({ label: `→ ${g.title || 'Без названия'}`, icon: GLYPHS[g.glyph ?? 'doc'], onSelect: () => emit('choose', g.id) })),
-  [
-    { label: 'Переместить…', icon: 'i-lucide-arrow-right', onSelect: () => emit('choose', 'more') },
-    { label: 'Удалить', icon: 'i-lucide-trash-2', danger: true, onSelect: remove }
-  ]
-].filter(g => g.length))
+// ---------- Входящие: the move button (Josh 28 Oct, 10; Todoist «Move to…», Things «Move») ----------
+
+const notify = useNotify()
+const { list: listPage } = useCreatePage()
+const allPlaces = usePlaces()
+/** Every open record in Входящие ends with it; a ticked one has none, and a preview only reads */
+const moving = computed(() => inbox.value && !props.rec.done && !props.readonly)
+const movePop = ref(false)
+/** Every page but Входящие (and never Сегодня), then «Новая страница» */
+const movePlaces = computed(() => allPlaces.value.filter(p => p.kind !== 'inbox'))
+/** With a model its place is the list's first row, tinted like the field's chip (Apple Mail's suggested mailbox) */
+const suggested = computed(() => movePop.value && journal.hasModel() ? journal.guessesFor(props.rec, false)[0] ?? null : null)
+/** The record moves at once and leaves Входящие; «Отменить» puts it back, and a page made for it goes while empty */
+function moveTo(to: Id | { name: string }) {
+  movePop.value = false
+  const { result: page, undo } = journal.undoable([props.rec.id], () =>
+    journal.chooseForRecord(props.rec.id, { pageId: typeof to === 'string' ? to : listPage(to.name).id }))
+  if (page && page.id !== data.inbox.id) notify(`Перемещено в ${page.title || 'Без названия'}`, { label: 'Отменить', run: undo })
+}
 </script>
 
 <template>
+  <!-- The move list rises over the rows and the add row below, even from a row that is still tinted (an isolated layer) -->
   <div
     ref="box"
     class="relative"
+    :class="{ 'z-5': movePop }"
   >
     <!-- Swipe actions grow from the right edge over the row's values; the mark and the text stay in place (B1) -->
     <div
@@ -256,7 +278,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
         class="group/row relative mx-1 flex min-h-11 items-center rounded-chip pr-3 lg:mx-0 lg:min-h-10 lg:pr-1.5"
         :class="[
           selected ? 'bg-sel' : lifted ? '' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
-          { 'fresh-tint': fresh },
+          { 'fresh-tint': fresh, 'animate-leave': leaving },
           swipe.dragging.value ? '' : 'transition-[padding] duration-200 ease-out-soft',
           // The browser keeps vertical scroll and leaves the sideways drag to the swipe (no pointercancel)
           readonly ? '' : 'touch-pan-y'
@@ -321,10 +343,14 @@ const inboxMenu = computed<MenuItem[][]>(() => [
             <span
               class="text-record"
               :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
-            >{{ nb(rec.text) }}</span>
+            >{{ nb(rec.text) }}<span
+              v-if="qty"
+              class="ml-1.5 text-toned"
+              data-row-qty
+            >{{ qty }}</span></span>
             <span
               v-if="noteLine && !stock"
-              class="truncate text-sm leading-4.75 text-toned"
+              class="line-clamp-2 text-sm leading-4.75 break-words text-toned"
               data-row-note
             >{{ noteLine }}</span>
             <span
@@ -399,45 +425,41 @@ const inboxMenu = computed<MenuItem[][]>(() => [
           </button>
         </span>
 
-        <!-- Входящие: the strongest guess, one width (92–120) so the next row's chip lands under the thumb, then the
-             faint «⋯»; at 320 the chip drops under the text as line 2. Sunk into the phone's page, raised on the desktop -->
-        <template v-if="choosing">
-          <span
-            v-if="guesses[0]"
-            class="sunk ml-1.5 flex max-w-30 min-w-23 shrink-0 max-[359px]:hidden lg:raised"
+        <!-- Входящие: the move button ends every open row; the places list opens right at it -->
+        <span
+          v-if="moving"
+          class="relative -mr-2 ml-0.5 flex shrink-0 lg:mr-0"
+        >
+          <button
+            type="button"
+            class="flex size-11 cursor-pointer items-center justify-center rounded-chip text-toned active:bg-pressed lg:size-9 lg:hover:bg-hover"
+            :aria-label="`Переместить «${rec.text}»`"
+            aria-haspopup="dialog"
+            :aria-expanded="movePop"
+            data-places-chip
+            data-move
+            @click="movePop = !movePop"
           >
-            <ChipButton
-              :label="`→ ${guesses[0].title || 'Без названия'}`"
-              :aria-label="`Переместить в «${guesses[0].title || 'Без названия'}»`"
-              class="w-full justify-center font-medium lg:h-8"
-              @click="emit('choose', guesses[0].id)"
+            <UIcon
+              name="i-lucide-folder-input"
+              class="size-5"
             />
-          </span>
-          <ActionMenu
-            :items="inboxMenu"
-            :title="rec.text"
-            caption="Входящие"
-            divided
-            wide
-            :label="`Ещё для «${rec.text}»`"
-          >
-            <button
-              type="button"
-              class="relative -mr-2 ml-1.5 flex h-11 w-6 shrink-0 cursor-pointer items-center justify-center rounded-item text-dimmed after:absolute after:inset-y-0 after:-right-1 after:-left-0.75 hover:text-highlighted active:bg-pressed lg:mr-0 lg:h-9 lg:w-8 lg:aria-expanded:text-highlighted"
-              :aria-label="`Ещё для «${rec.text}»`"
-              aria-haspopup="dialog"
-            >
-              <UIcon
-                name="i-lucide-ellipsis"
-                class="size-4.5"
-              />
-            </button>
-          </ActionMenu>
-        </template>
+          </button>
+          <PlacesPopover
+            v-if="movePop"
+            :pages="movePlaces"
+            :suggested="suggested"
+            below
+            label="Куда переместить"
+            @pick="id => moveTo(id)"
+            @create="name => moveTo({ name })"
+            @close="movePop = false"
+          />
+        </span>
 
         <!-- Desktop: the actions on hover, after the values; on touch they live in the swipe and in «⋯» -->
         <span
-          v-if="!readonly && isDesktop && !lifted && !choosing"
+          v-if="!readonly && isDesktop && !lifted"
           class="ml-1 hidden shrink-0 items-center gap-0.5 group-hover/row:flex group-focus-within/row:flex"
         >
           <component
@@ -471,7 +493,7 @@ const inboxMenu = computed<MenuItem[][]>(() => [
         </span>
         <component
           :is="later.ready.value ? LazyUDropdownMenu : Bare"
-          v-if="!readonly && isDesktop && !choosing"
+          v-if="!readonly && isDesktop"
           v-model:open="menuOpen"
           :items="menu"
           :content="{ align: 'end', onCloseAutoFocus: backToRow }"
@@ -512,20 +534,5 @@ const inboxMenu = computed<MenuItem[][]>(() => [
         </template>
       </div>
     </component>
-
-    <!-- Входящие at 320: the guess is line 2, under the text -->
-    <div
-      v-if="choosing && guesses[0]"
-      class="flex pr-3 pb-2 pl-12 min-[360px]:hidden"
-    >
-      <span class="sunk flex max-w-30 min-w-23">
-        <ChipButton
-          :label="`→ ${guesses[0].title || 'Без названия'}`"
-          :aria-label="`Переместить в «${guesses[0].title || 'Без названия'}»`"
-          class="w-full justify-center font-medium"
-          @click="emit('choose', guesses[0].id)"
-        />
-      </span>
-    </div>
   </div>
 </template>

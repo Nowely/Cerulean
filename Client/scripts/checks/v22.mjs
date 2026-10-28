@@ -106,21 +106,7 @@ export default [
     expect(await shows(row.getByText('1 л', { exact: true })), 'the row does not show «1 л»')
     expect(!(await p.getByText(/только что/).count()), '«только что» on screen')
   } },
-  // 6: «tick «Молоко» on «Купить»: it stays in place, struck through; tap again: back»
-  { id: 'v22-6-tick-stays', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    await openPage(p, 'Покупки')
-    // Once ticked, the mark reads «Купить снова «Молоко»» (v22 item 40), so the row is found by its text
-    const mark = p.locator('main li', { hasText: 'Молоко' }).first().getByRole('checkbox')
-    await mark.click()
-    await p.waitForTimeout(600)
-    expect(await mark.isVisible(), 'Молоко left the list after the tick')
-    expect(await mark.isChecked(), 'Молоко is not ticked')
-    expect(await p.getByText('Молоко', { exact: true }).evaluate(e => getComputedStyle(e).textDecorationLine.includes('line-through')), 'Молоко is not struck through')
-    await mark.click()
-    await p.waitForTimeout(300)
-    expect(!(await mark.isChecked()), 'a second tap did not untick')
-  } },
+  // 6 retired in main flow 2 (item 9): a tick leaves the list after a moment (mf2-9-tick replaces U2)
   // 8, 10, 22, 33, 34: receipts, series and found cards stay on Журнал's composer, off the main flow
   // 8: an expanded series receipt gives each row its own «→»
   { id: 'v22-8-series-rows', device: MOBILE, run: async (p) => {
@@ -186,11 +172,12 @@ export default [
     expect(await shows(p.getByText(/1 запись → Дела по дому/)), 'no receipt to Дела по дому')
     expect(await shows(p.getByText('Похожее в записях')), 'no «Похожее в записях»')
   } },
-  // 31: renames; day one's pages are Покупки, Задачи and Идеи (main flow, item 1), Журнал is in Главная's «⋯» (item 20)
+  // 31: renames; day one's pages are Быстрый старт, Покупки, Задачи and Идеи (main flow, item 1; main flow 2, item 3),
+  // Журнал is in Главная's «⋯» (item 20)
   { id: 'v22-31-renames', device: MOBILE, run: async (p) => {
     await open(p, '/', false)
     const names = await store(p, data => data.livePages.filter(x => x.kind === 'page').map(x => x.title).join(', '))
-    expect(names === 'Покупки, Задачи, Идеи', `day one's pages are ${names}`)
+    expect(names === 'Быстрый старт, Покупки, Задачи, Идеи', `day one's pages are ${names}`)
     await open(p, '/')
     await p.getByRole('button', { name: 'Меню Главной' }).click()
     await p.locator('[data-home-menu]').getByRole('menuitem', { name: 'Журнал' }).click()

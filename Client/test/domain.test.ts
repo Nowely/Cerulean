@@ -130,14 +130,20 @@ describe('demo summaries match the spec', () => {
     expect(pageSubline(page('Сегодня'), [], NOW, d.records)).toBe('3 дела со всех страниц · 1 просрочено')
   })
 
-  it('a row ticked while the page is open stays only in the views it fit before the tick', () => {
+  it('a row a tick is taking out stays only in the views it fit before the tick, then leaves (Josh 28 Oct, 12)', () => {
     const p = page('Покупки')
-    const [buy, stock] = [p.views.find(v => v.name === 'Купить')!, p.views.find(v => v.name === 'Запасы')!]
-    const opened = NOW - 60_000
+    const [buy, stock, bought] = ['Купить', 'Запасы', 'Куплено'].map(n => p.views.find(v => v.name === n)!)
     const recs = top('Покупки').map(r => r.text === 'Молоко' ? { ...r, done: true, tickedAt: NOW } : r)
-    const names = (v: typeof buy) => applyView(p, recs, v, NOW, opened).flatMap(g => g.records.map(r => r.text))
-    expect(names(buy)).toContain('Молоко')
-    expect(names(stock)).not.toContain('Молоко')
+    const milk = recs.find(r => r.text === 'Молоко')!
+    const names = (v: typeof buy, leaving?: Record<string, boolean>) => applyView(p, recs, v!, NOW, leaving).flatMap(g => g.records.map(r => r.text))
+    // While it leaves: struck on «Купить», not yet on «Куплено», never on «Запасы»
+    const going = { [milk.id]: false }
+    expect(names(buy, going)).toContain('Молоко')
+    expect(names(bought, going)).not.toContain('Молоко')
+    expect(names(stock, going)).not.toContain('Молоко')
+    // Once it has left: only on «Куплено»
+    expect(names(buy)).not.toContain('Молоко')
+    expect(names(bought)).toContain('Молоко')
   })
 
   it('«Купить» is grouped by Отдел in department order', () => {

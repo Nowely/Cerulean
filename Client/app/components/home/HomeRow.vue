@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // A page on Главная (main flow, items 17, 18). «Со сводкой»: a card, like a letter in Mail or a chat in Telegram: the
-// glyph on a 36px plate, the name with how many are open at its right (Reminders, Things), and under it what is in the
-// page, cut where the line ends. An empty page is its name alone. A dot means records written from elsewhere since the
-// page was opened. «Компактный»: a plain 44px list, glyph and name, the dot at the right edge.
+// glyph on a 36px plate, the name with how many are open right after it (Josh 28 Oct, 7), and under it what is in the
+// page, cut where the line ends. An empty page is its name alone. No dot for what is new (Josh 28 Oct, 2): the tint after
+// a send says where it went. «Компактный»: a plain 44px list, glyph and name.
 // The row's right end belongs to the page «⋯» (hover and keyboard focus on desktop); on a phone a long press opens it.
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from '#imports'
@@ -137,51 +137,29 @@ function click(e: MouseEvent) {
         />
       </span>
       <span class="flex min-w-0 flex-1 flex-col gap-px">
-        <span class="flex min-w-0 items-center gap-2">
+        <span class="flex min-w-0 items-center gap-1.5">
           <span
             class="min-w-0 truncate text-base leading-5.5 font-medium text-highlighted"
             :class="{ 'text-dimmed': page && !page.title }"
             data-name
           >{{ name }}</span>
-          <template v-if="card.isNew && (compact || !card.line)">
-            <span
-              class="ml-auto shrink-0 rounded-full bg-toned"
-              :class="compact ? 'size-1.5' : 'size-2'"
-              aria-hidden="true"
-              data-new-dot
-            />
-            <span class="sr-only">есть новое</span>
-          </template>
           <template v-if="!compact">
             <CountBadge
               v-if="late"
               :badge="late"
-              class="ml-auto"
             />
             <span
               v-else-if="card.open"
-              class="ml-auto shrink-0 text-15 leading-5 text-dimmed tabular-nums"
+              class="shrink-0 text-15 leading-5 text-dimmed tabular-nums"
               data-open
             ><span class="sr-only">открытых: </span>{{ card.open }}</span>
           </template>
         </span>
         <span
           v-if="!compact && card.line"
-          class="flex min-w-0 items-center gap-2.5"
-        >
-          <span
-            class="min-w-0 flex-1 truncate text-sm leading-4.75 text-toned"
-            data-line
-          >{{ card.line }}</span>
-          <template v-if="card.isNew">
-            <span
-              class="size-2 shrink-0 rounded-full bg-toned"
-              aria-hidden="true"
-              data-new-dot
-            />
-            <span class="sr-only">есть новое</span>
-          </template>
-        </span>
+          class="min-w-0 truncate text-sm leading-4.75 text-toned"
+          data-line
+        >{{ card.line }}</span>
       </span>
     </a>
     <PageMenu

@@ -3,7 +3,6 @@
 import { DESKTOP, MOBILE, expect, open, shows, store } from './lib.mjs'
 
 const NOW = new Date('2026-10-19T09:14:00+03:00')
-const PHONE_320 = { ...MOBILE, viewport: { width: 320, height: 640 } }
 
 const openPage = async (p, title) => {
   await p.getByRole('link', { name: new RegExp(`^${title}`) }).first().click()
@@ -93,65 +92,8 @@ export default [
     }).catch(() => null)
     expect(stuck !== null && stuck < 2, `«Молочное» is ${stuck} px off the top of the list`)
   } },
-  // 15: «Подарок маме на др» on one line with «→ Задачи» and «⋯»; «⋯» → «→ Идеи», «Переместить…», «Удалить»
-  { id: 'f-15-inbox', device: MOBILE, run: async (p) => {
-    await p.clock.install({ time: NOW })
-    await open(p, '/')
-    await openPage(p, 'Входящие')
-    const row = p.locator('main li').filter({ hasText: 'Подарок маме на др' }).first()
-    const box = await row.boundingBox()
-    expect(Math.round(box.height) <= 45, `the row is ${box.height} px, more than one line`)
-    const chip = row.getByRole('button', { name: 'Переместить в «Задачи»' })
-    expect(await chip.isVisible(), 'no «→ Задачи» chip')
-    expect(plain(await chip.textContent()) === '→ Задачи', `the chip reads «${plain(await chip.textContent())}»`)
-    const cw = (await chip.boundingBox()).width
-    expect(cw >= 92 && cw <= 120, `the chip is ${cw} px wide`)
-    expect(await row.getByRole('button', { name: /^Переместить в/ }).count() === 1, 'more than one guess chip on the row')
-    const text = await row.locator('[data-row-text]').boundingBox()
-    expect(text.width >= 200, `the text column is ${text.width} px`)
-    const more = row.getByRole('button', { name: 'Ещё для «Подарок маме на др»' })
-    const mw = (await more.boundingBox()).width
-    expect(Math.round(mw) === 24, `«⋯» is ${mw} px wide`)
-    await more.click()
-    await p.waitForTimeout(600)
-    const sheet = p.getByRole('dialog')
-    for (const name of ['→ Идеи', 'Переместить…', 'Удалить']) {
-      expect(await shows(sheet.getByRole('button', { name, exact: true }).or(sheet.getByRole('menuitem', { name, exact: true }))), `the sheet has no «${name}»`)
-    }
-    expect(!(await sheet.getByRole('button', { name: '→ Задачи', exact: true }).count()), 'the sheet repeats the chip')
-  } },
-  // 15 at 320: the chip drops under the text as line 2
-  { id: 'f-15-inbox-320', device: PHONE_320, run: async (p) => {
-    await p.clock.install({ time: NOW })
-    await open(p, '/')
-    await openPage(p, 'Входящие')
-    const row = p.locator('main li').filter({ hasText: 'Подарок маме на др' }).first()
-    const chip = row.getByRole('button', { name: 'Переместить в «Задачи»' }).locator('visible=true')
-    expect(await chip.count() === 1, `${await chip.count()} visible chips`)
-    const c = await chip.boundingBox()
-    const t = await row.locator('[data-row-text]').boundingBox()
-    expect(c.y >= t.y + t.height - 1, 'the chip is not under the text')
-  } },
-  // D3: «Входящие → «→ Задачи» moves the row, the toast takes it back»; the faint «⋯» holds the other guesses
-  { id: 'f-15-desk-inbox', device: DESKTOP, run: async (p) => {
-    await p.clock.install({ time: NOW })
-    await open(p, '/')
-    await openPage(p, 'Входящие')
-    const row = p.locator('main li').filter({ hasText: 'Подарок маме на др' }).first()
-    await row.getByRole('button', { name: 'Ещё для «Подарок маме на др»' }).click()
-    await p.waitForTimeout(500)
-    for (const name of ['→ Идеи', 'Переместить…', 'Удалить']) expect(await shows(p.getByRole('menuitem', { name, exact: true })), `the menu has no «${name}»`)
-    await p.keyboard.press('Escape')
-    await p.waitForTimeout(300)
-    await row.getByRole('button', { name: 'Переместить в «Задачи»' }).click()
-    await p.waitForTimeout(500)
-    expect(!(await p.locator('main li').filter({ hasText: 'Подарок маме на др' }).count()), 'the row is still in Входящие')
-    const undo = p.locator('[data-notice]', { hasText: 'Подарок маме на др → Задачи' }).getByRole('button', { name: 'Отменить' })
-    expect(await shows(undo), 'no «Подарок маме на др → Задачи · Отменить»')
-    await undo.click()
-    await p.waitForTimeout(500)
-    expect(await shows(p.locator('main li').filter({ hasText: 'Подарок маме на др' })), '«Отменить» did not bring the row back')
-  } },
+  // 15, 15 at 320 and D3 (f-15-inbox, f-15-inbox-320, f-15-desk-inbox) retired in main flow 2 (item 10): a Входящие row
+  // ends with a move button, not a guess chip and a «⋯» of guesses (mf2-10-inbox-move)
   // 16: «Сегодня shows «На неделе · 2 ›»; tap → «Поменять фильтр воды … ср»»; the fold stays as it was left
   // v24 item 18: one demo world, the fold reads «На неделе · 4» (ср, пт, сб, вс)
   { id: 'f-16-week', device: MOBILE, run: async (p) => {
@@ -374,11 +316,13 @@ export default [
     await p.getByRole('dialog').getByRole('button', { name: /^Связать/ }).or(p.getByRole('menuitem', { name: /^Связать/ })).first().click()
     await sheetChecked('Связать')
     await open(p, '/')
-    await openPage(p, 'Входящие')
-    await p.getByRole('button', { name: 'Ещё для «Подарок маме на др»' }).click()
+    // Main flow 2 (item 10): Входящие's rows have no «⋯» of guesses; the page picker opens from the record's «⋯»
+    const gift = await store(p, data => data.liveRecords.find(r => r.text === 'Подарок маме на др').id)
+    await open(p, `/r/${gift}`)
+    await p.getByRole('button', { name: 'Действия с записью' }).first().click()
     await p.waitForTimeout(500)
-    await p.getByRole('dialog').getByRole('button', { name: 'Переместить…' }).click()
-    await sheetChecked('Куда положить')
+    await p.getByRole('dialog').getByRole('button', { name: /^Переместить на другую страницу/ }).click()
+    await sheetChecked('Переместить')
     await open(p, '/settings')
     await p.getByRole('button', { name: /^Подключение/ }).click()
     await sheetChecked('Подключение')

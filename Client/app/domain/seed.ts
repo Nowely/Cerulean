@@ -25,17 +25,37 @@ export interface Dataset {
   entries: Entry[]
 }
 
+/** «Быстрый старт» on day one (Josh 28 Oct, 5): what to try, newest first, as Notion's «Getting Started» and Things do */
+const START: [string, string?][] = [
+  ['Запишите что-нибудь в поле внизу', 'Дата в словах станет сроком: «позвонить маме завтра в 10»'],
+  ['Откройте запись и добавьте к ней заметку'],
+  ['Разберите Входящие: кнопка справа у записи переносит её'],
+  ['Создайте свою страницу: «+» у «Мои страницы»'],
+  ['Подключите модель в Настройках, и записи будут раскладываться сами'],
+  ['Удалите эту страницу, когда она станет не нужна: «⋯» → «Удалить»']
+]
+
 /**
- * The first open (main flow, item 1): Входящие and Сегодня on top, and three empty pages in «Мои страницы» from their
- * starters, Покупки, Задачи, Идеи in that order (the list is newest first, so they are made a moment apart)
+ * The first open (main flow, item 1): Входящие and Сегодня on top, then in «Мои страницы» the list «Быстрый старт» and
+ * three empty pages from their starters, Покупки, Задачи, Идеи in that order (the list is newest first, so they are made
+ * a moment apart). «Быстрый старт» is an ordinary page: its records tick, open and delete, and the page deletes too
  */
 export function firstRun(now = Date.now()): Dataset {
+  const start = newPage({ title: 'Быстрый старт', glyph: 'list', order: 0, createdAt: now, openedAt: now, seenAt: now }, now)
   const own = (['shop', 'todo', 'note'] as const).map((key, i) => {
-    const at = now - i
-    const page = newPage({ order: i, createdAt: at, openedAt: at, seenAt: at }, now)
+    const at = now - 1 - i
+    const page = newPage({ order: i + 1, createdAt: at, openedAt: at, seenAt: at }, now)
     return { ...page, ...applyTemplate(page, key) }
   })
-  return { pages: [...systemPages(now), ...own], records: [], sections: [], entries: [] }
+  const records = START.map(([text, note], i) => newRecord({
+    pageId: start.id,
+    text,
+    ...(note ? withBody(para(note)) : {}),
+    order: i,
+    addedAt: now - i,
+    seed: true
+  }, now))
+  return { pages: [...systemPages(now), start, ...own], records, sections: [], entries: [] }
 }
 
 /** Only Покупки (green) and Книги (purple) have a colour chosen; every other page is «Без цвета» (v23) */

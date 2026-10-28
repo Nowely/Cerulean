@@ -11,7 +11,7 @@ import { mergeSnapshot, type Snapshot } from '~/domain/export'
 import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/factory'
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
 import { learn, learnWord } from '~/domain/rules'
-import { doneIn, dropPlace, topOrder, type Group } from '~/domain/views'
+import { doneIn, dropPlace, topOrder, type Group, type Leaving } from '~/domain/views'
 import { applyTemplate, readPage, TEMPLATES } from '~/domain/templates'
 import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
 import { uid } from '~/domain/ids'
@@ -74,6 +74,9 @@ function into<T extends { id: Id }>(map: Record<Id, T>, id: Id, value: T | undef
   else if (here) refill(here, value)
   else map[id] = value
 }
+
+/** How long a ticked row stays in its list before it leaves (Josh 28 Oct, 12) */
+export const LEAVE_MS = 1500
 
 export const useDataStore = defineStore('data', () => {
   const pages = ref<Record<Id, Page>>({})
@@ -723,10 +726,29 @@ export const useDataStore = defineStore('data', () => {
     else updateRecord(recId, { links: [...(rec.links ?? []), targetId] })
   }
 
+  /**
+   * Rows a tick is taking out of their list (Josh 28 Oct, 12): struck at once, they leave after LEAVE_MS (the last 0.2 s
+   * a fade); a second tap before that takes the tick back and the row stays. Kept for this tab only, never saved
+   */
+  const leaving = ref<Leaving>({})
+  const leaveTimers = new Map<Id, ReturnType<typeof setTimeout>>()
   function toggleDone(id: Id) {
     const rec = records.value[id]
     if (!rec) return
     const now = Date.now()
+    clearTimeout(leaveTimers.get(id))
+    leaveTimers.delete(id)
+    if (id in leaving.value) {
+      const { [id]: _, ...rest } = leaving.value
+      leaving.value = rest
+    } else {
+      leaving.value = { ...leaving.value, [id]: rec.done }
+      leaveTimers.set(id, setTimeout(() => {
+        leaveTimers.delete(id)
+        const { [id]: _, ...rest } = leaving.value
+        leaving.value = rest
+      }, LEAVE_MS))
+    }
     updateRecord(id, rec.done ? { done: false, doneAt: undefined, tickedAt: now } : { done: true, doneAt: now, tickedAt: now })
   }
 
@@ -1082,7 +1104,7 @@ export const useDataStore = defineStore('data', () => {
     init, setSettings, toggleFolded, clearWriteFailed, persist, hold, release, takeWaiting,
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     propUsage, addProp, updateProp, moveProp, removeOption, retypeProp, removeProp,
-    addRecord, updateRecord, toggleLink, toggleDone, moveRecords, teach, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
+    addRecord, updateRecord, toggleLink, toggleDone, leaving, moveRecords, teach, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
     appendParagraph, templateOf, makeTemplate, updateTemplate, removeTemplate, fillFromTemplate,
     createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,

@@ -107,6 +107,11 @@ export const useUiStore = defineStore('ui', () => {
    * (4 s, then a 1 s fade) starts again on every send
    */
   const freshPages = ref<Record<Id, number>>({})
+  /**
+   * The place picked by hand in Главная's field (Josh 28 Oct, 3): it stays after a send and when Главная is opened again,
+   * until the person picks another one. Null: Входящие, or Авто with a model. A reload starts it over (Josh, 12:45Z)
+   */
+  const homePlace = ref<Id | null>(null)
 
   return {
     picker,
@@ -122,6 +127,7 @@ export const useUiStore = defineStore('ui', () => {
     notice,
     docks,
     freshPages,
+    homePlace,
     pick: (p: Picker) => {
       picker.value = { ...p, anchor: p.anchor === undefined ? anchorNow() : p.anchor }
     },

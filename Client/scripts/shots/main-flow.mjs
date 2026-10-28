@@ -1,4 +1,4 @@
-// The main flow (canvas 71, page «Основной путь»): first open → first record → its note, Главная a week in, and the
+// The main flow (canvas 76, page «Основной путь»): first open → first record → its note, Главная a week in, and the
 // path with a model. The names are the mockup's artboards (Flow, FlowTyping, …), so the report pairs them. Every state
 // starts from a real first run (no ?demo) on an iPhone: its insets (47 top, 34 bottom) and, while writing, its keyboard
 // from 557 px down, where the mockup draws it.
@@ -44,8 +44,17 @@ export default ({ MOBILE, DAY, settle, open, data }) => {
     await page.keyboard.type(words)
     await settle(page, 400)
   }
+  /** Picks a place in the open field's list by hand; on Главная it stays (main flow 2, item 5) */
+  async function pickPlace(page, name) {
+    await page.locator('[data-chip="main"]').click()
+    await page.locator('[data-places]').getByRole('button', { name, exact: true }).click()
+    await settle(page, 200)
+  }
   async function sendMilk(page) {
-    await typing(page, 'Купить молоко')
+    await pill(page).click()
+    await keyboard(page)
+    await pickPlace(page, 'Покупки')
+    await page.keyboard.type('Купить молоко')
     await note(page).click()
     await page.keyboard.type('2,5%, большую пачку')
     await title(page).click()
@@ -90,6 +99,19 @@ export default ({ MOBILE, DAY, settle, open, data }) => {
     await settle(page, 300)
   }
 
+  /** Входящие a few days in, as the mockup's `inbox`: three records, one with a long text */
+  async function inbox(page) {
+    await first(page)
+    await data(page, (d, { MINUTE, DAY }) => {
+      const now = Date.now()
+      d.addRecord({ pageId: d.inbox.id, text: 'Подарок Оле', addedAt: now - DAY - 40 * MINUTE, via: 'chat' })
+      const pool = d.addRecord({ pageId: d.inbox.id, text: 'Узнать про абонемент в бассейн', addedAt: now - DAY - 20 * MINUTE, via: 'chat' })
+      d.setBody({ kind: 'record', id: pool.id }, { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Спросить про утренние часы и детскую группу, взять с собой справку от терапевта и фото 3×4' }] }] })
+      d.addRecord({ pageId: d.inbox.id, text: 'Купить батарейки', addedAt: now - 50 * MINUTE, via: 'chat' })
+    }, { MINUTE, DAY })
+    await goPage(page, 'Входящие')
+  }
+
   /** A week in, as the mockup's `week`: every page has records, two pages of the person's own, Покупки has a new one */
   async function week(page) {
     await first(page)
@@ -124,6 +146,9 @@ export default ({ MOBILE, DAY, settle, open, data }) => {
       add(d.inbox.id, 'Узнать про абонемент в бассейн', 1440 + 300)
       add(gifts.id, 'Настольная игра для Пети', 6 * 1440)
       add(gifts.id, 'Книга для Оли', 1440 + 200)
+      // Three of «Быстрый старт» are ticked, as the mockup has it
+      const start = d.liveRecords.filter(r => r.seed).sort((a, b) => b.addedAt - a.addedAt)
+      for (const i of [0, 1, 3]) d.updateRecord(start[i].id, { done: true, doneAt: ago(1440), tickedAt: ago(1440) })
       // Every page was opened since, but Покупки missed «Молоко»
       for (const p of d.livePages) d.updatePage(p.id, { seenAt: p.title === 'Покупки' ? ago(41) : now })
     }, { MINUTE, DAY })
@@ -137,15 +162,16 @@ export default ({ MOBILE, DAY, settle, open, data }) => {
   return [
     // П1 · first open
     { name: 'Flow', device: MOBILE, run: first },
-    // П2 · «Купить молоко»: the chip turned to Покупки
+    // П2 · «Купить молоко»: without a model the chip stays Входящие
     { name: 'FlowTyping', device: MOBILE, run: async (p) => {
       await first(p)
       await typing(p, 'Купить молоко')
     } },
-    // П3 · the note, ↑ ready
+    // П3 · Покупки picked by hand, the note, ↑ ready
     { name: 'FlowNote', device: MOBILE, run: async (p) => {
       await first(p)
       await typing(p, 'Купить молоко')
+      await pickPlace(p, 'Покупки')
       await note(p).click()
       await p.keyboard.type('2,5%, большую пачку')
       await settle(p, 300)
@@ -157,31 +183,58 @@ export default ({ MOBILE, DAY, settle, open, data }) => {
       await p.locator('[data-chip="main"]').click()
       await settle(p, 400)
     } },
-    // П2б · a date in the words
+    // П5 · «Новая страница» at the list's end, its name typed in the row
+    { name: 'FlowPlaceNew', device: MOBILE, run: async (p) => {
+      await first(p)
+      await typing(p, 'Подарок Оле')
+      await p.locator('[data-chip="main"]').click()
+      await p.locator('[data-places] [data-place-new]').click()
+      await p.keyboard.type('Подарки')
+      await settle(p, 400)
+    } },
+    // П6 · a date in the words
     { name: 'FlowDate', device: MOBILE, run: async (p) => {
       await first(p)
       await typing(p, 'Позвонить маме завтра в 10')
     } },
-    // П2в · three records in one line
-    { name: 'FlowList', device: MOBILE, run: async (p) => {
-      await first(p)
-      await typing(p, 'Купить молоко, хлеб, яйца')
-    } },
-    // П4 · after the send: the card, the dot, the notice; the field stays open
+    // П7 · after the send: the card, the notice; the field stays open with Покупки
     { name: 'FlowFiled', device: MOBILE, run: async (p) => {
       await first(p)
       await sendMilk(p)
     } },
-    // П5 · Покупки: «Молоко» with its text's first line, «+ Новая запись»
+    // П8 · after «Отменить»: the words, the note and the place are back in the field
+    { name: 'FlowUndo', device: MOBILE, run: async (p) => {
+      await first(p)
+      await sendMilk(p)
+      await p.locator('[data-notice]').getByRole('button', { name: 'Отменить' }).click()
+      await settle(p, 400)
+    } },
+    // П9 · Покупки: «Яйца 10 шт», «Молоко» with its text, «+ Новая запись»
     { name: 'FlowPage', device: MOBILE, run: async (p) => {
       await first(p)
+      await data(p, (d, MINUTE) => {
+        const shop = d.livePages.find(x => x.title === 'Покупки')
+        const qty = shop.props.find(x => x.name === 'Количество')
+        // The department the rules give eggs, as the add row would
+        const dept = shop.props.find(x => x.type === 'select')
+        const milky = dept.options.find(o => o.name === 'Молочное')
+        d.addRecord({ pageId: shop.id, text: 'Яйца', addedAt: Date.now() - 20 * MINUTE, values: { [qty.id]: '10 шт', [dept.id]: milky.id } })
+      }, MINUTE)
       await sendMilk(p)
       await away(p)
       await goPage(p, 'Покупки')
     } },
-    // П6 · the record
+    // П10 · Входящие: a move button at the end of each open record, a text on two lines
+    { name: 'FlowInbox', device: MOBILE, run: inbox },
+    // П11 · the move list at the row
+    { name: 'FlowInboxMove', device: MOBILE, run: async (p) => {
+      await inbox(p)
+      await p.getByRole('button', { name: 'Переместить «Подарок Оле»' }).click()
+      await settle(p, 400)
+    } },
+    // П12 · the record
     { name: 'FlowRec', device: MOBILE, run: milkRecord },
-    // П7 · writing its text: a list item, the bar over the keyboard
+    // П13 · writing its text: a list item, the bar over the keyboard
     { name: 'FlowBody', device: MOBILE, run: async (p) => {
       await milkRecord(p)
       await p.locator('main .body-text').first().click()
@@ -191,7 +244,7 @@ export default ({ MOBILE, DAY, settle, open, data }) => {
       await p.keyboard.type('- если нет, то 3,2%')
       await settle(p, 400)
     } },
-    // П8 · a subitem as a row, the next line open
+    // П14 · a subitem as a row, the next line open
     { name: 'FlowSub', device: MOBILE, run: async (p) => {
       await milkRecord(p)
       await p.locator('[data-add-row]', { hasText: 'Подпункт' }).click()

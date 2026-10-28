@@ -1,6 +1,8 @@
 // The main flow (handoff/main-flow-delta.md): first open → first record → its note, on a phone, from a real first run
 // (a fresh profile, no ?demo). Each check is one item's «Check:» line; the ids are mf-<item>-<what>. «With a model»
-// checks answer the model's requests in the page (a route), the way the service would.
+// checks answer the model's requests in the page (a route), the way the service would. Delta 2 (Josh's 28 Oct notes,
+// main-flow-2.mjs) overrules some lines: without a model nothing is sorted or split and a place picked by hand stays,
+// so these checks pick the place they write to; there is no dot for new, and day one has «Быстрый старт».
 import { BASE, DESKTOP, MOBILE, expect, open, shows, store } from './lib.mjs'
 
 const NOW = new Date('2026-10-19T09:14:00+03:00')
@@ -15,7 +17,6 @@ const title = p => p.getByRole('textbox', { name: 'Запись', exact: true })
 const note = p => p.getByRole('textbox', { name: 'Заметка', exact: true })
 const mainChip = p => p.locator('[data-chip="main"]')
 const closedChip = p => p.locator('[data-chip="closed"]')
-const rowChips = p => p.locator('[data-chip="row"]')
 const dateChip = p => p.locator('[data-date-chip]')
 const sendButton = p => p.getByRole('button', { name: 'Записать', exact: true })
 const places = p => p.locator('[data-places]')
@@ -53,9 +54,17 @@ async function typeTitle(p, words) {
   if (words) await p.keyboard.type(words)
   await p.waitForTimeout(120)
 }
-/** Writes a line from the field and sends it with Enter */
-async function write(p, words, noteText) {
+/** Picks a place in the open field's list; it stays for the next records on Главная (delta 2, item 5) */
+async function pickPlace(p, name) {
   if (!(await form(p).evaluate(e => !e.className.includes('opacity-0')))) await openField(p)
+  await mainChip(p).click()
+  await places(p).getByRole('button', { name, exact: true }).click()
+  await p.waitForTimeout(120)
+}
+/** Writes a line from the field and sends it with Enter; `to` picks the place first */
+async function write(p, words, noteText, to) {
+  if (!(await form(p).evaluate(e => !e.className.includes('opacity-0')))) await openField(p)
+  if (to) await pickPlace(p, to)
   await typeTitle(p, words)
   if (noteText) {
     await note(p).click()
@@ -83,8 +92,9 @@ async function home(p) {
   await p.waitForURL(u => new URL(u).pathname === '/')
   await p.waitForTimeout(300)
 }
+/** The person's own records («Быстрый старт» is the first run's) */
 const recs = (p, page) => store(p, (data, name) => data.liveRecords
-  .filter(r => !name || data.pages[r.pageId]?.title === name)
+  .filter(r => !r.seed && (!name || data.pages[r.pageId]?.title === name))
   .map(r => ({ text: r.text, page: data.pages[r.pageId]?.title, due: r.due, done: r.done, note: (r.body?.content ?? []).map(b => (b.content ?? []).map(c => c.text ?? '').join('')).join('\n'), parent: r.parentId })), page)
 /** A record's department and quantity, by its title */
 const valuesOf = (p, name) => store(p, (data, t) => {
@@ -143,8 +153,9 @@ export default [
   { id: 'mf-1-day-one', device: MOBILE, run: async (p) => {
     await first(p)
     const names = await p.locator('[data-home] [data-name]').allInnerTexts()
-    expect(JSON.stringify(names) === JSON.stringify(['Входящие', 'Сегодня', 'Покупки', 'Задачи', 'Идеи']), `rows: ${names}`)
-    expect(!(await p.locator('[data-home] [data-line]').count()), 'a row has text under its name')
+    expect(JSON.stringify(names) === JSON.stringify(['Входящие', 'Сегодня', 'Быстрый старт', 'Покупки', 'Задачи', 'Идеи']), `rows: ${names}`)
+    // Only «Быстрый старт» has records to sum up (delta 2, item 3)
+    expect(await p.locator('[data-home] [data-line]').count() === 1 && await card(p, 'Быстрый старт').locator('[data-line]').count() === 1, 'a row has text under its name')
     const captions = await p.locator('[data-home] h2').allInnerTexts()
     expect(captions.length === 1 && captions[0].startsWith('Мои страницы'), `captions: ${captions}`)
     const inboxTop = (await card(p, 'Входящие').boundingBox()).y
@@ -174,8 +185,8 @@ export default [
       await home(p)
     }
     // After a few records: nothing between the title and the tabs (acceptance 1)
-    await write(p, 'Купить молоко')
-    await write(p, 'Оплатить интернет сегодня')
+    await write(p, 'Купить молоко', '', 'Покупки')
+    await write(p, 'Оплатить интернет сегодня', '', 'Задачи')
     await tapFree(p)
     await goPage(p, 'Покупки')
     const shop = await pageWords(p)
@@ -223,7 +234,8 @@ export default [
     await p.keyboard.type('Купить молоко')
     await p.waitForTimeout(150)
     expect(await sendButton(p).isVisible(), 'no ↑')
-    expect(await text(mainChip(p)) === 'Покупки', `chip: ${await text(mainChip(p))}`)
+    // Without a model the place is Входящие until one is picked (delta 2, item 4)
+    expect(await text(mainChip(p)) === 'Входящие', `chip: ${await text(mainChip(p))}`)
     await note(p).click()
     taps++
     await p.keyboard.type('2,5%, большую пачку')
@@ -231,8 +243,8 @@ export default [
     taps++
     await p.waitForTimeout(300)
     expect(taps === 3, `${taps} taps`)
-    const milk = (await recs(p, 'Покупки')).find(r => r.text === 'Молоко')
-    expect(milk && milk.note === '2,5%, большую пачку', `Покупки: ${JSON.stringify(await recs(p))}`)
+    const milk = (await recs(p, 'Входящие')).find(r => r.text === 'Купить молоко')
+    expect(milk && milk.note === '2,5%, большую пачку', `Входящие: ${JSON.stringify(await recs(p))}`)
     for (const [what, l] of [['title', title(p)], ['note', note(p)]]) {
       const size = await l.evaluate(e => parseFloat(getComputedStyle(e).fontSize))
       expect(size >= 16, `the ${what} line is ${size}px: iOS would zoom`)
@@ -240,23 +252,17 @@ export default [
     expect(await title(p).getAttribute('enterkeyhint') === 'send', 'the title\'s Enter key is not «send»')
   } },
 
-  // 5. The chip shows the place, never «Авто»; a pick by hand is learned silently
+  // 5. The chip shows the place, never «Авто». Its «Авто chose, tinted» and «a pick is learned» lines are overruled by
+  // delta 2 (items 4, 5): without a model the chip stays where it is; mf2-4-no-sort and mf2-5-place-stays check that
   { id: 'mf-5-chip', device: MOBILE, run: async (p) => {
     await first(p)
     await openField(p)
-    await typeTitle(p, 'Купить молоко')
-    expect(await text(mainChip(p)) === 'Покупки' && await tinted(mainChip(p)), 'Купить молоко: not «Покупки», tinted')
     await typeTitle(p, 'Подарок Оле')
     expect(await text(mainChip(p)) === 'Входящие' && !(await tinted(mainChip(p))), 'Подарок Оле: not «Входящие», plain')
     expect(!(await form(p).locator('xpath=..').innerText()).includes('→'), 'a guess line over the field')
     await mainChip(p).click()
     await places(p).getByRole('button', { name: 'Идеи' }).click()
     expect(await text(mainChip(p)) === 'Идеи' && !(await tinted(mainChip(p))), 'the pick is not «Идеи», plain')
-    await p.keyboard.press('Enter')
-    await p.waitForTimeout(250)
-    expect(await text(mainChip(p)) === 'Входящие', 'after a send the chip is not «Входящие»')
-    await typeTitle(p, 'Подарок Пете')
-    expect(await text(mainChip(p)) === 'Идеи' && await tinted(mainChip(p)), 'Подарок Пете: not «Идеи», tinted')
     for (const c of await p.locator('[data-places-chip]').allInnerTexts()) expect(!c.includes('Авто'), 'a chip says «Авто»')
   } },
 
@@ -268,9 +274,10 @@ export default [
     await mainChip(p).click()
     await p.waitForTimeout(150)
     const rows = await places(p).getByRole('button').allInnerTexts()
-    expect(JSON.stringify(rows.map(r => r.trim())) === JSON.stringify(['Входящие', 'Покупки', 'Задачи', 'Идеи']), `places: ${rows}`)
+    expect(JSON.stringify(rows.map(r => r.trim())) === JSON.stringify(['Входящие', 'Быстрый старт', 'Покупки', 'Задачи', 'Идеи']), `places: ${rows}`)
     expect(await places(p).locator('[aria-current]').innerText() === 'Входящие', 'no tick on Входящие')
-    expect(!(await places(p).locator('input').count()), 'a search field')
+    // The one field in the list is «Новая страница» at its end (delta 2, item 6): no search
+    expect(await places(p).locator('input').count() === 1 && await places(p).locator('[data-place-new]').count() === 1, 'a search field')
     const list = await places(p).boundingBox()
     const chip = await mainChip(p).boundingBox()
     expect(list.y + list.height <= chip.y && list.width === 232, `the list is not 232 over the chip: ${JSON.stringify(list)}`)
@@ -288,8 +295,10 @@ export default [
     await openField(p)
     await typeTitle(p, 'Позвонить маме завтра в 10')
     expect(await text(p.locator('[data-field="open"] .date-mark')) === 'завтра в 10', `tint: ${await p.locator('.date-mark').allInnerTexts()}`)
-    expect(await text(mainChip(p)) === 'Задачи' && await tinted(mainChip(p)), 'not «Задачи», tinted')
+    // Without a model a date does not choose Задачи (delta 2, item 4)
+    expect(await text(mainChip(p)) === 'Входящие' && !(await tinted(mainChip(p))), 'not «Входящие», plain')
     expect(await text(dateChip(p)) === 'завтра, 10:00' && await dateChip(p).getAttribute('aria-label') === 'Срок: завтра, 10:00. Убрать срок', `date chip: ${await text(dateChip(p))}`)
+    await pickPlace(p, 'Задачи')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(250)
     let r = (await recs(p, 'Задачи')).find(x => x.text === 'Позвонить маме')
@@ -305,73 +314,30 @@ export default [
     expect(r && !r.due, `Задачи: ${JSON.stringify(await recs(p))}`)
   } },
 
-  // 8. Several records in one line, without a model
-  { id: 'mf-8-list', device: MOBILE, run: async (p) => {
-    await first(p)
-    await openField(p)
-    await typeTitle(p, 'Купить молоко, хлеб, яйца')
-    const rows = () => p.locator('[data-field="open"] li')
-    let shown = (await rows().allInnerTexts()).map(t => t.replace(/\s+/g, ' ').trim())
-    expect(JSON.stringify(shown) === JSON.stringify(['Молоко Покупки', 'Хлеб Покупки', 'Яйца Покупки']), `rows: ${shown}`)
-    expect(!(await note(p).count()) && !(await mainChip(p).count()), 'the note line or the main chip shows with a list')
-    await p.keyboard.press('Enter')
-    await p.waitForTimeout(250)
-    expect((await recs(p, 'Покупки')).length === 3, `Покупки: ${JSON.stringify(await recs(p, 'Покупки'))}`)
-    await typeTitle(p, 'Купить молоко 2,5%, большую пачку')
-    expect(!(await rows().count()), 'a list for one record')
-    await p.keyboard.press('Enter')
-    await p.waitForTimeout(250)
-    expect((await recs(p, 'Покупки')).length === 4, 'not one more record')
-    // Letter by letter: once two rows show after «и п», they stay while the word is typed (acceptance 1)
-    await typeTitle(p, 'Купить молоко и п')
-    const counts = [await rows().count()]
-    for (const ch of 'озвонить') {
-      await p.keyboard.type(ch)
-      await p.waitForTimeout(60)
-      counts.push(await rows().count())
-    }
-    expect(counts.every(n => n === 2), `rows while typing: ${counts.join('')}`)
-    await typeTitle(p, 'Сыр, позвонить бабушке')
-    shown = (await rows().allInnerTexts()).map(t => t.replace(/\s+/g, ' ').trim())
-    expect(JSON.stringify(shown) === JSON.stringify(['Сыр Покупки', 'Позвонить бабушке Задачи']), `rows: ${shown}`)
-    await rowChips(p).nth(1).click()
-    await places(p).getByRole('button', { name: 'Идеи' }).click()
-    await p.waitForTimeout(150)
-    shown = await rowChips(p).allInnerTexts()
-    expect(shown[0].trim() === 'Покупки' && shown[1].trim() === 'Идеи', `chips: ${shown}`)
-    expect(await tinted(rowChips(p).nth(0)) && !(await tinted(rowChips(p).nth(1))), 'tints: Авто tinted, the pick plain')
-    await p.keyboard.press('Enter')
-    await p.waitForTimeout(250)
-    const all = await recs(p)
-    expect(all.find(r => r.text === 'Сыр')?.page === 'Покупки' && all.find(r => r.text === 'Позвонить бабушке')?.page === 'Идеи', `filed: ${JSON.stringify(all)}`)
-  } },
-
-  // 9. The result shows where it went, then goes
+  // 9. The result shows where it went, then goes. Delta 2 overrules the dot (item 2) and the chip going back to
+  // Входящие (item 5); one line is one record (item 7)
   { id: 'mf-9-after-send', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await first(p)
-    await write(p, 'Купить молоко')
+    await write(p, 'Купить молоко', '', 'Покупки')
     expect(await form(p).isVisible() && await isFocused(title(p)), 'the field did not stay open with the caret')
-    expect(await text(mainChip(p)) === 'Входящие' && await title(p).getAttribute('aria-placeholder') !== 'x', 'the chip is not «Входящие»')
+    expect(await text(mainChip(p)) === 'Покупки', 'the chip did not keep «Покупки»')
     expect((await form(p).innerText()).includes('Новая запись'), 'the placeholder is not «Новая запись»')
     expect(!(await p.locator('.field-wash').count()), 'Главная dims after a send')
     const shop = card(p, 'Покупки')
     expect(await shop.getAttribute('data-fresh') !== null, 'the Покупки card is not tinted')
     expect(await text(shop.locator('[data-open]')) === 'открытых: 1' || await text(shop.locator('[data-open]')) === '1', `count: ${await text(shop.locator('[data-open]'))}`)
-    expect(await text(shop.locator('[data-line]')) === 'молоко' && await shop.locator('[data-new-dot]').count() === 1, 'no «молоко» or no dot')
+    expect(await text(shop.locator('[data-line]')) === 'молоко' && !(await p.locator('[data-new-dot]').count()), 'no «молоко», or a dot')
     expect(await text(notice(p)) === 'Добавлено в Покупки Отменить', `notice: ${await text(notice(p))}`)
     await p.clock.runFor(5200)
     expect(await shop.getAttribute('data-fresh') === null, 'the tint is there after 5 s')
     await p.clock.runFor(1000)
     expect(!(await notice(p).count()), 'the notice is there after 6 s')
-    expect(await shop.locator('[data-new-dot]').count() === 1, 'the dot went')
     await write(p, 'Купить хлеб')
     await notice(p).getByRole('button', { name: 'Отменить' }).click()
     await p.waitForTimeout(200)
     expect(await text(shop.locator('[data-line]')) === 'молоко' && (await text(shop.locator('[data-open]'))).endsWith('1'), `after «Отменить»: ${await text(shop)}`)
-    await write(p, 'Сыр, позвонить маме завтра')
-    expect(await text(notice(p)) === 'Добавлено в Покупки и Задачи Отменить', `notice: ${await text(notice(p))}`)
-    expect(await card(p, 'Задачи').getAttribute('data-fresh') !== null && await shop.getAttribute('data-fresh') !== null, 'both cards are not tinted')
+    await typeTitle(p, '')
     await tapFree(p)
     expect(await pill(p).isVisible() && !(await isFocused(form(p))), 'a tap on the free space did not close the field')
     const all = await screenText(p)
@@ -381,15 +347,13 @@ export default [
   // 10. New until the page is opened
   { id: 'mf-10-new', device: MOBILE, run: async (p) => {
     await first(p)
-    await write(p, 'Купить молоко')
+    await write(p, 'Купить молоко', '', 'Покупки')
     await tapFree(p)
     await goPage(p, 'Задачи')
     await home(p)
     await goPage(p, 'Покупки')
     const row = p.locator('[data-rows] .group\\/row').filter({ hasText: 'Молоко' })
     expect(await row.evaluate(e => e.className.includes('fresh-tint')), '«Молоко» is not tinted on Покупки')
-    await home(p)
-    expect(!(await card(p, 'Покупки').locator('[data-new-dot]').count()), 'the Покупки dot stayed')
   } },
 
   // 11. «+ Новая запись» at the end of the list
@@ -444,7 +408,7 @@ export default [
   { id: 'mf-12-page-field', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await first(p)
-    await write(p, 'Купить молоко', '2,5%, большую пачку')
+    await write(p, 'Купить молоко', '2,5%, большую пачку', 'Покупки')
     await tapFree(p)
     await goPage(p, 'Покупки')
     expect(await text(closedChip(p)) === 'Покупки' && await text(pillText(p)) === '', `closed field: ${await text(pill(p))}`)
@@ -472,7 +436,7 @@ export default [
   { id: 'mf-13-record', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await first(p)
-    await write(p, 'Купить молоко', '2,5%, большую пачку')
+    await write(p, 'Купить молоко', '2,5%, большую пачку', 'Покупки')
     await write(p, 'Купить хлеб')
     await tapFree(p)
     await goPage(p, 'Покупки')
@@ -497,7 +461,7 @@ export default [
     // Количество, Срок) opens «Новое свойство» at once, and «Выбор» starts on an empty option with the caret
     await p.goto(`${BASE}/`)
     await p.waitForSelector('[data-home]')
-    await write(p, 'Купить сыр 300 г завтра')
+    await write(p, 'Купить сыр 300 г завтра', '', 'Покупки')
     const id = await store(p, data => data.liveRecords.find(r => r.text === 'Сыр').id)
     await p.goto(`${BASE}/r/${id}`)
     await p.waitForSelector('main')
@@ -521,7 +485,7 @@ export default [
   // 14. Writing the text: the editing bar with «H»; a list item
   { id: 'mf-14-body', device: MOBILE, run: async (p) => {
     await first(p)
-    await write(p, 'Купить молоко', '2,5%, большую пачку')
+    await write(p, 'Купить молоко', '2,5%, большую пачку', 'Покупки')
     await tapFree(p)
     await goPage(p, 'Покупки')
     await p.locator('[data-rows] [data-row-text]').filter({ hasText: 'Молоко' }).click()
@@ -541,13 +505,14 @@ export default [
     expect(!(await heading.count()) || !(await heading.isVisible()), 'the bar stayed')
     await p.goBack()
     await p.waitForTimeout(400)
-    expect(await text(p.locator('[data-rows] .group\\/row').filter({ hasText: 'Молоко' }).locator('[data-row-note]')) === '2,5%, большую пачку', 'the second line changed')
+    // Delta 2, item 11: the second line joins the body's lines with a space
+    expect(await text(p.locator('[data-rows] .group\\/row').filter({ hasText: 'Молоко' }).locator('[data-row-note]')) === '2,5%, большую пачку если нет, то 3,2%', 'the second line is not the body joined')
   } },
 
   // 15. «+ Подпункт» as a row
   { id: 'mf-15-sub', device: MOBILE, run: async (p) => {
     await first(p)
-    await write(p, 'Купить молоко')
+    await write(p, 'Купить молоко', '', 'Покупки')
     await tapFree(p)
     await goPage(p, 'Покупки')
     await p.locator('[data-rows] [data-row-text]').filter({ hasText: 'Молоко' }).click()
@@ -615,7 +580,9 @@ export default [
   { id: 'mf-17-cards', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await first(p)
-    for (const l of ['Купить молоко, хлеб, яйца, сыр, кофе, порошок для стирки', 'Позвонить маме завтра в 10', 'Забрать посылку сегодня в 19', 'Оплатить интернет сегодня', 'Записаться к стоматологу']) await write(p, l)
+    // One line is one record without a model (delta 2, item 7): each thing on its own line
+    for (const l of ['Купить порошок для стирки', 'Купить кофе', 'Купить сыр', 'Купить яйца', 'Купить хлеб', 'Купить молоко']) await write(p, l, '', l === 'Купить порошок для стирки' ? 'Покупки' : undefined)
+    for (const l of ['Позвонить маме завтра в 10', 'Забрать посылку сегодня в 19', 'Оплатить интернет сегодня', 'Записаться к стоматологу']) await write(p, l, '', l.startsWith('Позвонить') ? 'Задачи' : undefined)
     await tapFree(p)
     const tasks = card(p, 'Задачи')
     expect((await text(tasks.locator('[data-open]'))).endsWith('4'), `Задачи count: ${await text(tasks.locator('[data-open]'))}`)
@@ -626,11 +593,11 @@ export default [
     expect((await text(today.locator('[data-open]'))).endsWith('2') && await text(today.locator('[data-line]')) === '19:00 забрать посылку, оплатить интернет', `Сегодня: ${await text(today)}`)
     const shop = card(p, 'Покупки')
     expect((await text(shop.locator('[data-open]'))).endsWith('6'), `Покупки: ${await text(shop)}`)
-    // Inside one send, the typed order (acceptance 1)
+    // Newest first (the typed order inside one send is the model's now, flow.test.ts)
     expect(await text(shop.locator('[data-line]')) === 'молоко, хлеб, яйца, сыр, кофе, порошок для стирки', `Покупки: ${await text(shop.locator('[data-line]'))}`)
     await goPage(p, 'Покупки')
     await p.getByRole('checkbox', { name: 'Отметить «Молоко»' }).click()
-    await p.waitForTimeout(300)
+    await p.waitForTimeout(1800)
     await home(p)
     expect((await text(shop.locator('[data-open]'))).endsWith('5') && !(await text(shop.locator('[data-line]'))).includes('молоко'), `after the tick: ${await text(shop)}`)
     const cards = await p.locator('[data-home]').innerText()
@@ -641,7 +608,7 @@ export default [
   // 18. «Компактный»: a plain list
   { id: 'mf-18-compact', device: MOBILE, run: async (p) => {
     await first(p)
-    await write(p, 'Купить молоко')
+    await write(p, 'Купить молоко', '', 'Покупки')
     await tapFree(p)
     await p.getByRole('button', { name: 'Меню Главной' }).click()
     await p.getByRole('menuitemradio', { name: 'Компактный' }).click()
@@ -649,9 +616,8 @@ export default [
     expect(!(await p.locator('[data-home] [data-line], [data-home] [data-open], [data-home] [data-plate]').count()), 'a summary, a count or a plate in compact')
     const h = await card(p, 'Задачи').evaluate(e => e.getBoundingClientRect().height)
     expect(Math.round(h) === 44, `a compact row is ${h}px`)
-    const dot = await card(p, 'Покупки').locator('[data-new-dot]').boundingBox()
-    const row = await card(p, 'Покупки').boundingBox()
-    expect(dot && row.x + row.width - (dot.x + dot.width) <= 12 && dot.width === 6, `the dot is not 6px at the right edge: ${JSON.stringify(dot)}`)
+    // No dot for new (delta 2, item 2)
+    expect(!(await p.locator('[data-home] [data-new-dot]').count()), 'a dot in compact')
     expect(await store(p, data => data.settings.homeRows) === 'compact', 'the view is not kept')
   } },
 
@@ -676,7 +642,11 @@ export default [
     await fakeModel(p, READINGS)
     await p.waitForTimeout(200)
     expect(await text(pillText(p)) === 'Купить хлеб и позвонить маме завтра', `example: ${await text(pillText(p))}`)
-    const all = await screenText(p)
+    // «Быстрый старт» is the person's page: its records say «Подключите модель», the app around them says nothing
+    const all = await p.evaluate(() => {
+      const start = [...document.querySelectorAll('[data-home] [role="listitem"]')].find(e => e.querySelector('[data-name]')?.textContent === 'Быстрый старт')
+      return document.body.innerText.replace(start?.innerText ?? '\u0000', '')
+    })
     for (const w of ['ИИ', 'Авто', 'модель']) expect(!all.includes(w), `«${w}» on Главная`)
     for (const w of GONE) expect(!all.includes(w), `«${w}» on Главная`)
   } },
@@ -773,8 +743,7 @@ export default [
     await hit44(sendButton(p), '↑')
     await hit44(mainChip(p), 'the place chip')
     await hit44(dateChip(p), 'the date chip')
-    await typeTitle(p, 'Сыр, позвонить бабушке')
-    await hit44(rowChips(p).nth(0), 'a row chip')
+    await pickPlace(p, 'Покупки')
     await typeTitle(p, 'Купить молоко')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(250)
@@ -850,7 +819,7 @@ export default [
     await pill(p).getByRole('button', { name: 'Надиктовать' }).click()
     await p.waitForTimeout(400)
     expect((await title(p).innerText()).trim() === 'купить молоко', `title: ${await title(p).innerText()}`)
-    expect(await text(mainChip(p)) === 'Покупки', `chip: ${await text(mainChip(p))}`)
+    expect(await text(mainChip(p)) === 'Входящие', `chip: ${await text(mainChip(p))}`)
   } },
 
   // Desktop is parked this round: a smoke test that the path works with a mouse and keys at 1440
@@ -860,7 +829,7 @@ export default [
     await p.keyboard.type('Купить молоко')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(300)
-    expect((await recs(p, 'Покупки')).length === 1, 'nothing filed with Enter')
+    expect((await recs(p, 'Входящие')).length === 1, 'nothing filed with Enter')
     // A place picked with the mouse, then a date read from the words
     await p.keyboard.type('Подарок Оле')
     await mainChip(p).click()
@@ -870,6 +839,8 @@ export default [
     expect((await recs(p, 'Идеи')).length === 1, 'the place picked with the mouse was not used')
     await p.keyboard.type('Позвонить маме завтра в 10')
     expect(await shows(dateChip(p)), 'no date chip')
+    await mainChip(p).click()
+    await places(p).getByRole('button', { name: 'Задачи' }).click()
     await p.keyboard.press('Enter')
     await p.waitForTimeout(300)
     expect((await recs(p, 'Задачи')).some(r => r.text === 'Позвонить маме' && r.due), 'the date was not read')
@@ -882,13 +853,16 @@ export default [
     await p.waitForTimeout(200)
     expect((await recs(p, 'Задачи')).length === 2, 'the add row did not add')
     // The record and its text
-    const id = await store(p, data => data.liveRecords.find(r => r.text === 'Молоко').id)
+    const id = await store(p, data => data.liveRecords.find(r => r.text === 'Купить молоко').id)
     await p.goto(`${BASE}/r/${id}`)
     await p.waitForSelector('main')
     await p.locator('main .body-text').first().click()
     await p.keyboard.type('2,5%, большую пачку')
     await p.keyboard.press('Escape')
     await p.waitForTimeout(400)
-    expect((await recs(p, 'Покупки'))[0].note === '2,5%, большую пачку', 'the record\'s text was not kept')
+    expect((await recs(p, 'Входящие'))[0].note === '2,5%, большую пачку', 'the record\'s text was not kept')
   } }
 ]
+
+// Delta 2's checks (main-flow-2.mjs) walk the same screen
+export { NOW, first, pill, pillText, form, title, note, mainChip, closedChip, dateChip, places, notice, card, text, isFocused, tinted, caretAtEnd, openField, typeTitle, pickPlace, write, tapFree, goPage, home, recs, valuesOf, fakeModel, READINGS, hit44 }
