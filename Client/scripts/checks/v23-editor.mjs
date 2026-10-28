@@ -305,22 +305,26 @@ export default [
   } },
 
   // D1: «click Яйца's body → the composer becomes the bar, same width, the text does not move; hover «Ж» →
-  // «Жирный · Ctrl B»; Esc → the composer is back; Журнал → click Молоко's body in the panel → the bar at the panel's
-  // foot, the page's composer still there». Since the main flow (item 13) the record page has no composer: the bar takes
-  // the text column's width
+  // «Жирный · Ctrl B»; Esc → the composer is back». Since the main flow (item 13) the record page has no composer: the bar
+  // takes the text column's width. Since the computer round (item 17) a click alone shows no bar (pc-17-text): it comes
+  // for a selection. Its part about Журнал's panel retired there too: a peek navigates on a computer (item 16)
   { id: 'e-D1-bar-desktop', device: DESKTOP, run: async (p) => {
     await openRecord(p, 'Яйца')
     const form = await editorOf(p).boundingBox()
     const line = () => editorOf(p).locator('p').first().boundingBox()
     const before = await line()
+    await editorOf(p).click()
+    await p.waitForTimeout(300)
+    expect(!(await bar(p).count()), 'a caret alone shows the bar')
     await select(p, 'десяток')
-    expect(await shows(bar(p)), 'no editing bar')
+    expect(await shows(bar(p)), 'no editing bar for a selection')
     const after = await line()
     expect(Math.abs(after.y - before.y) < 0.5 && Math.abs(after.x - before.x) < 0.5, `the text moved from ${before.x},${before.y} to ${after.x},${after.y}`)
     const b = await bar(p).boundingBox()
     expect(b.x >= form.x - 17 && b.x + b.width <= form.x + form.width + 17, `the bar is ${b.x}+${b.width}, the text ${form.x}+${form.width}`)
     const tool = await bar(p).getByRole('button', { name: 'Отменить ввод' }).boundingBox()
     expect(tool.width === 36 && tool.height === 36, `a tool is ${tool.width}×${tool.height}`)
+    expect(!(await bar(p).getByRole('button', { name: 'Готово' }).count()), 'the bar has «Готово» on a computer')
     await bar(p).getByRole('button', { name: 'Жирный' }).hover()
     const tip = p.getByRole('tooltip')
     expect(await shows(tip), 'no tooltip over «Ж»')
@@ -330,26 +334,6 @@ export default [
     await p.keyboard.press('Escape')
     await p.waitForTimeout(300)
     expect(!(await bar(p).count()), 'Esc did not put the bar away')
-    // The right panel: Молоко from «Связано»
-    await p.getByRole('button', { name: /^Молоко/ }).first().click()
-    await p.waitForTimeout(700)
-    await editorOf(p).click()
-    await p.waitForTimeout(300)
-    expect(await shows(bar(p)), 'no bar for the panel\'s body')
-    // The bar sits in the panel that holds the body: their nearest common box is the panel, not the page
-    const shared = await p.evaluate(() => {
-      const eds = document.querySelectorAll('.ProseMirror.body-text')
-      const ed = eds[eds.length - 1]
-      const tools = document.querySelector('[role="toolbar"][aria-label="Текст"]')
-      let a = ed
-      while (a && !a.contains(tools)) a = a.parentElement
-      return { width: a.getBoundingClientRect().width, left: a.getBoundingClientRect().left, composer: !!a.querySelector('[aria-label="Новый подпункт"]') }
-    })
-    expect(shared.width < 600 && !shared.composer, `the bar is not at the panel's foot (shared box ${shared.width}px wide)`)
-    await p.keyboard.type('Без лактозы')
-    await p.waitForTimeout(600)
-    const milk = await store(p, data => JSON.stringify(Object.values(data.records).find(r => r.text === 'Молоко').body))
-    expect(milk.includes('Без лактозы'), 'the panel\'s body was not saved')
   } },
 
   // 5: «long-press a word in Яйца → handles and the system menu show, the tint is clearly visible in light and dark, the

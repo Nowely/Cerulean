@@ -4,6 +4,8 @@
 // «⋯» of Главная: the view first («Вид»: «Со сводкой», «Компактный», a tick on the chosen one), then Журнал, Настройки,
 // «Новая секция» and Корзина. A new page is the «+» at «Мои страницы» (item 16). On the phone it is a popover under the
 // header, as in Notes and Reminders, not a sheet.
+// On a computer Главная is the left column (computer delta, item 1): the phone's header there, 60 high, with the same
+// popover, and every glyph names itself on hover (item 20).
 // Sync's one sign outside Настройки sits before Найти, only when something is wrong for long (sync delta, item 13): a
 // grey cloud-off after 10 minutes offline with changes unsent, a warn cloud with «!» when sync stopped. A tap opens
 // Настройки with the sync sheet.
@@ -13,6 +15,7 @@ import { useDataStore } from '~/stores/data'
 import { useCloudStore } from '~/stores/cloud'
 import { useFind } from '~/composables/useFind'
 import { useNow } from '~/composables/useNow'
+import { useSide } from '~/composables/useSide'
 import { pendingWords } from '~/domain/bucket'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import DotsButton from '../common/DotsButton.vue'
@@ -24,6 +27,7 @@ const router = useRouter()
 const find = useFind()
 const cloud = useCloudStore()
 const now = useNow()
+const side = useSide()
 
 const sign = computed(() => cloud.sign(now.value))
 const signLabel = computed(() => sign.value === 'warn' ? 'Синхронизация остановлена' : `Синхронизация ждёт сети: ${pendingWords(cloud.pending.count)}`)
@@ -88,7 +92,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key, true))
 </script>
 
 <template>
-  <TitleHeader title="Главная">
+  <TitleHeader
+    v-if="!side"
+    title="Главная"
+  >
     <button
       v-if="sign"
       type="button"
@@ -114,7 +121,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key, true))
       />
     </ActionMenu>
   </TitleHeader>
-  <header class="relative box-content flex h-13 shrink-0 items-center pt-[env(safe-area-inset-top)] pr-1 pl-4 lg:hidden">
+  <header
+    class="relative box-content flex h-13 shrink-0 items-center pr-1 pl-4"
+    :class="side ? 'pt-2' : 'pt-[env(safe-area-inset-top)] lg:hidden'"
+  >
     <h1 class="min-w-0 flex-1">
       <button
         type="button"
@@ -124,45 +134,63 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key, true))
         Главная
       </button>
     </h1>
-    <button
+    <UTooltip
       v-if="sign"
-      type="button"
-      class="flex size-11 cursor-pointer items-center justify-center rounded-item active:bg-pressed"
-      :class="sign === 'warn' ? 'text-warn-ink' : 'text-toned'"
-      :aria-label="signLabel"
-      data-sync-sign
-      @click="openSync"
+      :text="signLabel"
+      :disabled="!side"
     >
-      <UIcon
-        :name="sign === 'warn' ? 'i-lucide-cloud-alert' : 'i-lucide-cloud-off'"
-        class="size-5"
-      />
-    </button>
-    <button
-      type="button"
-      class="hit-44 relative flex size-11 cursor-pointer items-center justify-center rounded-item text-toned active:bg-pressed"
-      aria-label="Найти"
-      @click="find.open()"
+      <button
+        type="button"
+        class="flex size-11 cursor-pointer items-center justify-center rounded-item active:bg-pressed"
+        :class="[sign === 'warn' ? 'text-warn-ink' : 'text-toned', { 'hover:bg-side-hover': side }]"
+        :aria-label="signLabel"
+        data-sync-sign
+        @click="openSync"
+      >
+        <UIcon
+          :name="sign === 'warn' ? 'i-lucide-cloud-alert' : 'i-lucide-cloud-off'"
+          class="size-5"
+        />
+      </button>
+    </UTooltip>
+    <UTooltip
+      text="Найти"
+      :kbds="['meta', 'K']"
+      :disabled="!side"
     >
-      <UIcon
-        name="i-lucide-search"
-        class="size-5"
-      />
-    </button>
-    <button
-      ref="button"
-      type="button"
-      class="flex size-11 cursor-pointer items-center justify-center rounded-item text-toned active:bg-pressed"
-      aria-label="Меню Главной"
-      aria-haspopup="menu"
-      :aria-expanded="open"
-      @click="toggle"
+      <button
+        type="button"
+        class="hit-44 relative flex size-11 cursor-pointer items-center justify-center rounded-item text-toned active:bg-pressed"
+        :class="{ 'hover:bg-side-hover hover:text-highlighted': side }"
+        aria-label="Найти"
+        @click="find.open()"
+      >
+        <UIcon
+          name="i-lucide-search"
+          class="size-5"
+        />
+      </button>
+    </UTooltip>
+    <UTooltip
+      text="Меню Главной"
+      :disabled="!side || open"
     >
-      <UIcon
-        name="i-lucide-ellipsis"
-        class="size-4.5"
-      />
-    </button>
+      <button
+        ref="button"
+        type="button"
+        class="flex size-11 cursor-pointer items-center justify-center rounded-item text-toned active:bg-pressed"
+        :class="{ 'hover:bg-side-hover hover:text-highlighted': side }"
+        aria-label="Меню Главной"
+        aria-haspopup="menu"
+        :aria-expanded="open"
+        @click="toggle"
+      >
+        <UIcon
+          name="i-lucide-ellipsis"
+          class="size-4.5"
+        />
+      </button>
+    </UTooltip>
 
     <template v-if="open">
       <button
@@ -174,7 +202,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key, true))
       />
       <div
         ref="menu"
-        class="absolute top-[calc(env(safe-area-inset-top)+48px)] right-4 z-21 w-58 rounded-[14px] border border-line bg-elev p-1.5 shadow-float dark:border-line2"
+        class="absolute right-4 z-21 w-58 rounded-[14px] border border-line bg-elev p-1.5 shadow-float dark:border-line2"
+        :class="side ? 'top-14' : 'top-[calc(env(safe-area-inset-top)+48px)]'"
         role="menu"
         aria-label="Меню Главной"
         data-home-menu
@@ -189,7 +218,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key, true))
           v-for="v in VIEWS"
           :key="v.value"
           type="button"
-          class="flex h-11 w-full cursor-pointer items-center gap-3 rounded-[10px] px-2.5 text-left text-base text-highlighted outline-none focus-visible:bg-hover active:bg-pressed"
+          class="flex h-11 w-full cursor-pointer items-center gap-3 rounded-[10px] px-2.5 text-left text-base text-highlighted outline-none focus-visible:bg-hover active:bg-pressed lg:hover:bg-hover"
           role="menuitemradio"
           :aria-checked="view === v.value"
           @click="pick(() => setView(v.value))"
@@ -209,7 +238,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key, true))
           v-for="g in go"
           :key="g.label"
           type="button"
-          class="flex h-11 w-full cursor-pointer items-center gap-3 rounded-[10px] px-2.5 text-left text-base text-highlighted outline-none focus-visible:bg-hover active:bg-pressed"
+          class="flex h-11 w-full cursor-pointer items-center gap-3 rounded-[10px] px-2.5 text-left text-base text-highlighted outline-none focus-visible:bg-hover active:bg-pressed lg:hover:bg-hover"
           role="menuitem"
           @click="pick(g.run)"
         >

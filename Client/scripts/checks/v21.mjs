@@ -1,5 +1,5 @@
 // v21 delta and the app-only QA bugs
-import { BASE, DESKTOP, MOBILE, expect, open, pageOf, send, shows, store } from './lib.mjs'
+import { BASE, MOBILE, expect, open, pageOf, send, shows, store } from './lib.mjs'
 
 export default [
   // 2, 7: receipts stay on Журнал's composer, off the main flow
@@ -26,13 +26,8 @@ export default [
     expect(await shows(p.getByText(/Позвонить стоматологу/)), 'the record is not in Сегодня')
   } },
   // v21-9 retired in main flow 2 (item 10): Входящие rows have a move button, not a «→ Page» chip (mf2-10-inbox-move)
-  { id: 'v21-20', device: DESKTOP, run: async (p) => {
-    await open(p, '/')
-    const side = p.getByRole('complementary', { name: 'Навигация' })
-    expect(!(await side.getByRole('region', { name: 'Избранное' }).count()), 'the sidebar repeats the tree on Главная')
-    await p.goto(`${BASE}/journal`)
-    expect(await shows(side.getByRole('region', { name: 'Избранное' })), 'the sidebar has no tree off Главная')
-  } },
+  // v21-20 retired in the computer round (item 1): the sidebar whose tree it checked is gone; Главная is the left column
+  // on every screen, and pc-1-frame checks that nothing lists the pages a second time
   { id: 'B13-board', device: MOBILE, run: async (p) => {
     await open(p, '/')
     await p.getByRole('link', { name: /^Цели/ }).first().click()

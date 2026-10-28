@@ -24,6 +24,7 @@ import { askModel, ModelError, type ModelResult } from '~/domain/model'
 import { fieldDate, readLine, readModel, type LineContext, type LineDraft } from '~/domain/auto'
 import { cleanRecordText, isSearch, readDue } from '~/domain/parse'
 import { dayKey, formatDue } from '~/domain/dates'
+import { into } from '~/domain/text'
 import { DOCK_LINE } from '~/composables/useDockEdge'
 import { useCollecting } from '~/composables/useCollecting'
 import { useCalendarDay } from '~/composables/useCalendarDay'
@@ -124,15 +125,23 @@ const place = computed<LineContext['place']>(() => pickedLive.value ? { pageId: 
 /** The places on offer: Входящие, then the pages as Главная lists them (Избранное, Мои страницы, the sections) */
 const places = usePlaces()
 
-/** A page's template aimed by «+» on its «Шаблоны» row (v24): the next record is made by it */
+/**
+ * A page's template aimed by «+» on its «Шаблоны» row (v24): the next record is made by it. A computer's pages have no
+ * field, so Главная's takes the aim, with that page picked as its place (computer delta, item 6)
+ */
 const byTemplate = ref<Id | null>(null)
 watch(templates.aim, (a) => {
-  if (!a || props.mode !== 'page' || a.pageId !== props.pageId) return
+  if (!a) return
+  if (props.mode === 'page' ? a.pageId !== props.pageId : props.mode !== 'home' || !isDesktop.value) return
   templates.aim.value = null
+  if (props.mode === 'home') picked.value = a.pageId
   byTemplate.value = a.id
   openField()
 }, { immediate: true })
-const template = computed(() => byTemplate.value ? page.value?.templates?.find(t => t.id === byTemplate.value) ?? null : null)
+const template = computed(() => {
+  const of = page.value ?? (pickedLive.value ? data.pages[pickedLive.value] : undefined)
+  return byTemplate.value ? of?.templates?.find(t => t.id === byTemplate.value) ?? null : null
+})
 
 const modelOn = computed(() => journal.hasModel() && online.value)
 
@@ -237,9 +246,12 @@ const marks = computed(() => date.value?.spans ?? [])
  * action's name. «Быстрый старт» is not theirs (Josh 28 Oct, 5)
  */
 const anyRecord = computed(() => data.liveRecords.some(r => !r.seed))
-const placeholder = computed(() => props.mode !== 'home' ? '' : anyRecord.value ? 'Новая запись' : modelOn.value ? 'Купить хлеб и позвонить маме завтра' : 'Позвонить маме в 10')
+// On a computer the field says «Записать…» (Telegram's «Написать сообщение…»), so it does not read as a second «+ Новая
+// запись» beside the page's own row (computer delta, item 7)
+const action = computed(() => isDesktop.value ? 'Записать…' : 'Новая запись')
+const placeholder = computed(() => props.mode !== 'home' ? '' : anyRecord.value ? action.value : modelOn.value ? 'Купить хлеб и позвонить маме завтра' : 'Позвонить маме в 10')
 /** Open on a page the title line names the action, so «Заметка» is never the card's first words (item 12) */
-const openPlaceholder = computed(() => placeholder.value || 'Новая запись')
+const openPlaceholder = computed(() => placeholder.value || action.value)
 const hasWords = computed(() => !!title.value.trim())
 
 // ---------- open and close ----------
@@ -390,7 +402,7 @@ function landed(f: Filed, drafts: LineDraft[], typed: Typed, late = false) {
     if (late && sendNotice && ui.notice?.id === sendNotice.id) ui.notice = null
     return
   }
-  const id = notify(`Добавлено в ${namesOf([...new Set(away.map(d => d.pageId))])}`, { label: 'Отменить', run: () => undoSend(f, typed) }, NOTICE_MS)
+  const id = notify(`Добавлено ${into(namesOf([...new Set(away.map(d => d.pageId))]))}`, { label: 'Отменить', run: () => undoSend(f, typed) }, NOTICE_MS)
   sendNotice = { id, entryId: f.entryId }
 }
 /**
@@ -557,14 +569,14 @@ function titleKey(e: KeyboardEvent) {
         type="button"
         class="-my-0.75 h-11 min-w-0 flex-1 cursor-text truncate px-1.5 text-left text-input leading-11"
         :class="hasWords ? 'text-highlighted' : 'text-dimmed'"
-        :aria-label="hasWords ? `Продолжить: ${title}` : mode === 'home' ? 'Новая запись' : 'Поле записи'"
+        :aria-label="hasWords ? `Продолжить: ${title}` : mode === 'home' ? (isDesktop ? 'Записать' : 'Новая запись') : 'Поле записи'"
         @click="openField()"
       >
         {{ hasWords ? title : placeholder }}
       </button>
-      <!-- Offline the mic is faint and a tap says why (spec «Action weight») -->
+      <!-- Offline the mic is faint and a tap says why (spec «Action weight»). A computer has no mic (computer delta, item 7) -->
       <button
-        v-if="speech.supported"
+        v-if="speech.supported && !isDesktop"
         type="button"
         class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full"
         :class="online ? 'text-toned active:bg-pressed' : 'text-dimmed'"
@@ -582,7 +594,7 @@ function titleKey(e: KeyboardEvent) {
     <!-- Open: the card over the keyboard. Mounted while closed too (unseen), so a tap on the pill focuses it at once -->
     <form
       ref="card"
-      class="flex flex-col gap-0.5 rounded-sheet border border-line bg-elev pt-2.5 pr-1.5 pb-1.5 pl-1.5 shadow-float dark:border-line2 lg:shadow-none"
+      class="flex flex-col gap-0.5 rounded-sheet border border-line bg-elev pt-2.5 pr-1.5 pb-1.5 pl-1.5 shadow-float dark:border-line2 lg:shadow-none lg:focus-within:border-ring"
       :class="open ? 'relative z-3' : 'pointer-events-none absolute inset-x-0 bottom-0 -z-1 opacity-0'"
       :aria-hidden="open ? undefined : 'true'"
       data-field="open"
@@ -707,7 +719,7 @@ function titleKey(e: KeyboardEvent) {
           />
         </button>
         <button
-          v-else-if="speech.supported"
+          v-else-if="speech.supported && !isDesktop"
           type="button"
           class="hit-44 relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full active:bg-pressed"
           :class="speech.listening.value ? 'text-accent-ink' : online ? 'text-toned' : 'text-dimmed'"

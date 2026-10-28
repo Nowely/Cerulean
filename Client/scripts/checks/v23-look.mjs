@@ -11,9 +11,10 @@ async function openPage(p, title) {
   await p.waitForTimeout(500)
 }
 
-/** The page «⋯» and one of its rows: a sheet on the phone, a menu on desktop */
+/** The page «⋯» and one of its rows: a sheet on the phone, a menu on desktop (the page's own: each card on a computer's
+ * left column has one too) */
 async function pageMenu(p, item) {
-  await p.getByRole('button', { name: 'Действия со страницей' }).first().click()
+  await p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first().click()
   await p.waitForTimeout(400)
   await p.getByRole('menuitem', { name: item }).or(p.getByRole('dialog').getByRole('button', { name: item })).first().click()
   await p.waitForTimeout(700)
@@ -106,7 +107,7 @@ export default [
   { id: 'l-12-icon-desk', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     await openPage(p, 'Идеи')
-    const more = p.getByRole('button', { name: 'Действия со страницей' }).first()
+    const more = p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first()
     await pageMenu(p, 'Значок и цвет')
     const pop = p.getByRole('dialog', { name: /^Значок и цвет/ })
     expect(await shows(pop), 'no popover «Значок и цвет»')
@@ -161,18 +162,19 @@ export default [
     expect(await shows(hit), 'no Поиск hit for «Покупки»')
     expect(await glyphColor(hit) === muted, 'a Поиск hit is coloured')
   } },
-  // D6: «Главная and the sidebar → only Покупки (green) and Книги (purple) coloured; …»
+  // D6: «Главная and the sidebar → only Покупки (green) and Книги (purple) coloured; …». Since the computer round (item 1)
+  // the sidebar is gone and Главная is the left column, with a page open beside it
   { id: 'l-25-grey-desk', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     const muted = await resolve(p, 'var(--muted)')
     const want = async t => t === 'Покупки' ? resolve(p, 'var(--c-green)') : t === 'Книги' ? resolve(p, 'var(--c-purple)') : muted
-    const home = await rowColors(p, PAGES, p.locator('main'))
+    const side = p.locator('aside[data-side]')
+    const home = await rowColors(p, PAGES, side)
     for (const t of PAGES) expect(home[t] === await want(t), `${t} on Главная is ${home[t]}`)
-    // The sidebar lists the pages once a page is open
+    // Still so with another page open on the right
     await openPage(p, 'Цели')
-    const side = p.locator('aside[aria-label="Навигация"]')
     const colors = await rowColors(p, PAGES, side)
-    for (const t of PAGES) expect(colors[t] === await want(t), `${t} in the sidebar is ${colors[t]}`)
+    for (const t of PAGES) expect(colors[t] === await want(t), `${t} on Главная beside Цели is ${colors[t]}`)
     expect(await tileIs(p, null), 'Цели\'s tile is not neutral')
     await openPage(p, 'Книги')
     expect(await tileIs(p, 'purple'), 'Книги\'s tile is not purple')
@@ -184,7 +186,7 @@ export default [
     await colours.first().click()
     await p.waitForTimeout(300)
     expect(await tileIs(p, null), 'the tile is not neutral after «Без цвета»')
-    expect((await rowColors(p, ['Книги'], side))['Книги'] === muted, 'Книги in the sidebar is not grey')
+    expect((await rowColors(p, ['Книги'], side))['Книги'] === muted, 'Книги on Главная is not grey')
   } },
 
   // 22: «Покупки → the captions … are yellow, blue, green and purple pills; …»
@@ -325,11 +327,15 @@ export default [
     await p.waitForTimeout(400)
     await noDescription(p, '«Что класть на страницы»')
   } },
-  // D5: «Покупки → the aside reads «Что сюда класть»; Настройки → the first group «Раскладка», «6 из 6 ›» → a page → «Что сюда класть: …»; …»
+  // D5: «Покупки → the aside reads «Что сюда класть»; Настройки → the first group «Раскладка», «6 из 6 ›» → a page → «Что сюда класть: …»; …».
+  // The aside part retired in the computer round: the right column is the page alone (items 1, 15), and «Что сюда класть»
+  // is in the page «⋯» as on a phone
   { id: 'l-23-words-desk', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     await openPage(p, 'Покупки')
-    expect(await shows(p.getByRole('heading', { name: 'Что сюда класть' })), 'the aside does not read «Что сюда класть»')
+    await pageMenu(p, 'Что сюда класть')
+    expect(await shows(p.getByRole('dialog', { name: /^Что сюда класть/ })), 'the page «⋯» does not open «Что сюда класть»')
+    await p.keyboard.press('Escape')
     await noDescription(p, 'Покупки')
     await open(p, '/settings')
     expect((await p.locator('main h2').first().innerText()).trim() === 'Раскладка', 'the first group is not «Раскладка»')

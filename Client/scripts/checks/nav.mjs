@@ -1,7 +1,7 @@
 // v22 navigation slice: the page picker, Поиск and back, empty search, Главная noise, deleting a section, Журнал's
 // header, the «новых» dot, overdue once, bare place names, old words, cold start, 320px and landscape
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { BASE, DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
+import { BASE, DESKTOP, MOBILE, expect, open, shows, store } from './lib.mjs'
 
 const CLOCK = new Date('2026-10-19T09:14:00+03:00')
 const SMALL = { ...MOBILE, viewport: { width: 320, height: 568 } }
@@ -12,13 +12,6 @@ const recordId = (p, text) => store(p, (data, t) => Object.values(data.records).
 const box = l => l.first().boundingBox()
 /** A popover right under its button, or right above it */
 const at = (b, m) => Math.abs(b.y - (m.y + m.height)) <= 16 || Math.abs(b.y + b.height - m.y) <= 16
-/** A word on screen, not only for screen readers */
-const shownWord = (l, word) => l.evaluate((el, w) => {
-  const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
-  for (let n = walk.nextNode(); n; n = walk.nextNode()) if (n.textContent.includes(w) && !n.parentElement.closest('.sr-only')) return true
-  return false
-}, word)
-
 /** The page names a picker lists, one per row (the row's first line) */
 const pickerNames = picker => picker.locator('section li button').evaluateAll(bs => bs.map(b => b.querySelector('span.truncate, span.min-w-0')?.textContent?.trim()))
 
@@ -95,8 +88,8 @@ export default [
     expect(Math.abs((await box(picker)).width - 380) <= 2, `the popover is ${(await box(picker)).width}px wide`)
     const names = await pickerNames(picker)
     expect(names.filter(n => n === 'Покупки').length === 1, 'Покупки does not show exactly once')
-    // No scrim: the sidebar is still the thing under the pointer
-    const side = await box(p.getByRole('complementary', { name: 'Навигация' }))
+    // No scrim: the left column is still the thing under the pointer (computer delta, item 1: Главная is the left column)
+    const side = await box(p.locator('aside[data-side]'))
     expect(await p.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest('aside'), [side.x + 40, side.y + side.height / 2]), 'something covers the screen behind the picker')
     await p.keyboard.press('Escape')
     // The field's chip: the places list opens right above it (main flow, item 6)
@@ -110,8 +103,10 @@ export default [
     expect(Math.abs(list.y + list.height - field.y) <= 16 && Math.abs(list.x - field.x) <= 16, 'the places list is not on the field, at its chip')
     await p.keyboard.press('Escape')
     await p.keyboard.press('Escape')
-    // «Ещё…» on an Уточнение in Журнал: every page once, and «Новая страница «Подарки»» at the end
-    await p.getByRole('link', { name: 'Журнал' }).first().click()
+    // «Ещё…» on an Уточнение in Журнал: every page once, and «Новая страница «Подарки»» at the end. Журнал is in the left
+    // header's «⋯» now that the sidebar is gone
+    await p.locator('aside[data-side]').getByRole('button', { name: 'Меню Главной' }).click()
+    await p.getByRole('menuitem', { name: 'Журнал' }).click()
     await p.waitForTimeout(800)
     const card = p.locator('main').getByText('Куда положить «подарок маме на др»?').locator('xpath=ancestor::*[.//button[contains(., "Ещё")]][1]')
     const more = card.getByRole('button', { name: /^Ещё/ })
@@ -152,7 +147,8 @@ export default [
     await p.waitForTimeout(300)
     await p.getByRole('option', { name: /Вернуть книгу/ }).click()
     await p.waitForURL(/\/r\//)
-    const back = p.getByRole('navigation', { name: 'Назад' }).getByRole('link', { name: 'Поиск' })
+    // The record's own header link, which replaced DeskBack on the computer (computer delta, item 16)
+    const back = p.locator('main [data-record-back]').filter({ visible: true, hasText: 'Поиск' })
     expect(await shows(back), 'the record does not say «‹ Поиск»')
     await back.click()
     await p.waitForTimeout(500)
@@ -226,21 +222,8 @@ export default [
     expect(back.x < 40, '«‹ Главная» is not on the left')
   } },
   // 23. n-23-dot retired in main flow 2 (item 2): Главная has no dot for new; the send's tint is the only sign.
-  // The desktop sidebar keeps its dot (its look is not that round)
-  { id: 'n-23-desk-dot', device: DESKTOP, run: async (p) => {
-    await p.clock.install({ time: CLOCK })
-    await open(p, '/')
-    await send(p, 'хлеб')
-    await p.getByRole('link', { name: 'Журнал' }).first().click()
-    await p.waitForTimeout(500)
-    const side = p.getByRole('complementary', { name: 'Навигация' }).getByRole('link', { name: /^Покупки/ }).first()
-    expect(!(await shownWord(side, 'новых')), 'the sidebar shows the word «новых»')
-    expect(await side.locator('span.rounded-full[aria-hidden="true"]').count(), 'no dot after Покупки in the sidebar')
-    await p.getByRole('link', { name: 'Главная' }).first().click()
-    await p.waitForTimeout(500)
-    const row = p.locator('main').getByRole('link', { name: /^Покупки/ }).first()
-    expect(!(await shownWord(row, 'новых')) && !(await row.locator('[data-new-dot]').count()), 'Главная: a dot, or the word «новых»')
-  } },
+  // n-23-desk-dot retired in the computer round: the sidebar it checked is gone, and the delta's overrules table says «no dot
+  // anywhere» (computer delta, item 2). The computer's sign for new is pc-13-new-light/-dark
   // 32. Only Сегодня says «просрочено» on Главная
   { id: 'n-32-overdue-once', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: CLOCK })

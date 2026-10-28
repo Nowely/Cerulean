@@ -85,7 +85,8 @@ export default [
     const action = n.getByRole('button', { name: 'Отменить' })
     expect(await action.evaluate(e => e.scrollWidth <= e.clientWidth + 1), 'the action is cut')
   } },
-  // 11. Desktop: at the column's right above the composer, a drain line, held while the pointer is on it
+  // 11. Desktop: above the composer, held while the pointer is on it. Since the computer round (item 11) it is over
+  // Главная's field in the left column at the field's full width, 48 high, with no drain line
   { id: 'w-11-notice-desk', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: new Date('2026-10-19T09:14:00+03:00') })
     await open(p, '/')
@@ -96,8 +97,7 @@ export default [
     expect(await shows(notice(p)), 'no notice after a delete')
     const t = await box(notice(p))
     const form = await box(p.locator('[data-field="closed"]'))
-    expect(t.bottom <= form.top && Math.abs(t.right - form.right) <= 1, `the notice ${JSON.stringify(t)} is not at the right above the composer ${JSON.stringify(form)}`)
-    expect(await notice(p).locator('[data-drain]').evaluate(e => getComputedStyle(e).display !== 'none'), 'no drain line')
+    expect(t.bottom <= form.top && Math.abs(t.right - form.right) <= 1 && Math.abs(t.left - form.left) <= 1, `the notice ${JSON.stringify(t)} is not over the field ${JSON.stringify(form)}`)
     await notice(p).hover()
     await p.clock.fastForward(10_000)
     expect(await notice(p).count() === 1, 'the pointer on the notice did not hold it')
@@ -108,16 +108,17 @@ export default [
   } },
   // 12–39: receipts, Уточнение and their notes stay on Журнал's composer, off the main flow (12, the docked Уточнение,
   // went with Главная's dock)
-  // 22. Desktop: a question is filed with «Похожее в записях»; a similar row opens in the right panel
+  // 22. Desktop: a question is filed with «Похожее в записях»; a similar row opens in the right panel. Since the computer
+  // round (item 16) a peek navigates: the record opens on the right in place of Журнал
   { id: 'w-22-similar-desk', device: DESKTOP, run: async (p) => {
     await open(p, '/journal')
     await send(p, 'когда менять фильтр?')
     expect(await shows(p.getByText(/1 запись → Дела по дому/)), 'no receipt to Дела по дому')
     expect(await shows(p.getByText('Похожее в записях')), 'no «Похожее в записях»')
     await p.getByRole('button', { name: 'Открыть «Поменять фильтр воды» справа' }).click()
-    const panel = p.getByRole('complementary', { name: 'Превью' })
-    expect(await shows(panel), 'no right panel')
-    expect(await shows(panel.getByText('Поменять фильтр воды')), 'the panel shows another record')
+    await p.waitForURL(/\/r\//)
+    await p.waitForTimeout(400)
+    expect(await p.title().then(t => t.startsWith('Поменять фильтр воды')), `the right shows «${await p.title()}»`)
   } },
   // 22. Phone: a similar row opens the preview sheet
   { id: 'w-22-similar-phone', device: MOBILE, run: async (p) => {

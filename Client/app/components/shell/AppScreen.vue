@@ -12,6 +12,7 @@ import NoticeSlot from './NoticeSlot.vue'
 import { useBodyEditing } from '~/composables/useBodyEditing'
 import { coverHeight, DOCK_LINE } from '~/composables/useDockEdge'
 import { useScreen } from '~/composables/useScreen'
+import { useSide } from '~/composables/useSide'
 
 /** The dock's column: Главная 720, Журнал 640, pages 680 */
 const props = withDefaults(defineProps<{ wide?: boolean, chat?: boolean }>(), { wide: false, chat: false })
@@ -47,6 +48,10 @@ const column = computed(() => props.wide ? 'lg:max-w-180' : props.chat ? 'lg:max
 const dockLine = ref(false)
 provide(DOCK_LINE, dockLine)
 const { isDesktop } = useScreen()
+/** The computer's left column: the phone's dock on the column's surface, and the one notice slot (computer delta, item 11) */
+const side = useSide()
+/** On a computer the notice shows above Главная's field only; the open page on the right has no slot of its own */
+const notices = computed(() => side || !isDesktop.value)
 /** The dock's surface reaches up: over the guess line's edge, or over the editing bar's on a phone */
 const covering = computed(() => dockLine.value || (hard.value && !isDesktop.value))
 const fadeBottom = computed(() => !arrivedState.bottom && !hard.value && !dockLine.value)
@@ -105,29 +110,32 @@ defineExpose({ scroller })
     </div>
     <div
       v-if="$slots.dock"
-      class="relative shrink-0 px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] max-lg:[[data-keyboard]_&]:pb-2 lg:px-8 lg:pb-5"
-      :class="dockLine ? 'z-3 -mt-1.5' : covering ? 'z-3' : ''"
+      class="relative shrink-0 pt-1.5"
+      :class="[
+        side ? 'px-3 pb-4' : 'px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)] max-lg:[[data-keyboard]_&]:pb-2 lg:px-8 lg:pb-5',
+        dockLine ? 'z-3 -mt-1.5' : covering ? 'z-3' : ''
+      ]"
     >
       <div
         v-if="covering && cover"
-        class="pointer-events-none absolute inset-x-0 bg-canvas"
-        :class="dockLine ? 'bottom-[calc(100%-6px)]' : 'bottom-full'"
+        class="pointer-events-none absolute inset-x-0"
+        :class="[side ? 'bg-side' : 'bg-canvas', dockLine ? 'bottom-[calc(100%-6px)]' : 'bottom-full']"
         :style="{ height: `${cover}px` }"
         aria-hidden="true"
         data-dock-cover
       />
       <div
         class="mx-auto w-full"
-        :class="column"
+        :class="side ? '' : column"
       >
-        <NoticeSlot />
+        <NoticeSlot v-if="notices" />
         <div class="flex flex-col gap-2">
           <slot name="dock" />
         </div>
       </div>
     </div>
     <div
-      v-else
+      v-else-if="notices"
       class="shrink-0 px-4 lg:px-8"
     >
       <NoticeSlot

@@ -82,16 +82,17 @@ export default [
     expect(await shows(bar), 'no progress bar')
     expect(!(await bar.first().evaluate(e => e.className.includes('bg-accent'))), 'the bar is accent')
   } },
-  // 10. Desktop: rows, tabs and the composer share one 680 column
+  // 10. Desktop: rows and tabs share one column. Computer delta (items 1, 6, 24): the column is 752 and the field is
+  // Главная's, in the left column, so it is no longer measured here
   { id: 'acc-10-desk-column', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     await shop(p)
     const tabs = await edges(p.getByRole('tablist'))
-    const form = await edges(p.locator('[data-field="closed"]'))
-    expect(Math.abs(tabs[0] - form[0]) <= 1, `tabs start at ${tabs[0]}, the composer at ${form[0]}`)
     const row = await edges(p.locator('main li').first())
-    expect(Math.abs(row[0] - form[0]) <= 1 && Math.abs(row[1] - form[1]) <= 1, `rows ${row} vs composer ${form}`)
-    expect(Math.abs(form[1] - form[0] - 680) <= 1, `the composer is ${form[1] - form[0]} wide`)
+    expect(Math.abs(row[0] - tabs[0]) <= 1, `rows start at ${row[0]}, the tabs at ${tabs[0]}`)
+    expect(Math.abs(row[1] - row[0] - 752) <= 1, `the rows are ${row[1] - row[0]} wide`)
+    const form = await edges(p.locator('[data-field="closed"]'))
+    expect(form[1] <= 390, `the field is not in the left column: ${form}`)
   } },
   // 11. Корзина: line 2 has only the day and wraps
   { id: 'acc-11-trash', device: MOBILE, run: async (p) => {

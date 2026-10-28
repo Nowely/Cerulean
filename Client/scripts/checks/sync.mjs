@@ -11,6 +11,7 @@ const KEY_ID = 'YCAJEtestkeyid7'
 const SECRET = 'YCPtestsecretvalue0042'
 const BUCKET = 'cerulean-test'
 const DATA = 'cerulean/data.json'
+export { KEY_ID, SECRET, BUCKET }
 
 // ---------- the fake bucket ----------
 

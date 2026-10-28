@@ -103,7 +103,7 @@ const related = p => p.getByRole('region', { name: 'Связано' }).or(p.getB
  * would split (empty when none), and whether the bottom fade is on
  */
 const dockEdge = p => p.evaluate(() => {
-  const box = document.querySelector('.scroll-fade')
+  const box = document.querySelector('main .scroll-fade')
   const bb = box.getBoundingClientRect()
   const cover = document.querySelector('[data-dock-cover]')
   const dock = box.nextElementSibling
@@ -435,13 +435,18 @@ export default [
     const edge = await dockEdge(p)
     expect(!edge.fade && !edge.cut.length, edge.fade ? 'the feed fades above the row' : `cut by the edge: ${edge.cut.join(', ')}`)
   } },
-  // D3: «Задачи «записаться к @сто» offers the same row. Send: «Записаться к @Стоматолог», linked»
+  // D3: «Задачи «записаться к @сто» offers the same row. Send: «Записаться к @Стоматолог», linked». Since the computer
+  // round (item 6) a page has no field of its own: Главная's field writes there once its chip says Задачи
   { id: 'm24-d3-page', device: DESKTOP, run: async (p) => {
     await home(p)
+    await p.keyboard.press('Escape')
     await p.getByRole('link', { name: /^Задачи/ }).first().click()
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(400)
     await focusField(p)
+    await p.locator('[data-chip="main"]').click()
+    await p.locator('[data-places]').getByRole('button', { name: 'Задачи', exact: true }).click()
+    await p.waitForTimeout(200)
     await typeIn(p, 'записаться к @сто')
     const list = await rowChips(p)
     expect(list.map(c => c.name).join() === 'Стоматолог,Позвонить стоматологу', `the row offers ${list.map(c => c.name).join(', ')}`)

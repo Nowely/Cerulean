@@ -28,6 +28,14 @@ export function lowerFirst(s: string): string {
 }
 
 /**
+ * «в Покупки», but «во Входящие» (computer delta, item 14): «во» before в or ф followed by a consonant, as Russian says
+ * «во Владимир», «во Франции»
+ */
+export function into(name: string): string {
+  return `${/^[вф][^аеёиоуыэюя]/i.test(name) ? 'во' : 'в'} ${name}`
+}
+
+/**
  * A one-letter preposition or conjunction («в, к, с, у, о, и, а») stays with the next word: a no-break space after it
  * (v23, F9). For titles, line 2 and the question card as shown; a draft being typed is left as typed, and a saved
  * title turns it back into a plain space (`\s` takes it), so the stored text never holds it.

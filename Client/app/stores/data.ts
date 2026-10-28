@@ -88,6 +88,9 @@ interface Stamps {
 /** How long a ticked row stays in its list before it leaves (Josh 28 Oct, 12) */
 export const LEAVE_MS = 1500
 
+/** The first run happens on a computer's two columns (computer delta, items 23, 24): «Быстрый старт» names the left field */
+const madeOnDesk = () => typeof window !== 'undefined' && !!window.matchMedia?.('(min-width: 56.25rem)').matches
+
 export const useDataStore = defineStore('data', () => {
   const pages = ref<Record<Id, Page>>({})
   const records = ref<Record<Id, Rec>>({})
@@ -460,7 +463,7 @@ export const useDataStore = defineStore('data', () => {
         apply(loaded)
         purgeOld()
       } else {
-        const data = opts.demo ? demo() : firstRun()
+        const data = opts.demo ? demo() : firstRun(Date.now(), madeOnDesk())
         apply(data)
         // The copy reminder counts records from here
         settings.value = { ...settings.value, startedAt: Date.now() }
@@ -470,7 +473,7 @@ export const useDataStore = defineStore('data', () => {
       void readPersisted()
     } catch (e) {
       storageError.value = e instanceof Error ? e.message : String(e)
-      apply(opts.demo ? demo() : firstRun())
+      apply(opts.demo ? demo() : firstRun(Date.now(), madeOnDesk()))
     }
     ready.value = true
   }
@@ -1197,7 +1200,7 @@ export const useDataStore = defineStore('data', () => {
 
   /** «Удалить всё»: back to the first run, the key goes too, and sync's key with it; the bucket is left as it is */
   async function wipe() {
-    await replaceAll(firstRun(), { ...keeping(), startedAt: Date.now() })
+    await replaceAll(firstRun(Date.now(), madeOnDesk()), { ...keeping(), startedAt: Date.now() })
   }
 
   // ---------- sync through a bucket (stores/cloud.ts runs it) ----------

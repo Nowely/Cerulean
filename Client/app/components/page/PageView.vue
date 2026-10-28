@@ -34,6 +34,7 @@ import ViewTabs from './ViewTabs.vue'
 import RecordLine from '../record/RecordLine.vue'
 import CollectRow from '../record/CollectRow.vue'
 import PageNote from '../body/PageNote.vue'
+import PageStarters from './PageStarters.vue'
 
 // A list is what most pages show; the other views and the settings load when a page needs them
 const BoardLayout = defineAsyncComponent(() => import('./layouts/BoardLayout.vue'))
@@ -389,11 +390,15 @@ function addHere(text: string) {
   for (const d of drafts) data.addRecord({ pageId: to.id, text: d.text, due: d.due, values: d.values, order: order++, addedAt: now })
 }
 
+/** «Начать с» picked a kind: the «+ Новая запись» line opens with the caret */
+function startAdd() {
+  void nextTick(() => adder.value?.start())
+}
+
 defineExpose({
   openSettings: () => void openSettingsFromMenu(),
   toggleSearch: () => toggleSearch(),
-  /** «Начать с» picked a kind: the «+ Новая запись» line opens with the caret */
-  startAdd: () => void nextTick(() => adder.value?.start()),
+  startAdd,
   wide,
   heading,
   undecided
@@ -411,7 +416,8 @@ defineExpose({
       :class="!full ? 'lg:px-4' : 'lg:pt-px'"
     >
       <!-- The glyph on its tile, the doc glyph until a kind or a glyph is chosen; no «Добавить значок» (main flow, item 16) -->
-      <div class="flex items-center gap-2.5 lg:gap-3.5">
+      <!-- Computer: a 28 px tile over the check circles, the title where the record names start (computer delta, item 5) -->
+      <div class="flex items-center gap-2.5 lg:gap-1.5 lg:pl-1">
         <GlyphPicker
           v-if="full && page.kind === 'page'"
           v-model:open="glyphOpen"
@@ -423,7 +429,7 @@ defineExpose({
         >
           <button
             type="button"
-            class="flex shrink-0 cursor-pointer rounded-tile-md lg:rounded-tile-lg"
+            class="flex shrink-0 cursor-pointer rounded-tile-md"
             aria-label="Значок страницы"
           >
             <PageTile
@@ -490,6 +496,15 @@ defineExpose({
         {{ late }} просрочено
       </p>
     </div>
+
+    <!-- Computer: «Начать с» sits in the page under the title, since the field on the left is Главная's (computer delta,
+         item 18); a phone has it over the keyboard (pages/p/[id].vue) -->
+    <PageStarters
+      v-if="full && isDesktop && undecided"
+      class="pt-3 pb-1"
+      :page="page"
+      @picked="startAdd"
+    />
 
     <!-- The page's text (v23 «Заметка к странице»): between the title block and the tabs, drawn once it has text. A page
          with no records and no kind is its text, which fills the screen with no placeholder (main flow, item 16) -->

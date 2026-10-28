@@ -8,6 +8,7 @@ import { useRoute, useRouter } from '#imports'
 import { useCloudStore, type ConnectFail } from '~/stores/cloud'
 import { useNotify } from '~/composables/useNotify'
 import { useNow } from '~/composables/useNow'
+import { useScreen } from '~/composables/useScreen'
 import { YANDEX } from '~/domain/s3'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 
@@ -16,6 +17,7 @@ const notify = useNotify()
 const route = useRoute()
 const router = useRouter()
 const now = useNow()
+const { isDesktop } = useScreen()
 
 /** Yandex Object Storage's page on CORS: where the bucket's rule is set */
 const CORS_HELP = 'https://yandex.cloud/ru/docs/storage/operations/buckets/cors'
@@ -136,6 +138,7 @@ defineExpose({ open: () => open.value = true })
     v-model:open="open"
     title="Синхронизация"
     dialog
+    windowed
   >
     <form
       v-if="form"
@@ -154,10 +157,11 @@ defineExpose({ open: () => open.value = true })
             autocapitalize="off"
             spellcheck="false"
             :autofocus="!keyAgain"
+            size="lg"
             class="w-full"
             :aria-invalid="answer === 'access'"
             :aria-describedby="answer === 'access' ? 'sync-bucket-err' : undefined"
-            :ui="{ base: answer === 'access' ? 'ring-warn' : '' }"
+            :ui="{ base: answer === 'access' ? 'ring-warn md:text-input' : 'md:text-input' }"
             data-sync-bucket
             @update:model-value="onField('bucket', String($event))"
           />
@@ -179,7 +183,8 @@ defineExpose({ open: () => open.value = true })
           spellcheck="false"
           class="w-full"
           :aria-invalid="answer === 'key'"
-          :ui="{ base: answer === 'key' ? 'font-mono ring-warn' : 'font-mono' }"
+          size="lg"
+          :ui="{ base: answer === 'key' ? 'font-mono ring-warn md:text-input' : 'font-mono md:text-input' }"
           data-sync-key-id
           @update:model-value="onField('keyId', String($event))"
         />
@@ -196,10 +201,11 @@ defineExpose({ open: () => open.value = true })
             spellcheck="false"
             enterkeyhint="done"
             :autofocus="keyAgain"
+            size="lg"
             class="w-full"
             :aria-invalid="answer === 'key'"
             :aria-describedby="answer === 'key' ? 'sync-key-err' : undefined"
-            :ui="{ base: answer === 'key' ? 'font-mono tracking-wide ring-warn' : 'font-mono tracking-wide' }"
+            :ui="{ base: answer === 'key' ? 'font-mono tracking-wide ring-warn md:text-input' : 'font-mono tracking-wide md:text-input' }"
             data-sync-secret
             @update:model-value="onField('secret', String($event))"
           >
@@ -210,6 +216,7 @@ defineExpose({ open: () => open.value = true })
                 square
                 size="sm"
                 :aria-label="shown ? 'Скрыть ключ' : 'Показать ключ'"
+                :title="isDesktop ? (shown ? 'Скрыть ключ' : 'Показать ключ') : undefined"
                 :aria-pressed="shown"
                 @click="shown = !shown"
               />
@@ -226,7 +233,7 @@ defineExpose({ open: () => open.value = true })
       <button
         v-if="!other"
         type="button"
-        class="-mx-1 flex h-11 cursor-pointer items-center self-start rounded-item px-1 text-15 text-accent-ink hover:bg-muted lg:h-8 lg:text-sm"
+        class="-mx-1 flex h-11 cursor-pointer items-center self-start rounded-item px-1 text-15 text-accent-ink hover:bg-muted"
         :aria-expanded="false"
         @click="other = true"
       >
@@ -241,7 +248,9 @@ defineExpose({ open: () => open.value = true })
             autocomplete="off"
             autocapitalize="off"
             spellcheck="false"
+            size="lg"
             class="w-full"
+            :ui="{ base: 'md:text-input' }"
           />
         </label>
         <label class="block">
@@ -251,7 +260,9 @@ defineExpose({ open: () => open.value = true })
             autocomplete="off"
             autocapitalize="off"
             spellcheck="false"
+            size="lg"
             class="w-full"
+            :ui="{ base: 'md:text-input' }"
           />
         </label>
       </template>
@@ -293,7 +304,6 @@ defineExpose({ open: () => open.value = true })
       <div class="flex items-center justify-end gap-2 pt-1">
         <UButton
           size="lg"
-          class="lg:h-9 lg:text-sm"
           @click="open = false"
         >
           Отмена
@@ -303,7 +313,7 @@ defineExpose({ open: () => open.value = true })
           color="primary"
           variant="solid"
           size="lg"
-          :class="['lg:h-9 lg:text-sm', checking && 'disabled:opacity-100']"
+          :class="checking && 'disabled:opacity-100'"
           :loading="checking"
           :disabled="!complete"
         >
@@ -371,7 +381,7 @@ defineExpose({ open: () => open.value = true })
         <button
           v-if="cloud.meta?.error"
           type="button"
-          class="flex h-12 w-full cursor-pointer items-center text-left text-base text-accent-ink active:bg-pressed lg:h-9 lg:text-sm"
+          class="flex h-12 w-full cursor-pointer items-center text-left text-base text-accent-ink active:bg-pressed"
           @click="rekey"
         >
           Ввести ключ заново
@@ -379,7 +389,7 @@ defineExpose({ open: () => open.value = true })
         <button
           v-else-if="!cloud.meta?.newer"
           type="button"
-          class="flex h-12 w-full cursor-pointer items-center gap-2 text-left text-base text-accent-ink active:bg-pressed disabled:cursor-default disabled:opacity-60 lg:h-9 lg:text-sm"
+          class="flex h-12 w-full cursor-pointer items-center gap-2 text-left text-base text-accent-ink active:bg-pressed disabled:cursor-default disabled:opacity-60"
           :disabled="syncing || !cloud.online"
           @click="syncNow"
         >
@@ -387,7 +397,7 @@ defineExpose({ open: () => open.value = true })
         </button>
         <button
           type="button"
-          class="flex h-12 w-full cursor-pointer items-center text-left text-base text-warn-ink active:bg-pressed lg:h-9 lg:text-sm"
+          class="flex h-12 w-full cursor-pointer items-center text-left text-base text-warn-ink active:bg-pressed"
           @click="disconnect"
         >
           Отключить
@@ -398,7 +408,6 @@ defineExpose({ open: () => open.value = true })
           color="primary"
           variant="solid"
           size="lg"
-          class="lg:h-9 lg:text-sm"
           @click="open = false"
         >
           Готово

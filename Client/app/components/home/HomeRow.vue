@@ -4,6 +4,9 @@
 // page, cut where the line ends. An empty page is its name alone. No dot for what is new (Josh 28 Oct, 2): the tint after
 // a send says where it went. «Компактный»: a plain 44px list, glyph and name.
 // The row's right end belongs to the page «⋯» (hover and keyboard focus on desktop); on a phone a long press opens it.
+// In a computer's left column (computer delta, items 3, 13) the card lies on the column's surface: hover and the open page's
+// card in its own steps, the plate lifted off it, and «new» on the plate (accent-soft, the glyph in the accent) instead of
+// a fill, since a filled row means «open» there.
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from '#imports'
 import type { Page, Rec } from '~/domain/types'
@@ -11,6 +14,8 @@ import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
+import { useSide } from '~/composables/useSide'
+import { useOpenCard } from '~/composables/useRightPage'
 import { cardLine, type CardLine } from '~/domain/summary'
 import { lowerFirst } from '~/domain/text'
 import { pageColor } from '~/domain/look'
@@ -29,6 +34,10 @@ const ui = useUiStore()
 const now = useNow()
 const router = useRouter()
 const { isDesktop } = useScreen()
+const side = useSide()
+const openCard = useOpenCard()
+/** The page or favourite record open on the right is marked, and stays so under the pointer */
+const selected = computed(() => side && openCard.value === (props.page?.id ?? props.rec?.id))
 
 const to = computed(() => props.page ? `/p/${props.page.id}` : `/r/${props.rec!.id}`)
 const name = computed(() => props.page ? props.page.title || 'Без названия' : props.rec!.text)
@@ -60,6 +69,8 @@ watch(() => props.page ? ui.freshPages[props.page.id] : undefined, (at) => {
   if (plate.value) timers.push(setTimeout(() => plate.value = false, 4000 - gone))
 }, { immediate: true })
 onBeforeUnmount(clear)
+/** In the left column the plate comes at once and fades over the second after it (4 s + 1 s); other changes are instant */
+const fading = computed(() => lit.value && !plate.value)
 
 // A long press on a phone opens the page menu; the click that follows it must not open the page
 const menuOpen = ref(false)
@@ -92,9 +103,14 @@ function click(e: MouseEvent) {
   <!-- Lit by hover and keyboard focus only: focus given back by a closed sheet leaves it plain (v23, F18) -->
   <div
     role="listitem"
-    class="group/row relative flex items-center rounded-card hover:bg-muted has-focus-visible:bg-muted"
-    :class="[compact ? '' : 'not-first:mt-0.5', { 'fresh-tint': lit }]"
+    class="group/row relative flex items-center rounded-card"
+    :class="[
+      compact ? '' : 'not-first:mt-0.5',
+      !side ? 'hover:bg-muted has-focus-visible:bg-muted' : selected ? 'bg-side-sel' : 'hover:bg-side-hover has-focus-visible:bg-side-hover',
+      { 'fresh-tint': lit && !side }
+    ]"
     :data-fresh="lit || undefined"
+    :aria-current="selected ? 'page' : undefined"
   >
     <a
       :href="to"
@@ -109,8 +125,8 @@ function click(e: MouseEvent) {
     >
       <span
         v-if="!compact"
-        class="flex size-9 shrink-0 items-center justify-center rounded-tile-lg transition-colors duration-1000"
-        :class="plate ? 'bg-elev dark:bg-card' : 'bg-card dark:bg-chip'"
+        class="flex size-9 shrink-0 items-center justify-center rounded-tile-lg"
+        :class="[side ? (plate ? 'bg-accent-soft' : 'bg-elev dark:bg-chip') : plate ? 'bg-elev dark:bg-card' : 'bg-card dark:bg-chip', { 'transition-colors duration-1000': !side || fading }]"
         data-plate
       >
         <PageTile
@@ -118,6 +134,8 @@ function click(e: MouseEvent) {
           :color="pageColor(page)"
           :size="20"
           tint
+          :accent="side && plate"
+          :class="{ 'transition-colors duration-1000': side && fading }"
         />
       </span>
       <span
@@ -128,10 +146,13 @@ function click(e: MouseEvent) {
           :glyph="glyph"
           :color="pageColor(page)"
           tint
+          :accent="side && plate"
+          :class="{ 'transition-colors duration-1000': side && fading }"
         />
         <span
           v-if="late"
-          class="absolute -top-0.5 -right-0.75 size-2 rounded-full bg-warn ring-2 ring-canvas"
+          class="absolute -top-0.5 -right-0.75 size-2 rounded-full bg-warn ring-2"
+          :class="side ? 'ring-side' : 'ring-canvas'"
           role="img"
           :aria-label="late.text"
         />
@@ -169,10 +190,12 @@ function click(e: MouseEvent) {
       home
       :bare="!isDesktop"
     >
-      <!-- Desktop: over the row's right end on hover, so the number keeps its place at rest -->
+      <!-- Desktop: over the row's right end on hover or keyboard focus, so the number keeps its place at rest; a click on a
+           card leaves its link focused, and the open page's card shows no «⋯» for it (computer delta, ДГ1) -->
       <DotsButton
         label="Действия со страницей"
-        class="absolute top-1/2 right-1 -translate-y-1/2 bg-muted opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 aria-expanded:opacity-100"
+        class="absolute top-1/2 right-1 -translate-y-1/2 opacity-0 group-hover/row:opacity-100 group-has-focus-visible/row:opacity-100 aria-expanded:opacity-100"
+        :class="!side ? 'bg-muted' : selected ? 'bg-side-sel' : 'bg-side-hover'"
       />
     </PageMenu>
   </div>

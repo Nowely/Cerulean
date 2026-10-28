@@ -65,7 +65,8 @@ export default [
     const named = plain(await headerTitle(p))
     expect(named === 'Полумарафон к маю', `scrolled, the header reads «${named}»`)
   } },
-  // D3: «scroll Покупки → the slim header, «Молочное» stuck»
+  // D3: «scroll Покупки → the slim header, «Молочное» stuck». Since the computer round (item 4) a page's header has no way
+  // back: past the title block it names the page and its tab in the middle, and «⋯» stays at the window's corner
   { id: 'f-14-desk-slim', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
@@ -75,18 +76,17 @@ export default [
     expect(!(await p.locator('main header[data-slim]').count()), 'the slim header is there before scrolling')
     // «Молочное» right under the top of the scroller, a few rows into its group
     await p.evaluate(() => {
-      const box = document.querySelector('.scroll-fade')
+      const box = document.querySelector('main .scroll-fade')
       const cap = [...box.querySelectorAll('h3')].find(h => h.textContent.trim().startsWith('Молочное'))
       box.scrollTop += cap.getBoundingClientRect().top - box.getBoundingClientRect().top + 120
     })
     await p.waitForTimeout(400)
     const slim = p.locator('main header[data-slim]')
     expect(await slim.count() === 1 && await slim.isVisible(), 'no slim header past the title block')
-    const h = (await slim.boundingBox()).height
-    expect(Math.round(h) === 44, `the slim header is ${h} px`)
     expect(plain(await slim.textContent()).includes('Покупки · Купить'), `the slim header reads «${plain(await slim.textContent())}»`)
+    expect(!(await slim.getByRole('link').count()), 'the slim header has a way back')
     const stuck = await p.evaluate(() => {
-      const box = document.querySelector('.scroll-fade')
+      const box = document.querySelector('main .scroll-fade')
       const cap = [...box.querySelectorAll('h3')].find(h => h.textContent.trim().startsWith('Молочное'))
       return Math.abs(cap.getBoundingClientRect().top - box.getBoundingClientRect().top)
     }).catch(() => null)

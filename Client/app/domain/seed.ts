@@ -25,7 +25,11 @@ export interface Dataset {
   entries: Entry[]
 }
 
-/** «Быстрый старт» on day one (Josh 28 Oct, 5): what to try, newest first, as Notion's «Getting Started» and Things do */
+/**
+ * «Быстрый старт» on day one (Josh 28 Oct, 5): what to try, newest first, as Notion's «Getting Started» and Things do. The
+ * first line names where the field is in the layout the page was made in: at the foot of a phone, at the foot of a
+ * computer's left column (computer delta, item 23)
+ */
 const START: [string, string?][] = [
   ['Запишите что-нибудь в поле внизу', 'Дата в словах станет сроком: «позвонить маме завтра в 10»'],
   ['Откройте запись и добавьте к ней заметку'],
@@ -38,9 +42,10 @@ const START: [string, string?][] = [
 /**
  * The first open (main flow, item 1): Входящие and Сегодня on top, then in «Мои страницы» the list «Быстрый старт» and
  * three empty pages from their starters, Покупки, Задачи, Идеи in that order (the list is newest first, so they are made
- * a moment apart). «Быстрый старт» is an ordinary page: its records tick, open and delete, and the page deletes too
+ * a moment apart). «Быстрый старт» is an ordinary page: its records tick, open and delete, and the page deletes too.
+ * `desk`: made on a computer, with Главная as the left column
  */
-export function firstRun(now = Date.now()): Dataset {
+export function firstRun(now = Date.now(), desk = false): Dataset {
   const start = newPage({ title: 'Быстрый старт', glyph: 'list', order: 0, createdAt: now, openedAt: now, seenAt: now }, now)
   const own = (['shop', 'todo', 'note'] as const).map((key, i) => {
     const at = now - 1 - i
@@ -49,7 +54,7 @@ export function firstRun(now = Date.now()): Dataset {
   })
   const records = START.map(([text, note], i) => newRecord({
     pageId: start.id,
-    text,
+    text: desk && !i ? 'Запишите что-нибудь в поле слева внизу' : text,
     ...(note ? withBody(para(note)) : {}),
     order: i,
     addedAt: now - i,

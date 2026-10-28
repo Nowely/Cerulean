@@ -21,7 +21,7 @@ import { useNotify } from '~/composables/useNotify'
 import { usePlaces } from '~/composables/usePlaces'
 import { useCreatePage } from '~/composables/useCreatePage'
 import { formatDue, isOverdue } from '~/domain/dates'
-import { nb } from '~/domain/text'
+import { into, nb } from '~/domain/text'
 import { formatValue, optionOf } from '~/domain/props'
 import { bodyOf, docText } from '~/domain/body'
 import RecordMark from '../common/RecordMark.vue'
@@ -225,7 +225,7 @@ function moveTo(to: Id | { name: string }) {
   movePop.value = false
   const { result: page, undo } = journal.undoable([props.rec.id], () =>
     journal.chooseForRecord(props.rec.id, { pageId: typeof to === 'string' ? to : listPage(to.name).id }))
-  if (page && page.id !== data.inbox.id) notify(`Перемещено в ${page.title || 'Без названия'}`, { label: 'Отменить', run: undo })
+  if (page && page.id !== data.inbox.id) notify(`Перемещено ${into(page.title || 'Без названия')}`, { label: 'Отменить', run: undo })
 }
 </script>
 
@@ -278,7 +278,8 @@ function moveTo(to: Id | { name: string }) {
         class="group/row relative mx-1 flex min-h-11 items-center rounded-chip pr-3 lg:mx-0 lg:min-h-10 lg:pr-1.5"
         :class="[
           selected ? 'bg-sel' : lifted ? '' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
-          { 'fresh-tint': fresh, 'animate-leave': leaving },
+          // A computer marks «new» with a bar at the left edge, as a filled row means «open» there (computer delta, item 13)
+          { 'fresh-tint': fresh && !isDesktop, 'fresh-bar': fresh && isDesktop, 'animate-leave': leaving },
           swipe.dragging.value ? '' : 'transition-[padding] duration-200 ease-out-soft',
           // The browser keeps vertical scroll and leaves the sideways drag to the swipe (no pointercancel)
           readonly ? '' : 'touch-pan-y'
@@ -440,26 +441,33 @@ function moveTo(to: Id | { name: string }) {
           </button>
         </span>
 
-        <!-- Входящие: the move button ends every open row; the places list opens right at it -->
+        <!-- Входящие: the move button ends every open row; the places list opens right at it. A computer shows it on hover,
+             on keyboard focus and while its list is open (computer delta, item 19) -->
         <span
           v-if="moving"
           class="relative -mr-2 ml-0.5 flex shrink-0 lg:mr-0"
         >
-          <button
-            type="button"
-            class="flex size-11 cursor-pointer items-center justify-center rounded-chip text-toned active:bg-pressed lg:size-9 lg:hover:bg-hover"
-            :aria-label="`Переместить «${rec.text}»`"
-            aria-haspopup="dialog"
-            :aria-expanded="movePop"
-            data-places-chip
-            data-move
-            @click="movePop = !movePop"
+          <component
+            :is="later.ready.value && isDesktop && !movePop ? LazyUTooltip : Bare"
+            text="Переместить"
           >
-            <UIcon
-              name="i-lucide-folder-input"
-              class="size-5"
-            />
-          </button>
+            <button
+              type="button"
+              class="flex size-11 cursor-pointer items-center justify-center rounded-chip text-toned active:bg-pressed lg:size-9 lg:hover:bg-hover"
+              :class="{ 'lg:opacity-0 lg:group-hover/row:opacity-100 lg:group-focus-within/row:opacity-100 lg:focus-visible:opacity-100': !movePop }"
+              :aria-label="`Переместить «${rec.text}»`"
+              aria-haspopup="dialog"
+              :aria-expanded="movePop"
+              data-places-chip
+              data-move
+              @click="movePop = !movePop"
+            >
+              <UIcon
+                name="i-lucide-folder-input"
+                class="size-5"
+              />
+            </button>
+          </component>
           <PlacesPopover
             v-if="movePop"
             :pages="movePlaces"
@@ -477,8 +485,10 @@ function moveTo(to: Id | { name: string }) {
           v-if="!readonly && isDesktop && !lifted"
           class="ml-1 hidden shrink-0 items-center gap-0.5 group-hover/row:flex group-focus-within/row:flex"
         >
+          <!-- In Входящие the move button is the row's own, so it is not offered twice -->
           <component
             :is="later.ready.value ? LazyUTooltip : Bare"
+            v-if="!moving"
             text="Переместить"
           >
             <UButton

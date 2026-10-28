@@ -4,7 +4,7 @@
 // Цитата · @ · Готово), a selection (↶ · Ж · К · Ссылка · @ · ○ · Готово; the ring makes a subitem on a record and a
 // record on a page note), «@» (up to three whole chips and «Ещё…», which opens «Связать» to mention) and the address
 // field of «Ссылка». Its buttons never take the focus from the text. Desktop: 36px round tools, 18px glyphs, tooltips
-// that name the keys.
+// that name the keys. A computer shows only the selection, «@» and address faces, with no «Готово» (computer delta, 17).
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import type { Hit } from '~/domain/search'
 import type { MentionTarget } from '~/domain/body'
@@ -277,7 +277,8 @@ function more(h: Hit) {
       </BarTip>
     </template>
 
-    <template v-if="face !== 'mention'">
+    <!-- No «Готово» on a computer: Esc ends the editing, Enter applies the address (computer delta, item 17) -->
+    <template v-if="face !== 'mention' && !isDesktop">
       <span class="flex-1" />
       <BarTip
         label="Esc"
@@ -338,7 +339,7 @@ function more(h: Hit) {
   color: var(--ink);
 }
 
-@media (width >= 64rem) {
+@media (width >= 56.25rem) {
   .ebt {
     flex-basis: 36px;
     width: 36px;
