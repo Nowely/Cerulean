@@ -1,12 +1,14 @@
 <script setup lang="ts">
 // The field (main flow, items 3–9, 12, 21–27): the one place to write on Главная and on pages. Closed it is a 44px pill:
 // the place chip, the unsent words or an example, the mic. Open it is a card over the keyboard: the title line (17/24, a
-// date tinted where it was typed), the note line, and a bar with the place chip, the date chip and ↑. A line that holds
-// several records shows them as a list, each row with its own place. The chip names the place, tinted when Авто chose
-// it; nothing on the way explains itself in words. A send keeps the field open and empty for the next record.
+// date tinted where it was typed), the note line, and a bar with the place chip, the date chip and ↑. With a model a line
+// that holds several records shows them as a list, each row with its own place; without one a line is one record and goes
+// where the chip says (Josh 28 Oct, 4 and 9). The chip names the place, tinted when Авто chose it; nothing on the way
+// explains itself in words. A send keeps the field open and empty for the next record, and on Главная the place picked by
+// hand stays (Josh 28 Oct, 3). «Отменить» gives the words back (Josh 28 Oct, 6).
 import { computed, inject, nextTick, onBeforeUnmount, ref, shallowRef, useTemplateRef, watch, watchEffect } from 'vue'
 import { useOnline } from '@vueuse/core'
-import type { Id, Page } from '~/domain/types'
+import type { Id } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore, type Filed } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
@@ -16,6 +18,8 @@ import { useFind } from '~/composables/useFind'
 import { useSpeech } from '~/composables/useSpeech'
 import { useScreen } from '~/composables/useScreen'
 import { useTemplates } from '~/composables/useTemplates'
+import { useCreatePage } from '~/composables/useCreatePage'
+import { usePlaces } from '~/composables/usePlaces'
 import { askModel, ModelError, type ModelResult } from '~/domain/model'
 import { fieldDate, readLine, readModel, type LineContext, type LineDraft } from '~/domain/auto'
 import { cleanRecordText, isSearch, readDue } from '~/domain/parse'
@@ -45,6 +49,7 @@ const now = useNow()
 const find = useFind()
 const online = useOnline()
 const templates = useTemplates()
+const { list: listPage } = useCreatePage()
 const { isDesktop } = useScreen()
 
 const field = useTemplateRef<InstanceType<typeof ComposerField>>('field')
@@ -65,8 +70,14 @@ const noteBy = ref<'model' | null>(null)
 const noDate = ref<string | null>(null)
 /** The model's own date dropped the same way, for the words it was read from */
 const noModelDue = ref<string | null>(null)
-/** A place picked by hand for this record: it stays until the send (item 5) */
-const picked = ref<Id | null>(null)
+/**
+ * A place picked by hand. On Главная it stays after the send and when Главная is opened again (Josh 28 Oct, 3); on a
+ * page it holds for one record, as the page is the place there
+ */
+const picked = ref<Id | null>(props.mode === 'home' ? ui.homePlace : null)
+watch(picked, (id) => {
+  if (props.mode === 'home') ui.homePlace = id
+})
 /** Places picked on rows of the list, by the row's title (item 8) */
 const rows = ref<Record<string, Id>>({})
 /** The places popover: over the bar's chip, or over row `i`'s chip */
@@ -106,18 +117,12 @@ const home = computed<{ pageId: Id, by: 'page' } | null>(() => {
   if (props.mode === 'today' && todo.value) return { pageId: todo.value.id, by: 'page' }
   return null
 })
-const place = computed<LineContext['place']>(() => picked.value ? { pageId: picked.value, by: 'user' } : home.value)
+/** A page picked by hand that was deleted meanwhile is no place: the chip is back to Входящие (or Авто) */
+const pickedLive = computed(() => picked.value && data.pages[picked.value] && !data.pages[picked.value]!.deletedAt ? picked.value : null)
+const place = computed<LineContext['place']>(() => pickedLive.value ? { pageId: pickedLive.value, by: 'user' } : home.value)
 
 /** The places on offer: Входящие, then the pages as Главная lists them (Избранное, Мои страницы, the sections) */
-const places = computed<Page[]>(() => {
-  const order = [
-    data.inbox,
-    ...data.favorites.flatMap(f => f.kind === 'page' ? [f.page] : []),
-    ...data.recentlyMade,
-    ...data.sectionList.flatMap(s => data.livePages.filter(p => p.sectionId === s.id))
-  ]
-  return order.filter((p, i) => order.indexOf(p) === i && (p.kind === 'inbox' || (p.kind === 'page' && !onlyCollects(p))))
-})
+const places = usePlaces()
 
 /** A page's template aimed by «+» on its «Шаблоны» row (v24): the next record is made by it */
 const byTemplate = ref<Id | null>(null)
@@ -129,6 +134,8 @@ watch(templates.aim, (a) => {
 }, { immediate: true })
 const template = computed(() => byTemplate.value ? page.value?.templates?.find(t => t.id === byTemplate.value) ?? null : null)
 
+const modelOn = computed(() => journal.hasModel() && online.value)
+
 const ctx = computed<LineContext>(() => ({
   pages: journal.targets(),
   inboxId: data.inbox.id,
@@ -139,7 +146,8 @@ const ctx = computed<LineContext>(() => ({
   rows: rows.value,
   noDate: noDate.value,
   today: props.mode === 'today',
-  day: day.value
+  day: day.value,
+  sort: modelOn.value
 }))
 
 /** The rules' reading, at once on every key; the word being typed is not a detail word yet (item 8) */
@@ -147,7 +155,6 @@ const rules = computed(() => readLine(title.value, note.value, { ...ctx.value, l
 
 // ---------- the model reads after a pause in typing (items 21–23) ----------
 
-const modelOn = computed(() => journal.hasModel() && online.value)
 const reading = shallowRef<{ stamp: string, result: ModelResult } | null>(null)
 let timer: ReturnType<typeof setTimeout> | undefined
 let reader: AbortController | null = null
@@ -214,6 +221,8 @@ const single = computed<LineDraft | null>(() => {
 })
 const chipPage = computed(() => place.value?.pageId ?? single.value?.pageId ?? data.inbox.id)
 const chipAuto = computed(() => !place.value && chipPage.value !== data.inbox.id)
+/** With a model, Главная's list starts with «Авто»; it carries the tick while the model chooses (Josh 28 Oct, 3) */
+const autoRow = computed(() => props.mode === 'home' && modelOn.value && pop.value === 'main' ? { on: !place.value } : null)
 const chipName = computed(() => template.value ? template.value.name : data.pages[chipPage.value]?.title || 'Без названия')
 
 /** The date in the title line: what the rules read there, else the model's own; null once its chip was tapped */
@@ -223,8 +232,11 @@ const due = computed(() => date.value?.due ?? modelDue.value)
 const dueText = computed(() => due.value ? formatDue(due.value, now.value) : '')
 const marks = computed(() => date.value?.spans ?? [])
 
-/** An example until the first record exists anywhere (with a model, one that holds two records), then the action's name */
-const anyRecord = computed(() => data.liveRecords.length > 0)
+/**
+ * An example until the person's own first record exists anywhere (with a model, one that holds two records), then the
+ * action's name. «Быстрый старт» is not theirs (Josh 28 Oct, 5)
+ */
+const anyRecord = computed(() => data.liveRecords.some(r => !r.seed))
 const placeholder = computed(() => props.mode !== 'home' ? '' : anyRecord.value ? 'Новая запись' : modelOn.value ? 'Купить хлеб и позвонить маме завтра' : 'Позвонить маме в 10')
 /** Open on a page the title line names the action, so «Заметка» is never the card's first words (item 12) */
 const openPlaceholder = computed(() => placeholder.value || 'Новая запись')
@@ -287,7 +299,18 @@ function pick(id: Id) {
   }
   focusTitle()
 }
-const popCurrent = computed(() => typeof pop.value === 'number' ? list.value?.drafts[pop.value]?.pageId ?? chipPage.value : chipPage.value)
+/** «Авто» hands the choice back to the model */
+function pickAuto() {
+  pop.value = null
+  byTemplate.value = null
+  picked.value = null
+  focusTitle()
+}
+/** «Новая страница» in the list: a plain list under «Мои страницы» (or the page of that name), picked for the record */
+function pickNew(name: string) {
+  pick(listPage(name).id)
+}
+const popCurrent = computed(() => autoRow.value?.on ? null : typeof pop.value === 'number' ? list.value?.drafts[pop.value]?.pageId ?? chipPage.value : chipPage.value)
 /** A tap on the date drops it: the words stay as typed, and editing them reads the date again */
 function dropDate() {
   if (date.value) noDate.value = date.value.words
@@ -343,8 +366,20 @@ function namesOf(ids: Id[]): string {
 let sendNotice: { id: number, entryId: Id } | null = null
 const NOTICE_MS = 6000
 
+/** What was in the field at a send: «Отменить» puts it back as it was (Josh 28 Oct, 6) */
+interface Typed {
+  title: string
+  links: Id[]
+  note: string
+  noteBy: 'model' | null
+  noDate: string | null
+  noModelDue: string | null
+  picked: Id | null
+  byTemplate: Id | null
+}
+
 /** After a send: Главная's cards light up, and the notice names where the records went that do not show here */
-function landed(f: Filed, drafts: LineDraft[], late = false) {
+function landed(f: Filed, drafts: LineDraft[], typed: Typed, late = false) {
   const away = drafts.filter(d => !here(d))
   if (props.mode === 'home') {
     const at = Date.now()
@@ -355,16 +390,34 @@ function landed(f: Filed, drafts: LineDraft[], late = false) {
     if (late && sendNotice && ui.notice?.id === sendNotice.id) ui.notice = null
     return
   }
-  const id = notify(`Добавлено в ${namesOf([...new Set(away.map(d => d.pageId))])}`, { label: 'Отменить', run: () => undoSend(f) }, NOTICE_MS)
+  const id = notify(`Добавлено в ${namesOf([...new Set(away.map(d => d.pageId))])}`, { label: 'Отменить', run: () => undoSend(f, typed) }, NOTICE_MS)
   sendNotice = { id, entryId: f.entryId }
 }
-/** «Отменить»: every record of that send goes, and the cards and dots are as they were */
-function undoSend(f: Filed) {
+/**
+ * «Отменить»: every record of that send goes, the cards are as they were, and the field opens with exactly what was
+ * sent, the caret at the end of the title, so a change and Enter send it again (Gmail's «Undo send» reopens the draft)
+ */
+function undoSend(f: Filed, typed: Typed) {
   journal.undo(f.entryId)
   const tints = { ...ui.freshPages }
   for (const id of f.pages) delete tints[id]
   ui.freshPages = tints
+  title.value = typed.title
+  links.value = typed.links
+  note.value = typed.note
+  noteBy.value = typed.noteBy
+  noDate.value = typed.noDate
+  noModelDue.value = typed.noModelDue
+  picked.value = typed.picked
+  byTemplate.value = typed.byTemplate
+  open.value = true
+  sent.value = false
+  focusTitle()
 }
+// Writing the next record puts the last send's notice away: its «Отменить» would give the words back over new ones
+watch(title, (t) => {
+  if (t.trim() && sendNotice && ui.notice?.id === sendNotice.id) ui.notice = null
+})
 onBeforeUnmount(() => {
   if (sendNotice && ui.notice?.id === sendNotice.id) ui.notice = null
 })
@@ -401,18 +454,19 @@ function send(stay = true) {
   const tpl = template.value
   const typedNote = note.value.trim()
   const lineCtx = ctx.value
+  const typed: Typed = { title: title.value, links: links.value, note: note.value, noteBy: noteBy.value, noDate: noDate.value, noModelDue: noModelDue.value, picked: picked.value, byTemplate: byTemplate.value }
   const filed = journal.write(t, drafts, { here, links: links.value })
   if (tpl) for (const id of filed.ids) data.fillFromTemplate(id, tpl.id)
-  // A place picked by hand teaches Авто that word, silently (item 5)
-  for (const d of drafts) if (d.by === 'user') data.teach(d.text, d.pageId)
+  // With a model, a place picked by hand teaches Авто that word, silently (item 5); without one nothing is learned
+  if (modelOn.value) for (const d of drafts) if (d.by === 'user') data.teach(d.text, d.pageId)
   last = { text: title.value, links: links.value, ids: filed.ids, entryId: filed.entryId }
-  landed(filed, drafts)
+  landed(filed, drafts, typed)
   // The send never waits for the model: when it reads these words later, the records are filed again (item 24)
   if (modelOn.value && !ready && !(readDue(t, Date.now()).due && !date.value)) {
     const keepTitle = (d: LineDraft): LineDraft => typedNote ? { ...d, text: typedTitle(t), note: typedNote } : d
     void journal.lateRead(filed, t, typedNote, lineCtx, { here, keepTitle }, (again) => {
       const read = again.ids.map(id => data.records[id]).filter(r => !!r).map(r => ({ pageId: r!.pageId, due: r!.due } as LineDraft))
-      landed(again, read, true)
+      landed(again, read, typed, true)
     })
   }
   reset()
@@ -437,7 +491,7 @@ function reset() {
   noDate.value = null
   noModelDue.value = null
   rows.value = {}
-  picked.value = null
+  if (props.mode !== 'home') picked.value = null
   byTemplate.value = null
   reading.value = null
 }
@@ -676,7 +730,11 @@ function titleKey(e: KeyboardEvent) {
         :pages="places"
         :current="popCurrent"
         :end="typeof pop === 'number'"
+        :auto="autoRow"
         @pick="pick"
+        @auto="pickAuto"
+        @create="pickNew"
+        @back="focusTitle"
         @close="pop = null"
       />
     </form>

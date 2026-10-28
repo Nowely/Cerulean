@@ -226,6 +226,11 @@ export function splitItems(text: string, live = false): string[] {
     .map(capitalize)
 }
 
+/** «купить молоко» on a list of things: the page says «купить», the record does not */
+export function dropListVerb(text: string): string {
+  return text.replace(LIST_VERB, '')
+}
+
 /** A first word Авто understood as the page («идея: …», «цель: …»): the page says it, the record does not */
 const ROUTE_PREFIX = /^(?:идея|идеи|цель|задача|заметка|мысль|покупки|купить)\s*:\s*/i
 

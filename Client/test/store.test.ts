@@ -39,16 +39,53 @@ const online = (value: boolean) => Object.defineProperty(globalThis.navigator, '
 beforeEach(() => online(true))
 
 describe('data store', () => {
-  it('starts with Входящие, Сегодня and empty Покупки, Задачи and Идеи on the first run (main flow, item 1)', async () => {
+  it('starts with Входящие, Сегодня, «Быстрый старт» and empty Покупки, Задачи and Идеи on the first run (main flow, item 1; Josh 28 Oct, 5)', async () => {
     const { data } = await fresh()
-    expect(data.livePages.map(p => p.title)).toEqual(['Входящие', 'Сегодня', 'Покупки', 'Задачи', 'Идеи'])
-    expect(data.recentlyMade.map(p => [p.title, p.template])).toEqual([['Покупки', 'shop'], ['Задачи', 'todo'], ['Идеи', 'note']])
-    expect(data.liveRecords).toEqual([])
+    expect(data.livePages.map(p => p.title)).toEqual(['Входящие', 'Сегодня', 'Быстрый старт', 'Покупки', 'Задачи', 'Идеи'])
+    expect(data.recentlyMade.map(p => [p.title, p.template])).toEqual([['Быстрый старт', undefined], ['Покупки', 'shop'], ['Задачи', 'todo'], ['Идеи', 'note']])
+    // «Быстрый старт» holds six records to tick, the first with its text; none of them is the person's own
+    const start = data.recentlyMade[0]!
+    expect(start.glyph).toBe('list')
+    const steps = data.recordsOf(start.id)
+    expect(steps.map(r => r.text)).toEqual([
+      'Запишите что-нибудь в поле внизу',
+      'Откройте запись и добавьте к ней заметку',
+      'Разберите Входящие: кнопка справа у записи переносит её',
+      'Создайте свою страницу: «+» у «Мои страницы»',
+      'Подключите модель в Настройках, и записи будут раскладываться сами',
+      'Удалите эту страницу, когда она станет не нужна: «⋯» → «Удалить»'
+    ])
+    expect(steps.every(r => r.seed && !r.done)).toBe(true)
+    expect(data.liveRecords).toHaveLength(6)
     // Сегодня sits at the top with Входящие: Избранное is only the person's own stars
     expect(data.favorites).toEqual([])
-    const shop = data.recentlyMade[0]!
+    const shop = data.recentlyMade[1]!
     expect(shop.props.find(p => p.type === 'select')?.options?.map(o => o.name)).toContain('Молочное')
     expect(shop.views.map(v => v.name)).toEqual(['Купить', 'Куплено'])
+  })
+
+  it('takes a ticked row out of its list after a moment; a second tap before that keeps it (Josh 28 Oct, 12)', async () => {
+    const { data } = await fresh()
+    const [a, b] = data.recordsOf(data.recentlyMade[0]!.id)
+    vi.useFakeTimers()
+    try {
+      data.toggleDone(a!.id)
+      expect(data.records[a!.id]!.done).toBe(true)
+      expect(data.leaving).toEqual({ [a!.id]: false })
+      vi.advanceTimersByTime(1499)
+      expect(data.leaving).toEqual({ [a!.id]: false })
+      vi.advanceTimersByTime(1)
+      expect(data.leaving).toEqual({})
+      data.toggleDone(b!.id)
+      vi.advanceTimersByTime(800)
+      data.toggleDone(b!.id)
+      expect(data.records[b!.id]!.done).toBe(false)
+      expect(data.leaving).toEqual({})
+      vi.advanceTimersByTime(2000)
+      expect(data.leaving).toEqual({})
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('writes reactive objects to IndexedDB (the DataCloneError on main)', async () => {
@@ -245,7 +282,7 @@ describe('day one (main flow)', () => {
     const call = await journal.send('позвонить маме', 'auto')
     expect(data.pages[call.pageId!]!.title).toBe('Задачи')
     await journal.send('прочитать Канемана', 'auto')
-    expect(data.livePages.filter(p => p.kind === 'page').map(p => p.title)).toEqual(['Покупки', 'Задачи', 'Идеи'])
+    expect(data.livePages.filter(p => p.kind === 'page').map(p => p.title)).toEqual(['Быстрый старт', 'Покупки', 'Задачи', 'Идеи'])
     journal.undo(e.id)
     expect(data.recordsOf(data.pages[e.pageId!]!.id)).toEqual([])
   })
@@ -454,7 +491,9 @@ describe('properties (v22 item 30)', () => {
 
   it('deletes a property with its «Норма», values and place in the views; «Отменить» restores them', async () => {
     const { data, id, page, left, norm } = await shop()
-    const before = JSON.parse(JSON.stringify(page()))
+    // An undo is a change of its own to sync: its stamp is new, the rest is as before
+    const content = () => JSON.parse(JSON.stringify(page(), (k, v) => k === 'updatedAt' ? undefined : v))
+    const before = content()
     const n = data.propUsage(id, [left.id, norm.id])
     expect(n).toBeGreaterThan(0)
     const done = data.removeProp(id, left.id)!
@@ -463,7 +502,7 @@ describe('properties (v22 item 30)', () => {
     expect(page().views.some(v => v.shown.includes(left.id) || v.filter.some(f => f.field === left.id))).toBe(false)
     expect(Object.values(data.records).some(r => left.id in r.values || norm.id in r.values)).toBe(false)
     done.undo()
-    expect(JSON.parse(JSON.stringify(page()))).toEqual(before)
+    expect(content()).toEqual(before)
     expect(data.propUsage(id, [left.id, norm.id])).toBe(n)
   })
 })

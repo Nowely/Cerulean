@@ -1,5 +1,5 @@
 // A view is a saved way to look at a page: which records, in what order, grouped how
-import type { Due, DueChip, FilterRule, GroupBy, Page, PropDef, Rec, ViewDef } from './types'
+import type { Due, DueChip, FilterRule, GroupBy, Id, Page, PropDef, Rec, ViewDef } from './types'
 import { addDays, dayKey } from './dates'
 import { fold, ofProp } from './text'
 import { searchText } from './body'
@@ -50,13 +50,22 @@ export function matchesChips(rec: Rec, view: ViewDef, now: number): boolean {
 }
 
 /**
- * `since`: rows ticked or unticked after this moment (the page was opened) stay where they were, struck through,
- * until the page is opened again; a tick never makes a row vanish under the finger (v22, U2). Only the views the row
- * belonged to before the tick keep it: a row ticked on «Купить» never shows up on «Запасы»
+ * Rows a tick is taking out of their list (Josh 28 Oct, 12, as in Apple Reminders): each record's id and the done state
+ * it still shows with. A tick strikes the row at once and it leaves a moment later; until then it is only in the list it
+ * was in, never in both («Купить» and «Куплено»), and a second tap takes the tick back
  */
-export function filterRecords(records: Rec[], view: ViewDef, since = Number.POSITIVE_INFINITY, now = Date.now()): Rec[] {
+export type Leaving = Readonly<Record<Id, boolean>>
+
+/** The record as its lists see it: as it was before the tick while the tick is taking it out */
+export const asListed = (r: Rec, leaving?: Leaving): Rec => leaving && r.id in leaving ? { ...r, done: leaving[r.id]! } : r
+
+/**
+ * `leaving`: rows a tick is taking out stay in the views they belonged to before the tick, struck through, until they
+ * leave: a row ticked on «Купить» never shows up on «Запасы» or, yet, on «Куплено»
+ */
+export function filterRecords(records: Rec[], view: ViewDef, leaving?: Leaving, now = Date.now()): Rec[] {
   const fits = (r: Rec) => view.filter.every(rule => matches(r, rule)) && matchesChips(r, view, now)
-  return records.filter(r => fits(r) || ((r.tickedAt ?? 0) >= since && fits({ ...r, done: !r.done })))
+  return records.filter(r => fits(asListed(r, leaving)))
 }
 
 const byOrder = (a: Rec, b: Rec) => a.order - b.order
@@ -120,8 +129,8 @@ export function groupRecords(records: Rec[], groupBy: GroupBy, page: Page, now: 
 }
 
 /** Records of a view in display order, grouped. Groups have an empty label when the view is not grouped. */
-export function applyView(page: Page, records: Rec[], view: ViewDef, now: number, since?: number): Group[] {
-  return groupRecords(sortRecords(filterRecords(records, view, since, now), view.sort), view.groupBy, page, now)
+export function applyView(page: Page, records: Rec[], view: ViewDef, now: number, leaving?: Leaving): Group[] {
+  return groupRecords(sortRecords(filterRecords(records, view, leaving, now), view.sort), view.groupBy, page, now)
 }
 
 export function viewCount(page: Page, records: Rec[], view: ViewDef | undefined): number {
@@ -129,8 +138,8 @@ export function viewCount(page: Page, records: Rec[], view: ViewDef | undefined)
 }
 
 /** «Очистить купленное»: the ticked records a view shows (v22, N9) */
-export function doneIn(records: Rec[], view: ViewDef, since?: number): Rec[] {
-  return filterRecords(records, view, since).filter(r => r.done)
+export function doneIn(records: Rec[], view: ViewDef): Rec[] {
+  return filterRecords(records, view).filter(r => r.done)
 }
 
 /** A send on a calendar's selected day: a record without its own date lands on that day (v22, G6) */

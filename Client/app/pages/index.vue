@@ -8,7 +8,6 @@ import { useHead } from '#imports'
 import type { Id } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
-import { useFind } from '~/composables/useFind'
 import { useCreatePage } from '~/composables/useCreatePage'
 import AppScreen from '~/components/shell/AppScreen.vue'
 import HomeHeader from '~/components/home/HomeHeader.vue'
@@ -24,7 +23,6 @@ const RECENT_SHOWN = 5
 
 const data = useDataStore()
 const ui = useUiStore()
-const find = useFind()
 const { create } = useCreatePage()
 const screen = useTemplateRef<InstanceType<typeof AppScreen>>('screen')
 const field = useTemplateRef<InstanceType<typeof FlowField>>('field')
@@ -50,16 +48,7 @@ function tapFree(e: MouseEvent) {
   if (field.value?.isOpen) field.value.close()
 }
 
-// ---------- pull down opens Поиск, the title scrolls to the top ----------
-
-let y0: number | null = null
-function touchStart(e: TouchEvent) {
-  y0 = (screen.value?.scroller?.scrollTop ?? 0) <= 0 ? e.touches[0]!.clientY : null
-}
-function touchEnd(e: TouchEvent) {
-  if (y0 !== null && e.changedTouches[0]!.clientY - y0 > 90) find.open()
-  y0 = null
-}
+// A pull down at the top is the browser's own: it reloads the page (Josh 28 Oct, 1). The title scrolls to the top
 function toTop() {
   screen.value?.scroller?.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -81,8 +70,6 @@ function toTop() {
       class="mx-auto min-h-full w-full px-2 pb-4 lg:max-w-196 lg:px-8"
       data-home
       @click="tapFree"
-      @touchstart.passive="touchStart"
-      @touchend.passive="touchEnd"
     >
       <StoreWarning
         v-if="data.storageError"

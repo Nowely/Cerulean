@@ -4,7 +4,7 @@
 import type { DueChip, Id, Page, Rec, ViewDef, ViewSource } from './types'
 import { addDays, dayKey, formatDue, isOverdue, weekday } from './dates'
 import { capitalize, count, plural } from './text'
-import { filterRecords, inWeek, sortRecords } from './views'
+import { filterRecords, inWeek, sortRecords, type Leaving } from './views'
 
 /** «Срок» chips after «Любой», in the order their words go into the «Фильтр» select */
 export const DUE_CHIPS: { key: DueChip, label: string }[] = [
@@ -37,11 +37,11 @@ export function doneChoice(view: ViewDef): 'open' | 'done' | 'all' {
 
 /**
  * What a collecting view shows: live records and subitems of every page or of the chosen ones, through its filter,
- * by date («По сроку», fixed). `all` is every live record; rows ticked since `since` stay in place
+ * by date («По сроку», fixed). `all` is every live record; rows a tick is taking out stay until they leave
  */
-export function collected(view: ViewDef, all: Rec[], now: number, since?: number): Rec[] {
+export function collected(view: ViewDef, all: Rec[], now: number, leaving?: Leaving): Rec[] {
   const from = view.from === 'pick' ? new Set(view.pages ?? []) : null
-  return sortRecords(filterRecords(from ? all.filter(r => from.has(r.pageId)) : all, view, since, now), 'due')
+  return sortRecords(filterRecords(from ? all.filter(r => from.has(r.pageId)) : all, view, leaving, now), 'due')
 }
 
 /** The day a record written here gets when it names none (v24): «завтра» under «На неделе», today under «Сегодня» */

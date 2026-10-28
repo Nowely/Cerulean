@@ -3,7 +3,7 @@
 import type { Due, Page, Rec } from './types'
 import { addDays, dayKey, daysBetween, formatDueBrief, keyToDate } from './dates'
 import { count, lowerFirst, plural } from './text'
-import { filterRecords, sortRecords } from './views'
+import { asListed, filterRecords, sortRecords, type Leaving } from './views'
 import { collectLead, collected, firstCollects } from './collect'
 import { bodyOf, docText } from './body'
 
@@ -49,18 +49,18 @@ export function overdue(records: Rec[], now: number): Rec[] {
 
 /**
  * «На неделе» on Сегодня (v23, B4): open records due in the six days after today, by date, so each weekday names
- * one date (and rows ticked there since `since`)
+ * one date (and rows a tick is taking out, until they leave)
  */
-export function dueThisWeek(records: Rec[], now: number, since = Number.POSITIVE_INFINITY): Rec[] {
+export function dueThisWeek(records: Rec[], now: number, leaving?: Leaving): Rec[] {
   const today = dayKey(now)
   const last = addDays(today, 6)
-  return sortRecords(records.filter(r => (!r.done || (r.tickedAt ?? 0) >= since) && r.due && r.due.date > today && r.due.date <= last), 'due')
+  return sortRecords(records.filter(r => !asListed(r, leaving).done && r.due && r.due.date > today && r.due.date <= last), 'due')
 }
 
-/** Open records due today or earlier, from every page: what «Сегодня» shows (and rows ticked there since `since`) */
-export function dueToday(records: Rec[], now: number, since = Number.POSITIVE_INFINITY): Rec[] {
+/** Open records due today or earlier, from every page: what «Сегодня» shows (and rows a tick is taking out) */
+export function dueToday(records: Rec[], now: number, leaving?: Leaving): Rec[] {
   const today = dayKey(now)
-  return sortRecords(records.filter(r => (!r.done || (r.tickedAt ?? 0) >= since) && r.due && r.due.date <= today), 'due')
+  return sortRecords(records.filter(r => !asListed(r, leaving).done && r.due && r.due.date <= today), 'due')
 }
 
 /** Records the first view shows, in its order: the counter and the names come from here */

@@ -9,7 +9,7 @@ Read this first. The product is the client in `Client/`, a Notion-like browser a
 - **Handoff:** each mockup iteration sends the client a brief (`handoff/client-brief-*.md`) and a delta (`handoff/v21-delta.md`, …). Every item in them ends with a **Check:** line saying what to tap and what must happen.
 - **Decisions journal:** [`docs/decisions.md`](docs/decisions.md). Read the entries for an area before changing how it behaves. Add or edit entries in the same PR.
 - **State report:** `docs/ui-current-state.html` shows the app next to the mockup for every state, in light and dark, with the check table.
-- **Flow rounds:** since 22 Oct a round can polish one user flow instead of the whole app (the main flow: first open → first record → its note, `handoff/main-flow-delta.md`). It changes only the screens on that flow; other screens keep their behaviour even where the old rule now differs (Журнал keeps `AppComposer` and its receipt).
+- **Flow rounds:** since 22 Oct a round can polish one user flow instead of the whole app (the main flow: first open → first record → its note, `handoff/main-flow-delta.md`). It changes only the screens on that flow; other screens keep their behaviour even where the old rule now differs (Журнал keeps `AppComposer` and its receipt). Since 28 Oct every iteration touches a minimum: build only what its delta lists (`handoff/main-flow-2-delta.md` is the second round), and anything next to it waits for Josh's separate command.
 
 ## The loop
 
@@ -28,10 +28,13 @@ Each mockup iteration goes through the same steps:
 - Less noise: colour only for meaning, fill rather than borders, one prominent thing per screen.
 - Colours only in `Client/app/assets/css/tokens.css`. Components use no colours, `:deep` or `!important`.
 - Auto-imports are off: import from `vue` and `#imports`.
-- Keep it simple: no IndexedDB migrations or data protection, no sync, and CI runs lint, types and tests only (no screenshot checks).
+- Keep it simple: no IndexedDB migrations or data protection, and CI runs lint, types and tests only (no screenshot checks). Sync is the person's own S3 bucket only (`stores/cloud.ts`, `domain/bucket.ts`, `domain/s3.ts`): one file, last write wins per object.
+- Every write of a synced object goes through the data store's `save`, `saveMany` or `drop`, which stamp `updatedAt` and tell sync; a field that is not the person's change (a visit) is saved quiet. Keys never go into the bucket, a copy, a log or a screenshot; tests and shots use made-up keys and the fake bucket of `scripts/checks/sync.mjs`.
 - Before a push, run `pnpm lint`, `pnpm typecheck` and `pnpm test` in `Client/`.
 - Code, commits and PRs are in English. UI copy is Russian. Talk to Josh in Russian.
 - The live site (cerulean-nine.vercel.app) is not reachable from cloud containers, so test a local build.
 - One add row (`AddRow.vue`) serves every «+ …» row that turns into a line, and one field (`FlowField.vue`) serves Главная and pages; reuse them rather than adding another.
+- One places list (`PlacesPopover.vue`, its pages from `usePlaces`) serves the field's chip and Входящие's move button, and ends with «Новая страница» (`useCreatePage().list`).
+- Without a model nothing is sorted or split: `readLine` sorts only with `LineContext.sort`, which the field and «+ Новая запись» set from `journal.hasModel()`.
 - Every phone header is `box-content` with `pt-[env(safe-area-inset-top)]`, so the inset adds to its height. `mf-26-safe-areas` checks it with Chromium's safe-area override.
 - Do not build from a guess. What a delta lists under «Not built» stays unbuilt until Josh says otherwise.

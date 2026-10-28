@@ -8,10 +8,11 @@ import { bodyOf, isEmptyDoc, mentionIds, mentionReason, unmention, type BodyOwne
 import { KINDS, plain, Storage, type Kind, type Touched } from '~/db/idb'
 import { TabSync, type Change } from '~/db/sync'
 import { mergeSnapshot, type Snapshot } from '~/domain/export'
+import { noneGone, stampOf, SYNC_KINDS, type CloudMeta, type First, type Gone, type Merged, type Side, type SyncedSettings } from '~/domain/bucket'
 import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/factory'
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
 import { learn, learnWord } from '~/domain/rules'
-import { doneIn, dropPlace, topOrder, type Group } from '~/domain/views'
+import { doneIn, dropPlace, topOrder, type Group, type Leaving } from '~/domain/views'
 import { applyTemplate, readPage, TEMPLATES } from '~/domain/templates'
 import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
 import { uid } from '~/domain/ids'
@@ -48,8 +49,8 @@ export interface Related {
   quote?: string
 }
 
-/** Fields that can change in another tab without anything to show on the record's page */
-const QUIET_FIELDS = new Set(['openedAt', 'order'])
+/** Fields that can change in another tab without anything to show on the record's page (the sync stamp among them) */
+const QUIET_FIELDS = new Set(['openedAt', 'order', 'updatedAt'])
 
 /** Same plain data, whatever the key order (a stored copy and Object.assign order keys differently) */
 function same(a: unknown, b: unknown, top = false): boolean {
@@ -74,6 +75,18 @@ function into<T extends { id: Id }>(map: Record<Id, T>, id: Id, value: T | undef
   else if (here) refill(here, value)
   else map[id] = value
 }
+
+/** Settings that follow the person to other devices (sync): every one but the connection and the keeping fields */
+const LOCAL_SETTINGS = new Set<string>(['provider', 'apiKey', 'baseUrl', 'modelId', 'keyState', 'copiedAt', 'copyHiddenAt', 'startedAt', 'persistAsked'])
+
+/** When settings and learned words last changed here (sync compares them as one thing each) */
+interface Stamps {
+  settings: number
+  learned: number
+}
+
+/** How long a ticked row stays in its list before it leaves (Josh 28 Oct, 12) */
+export const LEAVE_MS = 1500
 
 export const useDataStore = defineStore('data', () => {
   const pages = ref<Record<Id, Page>>({})
@@ -101,6 +114,11 @@ export const useDataStore = defineStore('data', () => {
   /** Another tab's version of the held record, until «Обновить» or until this tab writes the record itself */
   const waiting = ref<Record<Id, Rec>>({})
   const storage = shallowRef<Storage | null>(null)
+  /** Sync through a bucket: its key and its state, this browser only (`stores/cloud.ts`); null while it is off */
+  const cloud = ref<CloudMeta | null>(null)
+  /** Things deleted for good, so that a purge reaches the bucket and never comes back from it */
+  const gone = ref<Gone>(noneGone())
+  const stamps = ref<Stamps>({ settings: 0, learned: 0 })
 
   // ---------- reading ----------
 
@@ -241,21 +259,48 @@ export const useDataStore = defineStore('data', () => {
 
   // ---------- writing ----------
 
-  function save(kind: Kind, value: Page | Rec | Section | Entry) {
+  // ---------- the clock sync compares ----------
+  // Every change is stamped with the wall clock, never below a stamp seen before (here or in the bucket): a change
+  // made here after a round trip is always later than what that round trip brought, whatever the other device's clock
+
+  let clock = 0
+
+  function stamp(): number {
+    clock = Math.max(Date.now(), clock + 1)
+    return clock
+  }
+
+  /** A stamp seen elsewhere (another tab, the bucket) */
+  function see(at: number | undefined) {
+    if (at && at > clock) clock = at
+  }
+
+  /** `quiet`: not a change of the person's (a page opened): stored, never stamped, so it waits for the next change */
+  function save(kind: Kind, value: Page | Rec | Section | Entry, quiet = false) {
     if (kind === 'records') delete waiting.value[value.id] // this tab's write is the last one now
+    if (!quiet) value.updatedAt = stamp()
     void storage.value?.put(kind, value)
     tell(kind, [value.id])
+    if (!quiet) changed()
   }
 
   function saveMany(kind: Kind, values: (Page | Rec | Section | Entry)[]) {
     if (!values.length) return
+    for (const v of values) v.updatedAt = stamp()
     void storage.value?.putMany(kind, values)
     tell(kind, values.map(v => v.id))
+    changed()
   }
 
+  /** Gone for good: a tombstone remembers when, for the bucket */
   function drop(kind: Kind, ids: Id[]) {
+    if (!ids.length) return
+    const at = stamp()
+    for (const id of ids) gone.value[kind][id] = at
     void storage.value?.delete(kind, ids)
     tell(kind, ids)
+    saveMeta('gone', gone.value)
+    changed()
   }
 
   function saveMeta(key: string, value: unknown) {
@@ -288,6 +333,14 @@ export const useDataStore = defineStore('data', () => {
   /** Counts this tab's writes; a read for another tab that started before a write here yields to it */
   let seq = 0
   const touched = new Map<string, number>()
+
+  /** Who wants to know of the person's changes in this tab (sync runs 2 s after one) */
+  const listeners = new Set<() => void>()
+  function onChange(fn: () => void) {
+    listeners.add(fn)
+    return () => listeners.delete(fn)
+  }
+  const changed = () => listeners.forEach(fn => fn())
 
   function tell(kind: Kind | 'meta', ids: Id[]) {
     seq++
@@ -332,6 +385,7 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function take(kind: Kind, id: Id, value: Page | Rec | Section | Entry | undefined) {
+    see(value?.updatedAt)
     if (kind === 'pages') into(pages.value, id, value && readPage(value as Page))
     else if (kind === 'sections') into(sections.value, id, value as Section | undefined)
     else if (kind === 'records') {
@@ -356,6 +410,10 @@ export const useDataStore = defineStore('data', () => {
   function readMeta(meta: Map<string, unknown>) {
     if (meta.has('settings')) settings.value = { ...DEFAULT_SETTINGS, ...(meta.get('settings') as Partial<Settings> | undefined) }
     if (meta.has('learned')) learned.value = (meta.get('learned') as Learned | undefined) ?? {}
+    if (meta.has('cloud')) cloud.value = (meta.get('cloud') as CloudMeta | undefined) ?? null
+    if (meta.has('gone')) gone.value = { ...noneGone(), ...(meta.get('gone') as Gone | undefined) }
+    if (meta.has('stamps')) stamps.value = { settings: 0, learned: 0, ...(meta.get('stamps') as Stamps | undefined) }
+    see(Math.max(stamps.value.settings, stamps.value.learned))
   }
 
   /** The record page holds its record while it is open; letting go takes in what waited */
@@ -393,6 +451,11 @@ export const useDataStore = defineStore('data', () => {
       const loaded = await storage.value.load()
       settings.value = { ...DEFAULT_SETTINGS, ...(loaded.meta.get('settings') as Partial<Settings> | undefined) }
       learned.value = (loaded.meta.get('learned') as Learned | undefined) ?? {}
+      readMeta(new Map([...loaded.meta].filter(([k]) => k === 'cloud' || k === 'gone' || k === 'stamps')))
+      for (const kind of SYNC_KINDS) {
+        for (const x of loaded[kind]) see(x.updatedAt)
+        for (const at of Object.values(gone.value[kind])) see(at)
+      }
       if (loaded.pages.length) {
         apply(loaded)
         purgeOld()
@@ -440,6 +503,21 @@ export const useDataStore = defineStore('data', () => {
   function setSettings(patch: Partial<Settings>) {
     settings.value = { ...settings.value, ...patch }
     saveMeta('settings', settings.value)
+    if (Object.keys(patch).some(k => !LOCAL_SETTINGS.has(k))) touchSettings()
+  }
+
+  /** A setting that follows the person changed (the theme lives outside the store: `stores/cloud.ts` calls this) */
+  function touchSettings() {
+    stamps.value = { ...stamps.value, settings: stamp() }
+    saveMeta('stamps', stamps.value)
+    changed()
+  }
+
+  function saveLearned() {
+    saveMeta('learned', learned.value)
+    stamps.value = { ...stamps.value, learned: stamp() }
+    saveMeta('stamps', stamps.value)
+    changed()
   }
 
   // pages
@@ -467,12 +545,15 @@ export const useDataStore = defineStore('data', () => {
     return createPage({ title })
   }
 
+  /** Opening a page is not a change to sync: it rides along with the page's next change */
+  const QUIET_PAGE = new Set(['seenAt', 'openedAt'])
+
   function updatePage(id: Id, patch: Partial<Page>) {
     const page = pages.value[id]
     if (!page) return
     const was = page.title
     Object.assign(page, patch)
-    save('pages', page)
+    save('pages', page, Object.keys(patch).every(k => QUIET_PAGE.has(k)))
     if (page.title !== was) follow(id, was, page.title)
   }
 
@@ -723,10 +804,29 @@ export const useDataStore = defineStore('data', () => {
     else updateRecord(recId, { links: [...(rec.links ?? []), targetId] })
   }
 
+  /**
+   * Rows a tick is taking out of their list (Josh 28 Oct, 12): struck at once, they leave after LEAVE_MS (the last 0.2 s
+   * a fade); a second tap before that takes the tick back and the row stays. Kept for this tab only, never saved
+   */
+  const leaving = ref<Leaving>({})
+  const leaveTimers = new Map<Id, ReturnType<typeof setTimeout>>()
   function toggleDone(id: Id) {
     const rec = records.value[id]
     if (!rec) return
     const now = Date.now()
+    clearTimeout(leaveTimers.get(id))
+    leaveTimers.delete(id)
+    if (id in leaving.value) {
+      const { [id]: _, ...rest } = leaving.value
+      leaving.value = rest
+    } else {
+      leaving.value = { ...leaving.value, [id]: rec.done }
+      leaveTimers.set(id, setTimeout(() => {
+        leaveTimers.delete(id)
+        const { [id]: _, ...rest } = leaving.value
+        leaving.value = rest
+      }, LEAVE_MS))
+    }
     updateRecord(id, rec.done ? { done: false, doneAt: undefined, tickedAt: now } : { done: true, doneAt: now, tickedAt: now })
   }
 
@@ -758,14 +858,14 @@ export const useDataStore = defineStore('data', () => {
         learned.value = learn(learned.value, rec.text, pageId)
       }
     })
-    saveMeta('learned', learned.value)
+    saveLearned()
   }
 
   /** A place picked by hand on send: Авто learns the title's first word for it, silently (main flow, item 5) */
   function teach(title: string, pageId: Id) {
     if (pages.value[pageId]?.kind !== 'page') return
     learned.value = learnWord(learned.value, title, pageId)
-    saveMeta('learned', learned.value)
+    saveLearned()
   }
 
   function removeRecords(ids: Id[]) {
@@ -1017,19 +1117,44 @@ export const useDataStore = defineStore('data', () => {
     return { copiedAt, copyHiddenAt, startedAt, persistAsked }
   }
 
-  async function replaceAll(data: Dataset, keep: Partial<Settings> = {}, words: Learned = {}) {
+  /** Everything is replaced; sync's own meta (its key, tombstones, stamps) only when `sync` hands it on */
+  async function replaceAll(data: Dataset, keep: Partial<Settings> = {}, words: Learned = {}, kept: { cloud: CloudMeta, gone: Gone, stamps: Stamps } | null = null) {
     apply(data)
     learned.value = words
     settings.value = { ...DEFAULT_SETTINGS, ...keep }
     waiting.value = {}
-    await storage.value?.replaceAll(data, new Map<string, unknown>([['settings', settings.value], ['learned', words]]))
+    cloud.value = kept?.cloud ?? null
+    gone.value = kept?.gone ?? noneGone()
+    stamps.value = kept?.stamps ?? { settings: 0, learned: 0 }
+    const meta = new Map<string, unknown>([['settings', settings.value], ['learned', words]])
+    if (kept) for (const [k, v] of Object.entries(kept)) meta.set(k, v)
+    await storage.value?.replaceAll(data, meta)
     sync?.post({ all: true })
   }
 
-  /** «Заменить всё»: the file replaces everything; the connection to the model stays, it is never in a file */
+  /**
+   * «Заменить всё»: the file replaces everything; the connection to the model stays, it is never in a file. While sync
+   * is on the bucket's copy is replaced as well: what the file lacks gets a tombstone and what it has a new stamp, so
+   * the next round trip writes the file's state over the bucket's (a thing another device added since this one's last
+   * round trip stays)
+   */
   async function importSnapshot(s: Snapshot) {
     const { provider, apiKey, baseUrl, modelId, keyState } = settings.value
-    await replaceAll(s, { ...s.settings, provider, apiKey, baseUrl, modelId, keyState, ...keeping() }, s.learned)
+    let kept: { cloud: CloudMeta, gone: Gone, stamps: Stamps } | null = null
+    if (cloud.value) {
+      const g: Gone = plain(gone.value)
+      for (const kind of SYNC_KINDS) {
+        const ids = new Set<Id>(s[kind].map(x => x.id))
+        const at = stamp()
+        for (const x of kind === 'entries' ? entries.value : Object.values(kind === 'pages' ? pages.value : kind === 'records' ? records.value : sections.value)) {
+          if (!ids.has(x.id)) g[kind][x.id] = at
+        }
+        for (const x of s[kind]) x.updatedAt = stamp()
+      }
+      kept = { cloud: plain(cloud.value), gone: g, stamps: { settings: stamp(), learned: stamp() } }
+    }
+    await replaceAll(s, { ...s.settings, provider, apiKey, baseUrl, modelId, keyState, ...keeping() }, s.learned, kept)
+    if (kept) changed()
   }
 
   /** «Добавить к текущим»: see `mergeSnapshot`; returns what «Отменить» needs */
@@ -1051,7 +1176,7 @@ export const useDataStore = defineStore('data', () => {
     const words = learned.value
     if (Object.keys(m.learned).length) {
       learned.value = { ...m.learned, ...words }
-      saveMeta('learned', learned.value)
+      saveLearned()
     }
     return { pages: m.pages.map(p => p.id), records: m.records.map(r => r.id), sections: m.sections.map(x => x.id), before, learned: words }
   }
@@ -1066,13 +1191,136 @@ export const useDataStore = defineStore('data', () => {
     saveMany('pages', a.before.map(p => pages.value[p.id]!))
     if (learned.value !== a.learned) {
       learned.value = a.learned
-      saveMeta('learned', learned.value)
+      saveLearned()
     }
   }
 
-  /** «Удалить всё»: back to the first run, the key goes too */
+  /** «Удалить всё»: back to the first run, the key goes too, and sync's key with it; the bucket is left as it is */
   async function wipe() {
     await replaceAll(firstRun(), { ...keeping(), startedAt: Date.now() })
+  }
+
+  // ---------- sync through a bucket (stores/cloud.ts runs it) ----------
+
+  function setCloud(meta: CloudMeta | null) {
+    cloud.value = meta
+    saveMeta('cloud', meta)
+  }
+
+  /** Settings that follow the person, as this browser has them (the theme is the cloud store's to add) */
+  function syncedSettings(): SyncedSettings {
+    return Object.fromEntries(Object.entries(settings.value).filter(([k]) => !LOCAL_SETTINGS.has(k))) as SyncedSettings
+  }
+
+  /** Everything that syncs, as this browser holds it */
+  function side(): Side {
+    return {
+      pages: Object.values(pages.value),
+      records: Object.values(records.value),
+      sections: Object.values(sections.value),
+      entries: entries.value,
+      gone: gone.value,
+      settings: { at: stamps.value.settings, value: syncedSettings() },
+      learned: { at: stamps.value.learned, value: learned.value }
+    }
+  }
+
+  /**
+   * Changes stamped after `since` (not in the bucket yet) and when the first of them was made. Журнал's lines ride
+   * along with the records they made, so they are counted only with `journal` (whether anything at all is to send)
+   */
+  function pendingAfter(since: number, journal = false): { count: number, first: number | null } {
+    let count = 0
+    let first: number | null = null
+    const add = (at: number) => {
+      if (at <= since) return
+      count++
+      first = first === null ? at : Math.min(first, at)
+    }
+    for (const x of Object.values(pages.value)) add(stampOf(x))
+    for (const x of Object.values(records.value)) add(stampOf(x))
+    for (const x of Object.values(sections.value)) add(stampOf(x))
+    if (journal) for (const x of entries.value) add(stampOf(x))
+    for (const kind of SYNC_KINDS) for (const at of Object.values(gone.value[kind])) add(at)
+    add(stamps.value.settings)
+    add(stamps.value.learned)
+    return { count, first }
+  }
+
+  /** The latest stamp given here: a round trip marks what it sends with it */
+  const clockNow = () => clock
+
+  /**
+   * A round trip's result goes in: the bucket's later versions, its tombstones, its settings and words. Stored and
+   * told to other tabs, never stamped again. A record open on its page waits for «Обновить», as for another tab.
+   * Returns the bucket's settings when they won (the theme is the caller's to apply)
+   */
+  function takeRemote(m: Merged): SyncedSettings | null {
+    see(m.top)
+    for (const kind of SYNC_KINDS) {
+      const values = m.take[kind]
+      if (values.length) {
+        void storage.value?.putMany(kind, values)
+        for (const v of values) take(kind, v.id, plain(v))
+        tell(kind, values.map(v => v.id))
+      }
+      const ids = m.drop[kind]
+      if (ids.length) {
+        void storage.value?.delete(kind, ids)
+        for (const id of ids) take(kind, id, undefined)
+        tell(kind, ids)
+      }
+    }
+    if (!same(gone.value, m.gone)) {
+      gone.value = m.gone
+      saveMeta('gone', gone.value)
+    }
+    if (m.settings) {
+      const value = Object.fromEntries(Object.entries(m.settings.value).filter(([k]) => !LOCAL_SETTINGS.has(k) && k !== 'theme'))
+      settings.value = { ...settings.value, ...value }
+      saveMeta('settings', settings.value)
+      stamps.value = { ...stamps.value, settings: m.settings.at }
+    }
+    if (m.learned) {
+      learned.value = m.learned.value
+      saveMeta('learned', learned.value)
+      stamps.value = { ...stamps.value, learned: m.learned.at }
+    }
+    if (m.settings || m.learned) saveMeta('stamps', stamps.value)
+    return m.settings?.value ?? null
+  }
+
+  /** The first connect, this side's part (see `firstMerge`): what it drops goes without a tombstone, the rest is renamed */
+  function adopt(f: First) {
+    const here = (kind: (typeof SYNC_KINDS)[number], id: Id) => kind === 'entries' ? entries.value.find(e => e.id === id) : (kind === 'pages' ? pages.value : kind === 'records' ? records.value : sections.value)[id]
+    for (const kind of SYNC_KINDS) {
+      const ids = f.dropped[kind]
+      if (ids.length) {
+        void storage.value?.delete(kind, ids)
+        for (const id of ids) take(kind, id, undefined)
+        tell(kind, ids)
+      }
+      const renamed = (f.here[kind] as (Page | Rec | Section | Entry)[]).filter(x => here(kind, x.id) !== x)
+      if (renamed.length) {
+        void storage.value?.putMany(kind, renamed)
+        for (const x of renamed) take(kind, x.id, plain(x))
+        tell(kind, renamed.map(x => x.id))
+      }
+    }
+    if (f.here.learned && f.here.learned.value !== learned.value) {
+      learned.value = f.here.learned.value
+      saveMeta('learned', learned.value)
+    }
+    // The bucket's own starter pages this device stands for: a tombstone at least as late as their version there
+    let retiring = false
+    for (const kind of SYNC_KINDS) {
+      for (const [id, at] of Object.entries(f.retired[kind])) {
+        see(at)
+        gone.value[kind][id] = stamp()
+        retiring = true
+      }
+    }
+    if (retiring) saveMeta('gone', gone.value)
   }
 
   return {
@@ -1082,11 +1330,12 @@ export const useDataStore = defineStore('data', () => {
     init, setSettings, toggleFolded, clearWriteFailed, persist, hold, release, takeWaiting,
     createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
     propUsage, addProp, updateProp, moveProp, removeOption, retypeProp, removeProp,
-    addRecord, updateRecord, toggleLink, toggleDone, moveRecords, teach, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
+    addRecord, updateRecord, toggleLink, toggleDone, leaving, moveRecords, teach, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
     appendParagraph, templateOf, makeTemplate, updateTemplate, removeTemplate, fillFromTemplate,
     createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,
     snapshot, importSnapshot, addSnapshot, takeBack, wipe,
+    cloud, setCloud, side, pendingAfter, clockNow, takeRemote, adopt, onChange, touchSettings,
     flush: () => storage.value?.flush() ?? Promise.resolve()
   }
 })

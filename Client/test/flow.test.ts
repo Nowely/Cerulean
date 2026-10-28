@@ -32,11 +32,33 @@ function day() {
 /** [title, page, by, due] of each record the field would add */
 const read = (title: string, ctx: LineContext, note = '') => readLine(title, note, ctx).drafts.map(d => [d.text, ctx.pages.find(p => p.id === d.pageId)!.title, d.by, d.due])
 
-describe('the field without a model (main flow, items 4–8)', () => {
+describe('the field without a model (Josh 28 Oct, 4 and 9)', () => {
+  it('sorts nothing: a line goes where the chip says, Входящие unless a place was picked, and the date is read', () => {
+    const { by, ctx } = day()
+    expect(read('Купить молоко', ctx())).toEqual([['Купить молоко', 'Входящие', 'auto', null]])
+    expect(read('Позвонить маме завтра в 10', ctx())).toEqual([['Позвонить маме', 'Входящие', 'auto', { date: TOMORROW, time: '10:00' }]])
+    // Learned words are not used
+    const learned = learnWord({}, 'Подарок Оле', by('Идеи').id)
+    expect(read('Подарок Пете', ctx({ learned }))).toEqual([['Подарок Пете', 'Входящие', 'auto', null]])
+  })
+
+  it('never splits a line: one line is one record, and Покупки still drops «купить» and reads the department', () => {
+    const { by, ctx } = day()
+    const shop = by('Покупки')
+    expect(read('Купить сыр, кофе, чай', ctx({ place: { pageId: shop.id, by: 'user' } }))).toEqual([['Сыр, кофе, чай', 'Покупки', 'user', null]])
+    expect(read('Хлеб, батон', ctx({ place: { pageId: shop.id, by: 'page' } })).map(d => d[0])).toEqual(['Хлеб, батон'])
+    expect(read('Купить молоко и позвонить маме', ctx({ live: true }))).toHaveLength(1)
+    const dept = shop.props.find(p => p.type === 'select')!
+    const [milk] = readLine('Купить молоко', '', ctx({ place: { pageId: shop.id, by: 'user' } })).drafts
+    expect(dept.options!.find(o => o.id === milk!.values[dept.id])?.name).toBe('Молочное')
+  })
+})
+
+describe('the field\'s rules with a model, before it answers (main flow, items 4–8)', () => {
   it('shows the place Авто chose, and Входящие when it is unsure (item 5)', () => {
     const { ctx } = day()
-    expect(read('Купить молоко', ctx())).toEqual([['Молоко', 'Покупки', 'auto', null]])
-    expect(read('Подарок Оле', ctx())).toEqual([['Подарок Оле', 'Входящие', 'auto', null]])
+    expect(read('Купить молоко', ctx({ sort: true }))).toEqual([['Молоко', 'Покупки', 'auto', null]])
+    expect(read('Подарок Оле', ctx({ sort: true }))).toEqual([['Подарок Оле', 'Входящие', 'auto', null]])
   })
 
   it('learns a place picked by hand from the first word longer than two letters, «купить» skipped (item 5)', () => {
@@ -44,7 +66,7 @@ describe('the field without a model (main flow, items 4–8)', () => {
     const ideas = by('Идеи')
     const learned = learnWord({}, 'Подарок Оле', ideas.id)
     expect(Object.values(learned)).toEqual([ideas.id])
-    expect(read('Подарок Пете', ctx({ learned }))).toEqual([['Подарок Пете', 'Идеи', 'auto', null]])
+    expect(read('Подарок Пете', ctx({ learned, sort: true }))).toEqual([['Подарок Пете', 'Идеи', 'auto', null]])
     expect(Object.keys(learnWord({}, 'Купить сыр', ideas.id))).toHaveLength(1)
     expect(learnWord({}, 'Купить', ideas.id)).toEqual({})
   })
@@ -65,9 +87,9 @@ describe('the field without a model (main flow, items 4–8)', () => {
     expect(date.words).toBe('завтра в 10')
     expect(date.spans.map(([a, b]) => title.slice(a, b + 1))).toEqual(['завтра в 10'])
     expect(date.due).toEqual({ date: TOMORROW, time: '10:00' })
-    expect(read(title, ctx())).toEqual([['Позвонить маме', 'Задачи', 'auto', { date: TOMORROW, time: '10:00' }]])
+    expect(read(title, ctx({ sort: true }))).toEqual([['Позвонить маме', 'Задачи', 'auto', { date: TOMORROW, time: '10:00' }]])
     expect(fieldDate(title, NOW, 'завтра в 10')).toBeNull()
-    expect(read(title, ctx({ noDate: 'завтра в 10' }))).toEqual([['Позвонить маме завтра в 10', 'Задачи', 'auto', null]])
+    expect(read(title, ctx({ noDate: 'завтра в 10', sort: true }))).toEqual([['Позвонить маме завтра в 10', 'Задачи', 'auto', null]])
   })
 
   it('reads «сегодня в 19» and «сегодня» as dates (item 17)', () => {
@@ -77,25 +99,25 @@ describe('the field without a model (main flow, items 4–8)', () => {
 
   it('splits a line into records, keeping a detail with its thing (item 8)', () => {
     const { ctx } = day()
-    expect(read('Купить молоко, хлеб, яйца', ctx()).map(d => [d[0], d[1]])).toEqual([['Молоко', 'Покупки'], ['Хлеб', 'Покупки'], ['Яйца', 'Покупки']])
-    expect(read('Купить молоко 2,5%, большую пачку', ctx())).toHaveLength(1)
+    expect(read('Купить молоко, хлеб, яйца', ctx({ sort: true })).map(d => [d[0], d[1]])).toEqual([['Молоко', 'Покупки'], ['Хлеб', 'Покупки'], ['Яйца', 'Покупки']])
+    expect(read('Купить молоко 2,5%, большую пачку', ctx({ sort: true }))).toHaveLength(1)
     expect(splitParts('Купить молоко 2,5%, большую пачку')).toHaveLength(1)
-    expect(read('Сыр, позвонить бабушке', ctx()).map(d => [d[0], d[1]])).toEqual([['Сыр', 'Покупки'], ['Позвонить бабушке', 'Задачи']])
+    expect(read('Сыр, позвонить бабушке', ctx({ sort: true })).map(d => [d[0], d[1]])).toEqual([['Сыр', 'Покупки'], ['Позвонить бабушке', 'Задачи']])
   })
 
   it('does not read the word being typed as a detail word, and reads every word on send (acceptance 1)', () => {
     const { ctx } = day()
-    const rows = (t: string) => read(t, ctx({ live: true })).map(d => d[0])
+    const rows = (t: string) => read(t, ctx({ live: true, sort: true })).map(d => d[0])
     expect(['Купить молоко и п', 'Купить молоко и по', 'Купить молоко и поз'].map(rows)).toEqual([['Молоко', 'П'], ['Молоко', 'По'], ['Молоко', 'Поз']])
     // A space finishes the word; the send counts every word
     expect(rows('Купить молоко и по ')).toHaveLength(1)
-    expect(read('Купить молоко и по', ctx())).toHaveLength(1)
+    expect(read('Купить молоко и по', ctx({ sort: true }))).toHaveLength(1)
   })
 
   it('moves only the row whose chip was tapped, and keeps that pick for the same title (item 8)', () => {
     const { by, ctx } = day()
     const ideas = by('Идеи')
-    expect(read('Сыр, позвонить бабушке', ctx({ rows: { 'Позвонить бабушке': ideas.id } })).map(d => [d[0], d[1], d[2]]))
+    expect(read('Сыр, позвонить бабушке', ctx({ rows: { 'Позвонить бабушке': ideas.id }, sort: true })).map(d => [d[0], d[1], d[2]]))
       .toEqual([['Сыр', 'Покупки', 'auto'], ['Позвонить бабушке', 'Идеи', 'user']])
   })
 

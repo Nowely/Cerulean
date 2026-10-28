@@ -2,7 +2,7 @@
 import type { Due, Id, Page, Rec } from './types'
 import type { ModelItem, ModelResult } from './model'
 import { classify, guessOption, pageTopic, textTopics, type Learned, type RuleResult } from './rules'
-import { cleanRecordText, dropPrefix, dueWords, isSearch, parseDue, parseQty, readDue, splitItems, splitParts, type Span } from './parse'
+import { cleanRecordText, dropListVerb, dropPrefix, dueWords, isSearch, parseDue, parseQty, readDue, splitItems, splitParts, type Span } from './parse'
 import { dayKey } from './dates'
 import { capitalize, fold } from './text'
 
@@ -154,6 +154,11 @@ export interface LineContext {
   day?: string | null
   /** The preview while typing: the word being typed is not read as a detail word yet (acceptance 1). Off on send */
   live?: boolean
+  /**
+   * The rules may choose the place and split the line: only with a model (Josh 28 Oct, 4 and 9). Without one a line is
+   * one record and goes where the chip says
+   */
+  sort?: boolean
 }
 
 /** A date read in the field: where its words were typed (to tint them), the words, and the date */
@@ -206,7 +211,11 @@ export function readLine(title: string, note: string, ctx: LineContext): LineRea
   }
 
   const chosen = page(ctx.place?.pageId)
-  if (chosen) {
+  if (!ctx.sort) {
+    // One line, one record, as typed: a list of things still drops «купить», the page says it (and the department is read)
+    const to = chosen ?? inbox
+    put(isListPage(to) ? dropListVerb(dropPrefix(text)) : text, to, chosen ? ctx.place!.by : 'auto')
+  } else if (chosen) {
     for (const line of linesFor(text, chosen, live)) put(line, chosen, ctx.place!.by)
   } else {
     const parts = splitRoute(text, ctx.pages, ctx.learned, ctx.recent, live) ?? [{ text, ...classify(text, ctx.pages, ctx.learned, ctx.recent) }]

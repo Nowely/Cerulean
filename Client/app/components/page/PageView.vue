@@ -7,7 +7,6 @@ import { useRouter } from '#imports'
 import type { Id, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
-import { useRecordActions } from '~/composables/useRecordActions'
 import { useUiStore } from '~/stores/ui'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
@@ -48,7 +47,6 @@ const emit = defineEmits<{ editing: [boolean] }>()
 
 const data = useDataStore()
 const journal = useJournalStore()
-const actions = useRecordActions()
 const notify = useNotify()
 const ui = useUiStore()
 const now = useNow()
@@ -100,8 +98,7 @@ async function openTaken() {
 }
 
 // Opening a page clears its dot on Главная: what was written from elsewhere since the last visit takes the fresh tint
-// here instead (main flow, item 10). A row ticked after this moment stays in place, struck through, until the page is
-// opened again
+// here instead (main flow, item 10). A row written after this moment always shows
 const openedAt = ref(Date.now())
 const seen = ref(props.page.seenAt)
 onMounted(() => {
@@ -130,7 +127,7 @@ watch(() => props.page.id, () => {
  * «Фильтр»; the rows open as a preview over this page. The page's composer follows it (useCollecting)
  */
 const collecting = computed(() => !today.value && collects(view.value))
-const collectedAll = computed(() => collecting.value ? collected(view.value, data.liveRecords, now.value, openedAt.value) : [])
+const collectedAll = computed(() => collecting.value ? collected(view.value, data.liveRecords, now.value, data.leaving) : [])
 const collectedRows = computed(() => query.value.trim() ? collectedAll.value.filter(r => matchesQuery(r, query.value)) : collectedAll.value)
 const collectingNow = useCollecting()
 watch([() => props.page.id, () => view.value.id, collecting, full], ([pageId, id, on, isFull]) => {
@@ -279,12 +276,12 @@ async function toggleSearch() {
   }
 }
 const shown = computed(() => query.value.trim() ? records.value.filter(r => matchesQuery(r, query.value)) : records.value)
-const todayGroups = computed(() => groupByDue(dueToday(data.liveRecords, now.value, openedAt.value).filter(r => matchesQuery(r, query.value)), now.value))
+const todayGroups = computed(() => groupByDue(dueToday(data.liveRecords, now.value, data.leaving).filter(r => matchesQuery(r, query.value)), now.value))
 /**
  * Сегодня (v23, B4, M15): after today the folding «На неделе», the six days after it. It starts folded, or open when
  * nothing is due today, and then stays as it was left (kept with the other folds in settings)
  */
-const week = computed(() => today.value ? dueThisWeek(data.liveRecords, now.value, openedAt.value).filter(r => matchesQuery(r, query.value)) : [])
+const week = computed(() => today.value ? dueThisWeek(data.liveRecords, now.value, data.leaving).filter(r => matchesQuery(r, query.value)) : [])
 const WEEK = 'today-week:'
 const weekOpen = computed(() => {
   const left = data.settings.folded.find(k => k.startsWith(WEEK))
@@ -340,16 +337,6 @@ function openRecord(rec: Rec) {
   else peek.peek({ kind: 'record', id: rec.id })
 }
 
-/** A choice on a row of Входящие settles the same Уточнение as in Журнал */
-function choose(rec: Rec, choice: Id | 'more' | 'new') {
-  if (choice === 'more') {
-    ui.pick({ title: 'Куда положить', subtitle: rec.text, current: rec.pageId, guesses: journal.guessesFor(rec), run: c => actions.place(rec, c) })
-    return
-  }
-  if (choice === 'new') return
-  actions.place(rec, { pageId: choice })
-}
-
 // A page with no title, no text and no records goes away on leaving it, silently, as in Notion (main flow, item 16). A
 // title still being typed is kept: this runs before the field's own blur would save it
 onBeforeUnmount(() => {
@@ -380,7 +367,8 @@ const canAdd = computed(() => full.value && !glance.value && !query.value.trim()
 /** On the page, at the end of its list; on Сегодня into Задачи, due today, so it shows where it was written */
 /**
  * «+ Новая запись» reads the line as the field does (acceptance 1): the date becomes Срок, a quantity the quantity, a
- * thing to buy gets its department, and a list splits. The place is always this page; on Сегодня, Задачи with today
+ * thing to buy gets its department, and with a model a list splits. The place is always this page; on Сегодня, Задачи
+ * with today
  */
 function addHere(text: string) {
   const to = today.value ? data.livePages.find(p => p.kind === 'page' && p.template === 'todo' && !onlyCollects(p)) ?? data.inbox : props.page
@@ -392,7 +380,9 @@ function addHere(text: string) {
     recent: data.recent,
     now,
     place: { pageId: to.id, by: 'page' },
-    today: today.value
+    today: today.value,
+    // Without a model one line is one record (Josh 28 Oct, 9)
+    sort: journal.hasModel()
   })
   // At the end of the list, in the order typed
   let order = data.recordsOf(to.id).reduce((m, r) => Math.max(m, r.order), -1) + 1
@@ -700,7 +690,6 @@ defineExpose({
           :seen="full ? seen : undefined"
           :class="glance ? 'pt-3' : bar ? '' : 'lg:pt-1'"
           @open="openRecord"
-          @choose="choose"
         >
           <template #empty>
             <p

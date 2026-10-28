@@ -178,9 +178,9 @@ export default [
   // дому» · «завтра» shows right after «Пробежка 6 км», the header counts «8 дел со всех страниц», and Дела по дому has
   // the record due завтра». The mockups type «купить лампочки», which this app's rules file to Покупки: «повесить
   // полку» is a line they file to Дела по дому
-  // Since the main flow the field says where in its chip (Авто's choice, tinted, item 5), with no line above it; the
-  // screen's own day is given with no chip, as on Сегодня: the row lands by its date in the list in front of you. The
-  // places list has no «Авто» row (item 6)
+  // Since the main flow the field says where in its chip, with no line above it; the screen's own day is given with no
+  // chip, as on Сегодня: the row lands by its date in the list in front of you. Without a model nothing is sorted
+  // (main flow 2, item 4), so the chip stays «Входящие» and the record goes there with that day
   { id: 'c24-10-composer', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
     await openField(p)
@@ -195,13 +195,13 @@ export default [
     await p.keyboard.type('повесить полку')
     await p.waitForTimeout(600)
     const chip = plain(await p.locator('[data-chip="main"]').innerText())
-    expect(chip === 'Дела по дому', `the chip reads «${chip}»`)
+    expect(chip === 'Входящие', `the chip reads «${chip}»`)
     await p.keyboard.press('Enter')
     await p.waitForTimeout(1200)
     const rows = await collectRows(p)
     const at = rows.findIndex(r => r.text === 'Повесить полку')
     expect(at === 3 && rows[2].text === 'Пробежка 6 км', `Повесить полку is row ${at}: ${rows.map(r => r.text)}`)
-    expect(rows[at].home === 'Дела по дому' && rows[at].end === 'завтра', `the row reads ${JSON.stringify(rows[at])}`)
+    expect(rows[at].home === 'Входящие' && rows[at].end === 'завтра', `the row reads ${JSON.stringify(rows[at])}`)
     expect(await p.locator('[data-collect-row].fresh-tint').count() === 1, 'the new row has no fresh tint')
     // Main flow, acceptance 1: no count or source line under the title, only the warn word
     expect(!(await p.getByText(/со всех страниц/).count()), 'a source line under the title')
@@ -209,7 +209,7 @@ export default [
       const r = Object.values(d.records).find(x => x.text === 'Повесить полку')
       return r && { page: d.pages[r.pageId].title, due: r.due?.date }
     })
-    expect(rec?.page === 'Дела по дому' && rec.due === '2026-10-20', `the record: ${JSON.stringify(rec)}`)
+    expect(rec?.page === 'Входящие' && rec.due === '2026-10-20', `the record: ${JSON.stringify(rec)}`)
   } },
   // 10: «A day named in the text wins over the filter's: «забрать посылку в четверг» shows «чт»»
   { id: 'c24-10-own-day', device: MOBILE, run: async (p) => {

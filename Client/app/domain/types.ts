@@ -161,6 +161,8 @@ export interface Page {
   /** «новых» counts records added after this */
   seenAt: number
   deletedAt: number | null
+  /** The last change made by the person, on the clock sync compares (`stores/data.ts` `stamp`); absent: before sync */
+  updatedAt?: number
 }
 
 export type Tag = 'clarify' | 'offline'
@@ -173,7 +175,7 @@ export interface Rec {
   text: string
   done: boolean
   doneAt?: number
-  /** Last tick or untick: a row ticked while its page is open stays in place until the page is opened again */
+  /** Last tick or untick */
   tickedAt?: number
   /** The plain «Заметка» from before v23: read as a one-paragraph body until the body is first written, then '' */
   note: string
@@ -193,11 +195,15 @@ export interface Rec {
   /** «Связано»: records and pages this one is linked to by hand. A link reads both ways: the other side lists it too */
   links?: Id[]
   via: 'chat' | 'manual'
+  /** Made by the first run («Быстрый старт»), not by the person: the field's example stays until a record of their own */
+  seed?: boolean
   addedAt: number
   order: number
   favorite: number | null
   openedAt?: number
   deletedAt: number | null
+  /** See `Page.updatedAt` */
+  updatedAt?: number
 }
 
 export interface Section {
@@ -205,6 +211,8 @@ export interface Section {
   name: string
   order: number
   collapsed: boolean
+  /** See `Page.updatedAt` */
+  updatedAt?: number
 }
 
 export type EntryKind = 'pending' | 'routed' | 'ask' | 'found' | 'undone' | 'offline'
@@ -247,6 +255,8 @@ export interface Entry {
    * with their marker («Позвонить @Стоматолог»), and «Отменить» gives them back as chips
    */
   links?: Id[]
+  /** See `Page.updatedAt` */
+  updatedAt?: number
 }
 
 export type ModelChoice = 'fast' | 'exact'

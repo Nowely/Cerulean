@@ -25,16 +25,7 @@ export default [
     await p.getByRole('link', { name: /^Сегодня/ }).first().click()
     expect(await shows(p.getByText(/Позвонить стоматологу/)), 'the record is not in Сегодня')
   } },
-  { id: 'v21-9', device: MOBILE, run: async (p) => {
-    await open(p, '/')
-    await p.getByRole('link', { name: /^Входящие/ }).first().click()
-    await p.waitForURL(/\/p\//)
-    const chip = p.getByRole('button', { name: /^→ |^Переместить в «/ }).first()
-    expect(await shows(chip), 'no «→ Page» chip on a Входящие row')
-    await chip.click()
-    await p.waitForTimeout(300)
-    expect(await shows(p.getByRole('button', { name: 'Отменить' })), 'no toast with «Отменить» after a pick')
-  } },
+  // v21-9 retired in main flow 2 (item 10): Входящие rows have a move button, not a «→ Page» chip (mf2-10-inbox-move)
   { id: 'v21-20', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     const side = p.getByRole('complementary', { name: 'Навигация' })

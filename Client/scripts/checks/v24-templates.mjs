@@ -250,8 +250,8 @@ export default [
     const name = plain(await first.locator('[data-row-text]').first().textContent())
     expect(name.startsWith('Созвон с Лизой') && row.includes('0/3'), `the top row reads «${row}»`)
     expect(await first.locator('.fresh-tint').count(), 'the new row is not fresh')
-    // The note glyph is the text's first line under the row (main flow, item 12)
-    expect(plain(await first.locator('[data-row-note]').textContent().catch(() => '')) === 'Повестка', 'the new row has no note line')
+    // The note glyph is the text under the row (main flow, item 12), its lines joined (main flow 2, item 11)
+    expect(plain(await first.locator('[data-row-note]').textContent().catch(() => '')).startsWith('Повестка'), 'the new row has no note line')
     // Main flow, acceptance 1: no count or source line under the title, only the warn word
     expect(await shows(p.locator('main p.text-warn').filter({ hasText: /^\s*1 просрочено\s*$/ })) && !(await p.getByText(/^5 дел/).count()), 'the header is not «1 просрочено» alone')
     expect(await chip() === 'Задачи', `after the send the chip reads «${await chip()}»`)

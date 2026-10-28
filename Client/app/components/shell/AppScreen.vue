@@ -91,7 +91,7 @@ defineExpose({ scroller })
     <slot name="header" />
     <div
       ref="scroller"
-      class="scroll-fade min-h-0 flex-1 overflow-y-auto overscroll-contain"
+      class="scroll-fade min-h-0 flex-1 overflow-y-auto"
       :data-fade-top="fadeTop || undefined"
       :data-fade-bottom="($slots.dock && fadeBottom) || undefined"
     >

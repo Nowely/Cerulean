@@ -51,7 +51,8 @@ export default [
     await open(p, '/')
     await shop(p)
     const row = p.locator('main li').filter({ hasText: 'Сыр' }).first()
-    const name = row.getByText('Сыр', { exact: true })
+    // The name's line holds the quantity too (main flow 2, item 12)
+    const name = row.locator('[data-row-text] > span').first()
     const box = await row.boundingBox()
     const before = (await name.boundingBox()).x
     const cdp = await p.context().newCDPSession(p)
@@ -70,16 +71,7 @@ export default [
     expect(Math.abs(after.x - before) <= 1, `the name moved by ${Math.round(after.x - before)} px`)
     expect(await row.getByRole('checkbox').first().isVisible(), 'the mark left the screen')
   } },
-  // 7–8. The composer chip is accent-ink; chips on a page sit on `trk`
-  { id: 'acc-7-8-chips', device: MOBILE, run: async (p) => {
-    // The field's chip is the place, plain or tinted (main flow, item 5, in main-flow.mjs); Входящие's chips sit on trk
-    await open(p, '/')
-    const inbox = await store(p, data => data.inbox.id)
-    await open(p, `/p/${inbox}`)
-    const trk = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--trk').trim())
-    const fill = await p.getByRole('button', { name: /^Переместить в/ }).first().evaluate(e => getComputedStyle(e).backgroundColor)
-    expect(!!trk && fill !== 'rgb(255, 255, 255)', `a page chip is ${fill}`)
-  } },
+  // 7–8 retired in main flow 2 (item 10): Входящие has no guess chips; each open record ends with a move button
   // 9. The Прогресс bar is neutral
   { id: 'acc-9-progress', device: MOBILE, run: async (p) => {
     await open(p, '/')

@@ -22,7 +22,7 @@ const props = defineProps<{
   page: Page
   view: ViewDef
   records: Rec[]
-  /** The page was opened then: rows ticked since stay in place */
+  /** The page was opened then: rows written since always show */
   since?: number
   readonly?: boolean
   /** «Очистить купленное» under a view of ticked records (not while searching the page) */
@@ -30,11 +30,11 @@ const props = defineProps<{
   /** When the page was opened before this visit: records written from elsewhere after it take the fresh tint */
   seen?: number
 }>()
-const emit = defineEmits<{ open: [rec: Rec], choose: [rec: Rec, pageId: Id | 'more' | 'new'] }>()
+const emit = defineEmits<{ open: [rec: Rec] }>()
 const data = useDataStore()
 const notify = useNotify()
 const now = useNow()
-const groups = computed(() => applyView(props.page, props.records, props.view, now.value, props.since))
+const groups = computed(() => applyView(props.page, props.records, props.view, now.value, data.leaving))
 /** Moves and deletions keep their «Отменить» for 8 s */
 const UNDO_MS = 8000
 
@@ -194,10 +194,10 @@ function clearDone() {
             :readonly="readonly"
             :reveal="r.addedAt >= (since ?? Number.POSITIVE_INFINITY)"
             :tint="seen !== undefined && r.via === 'chat' && r.addedAt > seen"
+            :leaving="r.id in data.leaving"
             :lifted="drag.lifted.value === r.id"
             :grip="readonly ? undefined : drag.handle(r.id)"
             @open="emit('open', r)"
-            @choose="id => emit('choose', r, id)"
             @shift="by => shift(r, by)"
           />
           <!-- The long press for screen readers (keyboards have Alt+↑/↓ on the row) -->

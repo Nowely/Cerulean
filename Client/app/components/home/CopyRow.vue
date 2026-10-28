@@ -4,6 +4,7 @@
 // row goes; × is «Не сейчас» for a month.
 import { computed } from 'vue'
 import { useDataStore } from '~/stores/data'
+import { useCloudStore } from '~/stores/cloud'
 import { useNow } from '~/composables/useNow'
 import { copyDue } from '~/domain/keep'
 import { formatDate } from '~/domain/dates'
@@ -11,9 +12,10 @@ import CopyMenu from '../settings/CopyMenu.vue'
 
 defineProps<{ compact?: boolean }>()
 const data = useDataStore()
+const cloud = useCloudStore()
 const now = useNow()
 
-const due = computed(() => !data.storageError && copyDue(data.settings, Object.values(data.records), now.value, data.persisted))
+const due = computed(() => !data.storageError && copyDue(data.settings, Object.values(data.records), now.value, data.persisted, cloud.working))
 const last = computed(() => data.settings.copiedAt ? `Последняя копия ${formatDate(data.settings.copiedAt, now.value)}` : 'Копию ещё не сохраняли')
 </script>
 

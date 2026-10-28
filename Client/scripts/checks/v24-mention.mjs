@@ -81,6 +81,12 @@ const typeIn = async (p, text) => {
   await p.keyboard.type(text)
   await p.waitForTimeout(350)
 }
+/** Picks the field's place by hand: without a model the chip stays Входящие (main flow 2, item 4) */
+async function pickPlace(p, name) {
+  await p.locator('[data-chip="main"]').first().click()
+  await p.locator('[data-places]').getByRole('button', { name, exact: true }).click()
+  await p.waitForTimeout(200)
+}
 const pickChip = async (p, name) => {
   await row(p).getByRole('button', { name: new RegExp(`^Упомянуть «${name}»`) }).click()
   await p.waitForTimeout(300)
@@ -206,7 +212,8 @@ export default [
     await home(p)
     await typeIn(p, 'позвонить @сто')
     await pickChip(p, 'Стоматолог')
-    expect(await place(p) === 'Задачи', `the chip reads «${await place(p)}»`)
+    expect(await place(p) === 'Входящие', `the chip reads «${await place(p)}»`)
+    await pickPlace(p, 'Задачи')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(800)
     const made = await recordsWith(p, '@Стоматолог')
@@ -279,16 +286,20 @@ export default [
     expect(!(await recordsWith(p, '@Стоматолог')).length, 'the record is still there')
     const links = await store(p, data => Object.values(data.records).filter(r => !r.deletedAt).flatMap(r => r.links ?? []).map(id => data.nameOf(id)))
     expect(!links.includes('Стоматолог'), 'a link to Стоматолог is still there')
-    // The same line with a second record: only the first links
+    // «Отменить» gives the words back, the chip too (main flow 2, item 8)
+    expect(await chips(p).count() === 1 && /позвонить/i.test(await words(p)), `the field holds «${await words(p)}»`)
+    await p.keyboard.press('ControlOrMeta+a')
+    await p.keyboard.press('Backspace')
+    // The same line with more words: without a model one line is one record, and it holds the link (main flow 2, item 7)
     await focusField(p)
     await typeIn(p, 'позвонить @сто')
     await pickChip(p, 'Стоматолог')
     await typeIn(p, ', купить хлеб')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(800)
-    const made = await store(p, data => data.entries.at(-1).recordIds.map(id => data.records[id]).map(r => ({ text: r.text, links: r.links ?? [] })))
-    expect(made.length === 2, `the line made ${made.length} records`)
-    expect(made.filter(r => r.links.length).map(r => r.text).join() === 'Позвонить @Стоматолог', `linked: ${JSON.stringify(made)}`)
+    const made = await store(p, data => data.entries.at(-1).recordIds.map(id => data.records[id]).map(r => ({ text: r.text, links: (r.links ?? []).map(id => data.nameOf(id)) })))
+    expect(made.length === 1, `the line made ${made.length} records`)
+    expect(made[0].text.startsWith('Позвонить @Стоматолог') && made[0].links.join() === 'Стоматолог', `linked: ${JSON.stringify(made)}`)
   } },
   // 14: «on Главная with the keyboard up, type «позвонить @сто». Every row above the chips is whole, no fade; Задачи with
   // both its lines and the «Личное» caption stay. Clear the field: the fade returns»
@@ -408,7 +419,8 @@ export default [
     expect(Math.abs(pill.y - (chip.y + chip.height) - 8) <= 1, `the chips end ${pill.y - chip.y - chip.height}px above the pill`)
     await p.keyboard.press('Enter')
     await p.waitForTimeout(300)
-    expect(await chips(p).count() === 1 && await place(p) === 'Задачи', `the chip reads «${await place(p)}»`)
+    // Without a model the place stays Входящие (main flow 2, item 4)
+    expect(await chips(p).count() === 1 && await place(p) === 'Входящие', `the chip reads «${await place(p)}»`)
   } },
   // D3: «Журнал «записаться на забег к @пол» offers «Полумарафон к маю», and the feed above ends at a hard edge with no
   // half line»
