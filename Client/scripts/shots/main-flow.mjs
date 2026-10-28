@@ -6,6 +6,76 @@
 const KEYBOARD_TOP = 557
 const MINUTE = 60000
 
+/** The model, answering in the page the way a service would (the lines of the mockup's `aiRead`) */
+export async function fakeAi(page, data, settle) {
+  await page.route('**/fake-ai/v1/**', async (route) => {
+    const body = JSON.parse(route.request().postData() ?? '{}')
+    const input = JSON.parse(body.messages?.at(-1)?.content ?? '{}')
+    const id = name => input.pages?.find(x => x.title === name)?.id ?? null
+    const item = (text, pageId, more = {}) => ({ text, note: '', pageId, date: null, time: null, qty: null, option: null, ...more })
+    const read = {
+      'Купить молоко 2,5% большую пачку и позвонить маме завтра в 10': [item('Молоко', id('Покупки'), { note: '2,5%, большую пачку' }), item('Позвонить маме', id('Задачи'), { date: '2026-10-20', time: '10:00' })],
+      'Купить сыр и пазл для Пети': [item('Сыр', id('Покупки')), item('Пазл для Пети', id('Подарки'))]
+    }[input.line] ?? [item(input.line, null)]
+    await new Promise(r => setTimeout(r, 300))
+    return route.fulfill({ json: { id: 'x', object: 'chat.completion', created: 0, model: 'shots', choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify({ kind: 'record', items: read }) } }] } })
+  })
+  await data(page, (d, base) => d.setSettings({ provider: 'custom', baseUrl: base, modelId: 'shots', apiKey: 'sk-shots', keyState: 'ok', rulesFirst: false }), `${new URL(page.url()).origin}/fake-ai/v1`)
+  await settle(page, 300)
+}
+
+/** Входящие a few days in, as the mockup's `inbox`: three records, one with a long text */
+export async function seedInbox(page, data, DAY) {
+  await data(page, (d, { MINUTE, DAY }) => {
+    const now = Date.now()
+    d.addRecord({ pageId: d.inbox.id, text: 'Подарок Оле', addedAt: now - DAY - 40 * MINUTE, via: 'chat' })
+    const pool = d.addRecord({ pageId: d.inbox.id, text: 'Узнать про абонемент в бассейн', addedAt: now - DAY - 20 * MINUTE, via: 'chat' })
+    d.setBody({ kind: 'record', id: pool.id }, { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Спросить про утренние часы и детскую группу, взять с собой справку от терапевта и фото 3×4' }] }] })
+    d.addRecord({ pageId: d.inbox.id, text: 'Купить батарейки', addedAt: now - 50 * MINUTE, via: 'chat' })
+  }, { MINUTE, DAY })
+}
+
+/** A week in, as the mockup's `week`: every page has records, two pages of the person's own, Покупки has a new one */
+export async function seedWeek(page, data, DAY) {
+  await data(page, (d, { MINUTE, DAY }) => {
+    const now = Date.now()
+    const ago = min => now - min * MINUTE
+    const by = t => d.livePages.find(p => p.title === t)
+    const day = (n) => {
+      const x = new Date(now + n * DAY)
+      return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+    }
+    const gifts = d.createPage({ title: 'Подарки', createdAt: ago(6 * 1440 + 10) })
+    const trip = d.createPage({ title: 'Отпуск', createdAt: ago(8 * 1440) })
+    d.setBody({ kind: 'page', id: trip.id }, { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'Билеты взять до 1 ноября' }] },
+      { type: 'bulletList', content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Отель у моря, пять ночей' }] }] }] }
+    ] })
+    const add = (page, text, min, due = null) => d.addRecord({ pageId: by(page)?.id ?? page, text, addedAt: ago(min), due, via: 'chat' })
+    add('Покупки', 'Порошок для стирки', 3 * 1440)
+    add('Покупки', 'Кофе', 2 * 1440)
+    add('Покупки', 'Сыр', 1440 + 30)
+    add('Покупки', 'Яйца', 45)
+    add('Покупки', 'Хлеб', 42)
+    const milk = add('Покупки', 'Молоко', 40)
+    d.setBody({ kind: 'record', id: milk.id }, { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '2,5%, большую пачку' }] }] })
+    add('Задачи', 'Записаться к стоматологу', 4 * 1440)
+    add('Задачи', 'Позвонить маме', 1440 + 120, { date: day(1), time: '10:00' })
+    add('Задачи', 'Оплатить интернет', 2 * 1440, { date: day(0) })
+    add('Задачи', 'Забрать посылку', 180, { date: day(0), time: '19:00' })
+    add('Идеи', 'Сходить в новый музей', 5 * 1440)
+    add('Идеи', 'Подарок Оле на день рождения', 2 * 1440 + 60)
+    add(d.inbox.id, 'Узнать про абонемент в бассейн', 1440 + 300)
+    add(gifts.id, 'Настольная игра для Пети', 6 * 1440)
+    add(gifts.id, 'Книга для Оли', 1440 + 200)
+    // Three of «Быстрый старт» are ticked, as the mockup has it
+    const start = d.liveRecords.filter(r => r.seed).sort((a, b) => b.addedAt - a.addedAt)
+    for (const i of [0, 1, 3]) d.updateRecord(start[i].id, { done: true, doneAt: ago(1440), tickedAt: ago(1440) })
+    // Every page was opened since, but Покупки missed «Молоко»
+    for (const p of d.livePages) d.updatePage(p.id, { seenAt: p.title === 'Покупки' ? ago(41) : now })
+  }, { MINUTE, DAY })
+}
+
 export default ({ MOBILE, DAY, settle, open, data }) => {
   /** An iPhone's insets and keyboard, set before the first open */
   async function phone(page) {
@@ -81,77 +151,15 @@ export default ({ MOBILE, DAY, settle, open, data }) => {
     await settle(page, 600)
   }
 
-  /** The model, answering in the page the way a service would (the lines of the mockup's `aiRead`) */
-  async function model(page) {
-    await page.route('**/fake-ai/v1/**', async (route) => {
-      const body = JSON.parse(route.request().postData() ?? '{}')
-      const input = JSON.parse(body.messages?.at(-1)?.content ?? '{}')
-      const id = name => input.pages?.find(x => x.title === name)?.id ?? null
-      const item = (text, pageId, more = {}) => ({ text, note: '', pageId, date: null, time: null, qty: null, option: null, ...more })
-      const read = {
-        'Купить молоко 2,5% большую пачку и позвонить маме завтра в 10': [item('Молоко', id('Покупки'), { note: '2,5%, большую пачку' }), item('Позвонить маме', id('Задачи'), { date: '2026-10-20', time: '10:00' })],
-        'Купить сыр и пазл для Пети': [item('Сыр', id('Покупки')), item('Пазл для Пети', id('Подарки'))]
-      }[input.line] ?? [item(input.line, null)]
-      await new Promise(r => setTimeout(r, 300))
-      return route.fulfill({ json: { id: 'x', object: 'chat.completion', created: 0, model: 'shots', choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify({ kind: 'record', items: read }) } }] } })
-    })
-    await data(page, (d, base) => d.setSettings({ provider: 'custom', baseUrl: base, modelId: 'shots', apiKey: 'sk-shots', keyState: 'ok', rulesFirst: false }), `${new URL(page.url()).origin}/fake-ai/v1`)
-    await settle(page, 300)
-  }
-
-  /** Входящие a few days in, as the mockup's `inbox`: three records, one with a long text */
+  const model = page => fakeAi(page, data, settle)
   async function inbox(page) {
     await first(page)
-    await data(page, (d, { MINUTE, DAY }) => {
-      const now = Date.now()
-      d.addRecord({ pageId: d.inbox.id, text: 'Подарок Оле', addedAt: now - DAY - 40 * MINUTE, via: 'chat' })
-      const pool = d.addRecord({ pageId: d.inbox.id, text: 'Узнать про абонемент в бассейн', addedAt: now - DAY - 20 * MINUTE, via: 'chat' })
-      d.setBody({ kind: 'record', id: pool.id }, { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Спросить про утренние часы и детскую группу, взять с собой справку от терапевта и фото 3×4' }] }] })
-      d.addRecord({ pageId: d.inbox.id, text: 'Купить батарейки', addedAt: now - 50 * MINUTE, via: 'chat' })
-    }, { MINUTE, DAY })
+    await seedInbox(page, data, DAY)
     await goPage(page, 'Входящие')
   }
-
-  /** A week in, as the mockup's `week`: every page has records, two pages of the person's own, Покупки has a new one */
   async function week(page) {
     await first(page)
-    await data(page, (d, { MINUTE, DAY }) => {
-      const now = Date.now()
-      const ago = min => now - min * MINUTE
-      const by = t => d.livePages.find(p => p.title === t)
-      const day = (n) => {
-        const x = new Date(now + n * DAY)
-        return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
-      }
-      const gifts = d.createPage({ title: 'Подарки', createdAt: ago(6 * 1440 + 10) })
-      const trip = d.createPage({ title: 'Отпуск', createdAt: ago(8 * 1440) })
-      d.setBody({ kind: 'page', id: trip.id }, { type: 'doc', content: [
-        { type: 'paragraph', content: [{ type: 'text', text: 'Билеты взять до 1 ноября' }] },
-        { type: 'bulletList', content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Отель у моря, пять ночей' }] }] }] }
-      ] })
-      const add = (page, text, min, due = null) => d.addRecord({ pageId: by(page)?.id ?? page, text, addedAt: ago(min), due, via: 'chat' })
-      add('Покупки', 'Порошок для стирки', 3 * 1440)
-      add('Покупки', 'Кофе', 2 * 1440)
-      add('Покупки', 'Сыр', 1440 + 30)
-      add('Покупки', 'Яйца', 45)
-      add('Покупки', 'Хлеб', 42)
-      const milk = add('Покупки', 'Молоко', 40)
-      d.setBody({ kind: 'record', id: milk.id }, { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '2,5%, большую пачку' }] }] })
-      add('Задачи', 'Записаться к стоматологу', 4 * 1440)
-      add('Задачи', 'Позвонить маме', 1440 + 120, { date: day(1), time: '10:00' })
-      add('Задачи', 'Оплатить интернет', 2 * 1440, { date: day(0) })
-      add('Задачи', 'Забрать посылку', 180, { date: day(0), time: '19:00' })
-      add('Идеи', 'Сходить в новый музей', 5 * 1440)
-      add('Идеи', 'Подарок Оле на день рождения', 2 * 1440 + 60)
-      add(d.inbox.id, 'Узнать про абонемент в бассейн', 1440 + 300)
-      add(gifts.id, 'Настольная игра для Пети', 6 * 1440)
-      add(gifts.id, 'Книга для Оли', 1440 + 200)
-      // Three of «Быстрый старт» are ticked, as the mockup has it
-      const start = d.liveRecords.filter(r => r.seed).sort((a, b) => b.addedAt - a.addedAt)
-      for (const i of [0, 1, 3]) d.updateRecord(start[i].id, { done: true, doneAt: ago(1440), tickedAt: ago(1440) })
-      // Every page was opened since, but Покупки missed «Молоко»
-      for (const p of d.livePages) d.updatePage(p.id, { seenAt: p.title === 'Покупки' ? ago(41) : now })
-    }, { MINUTE, DAY })
+    await seedWeek(page, data, DAY)
     await settle(page, 500)
   }
   async function homeMenu(page) {

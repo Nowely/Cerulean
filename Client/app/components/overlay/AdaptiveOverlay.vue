@@ -35,7 +35,13 @@ const props = withDefaults(defineProps<{
    * goes back here instead of closing; a click outside still closes both levels
    */
   back?: () => void
-}>(), { subtitle: undefined, width: undefined, align: 'end', side: undefined, anchor: undefined, back: undefined })
+  /**
+   * Desktop: the dialog is a window (computer delta, item 22; macOS sheets): 440 wide, centred, its top fixed 160 from the
+   * window's top so it grows down and nothing moves when an error line comes; radius 16, padding 20/24/24, a 1px line2
+   * edge in dark
+   */
+  windowed?: boolean
+}>(), { subtitle: undefined, width: undefined, align: 'end', side: undefined, anchor: undefined, back: undefined, windowed: false })
 // `closed`: the overlay is gone and focus is back, so the next one can open (a sheet that leads to another)
 const emit = defineEmits<{ closed: [] }>()
 const open = defineModel<boolean>('open', { default: false })
@@ -79,7 +85,7 @@ const sheetNotice = useTemplateRef<{ showing: boolean }>('sheetNotice')
     v-if="isDesktop && dialog"
     v-model:open="open"
     :title="title"
-    :ui="{ content: 'max-w-md' }"
+    :ui="{ content: windowed ? 'max-w-110 sm:max-w-110 top-40 translate-y-0 rounded-[16px] dark:ring-line2' : 'max-w-md' }"
     :content="{ ...role, onCloseAutoFocus: () => emit('closed'), onPointerDownOutside: notice.keep, onFocusOutside: notice.keep }"
   >
     <template #content>
@@ -90,13 +96,20 @@ const sheetNotice = useTemplateRef<{ showing: boolean }>('sheetNotice')
       >
         {{ ui.notice?.title }}
       </p>
-      <div class="flex max-h-[70dvh] flex-col">
+      <div
+        class="flex flex-col"
+        :class="windowed ? 'max-h-[calc(100dvh-208px)]' : 'max-h-[70dvh]'"
+        :data-phone-type="windowed || undefined"
+      >
         <div
-          class="flex min-h-11 shrink-0 items-center gap-2 pt-3 pl-5"
-          :class="$slots.close ? 'pr-2' : 'pr-5'"
+          class="flex min-h-11 shrink-0 items-center gap-2"
+          :class="windowed ? 'px-6 pt-5 pb-2' : ['pt-3 pl-5', $slots.close ? 'pr-2' : 'pr-5']"
         >
           <div class="min-w-0 flex-1">
-            <h2 class="truncate text-sheet text-highlighted">
+            <h2
+              class="truncate text-highlighted"
+              :class="windowed ? 'text-xl font-semibold tracking-[-.015em]' : 'text-sheet'"
+            >
               {{ title }}
             </h2>
             <p
@@ -109,8 +122,8 @@ const sheetNotice = useTemplateRef<{ showing: boolean }>('sheetNotice')
           <slot name="close" />
         </div>
         <div
-          class="min-h-0 flex-1 overflow-y-auto px-3"
-          :class="$slots.footer ? 'pb-1' : 'pb-3'"
+          class="min-h-0 flex-1 overflow-y-auto"
+          :class="windowed ? 'px-4 pb-4' : ['px-3', $slots.footer ? 'pb-1' : 'pb-3']"
         >
           <slot />
         </div>

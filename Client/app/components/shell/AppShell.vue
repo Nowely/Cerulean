@@ -1,10 +1,13 @@
 <script setup lang="ts">
-// The frame: on a phone one screen at a time; on desktop the sidebar, the main column and,
-// when something is previewed, the right panel. Overlays shared by every screen live here.
-import { defineAsyncComponent, h, nextTick, onMounted, ref, watch } from 'vue'
+// The frame: on a phone one screen at a time. On a computer («Как Telegram», computer delta, item 1) Главная itself is the
+// left column, with its field at its foot, and the open page, record or settings is on the right; nothing lists the pages
+// a second time. Overlays shared by every screen live here.
+import { defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter, useHead, useColorMode, defineShortcuts } from '#imports'
+import { useEventListener } from '@vueuse/core'
 import { useScreen } from '~/composables/useScreen'
-import { usePeek } from '~/composables/usePeek'
+import { useHomeField } from '~/composables/useSide'
+import { pathOf, usePeek } from '~/composables/usePeek'
 import { useFind } from '~/composables/useFind'
 import { useViewport } from '~/composables/useViewport'
 import { useOpenedTracking } from '~/composables/useOpened'
@@ -13,14 +16,10 @@ import { useLater } from '~/composables/useLater'
 import { useNotify } from '~/composables/useNotify'
 import { useUiStore } from '~/stores/ui'
 import { useDataStore } from '~/stores/data'
+import SideColumn from './SideColumn.vue'
 
-// Only the screen itself is in the first download. The sidebar (desktop only) keeps its width while it
-// loads; the overlays come with the menus and sheets (useLater), after the first paint.
-const AppSidebar = defineAsyncComponent({
-  loader: () => import('./AppSidebar.vue'),
-  loadingComponent: { render: () => h('aside', { class: 'w-65 shrink-0 bg-side' }) },
-  delay: 0
-})
+// Only the screen itself is in the first download; the overlays come with the menus and sheets (useLater), after the
+// first paint.
 const PreviewPane = defineAsyncComponent(() => import('../overlay/PreviewPane.vue'))
 const FindOverlay = defineAsyncComponent(() => import('../overlay/FindOverlay.vue'))
 const PagePicker = defineAsyncComponent(() => import('../overlay/PagePicker.vue'))
@@ -49,6 +48,21 @@ watch(() => !!(find.isOpen.value || peek.target.value || ui.picker || ui.confirm
 defineShortcuts({
   meta_k: () => (find.isOpen.value ? find.close() : find.open())
 })
+
+// A computer's Esc closes what is on top, one thing at a time (computer delta, item 20): a field's own Esc first (the text,
+// the add row, a title: they handle it there), then a list, a menu or a window (their own layers), then Главная's open
+// field, and last a record goes back to its page
+const homeField = useHomeField()
+function escape(e: KeyboardEvent) {
+  if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing || !isDesktop.value) return
+  if ((e.target as Element | null)?.closest?.('input, textarea, [contenteditable="true"]')) return
+  const layers = [...document.querySelectorAll('[data-dismissable-layer], [data-places], [data-home-menu]')]
+  if (layers.some(el => !el.querySelector('[role="tooltip"]'))) return
+  const field = homeField.value
+  if (field?.isOpen()) return field.close()
+  if (route.path.startsWith('/r/')) document.querySelector<HTMLElement>('[data-record-back]')?.click()
+}
+useEventListener(window, 'keydown', escape)
 
 // The browser chrome takes the canvas colour of the current theme, read from the tokens once it applies
 const themeColor = ref<string>()
@@ -86,6 +100,11 @@ watch(() => peek.target.value, (t) => {
 watch(() => route.path, () => {
   if (route.query.peek && !isDesktop.value) peek.close()
 })
+
+// A computer opens a preview's page or record on the right instead (computer delta, item 16)
+watch([isDesktop, () => peek.target.value], ([desk, t]) => {
+  if (desk && t && (t.kind === 'page' ? data.pages[t.id] : data.records[t.id])) void router.replace(pathOf(t))
+}, { immediate: true })
 </script>
 
 <template>
@@ -94,15 +113,10 @@ watch(() => route.path, () => {
     @touchstart.passive="touchStart"
     @touchend.passive="touchEnd"
   >
-    <AppSidebar v-if="isDesktop" />
+    <SideColumn v-if="isDesktop" />
     <main class="flex min-w-0 flex-1 flex-col">
       <slot />
     </main>
-    <PreviewPane
-      v-if="isDesktop && peek.target.value"
-      :target="peek.target.value"
-      variant="panel"
-    />
   </div>
   <template v-if="later.ready.value">
     <PreviewPane

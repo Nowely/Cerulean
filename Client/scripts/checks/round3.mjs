@@ -1,8 +1,6 @@
 // PR #15 acceptance round 2: what did not land (design/app-qa/acceptance-pr15-round2.md, «What did not land» 3–18)
 import { BASE, DESKTOP, MOBILE, expect, open, send, shows, store } from './lib.mjs'
 
-const DEMO_TIME = new Date('2026-10-19T09:14:00+03:00')
-
 async function page(p, title) {
   await p.getByRole('link', { name: new RegExp(`^${title}`) }).first().click()
   await p.waitForURL(/\/p\//)
@@ -38,23 +36,8 @@ export default [
     expect(await where.evaluate(e => e.getBoundingClientRect().right <= e.closest('[data-notice]').getBoundingClientRect().right), '«Перемещено в Задачи» is cut off')
     expect(await n.evaluate(e => e.scrollHeight <= e.clientHeight + 1), 'a third line peeks out')
   } },
-  // 5: the «новых» dot sits right after the name in the sidebar; text statuses stay at the end
-  { id: 'r3-5-sidebar-dot', device: DESKTOP, run: async (p) => {
-    await p.clock.install({ time: DEMO_TIME })
-    await open(p, '/journal')
-    const dots = p.locator('aside .size-1\\.5.rounded-full')
-    expect(await shows(dots), 'no «новых» dot in the sidebar')
-    const gaps = await dots.evaluateAll(all => all.map((d) => {
-      const name = d.closest('a, button').querySelector('span.truncate')
-      return d.getBoundingClientRect().left - name.getBoundingClientRect().right
-    }))
-    expect(gaps.every(g => g >= 0 && g <= 12), `a dot is not after its name (gaps ${gaps.join(', ')})`)
-    const late = p.locator('aside .text-warn').first()
-    if (await late.count()) {
-      const row = await late.evaluate(e => e.closest('a, button').getBoundingClientRect().right - e.getBoundingClientRect().right)
-      expect(row <= 16, 'a text status left the row end')
-    }
-  } },
+  // 5 (r3-5-sidebar-dot) retired in the computer round: the sidebar is gone and the delta's overrules table says «no dot
+  // anywhere» (computer delta, item 2). The computer's sign for new is pc-13-new-light/-dark
   // 6: after Shift+F10 and Esc the focus is on the row; ↓ goes to the next row; Delete moves on to the next row
   { id: 'r3-6-row-focus', device: DESKTOP, run: async (p) => {
     await open(p, '/')
@@ -109,7 +92,8 @@ export default [
   { id: 'r3-13-prop-footer', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     await page(p, 'Покупки')
-    await p.getByRole('button', { name: 'Действия со страницей' }).first().click()
+    // The page's own «⋯»: on a computer each card on the left has one too
+    await p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first().click()
     await p.getByRole('menu').getByText(/^Свойства/).first().click()
     await p.getByRole('button', { name: 'Изменить «Отдел»' }).click()
     await p.waitForTimeout(400)
@@ -125,13 +109,15 @@ export default [
     await done.click()
     expect(await shows(dialog.getByText('Есть у каждой записи страницы')), '«Готово» did not go back to «Свойства»')
   } },
-  // 14: with Найти open, only Найти is the current row
+  // 14: with Поиск open, one row on the left is current. The computer round (items 1, 2) took the «Найти» row away: Поиск
+  // is the left header's magnifier and opens over the page on the right, whose card stays the only current one
   { id: 'r3-14-find-current', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     await p.keyboard.press('Control+k')
     await p.waitForTimeout(400)
     const current = await p.locator('aside [aria-current="page"]').evaluateAll(all => all.map(e => e.innerText.split('\n')[0].trim()))
-    expect(current.length === 1 && current[0] === 'Найти', `current rows: ${current.join(', ')}`)
+    const right = (await p.locator('main h1').first().innerText()).trim()
+    expect(current.length === 1 && current[0].startsWith(right), `current rows: ${current.join(', ')}; on the right: ${right}`)
   } },
   // 15: desktop: «Запись изменили в другой вкладке» under the title (PageTwoTabs); the phone keeps it above (MobileTwoTabs)
   { id: 'r3-15-two-tabs-desk', device: DESKTOP, run: p => twoTabs(p, 'under') },

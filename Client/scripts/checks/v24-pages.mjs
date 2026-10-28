@@ -114,7 +114,8 @@ export default [
     // The newest record of «Список», fresh, with no date and no group
     expect(await p.getByRole('tab', { name: 'Список' }).getAttribute('aria-selected') !== 'false', '«Список» is not the view shown')
     expect(await firstRow(p).innerText() === METERS, `the top row is «${await firstRow(p).innerText()}»`)
-    expect((await rowBox(p).getAttribute('class')).includes('fresh-tint'), 'the row is not fresh')
+    // On a computer «new» is the bar at the row's left edge, never the tint (computer delta, item 13)
+    expect((await rowBox(p).getAttribute('class')).includes(name === 'phone' ? 'fresh-tint' : 'fresh-bar'), 'the row is not fresh')
     const rest = (await rowBox(p).innerText()).replace(METERS, '')
     expect(!/\d/.test(rest), `the row shows a date: «${rest.trim()}»`)
     const made = await store(p, (data, t) => {
@@ -128,10 +129,10 @@ export default [
     // «·» between the words and the action on desktop
     expect((await t.innerText()).replace(/[\s·]+/g, ' ').includes('Строка стала записью Отменить'), `the toast reads «${await t.innerText()}»`)
     if (name === 'desktop') {
-      // D8: above the editing bar, at its right end
-      const [a, b] = [await t.boundingBox(), await bar(p).boundingBox()]
-      expect(a.y + a.height <= b.y + 1, 'the toast is not above the editing bar')
-      expect(Math.abs(a.x + a.width - (b.x + b.width)) <= 16, `the toast ends at ${a.x + a.width}, the bar at ${b.x + b.width}`)
+      // D8 was «above the editing bar, at its right end»; since the computer round (item 11) the one notice is over
+      // Главная's field in the left column
+      const [a, f] = [await t.boundingBox(), await p.locator('aside[data-side] [data-field]').first().boundingBox()]
+      expect(a.y + a.height <= f.y && Math.abs(a.x + a.width - (f.x + f.width)) <= 2, 'the toast is not over Главная\'s field')
     }
     // «Отменить»: the sentence back, the row gone, «2 дела»
     await t.getByRole('button', { name: 'Отменить' }).click()
@@ -143,8 +144,9 @@ export default [
   } })),
   // v24 acceptance, outside the Check lines (1): ↶ in the editing bar, or Ctrl Z, right after the ring undoes the whole of
   // it as «Отменить» does: the sentence back once, the row gone, the notice closed. ↶ again never cuts the words a second
-  // time, nor after «Отменить»
-  ...[['phone', MOBILE, 'bar'], ['desktop', DESKTOP, 'bar'], ['desktop-keys', DESKTOP, 'keys']].map(([name, device, how]) => ({ id: `p24-15-undo-${name}`, device, run: async (p) => {
+  // time, nor after «Отменить». The desktop ↶ run (p24-15-undo-desktop) retired in the computer round (item 17): with the
+  // caret alone a computer shows no bar, so its ↶ is Ctrl Z (p24-15-undo-desktop-keys)
+  ...[['phone', MOBILE, 'bar'], ['desktop-keys', DESKTOP, 'keys']].map(([name, device, how]) => ({ id: `p24-15-undo-${name}`, device, run: async (p) => {
     await openPage(p, 'Дела по дому')
     const undo = async () => {
       const button = bar(p).getByRole('button', { name: 'Отменить ввод' })
@@ -164,7 +166,7 @@ export default [
       await p.waitForTimeout(700)
       expect(await store(p, (data, x) => data.liveRecords.some(r => r.text === x), METERS), 'the ring made no record')
       if (round === '↶') {
-        expect(await bar(p).getByRole('button', { name: 'Отменить ввод' }).isEnabled(), '↶ is off right after the ring')
+        if (how === 'bar') expect(await bar(p).getByRole('button', { name: 'Отменить ввод' }).isEnabled(), '↶ is off right after the ring')
         await undo()
         await whole('after ↶')
         expect(!(await toast(p, 'Строка стала записью').count()), 'the notice stays after ↶')
@@ -309,7 +311,7 @@ export default [
   // above the notice its «Все страницы» raises
   { id: 'p24-1-how-notice-desk', device: { ...DESKTOP, viewport: { width: 1280, height: 720 } }, run: async (p) => {
     await kitchen(p)
-    await p.getByRole('button', { name: 'Действия со страницей' }).first().click()
+    await p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first().click()
     await p.waitForTimeout(500)
     await p.getByRole('menuitem', { name: 'Настроить вид' }).first().click()
     await p.waitForTimeout(900)

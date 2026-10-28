@@ -58,9 +58,10 @@ async function withTemplate(p) {
   await openTasks(p)
 }
 
-/** The visible «⋯» named `label` (a phone header or the desktop title row) */
+/** The visible «⋯» named `label` (a phone header or the desktop title row), the screen's own: each card on a computer's
+ * left column has one too */
 async function dots(p, label) {
-  await p.locator(`button[aria-label="${label}"]:visible`).first().click()
+  await p.locator(`main button[aria-label="${label}"]:visible`).first().click()
   await p.waitForTimeout(500)
 }
 /** The rows of the open «⋯», as read: «Переместить на другую страницу · Задачи», «Шаблоны 1» */
@@ -70,7 +71,7 @@ const menuRows = p => isDesk(p)
 const menuRow = (p, name) => isDesk(p) ? p.getByRole('menuitem', { name }) : p.getByRole('dialog').last().getByRole('button', { name })
 
 /** The composer's field: the plain field until the editor takes over (item 12), then the editor */
-const field = p => p.locator('form').getByRole('textbox').first()
+const field = p => p.locator('main form').getByRole('textbox').first()
 
 /** The body's blocks as read */
 const bodyBlocks = p => p.locator('main .body-text').filter({ visible: true }).first().evaluate(el => [...el.children].map(c => c.textContent.replace(/\s+/g, ' ').trim()))
@@ -149,7 +150,7 @@ export default [
       // D1: 340px at the «⋯»; a click outside closes it
       const w = await sheet.evaluate(el => el.getBoundingClientRect().width)
       expect(Math.abs(w - 340) <= 2, `the popover is ${w}px wide`)
-      const dotsBox = await p.locator('button[aria-label="Действия со страницей"]:visible').first().boundingBox()
+      const dotsBox = await p.locator('main button[aria-label="Действия со страницей"]:visible').first().boundingBox()
       const box = await sheet.boundingBox()
       expect(Math.abs(box.x + box.width - (dotsBox.x + dotsBox.width)) <= 2 && box.y >= dotsBox.y + dotsBox.height, 'the popover does not stand at «⋯»')
       await p.mouse.click(700, 700)
@@ -219,7 +220,8 @@ export default [
 
   // 6: a record by template (and D7 on desktop: the 36px «+» with its tooltip)
   // Since the main flow the places list holds pages only (item 6): a template is aimed by «⋯» → «Шаблоны» → «+», and the
-  // field's chip names it
+  // field's chip names it. On a computer that field is Главная's (computer delta, item 6), which keeps Задачи as its place
+  // and says where the record went, as after any send
   ...[MOBILE, DESKTOP].map(device => ({ id: `t24-06-by-template${device === DESKTOP ? '-desktop' : ''}`, device, run: async (p) => {
     await withTemplate(p)
     await dots(p, 'Действия со страницей')
@@ -249,13 +251,13 @@ export default [
     const row = plain(await first.textContent())
     const name = plain(await first.locator('[data-row-text]').first().textContent())
     expect(name.startsWith('Созвон с Лизой') && row.includes('0/3'), `the top row reads «${row}»`)
-    expect(await first.locator('.fresh-tint').count(), 'the new row is not fresh')
+    expect(await first.locator(isDesk(p) ? '.fresh-bar' : '.fresh-tint').count(), 'the new row is not fresh')
     // The note glyph is the text under the row (main flow, item 12), its lines joined (main flow 2, item 11)
     expect(plain(await first.locator('[data-row-note]').textContent().catch(() => '')).startsWith('Повестка'), 'the new row has no note line')
     // Main flow, acceptance 1: no count or source line under the title, only the warn word
     expect(await shows(p.locator('main p.text-warn').filter({ hasText: /^\s*1 просрочено\s*$/ })) && !(await p.getByText(/^5 дел/).count()), 'the header is not «1 просрочено» alone')
     expect(await chip() === 'Задачи', `after the send the chip reads «${await chip()}»`)
-    expect(!(await notice(p).count()), `a toast: «${plain(await notice(p).first().textContent().catch(() => ''))}»`)
+    if (!isDesk(p)) expect(!(await notice(p).count()), `a toast: «${plain(await notice(p).first().textContent().catch(() => ''))}»`)
     const made = await store(p, (data) => {
       const r = data.liveRecords.find(x => x.text === 'Созвон с Лизой')
       return { body: JSON.stringify(r.body ?? null), subs: data.subitemsOf(r.id).map(s => `${s.text}${s.done ? '+' : ''}`) }
@@ -284,7 +286,7 @@ export default [
   } })),
 
   // 29 and D8: the template toasts name the page without quotes; on desktop the toast sits above the composer, at its right
-  // end. A record has no composer since the main flow (item 13): the toast is at the foot of its column, at the right
+  // end. Since the computer round (item 11) the one notice is over Главная's field in the left column, its full width
   { id: 't24-29-toast-words-desktop', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
@@ -295,9 +297,9 @@ export default [
     const toast = notice(p).filter({ hasText: 'Шаблон «Встреча» сохранён в Задачи' })
     expect(await shows(toast), 'no «Шаблон «Встреча» сохранён в Задачи»')
     const t = await toast.boundingBox()
-    const c = await p.locator('[data-notice-slot]').filter({ has: toast }).boundingBox()
-    expect(900 - (t.y + t.height) <= 40, `the toast ends ${900 - t.y - t.height}px above the foot`)
-    expect(Math.abs(t.x + t.width - (c.x + c.width)) <= 2, `the toast ends ${c.x + c.width - t.x - t.width}px left of its column's right end`)
+    const f = await p.locator('aside[data-side] [data-field]').first().boundingBox()
+    expect(t.y + t.height <= f.y && f.y - t.y - t.height <= 16, `the toast ends ${f.y - t.y - t.height}px above Главная's field`)
+    expect(Math.abs(t.x - f.x) <= 2 && Math.abs(t.x + t.width - (f.x + f.width)) <= 2, 'the toast is not the field\'s width')
   } },
 
   // D2: template subitems keep on Enter or leaving, Esc puts back, Alt+↑/↓ moves
@@ -333,7 +335,7 @@ export default [
     await p.keyboard.press('Enter')
     await p.waitForTimeout(400)
     expect((await templatesOf(p, 'Задачи'))[0].subs.at(-1) === 'Обсудить бюджет', 'the composer does not add a subitem to the template')
-    await p.locator('form button[aria-label^="Куда"]').first().click()
+    await p.locator('main form button[aria-label^="Куда"]').first().click()
     await p.waitForTimeout(500)
     await p.getByRole('dialog', { name: 'Куда записать' }).getByRole('button', { name: /^В заметку/ }).click()
     await p.waitForTimeout(500)

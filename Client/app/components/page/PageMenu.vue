@@ -53,7 +53,8 @@ async function copy() {
 function remove() {
   const id = props.page.id
   data.removePage(id)
-  if (!props.home) void router.replace('/')
+  // On a computer the card's «⋯» can delete the page open on the right: `/` opens the next one (computer delta, item 2)
+  if (!props.home || router.currentRoute.value.path === `/p/${id}`) void router.replace('/')
   notify('Страница в корзине', { label: 'Отменить', run: () => data.restorePage(id) })
 }
 

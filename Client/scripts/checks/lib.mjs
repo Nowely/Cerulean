@@ -16,7 +16,9 @@ export async function open(page, path, demo = true) {
 /** Sends a line from the screen's field: the main flow's on Главная and pages (put away after), Журнал's composer elsewhere */
 export async function send(page, text) {
   const pill = page.locator('[data-field="closed"] button').nth(1)
-  if (await pill.isVisible().catch(() => false)) {
+  // Журнал keeps its own composer; on a computer Главная's field sits beside it in the left column (computer delta, item 1)
+  const journal = new URL(page.url()).pathname.startsWith('/journal')
+  if (!journal && await pill.isVisible().catch(() => false)) {
     await pill.click()
     const title = page.getByRole('textbox', { name: 'Запись', exact: true })
     await title.fill(text)

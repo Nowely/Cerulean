@@ -1,8 +1,10 @@
 // Превью: a page or record opened from a link keeps your place. It lives in the URL (?peek=r:<id>),
-// so the system back gesture closes it like any other step.
+// so the system back gesture closes it like any other step. A computer has no preview panel: it opens the page or the
+// record on the right, in place of what is there, and «‹» comes back (computer delta, item 16).
 import { computed } from 'vue'
 import { useRoute, useRouter } from '#imports'
 import type { Id } from '~/domain/types'
+import { useScreen } from '~/composables/useScreen'
 
 export type Target = { kind: 'page', id: Id } | { kind: 'record', id: Id }
 
@@ -25,8 +27,10 @@ export function usePeek() {
   const route = useRoute()
   const router = useRouter()
   const target = computed(() => decodeTarget(route.query.peek))
+  const { isDesktop } = useScreen()
 
   function peek(t: Target) {
+    if (isDesktop.value) return void router.push(pathOf(t))
     const query = { ...route.query, peek: encodeTarget(t) }
     // Swapping one preview for another does not stack history
     if (route.query.peek) void router.replace({ query })

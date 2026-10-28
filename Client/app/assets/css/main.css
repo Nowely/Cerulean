@@ -24,6 +24,11 @@
 @theme {
   --font-sans: "Onest Variable", "Onest Fallback", system-ui, sans-serif;
 
+  /* Widths (computer delta, item 24): under 900 the phone; from 900 the computer's two columns, the left one 320;
+     from 1200 the left one 390 and the open page in a 752 column, as drawn */
+  --breakpoint-lg: 56.25rem;
+  --breakpoint-xl: 75rem;
+
   /*
    * Type scale: nothing outside these sizes. Fixed steps for chrome
    * (11 the Журнал counter, 12 counts, 13 captions and times, 14 chips and buttons, 15 small body,
@@ -125,7 +130,7 @@
   }
 }
 
-@media (width >= 64rem) {
+@media (width >= 56.25rem) {
   :root {
     --text-title: 30px;
     --text-title--line-height: 1.2;
@@ -140,12 +145,30 @@
 }
 
 /* Inputs stay at 16px on touch screens, otherwise iOS zooms the page on focus */
-@media (width >= 64rem) and (pointer: fine) {
+@media (width >= 56.25rem) and (pointer: fine) {
   :root {
     --text-input: 14px;
     --text-opt: 13px;
     --text-opt--line-height: 22px;
   }
+}
+
+/* The computer's left column is Главная itself (computer delta, item 1): the phone's screen with the phone's type. The
+   sync window holds the phone sheet's content too (item 22) */
+[data-side],
+[data-phone-type] {
+  --text-title: 20px;
+  --text-title--line-height: 26px;
+  --text-sheet: 20px;
+  --text-record: 16px;
+  --text-row: 16px;
+  --text-row--font-weight: 600;
+  --text-body: 16px;
+  --text-meta: 14px;
+  --text-caption: 13px;
+  --text-input: 16px;
+  --text-opt: 16px;
+  --text-opt--line-height: 28px;
 }
 
 /* Token utilities: bg-canvas, bg-sel, text-accent-ink, bg-page-green-bg, shadow-float… */
@@ -318,6 +341,23 @@
 
 @keyframes fresh-out {
   to { opacity: 0; }
+}
+
+/* A computer's «new» on a record (computer delta, item 13): a 3px accent bar at the row's left edge, inset 10px top and
+   bottom, for the same 4 s and 1 s fade. A filled row means «open» there (Mail, Finder) */
+@utility fresh-bar {
+  &::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 2px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    pointer-events: none;
+    animation: fresh-out 1s 4s forwards;
+  }
 }
 
 /* The field's place chip when Авто changes its mind (main flow, item 5): the tint deepens for a moment, then settles */

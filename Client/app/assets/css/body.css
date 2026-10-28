@@ -225,7 +225,7 @@
     cursor: text;
   }
 
-  @media (width >= 64rem) {
+  @media (width >= 56.25rem) {
     .body-target .body-text:has(> p.is-editor-empty:only-child) {
       margin: -6px 0 0 -8px;
       padding: 6px 8px;

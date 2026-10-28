@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // Where this screen or sheet shows the notice (useNotify): only the top slot on screen shows it. A screen's slot is
 // right above its composer or docked card, in the flow, so it never covers the list; a sheet's is the sheet's foot,
-// under its content. On a phone the notice is the width of the column and wraps to two lines; on desktop it sits at
-// the column's right with «·» before its action and a drain line along its bottom, and rises over a dialog's scrim.
+// under its content. The notice is the width of the column, 48 high with or without its action, and wraps to two lines.
+// A computer shows it only above Главная's field in the left column, the field's width, as on the phone, and it rises
+// over a dialog's scrim (computer delta, items 11, 23).
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useUiStore } from '~/stores/ui'
 import { useNoticeSlot } from '~/composables/useNotify'
@@ -16,8 +17,6 @@ const props = withDefaults(defineProps<{
 const ui = useUiStore()
 const slot = useNoticeSlot(props.place === 'sheet' ? 1 : 0, () => props.active)
 const notice = computed(() => slot.shows.value ? ui.notice : null)
-/** The drain line starts where the clock is, read once when the notice comes here */
-const drained = computed(() => notice.value ? slot.elapsed() : 0)
 // The notice left this slot or was replaced: what held it here lets go
 watch(() => notice.value?.id, (now, before) => {
   if (before) slot.release()
@@ -50,8 +49,8 @@ watch(over, (on) => {
 onBeforeUnmount(() => window.removeEventListener('resize', measure))
 
 const pad = {
-  dock: 'pb-2 lg:pb-2.5',
-  bare: 'pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)] lg:pb-5',
+  dock: 'pb-2',
+  bare: 'pt-1.5 pb-[max(env(safe-area-inset-bottom),1.25rem)]',
   // A sheet's notice sits on its 22pt bottom, never over a row (v24 fixes, 17)
   sheet: 'px-3 pt-2 pb-[max(env(safe-area-inset-bottom),1.375rem)]'
 }
@@ -72,7 +71,7 @@ defineExpose({ showing: computed(() => !!notice.value) })
       <div
         v-if="notice"
         :key="notice.id"
-        class="flex lg:justify-end"
+        class="flex"
         :class="[pad[place], { 'fixed z-10': over }]"
         :style="over ? at : undefined"
       >
@@ -81,8 +80,8 @@ defineExpose({ showing: computed(() => !!notice.value) })
         <div
           data-notice
           data-body-keep
-          class="pointer-events-auto relative flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden rounded-card bg-inverted py-0.5 text-sm text-canvas shadow-float motion-safe:animate-rise lg:min-h-11 lg:max-w-full lg:flex-none lg:gap-1 lg:py-1.25 lg:pl-4"
-          :class="notice.action ? 'pr-1 pl-3.5 lg:pr-1.25' : 'min-h-11 px-3.5 lg:pr-4'"
+          class="pointer-events-auto relative flex min-h-12 min-w-0 flex-1 items-center gap-0.5 overflow-hidden rounded-card bg-inverted py-0.5 text-sm text-canvas shadow-float motion-safe:animate-rise"
+          :class="notice.action ? 'pr-1 pl-3.5' : 'px-3.5'"
           @mouseenter="slot.hold('hover', true)"
           @mouseleave="slot.hold('hover', false)"
           @focusin="slot.hold('focus', true)"
@@ -92,7 +91,7 @@ defineExpose({ showing: computed(() => !!notice.value) })
           @touchcancel.passive="slot.hold('touch', false)"
         >
           <!-- The padding sits outside the clamp, or the clipped third line peeks through it -->
-          <span class="min-w-0 flex-1 py-1.5 leading-snug lg:flex-initial lg:py-0.5">
+          <span class="min-w-0 flex-1 py-1.5 leading-snug">
             <span
               v-if="moved"
               class="flex min-w-0 items-baseline gap-1"
@@ -105,26 +104,15 @@ defineExpose({ showing: computed(() => !!notice.value) })
               class="line-clamp-2"
             >{{ notice.title }}</span>
           </span>
-          <template v-if="notice.action">
-            <span
-              class="hidden lg:inline"
-              aria-hidden="true"
-            >·</span>
-            <button
-              type="button"
-              class="h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-item px-2.5 font-medium lg:h-8.5 lg:px-3 lg:underline lg:underline-offset-3 lg:hover:bg-canvas/10"
-              @mousedown.prevent
-              @click="notice.action.run()"
-            >
-              {{ notice.action.label }}
-            </button>
-          </template>
-          <span
-            data-drain
-            class="absolute inset-x-0 bottom-0 hidden h-0.5 origin-left bg-faint motion-safe:animate-drain lg:block lg:motion-reduce:hidden"
-            :style="{ animationDuration: `${notice.duration}ms`, animationDelay: `-${drained}ms`, animationPlayState: slot.held.value ? 'paused' : 'running' }"
-            aria-hidden="true"
-          />
+          <button
+            v-if="notice.action"
+            type="button"
+            class="h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-item px-2.5 font-medium lg:hover:bg-canvas/10"
+            @mousedown.prevent
+            @click="notice.action.run()"
+          >
+            {{ notice.action.label }}
+          </button>
         </div>
       </div>
     </Teleport>

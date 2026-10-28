@@ -7,6 +7,7 @@ import { nextTick, ref, useTemplateRef, watch } from 'vue'
 import type { Section } from '~/domain/types'
 import type { Badge } from '~/domain/summary'
 import { useDataStore } from '~/stores/data'
+import { useSide } from '~/composables/useSide'
 import SectionMenu from './SectionMenu.vue'
 
 const props = defineProps<{
@@ -25,6 +26,8 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ toggle: [], done: [], add: [] }>()
 const data = useDataStore()
+/** In a computer's left column the caption lies on the column's surface */
+const side = useSide()
 const renaming = ref(false)
 const draft = ref(props.name)
 const input = useTemplateRef<HTMLInputElement>('input')
@@ -54,8 +57,8 @@ function cancel() {
 
 <template>
   <div
-    class="sticky top-0 z-2 mt-4 flex items-center bg-canvas"
-    :class="add ? 'h-8' : 'h-6'"
+    class="sticky top-0 z-2 mt-4 flex items-center"
+    :class="[add ? 'h-8' : 'h-6', side ? 'bg-side' : 'bg-canvas']"
   >
     <input
       v-if="renaming"
@@ -103,19 +106,25 @@ function cancel() {
         />
       </button>
     </h2>
-    <button
+    <UTooltip
       v-if="add && !renaming"
-      type="button"
-      class="relative mr-0.5 flex h-8 w-10 shrink-0 cursor-pointer items-center justify-center rounded-item text-toned after:absolute after:-inset-x-0.5 after:-inset-y-1.5 hover:text-highlighted active:bg-pressed"
-      aria-label="Новая страница"
-      data-new-page
-      @click="emit('add')"
+      text="Новая страница"
+      :disabled="!side"
     >
-      <UIcon
-        name="i-lucide-plus"
-        class="size-5"
-      />
-    </button>
+      <button
+        type="button"
+        class="relative mr-0.5 flex h-8 w-10 shrink-0 cursor-pointer items-center justify-center rounded-item text-toned after:absolute after:-inset-x-0.5 after:-inset-y-1.5 hover:text-highlighted active:bg-pressed"
+        :class="{ 'hover:bg-side-hover': side }"
+        aria-label="Новая страница"
+        data-new-page
+        @click="emit('add')"
+      >
+        <UIcon
+          name="i-lucide-plus"
+          class="size-5"
+        />
+      </button>
+    </UTooltip>
     <span
       v-if="section && !renaming"
       class="mr-0.5 flex"

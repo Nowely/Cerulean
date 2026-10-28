@@ -9,7 +9,7 @@ Read this first. The product is the client in `Client/`, a Notion-like browser a
 - **Handoff:** each mockup iteration sends the client a brief (`handoff/client-brief-*.md`) and a delta (`handoff/v21-delta.md`, …). Every item in them ends with a **Check:** line saying what to tap and what must happen.
 - **Decisions journal:** [`docs/decisions.md`](docs/decisions.md). Read the entries for an area before changing how it behaves. Add or edit entries in the same PR.
 - **State report:** `docs/ui-current-state.html` shows the app next to the mockup for every state, in light and dark, with the check table.
-- **Flow rounds:** since 22 Oct a round can polish one user flow instead of the whole app (the main flow: first open → first record → its note, `handoff/main-flow-delta.md`). It changes only the screens on that flow; other screens keep their behaviour even where the old rule now differs (Журнал keeps `AppComposer` and its receipt). Since 28 Oct every iteration touches a minimum: build only what its delta lists (`handoff/main-flow-2-delta.md` is the second round), and anything next to it waits for Josh's separate command.
+- **Flow rounds:** since 22 Oct a round can polish one user flow instead of the whole app (the main flow: first open → first record → its note, `handoff/main-flow-delta.md`). It changes only the screens on that flow; other screens keep their behaviour even where the old rule now differs (Журнал keeps `AppComposer` and its receipt). Since 28 Oct every iteration touches a minimum: build only what its delta lists (`handoff/main-flow-2-delta.md` is the second round), and anything next to it waits for Josh's separate command. The computer round (`handoff/computer-delta.md`, canvas 84, 28 Oct) puts the main flow and sync in the «Как Telegram» layout: Главная is the left column and the page, record or settings open on the right. In the mockups `python3 tools/make.py play` walks five modes, and its `computer` mode asserts what the prototype can show with a mouse; in the app `scripts/checks/computer.mjs` (`pc-…`) walks the delta's checks next to the phone's `main-flow.mjs` and `main-flow-2.mjs`.
 
 ## The loop
 
@@ -20,11 +20,11 @@ Each mockup iteration goes through the same steps:
 3. It scripts the checks it can in `Client/scripts/checks/` (one file per round, ids `<round>-<item>-<what>`; run `pnpm dev`, then `node scripts/checks.mjs <filter>`). A later round that overrules a check retires it in the same PR and says so in the PR body. Checks of a flow start from a real first run (`open(p, path, false)`: no `?demo`).
 4. It regenerates the report: run `pnpm dev`, then `pnpm shots` (`SHOTS_CHROMIUM=/opt/pw-browsers/chromium` in a cloud container). The table lists the item, its check and the result (pass, fail or partly) with a screenshot or a sentence.
 5. Acceptance: the mockups thread walks the check lines on a local build of the PR branch at 390 px and 1440 px. It writes what did not land into the PR, and the fixes go into the same PR until it passes.
-6. Josh merges the PR himself («Ready for review», then «Squash and merge»). Agents never mark a PR ready or merge it.
+6. Josh merges the PR himself («Ready for review», then «Squash and merge»). Agents never mark a PR ready or merge it, unless Josh asks the thread to: for the computer PR (28 Oct 22:10Z) the thread squash-merges it once acceptance passes.
 
 ## Constraints
 
-- Mobile first. Light is primary, dark is equal. Desktop and phone share one logic and differ only in containers.
+- Mobile first. Light is primary, dark is equal. Desktop and phone share one logic and differ only in containers. From 900 px (`lg`, `useScreen().isDesktop`) Главная is the left column (`SideColumn.vue`, `useSide()`), 390 px from 1200 px (`xl`, `isWide`) and 320 px below; the computer's few differences (no mic, «new» as a plate and a bar, one Esc handler in `AppShell.vue`) are listed under «The computer» in `docs/decisions.md`.
 - Less noise: colour only for meaning, fill rather than borders, one prominent thing per screen.
 - Colours only in `Client/app/assets/css/tokens.css`. Components use no colours, `:deep` or `!important`.
 - Auto-imports are off: import from `vue` and `#imports`.

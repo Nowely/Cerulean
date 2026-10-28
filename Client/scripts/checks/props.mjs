@@ -6,7 +6,8 @@ async function editor(p, name) {
   await open(p, '/')
   await p.getByRole('link', { name: /^Покупки/ }).first().click()
   await p.waitForURL(/\/p\//)
-  await p.getByRole('button', { name: 'Действия со страницей' }).first().click()
+  // The page's own «⋯»: on a computer each card on the left has one too
+  await p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first().click()
   await p.getByRole('dialog').or(p.getByRole('menu')).getByText(/^Свойства/).first().click()
   await p.getByRole('button', { name: `Изменить «${name}»` }).click()
   await p.waitForTimeout(500)

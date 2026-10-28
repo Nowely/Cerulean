@@ -92,10 +92,11 @@ export default [
   { id: 'v22-27-nostore-desk', device: DESKTOP, run: async (p) => {
     await breakStorage(p)
     await open(p, '/')
-    // Desktop addendum (canvas 60): the same tinted block as on the phone, above Входящие
-    const block = p.getByRole('alert').filter({ hasText: 'Изменения не сохраняются' })
+    // Desktop addendum (canvas 60): the same tinted block as on the phone, above Входящие; in the left column since the
+    // computer delta (item 1)
+    const block = p.locator('[data-home]').getByRole('alert').filter({ hasText: 'Изменения не сохраняются' })
     expect(await shows(block), 'no warning block on desktop Главная')
-    const [first, inbox] = await Promise.all([block.boundingBox(), p.locator('main').getByRole('link', { name: /^Входящие/ }).first().boundingBox()])
+    const [first, inbox] = await Promise.all([block.boundingBox(), p.locator('[data-home]').getByRole('link', { name: /^Входящие/ }).first().boundingBox()])
     expect(first.y < inbox.y, 'the block is not above Входящие')
     await block.getByRole('button', { name: 'Как исправить' }).click()
     await p.waitForURL(/\/settings/)
