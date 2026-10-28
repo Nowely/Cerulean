@@ -340,7 +340,22 @@ function moveTo(to: Id | { name: string }) {
             @click="emit('open')"
             @keydown="onKey"
           >
+            <!-- The quantity is never cut: on one line the name gives way to it (acceptance F1, canvas 78) -->
             <span
+              v-if="qty && !wrap"
+              class="flex min-w-0 items-baseline text-record"
+            >
+              <span
+                class="min-w-0 truncate"
+                :class="rec.done ? 'text-dimmed line-through' : 'text-highlighted'"
+              >{{ nb(rec.text) }}</span><span
+                class="ml-1.5 shrink-0 text-toned"
+                :class="{ 'line-through': rec.done }"
+                data-row-qty
+              >{{ qty }}</span>
+            </span>
+            <span
+              v-else
               class="text-record"
               :class="[wrap ? 'line-clamp-3' : 'truncate', rec.done ? 'text-dimmed line-through' : 'text-highlighted']"
             >{{ nb(rec.text) }}<span

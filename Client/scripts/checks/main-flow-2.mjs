@@ -397,6 +397,37 @@ export default [
     expect(m.text === 'Яйца 10 шт' && Math.round(m.gap) === 6 && m.line && m.toned, `the row: ${JSON.stringify(m)}`)
     expect(!m.right, 'the quantity still sits at the right too')
   } },
+  // Acceptance F1 (canvas 78): a long name gives way, the quantity shows whole at the row's end, ticked or not
+  { id: 'mf2-12-long', device: MOBILE, run: async (p) => {
+    await first(p)
+    await goPage(p, 'Покупки')
+    await p.locator('[data-add-row]').click()
+    await p.keyboard.type('Яйца куриные крупные отборные категории С0 10 шт')
+    await p.keyboard.press('Enter')
+    await p.keyboard.press('Escape')
+    await p.waitForTimeout(250)
+    const row = rowOf(p, 'Яйца куриные')
+    const look = () => row.evaluate((e) => {
+      const t = e.querySelector('[data-row-text]')
+      const q = t.querySelector('[data-row-qty]')
+      const name = q.previousElementSibling
+      const box = t.getBoundingClientRect()
+      const r = q.getBoundingClientRect()
+      return {
+        qty: q.textContent,
+        whole: q.scrollWidth <= q.clientWidth + 1 && r.right <= box.right + 1,
+        cut: name.scrollWidth > name.clientWidth,
+        line: Math.abs(r.top - name.getBoundingClientRect().top) < 3,
+        through: [getComputedStyle(name).textDecorationLine, getComputedStyle(q).textDecorationLine]
+      }
+    })
+    const m = await look()
+    expect(m.qty === '10 шт' && m.whole && m.cut && m.line, `the row: ${JSON.stringify(m)}`)
+    await row.locator('[data-check], [role="checkbox"]').first().click()
+    await p.waitForTimeout(200)
+    const d = await look()
+    expect(d.whole && d.through.every(x => x.includes('line-through')), `ticked: ${JSON.stringify(d)}`)
+  } },
 
   // 13. A smaller title: 20px on a phone
   { id: 'mf2-13-title', device: MOBILE, run: async (p) => {
