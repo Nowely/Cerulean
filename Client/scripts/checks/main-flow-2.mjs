@@ -267,14 +267,17 @@ export default [
     expect(!(await notice(p).count()), 'typing did not put the notice away')
     // A date the person dropped stays dropped
     await typeTitle(p, 'Позвонить маме завтра в 10')
+    // A cold dev server can lag behind the typing: the chip is tapped once it holds the whole date
+    await p.waitForFunction(() => document.querySelector('[data-date-chip]')?.textContent?.includes('10'), null, { timeout: 3000 }).catch(() => {})
     await dateChip(p).click()
     await title(p).click()
     await p.keyboard.press('End')
     await p.keyboard.press('Enter')
     await p.waitForTimeout(250)
     await notice(p).getByRole('button', { name: 'Отменить' }).click()
+    await title(p).filter({ hasText: 'Позвонить маме' }).waitFor({ timeout: 3000 }).catch(() => {})
     await p.waitForTimeout(250)
-    expect(await text(title(p)) === 'Позвонить маме завтра в 10' && !(await dateChip(p).count()), 'the dropped date came back')
+    expect(await text(title(p)) === 'Позвонить маме завтра в 10' && !(await dateChip(p).count()), `the dropped date came back: «${await text(title(p))}», chip ${await dateChip(p).count()}`)
   } },
 
   // 9. A tick strikes at once and leaves the list after a moment
