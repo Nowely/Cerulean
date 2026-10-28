@@ -269,6 +269,7 @@ export default [
     // On Главная, side by side
     await p.goto(p.url().replace(/\/settings.*$/, '/'))
     await p.waitForSelector('main')
+    await home(p)
     const names = await p.locator('[data-home] [data-name]').allInnerTexts()
     expect(names.filter(x => x.trim() === 'Покупки').length === 2, `Главная: ${names}`)
     await other.context().close()
