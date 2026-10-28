@@ -491,7 +491,9 @@ describe('properties (v22 item 30)', () => {
 
   it('deletes a property with its «Норма», values and place in the views; «Отменить» restores them', async () => {
     const { data, id, page, left, norm } = await shop()
-    const before = JSON.parse(JSON.stringify(page()))
+    // An undo is a change of its own to sync: its stamp is new, the rest is as before
+    const content = () => JSON.parse(JSON.stringify(page(), (k, v) => k === 'updatedAt' ? undefined : v))
+    const before = content()
     const n = data.propUsage(id, [left.id, norm.id])
     expect(n).toBeGreaterThan(0)
     const done = data.removeProp(id, left.id)!
@@ -500,7 +502,7 @@ describe('properties (v22 item 30)', () => {
     expect(page().views.some(v => v.shown.includes(left.id) || v.filter.some(f => f.field === left.id))).toBe(false)
     expect(Object.values(data.records).some(r => left.id in r.values || norm.id in r.values)).toBe(false)
     done.undo()
-    expect(JSON.parse(JSON.stringify(page()))).toEqual(before)
+    expect(content()).toEqual(before)
     expect(data.propUsage(id, [left.id, norm.id])).toBe(n)
   })
 })

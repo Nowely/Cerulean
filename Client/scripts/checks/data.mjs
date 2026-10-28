@@ -111,8 +111,9 @@ export default [
     await p.goto(p.url().replace(/\/(\?.*)?$/, '/settings'))
     await p.waitForSelector('main')
     const data = p.getByRole('region', { name: 'Данные' })
-    const rows = await data.locator(':scope > button, :scope > div').allInnerTexts()
-    expect(/^Не удалять при нехватке места/.test(rows[0] ?? ''), `the first row of «Данные» is «${rows[0]?.split('\n')[0]}»`)
+    // Sync (28 Oct, item 1) is the first row of «Данные» now; the shield row comes right after it
+    const rows = (await data.locator(':scope > button, :scope > div').allInnerTexts()).filter(t => !/^Синхронизация/.test(t))
+    expect(/^Не удалять при нехватке места/.test(rows[0] ?? ''), `the first row of «Данные» after «Синхронизация» is «${rows[0]?.split('\n')[0]}»`)
     expect(/Включить/.test(rows[0] ?? ''), 'no «Включить»')
     // v23 (M11): before the first copy line 2 is just «JSON или Markdown»; the status line says «копии нет»
     expect(/Сохранить копию\s*JSON или Markdown\s*$/.test(rows[1] ?? ''), 'the second row is not «Сохранить копию · JSON или Markdown»')

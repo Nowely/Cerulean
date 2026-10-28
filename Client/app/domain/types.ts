@@ -161,6 +161,8 @@ export interface Page {
   /** «новых» counts records added after this */
   seenAt: number
   deletedAt: number | null
+  /** The last change made by the person, on the clock sync compares (`stores/data.ts` `stamp`); absent: before sync */
+  updatedAt?: number
 }
 
 export type Tag = 'clarify' | 'offline'
@@ -200,6 +202,8 @@ export interface Rec {
   favorite: number | null
   openedAt?: number
   deletedAt: number | null
+  /** See `Page.updatedAt` */
+  updatedAt?: number
 }
 
 export interface Section {
@@ -207,6 +211,8 @@ export interface Section {
   name: string
   order: number
   collapsed: boolean
+  /** See `Page.updatedAt` */
+  updatedAt?: number
 }
 
 export type EntryKind = 'pending' | 'routed' | 'ask' | 'found' | 'undone' | 'offline'
@@ -249,6 +255,8 @@ export interface Entry {
    * with their marker («Позвонить @Стоматолог»), and «Отменить» gives them back as chips
    */
   links?: Id[]
+  /** See `Page.updatedAt` */
+  updatedAt?: number
 }
 
 export type ModelChoice = 'fast' | 'exact'

@@ -28,7 +28,8 @@ Each mockup iteration goes through the same steps:
 - Less noise: colour only for meaning, fill rather than borders, one prominent thing per screen.
 - Colours only in `Client/app/assets/css/tokens.css`. Components use no colours, `:deep` or `!important`.
 - Auto-imports are off: import from `vue` and `#imports`.
-- Keep it simple: no IndexedDB migrations or data protection, no sync, and CI runs lint, types and tests only (no screenshot checks).
+- Keep it simple: no IndexedDB migrations or data protection, and CI runs lint, types and tests only (no screenshot checks). Sync is the person's own S3 bucket only (`stores/cloud.ts`, `domain/bucket.ts`, `domain/s3.ts`): one file, last write wins per object.
+- Every write of a synced object goes through the data store's `save`, `saveMany` or `drop`, which stamp `updatedAt` and tell sync; a field that is not the person's change (a visit) is saved quiet. Keys never go into the bucket, a copy, a log or a screenshot; tests and shots use made-up keys and the fake bucket of `scripts/checks/sync.mjs`.
 - Before a push, run `pnpm lint`, `pnpm typecheck` and `pnpm test` in `Client/`.
 - Code, commits and PRs are in English. UI copy is Russian. Talk to Josh in Russian.
 - The live site (cerulean-nine.vercel.app) is not reachable from cloud containers, so test a local build.

@@ -6,7 +6,8 @@ const MONTH = 30 * 86400000
 export const COPY_AFTER = 20
 
 /**
- * The row under the sections of Главная. Never once the browser keeps the data for good (`persisted`).
+ * The row under the sections of Главная. Never once the browser keeps the data for good (`persisted`), nor while sync
+ * works (`synced`: connected, not stopped): the bucket holds a copy then (sync delta, item 3).
  * After a copy: a month after it. Before any copy: after 20 records, or a month after the first run once there is
  * anything to lose. «Не сейчас» puts it off for a month either way.
  */
@@ -14,9 +15,10 @@ export function copyDue(
   s: Pick<Settings, 'copiedAt' | 'copyHiddenAt' | 'startedAt'>,
   records: Rec[],
   now: number,
-  persisted: boolean | null
+  persisted: boolean | null,
+  synced = false
 ): boolean {
-  if (persisted) return false
+  if (persisted || synced) return false
   if (s.copyHiddenAt && now - s.copyHiddenAt < MONTH) return false
   if (s.copiedAt) return now - s.copiedAt >= MONTH
   const written = records.filter(r => r.addedAt >= s.startedAt).length

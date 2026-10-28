@@ -4,10 +4,16 @@
 // «⋯» of Главная: the view first («Вид»: «Со сводкой», «Компактный», a tick on the chosen one), then Журнал, Настройки,
 // «Новая секция» and Корзина. A new page is the «+» at «Мои страницы» (item 16). On the phone it is a popover under the
 // header, as in Notes and Reminders, not a sheet.
+// Sync's one sign outside Настройки sits before Найти, only when something is wrong for long (sync delta, item 13): a
+// grey cloud-off after 10 minutes offline with changes unsent, a warn cloud with «!» when sync stopped. A tap opens
+// Настройки with the sync sheet.
 import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from '#imports'
 import { useDataStore } from '~/stores/data'
+import { useCloudStore } from '~/stores/cloud'
 import { useFind } from '~/composables/useFind'
+import { useNow } from '~/composables/useNow'
+import { pendingWords } from '~/domain/bucket'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import DotsButton from '../common/DotsButton.vue'
 import TitleHeader from '../shell/TitleHeader.vue'
@@ -16,6 +22,16 @@ const emit = defineEmits<{ newSection: [], top: [] }>()
 const data = useDataStore()
 const router = useRouter()
 const find = useFind()
+const cloud = useCloudStore()
+const now = useNow()
+
+const sign = computed(() => cloud.sign(now.value))
+const signLabel = computed(() => sign.value === 'warn' ? 'Синхронизация остановлена' : `Синхронизация ждёт сети: ${pendingWords(cloud.pending.count)}`)
+/** Настройки first, the sheet over them: closing it stays in Настройки */
+async function openSync() {
+  await router.push('/settings')
+  await router.push({ query: { sync: null } })
+}
 
 const VIEWS = [
   { value: 'summary', label: 'Со сводкой' },
@@ -73,6 +89,20 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key, true))
 
 <template>
   <TitleHeader title="Главная">
+    <button
+      v-if="sign"
+      type="button"
+      class="flex size-9 cursor-pointer items-center justify-center rounded-item hover:bg-muted"
+      :class="sign === 'warn' ? 'text-warn-ink' : 'text-toned'"
+      :aria-label="signLabel"
+      data-sync-sign
+      @click="openSync"
+    >
+      <UIcon
+        :name="sign === 'warn' ? 'i-lucide-cloud-alert' : 'i-lucide-cloud-off'"
+        class="size-4.5"
+      />
+    </button>
     <ActionMenu
       :items="items"
       title="Главная"
@@ -94,6 +124,20 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key, true))
         Главная
       </button>
     </h1>
+    <button
+      v-if="sign"
+      type="button"
+      class="flex size-11 cursor-pointer items-center justify-center rounded-item active:bg-pressed"
+      :class="sign === 'warn' ? 'text-warn-ink' : 'text-toned'"
+      :aria-label="signLabel"
+      data-sync-sign
+      @click="openSync"
+    >
+      <UIcon
+        :name="sign === 'warn' ? 'i-lucide-cloud-alert' : 'i-lucide-cloud-off'"
+        class="size-5"
+      />
+    </button>
     <button
       type="button"
       class="hit-44 relative flex size-11 cursor-pointer items-center justify-center rounded-item text-toned active:bg-pressed"

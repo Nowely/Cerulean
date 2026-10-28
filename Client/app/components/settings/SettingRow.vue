@@ -14,6 +14,8 @@ withDefaults(defineProps<{
   hintTone?: 'warn'
   /** Desktop: a state dot before the hint («● Работает · gpt-6-luna»); faint while not yet checked */
   dot?: 'ok' | 'warn' | 'faint'
+  /** Phone: a warn dot before the hint too, when the hint says something stopped («Синхронизация») */
+  warnDot?: boolean
   /** Phone: the value at the right end of the line */
   value?: string
   /** Phone: an accent value is what a tap does («Включить», «Сейчас») */
@@ -83,7 +85,11 @@ const { isDesktop } = useScreen()
             v-if="hint"
             class="mt-0.5 block text-13 leading-snug"
             :class="[hintTone === 'warn' ? 'text-warn-ink' : 'text-toned', valueWraps ? 'truncate' : '']"
-          >{{ nb(hint) }}</span>
+          ><span
+            v-if="warnDot"
+            class="mr-1.5 inline-block size-2 rounded-full bg-warn align-[1px]"
+            aria-hidden="true"
+          />{{ nb(hint) }}</span>
         </span>
         <span
           v-if="value && valueWraps"

@@ -25,9 +25,9 @@ function fileFrom(change?: (d: ReturnType<typeof demo>) => void): Snapshot {
   return parseSnapshot(toJSON({ ...d, settings: { ...DEFAULT_SETTINGS }, learned: {} }))
 }
 
-/** What the user has, for comparing before and after (ids, order of keys aside) */
+/** What the user has, for comparing before and after (ids, order of keys and the sync stamp of an undone change aside) */
 function state(data: ReturnType<typeof useDataStore>) {
-  const sort = <T extends { id: string }>(xs: T[]) => JSON.parse(JSON.stringify([...xs].sort((a, b) => a.id.localeCompare(b.id))))
+  const sort = <T extends { id: string }>(xs: T[]) => JSON.parse(JSON.stringify([...xs].sort((a, b) => a.id.localeCompare(b.id)), (k, v) => k === 'updatedAt' ? undefined : v))
   return {
     pages: sort(Object.values(data.pages)),
     records: sort(Object.values(data.records)),

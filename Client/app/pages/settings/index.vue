@@ -5,6 +5,7 @@ import { computed, onMounted, ref, shallowRef, useTemplateRef } from 'vue'
 import { useColorMode, useHead, useRoute, useRouter } from '#imports'
 import type { ModelChoice } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
+import { useCloudStore } from '~/stores/cloud'
 import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
 import { useNotify } from '~/composables/useNotify'
@@ -21,6 +22,7 @@ import SegmentedControl from '~/components/common/SegmentedControl.vue'
 import CopyMenu from '~/components/settings/CopyMenu.vue'
 import SettingRow from '~/components/settings/SettingRow.vue'
 import ConnectionEditor from '~/components/settings/ConnectionEditor.vue'
+import SyncEditor from '~/components/settings/SyncEditor.vue'
 import DescriptionList from '~/components/settings/DescriptionList.vue'
 import ImportSheet from '~/components/settings/ImportSheet.vue'
 import StoreWarning from '~/components/home/StoreWarning.vue'
@@ -29,6 +31,7 @@ import { onlyCollects } from '~/domain/collect'
 useHead({ title: 'Настройки · Cerulean' })
 
 const data = useDataStore()
+const cloud = useCloudStore()
 const ui = useUiStore()
 const router = useRouter()
 const route = useRoute()
@@ -36,6 +39,7 @@ const notify = useNotify()
 const colorMode = useColorMode()
 const { isDesktop } = useScreen()
 const keyEditor = useTemplateRef<InstanceType<typeof ConnectionEditor>>('keyEditor')
+const syncEditor = useTemplateRef<InstanceType<typeof SyncEditor>>('syncEditor')
 
 // Авто
 
@@ -117,8 +121,14 @@ const copyHint = computed(() => `JSON или Markdown${copiedAt.value ? ` · п�
 /** The status line carries the copy's state (v23, B6, M11): «копии нет» or «копия 12 сентября» */
 const copyState = computed(() => copiedAt.value ? `копия ${formatDate(copiedAt.value, now.value)}` : 'копии нет')
 /** «Сохранить» in the status line while a copy is due: none yet, or the monthly reminder of Главная is due */
-const copyNeeded = computed(() => !copiedAt.value || copyDue(data.settings, Object.values(data.records), now.value, data.persisted))
+const copyNeeded = computed(() => !copiedAt.value || copyDue(data.settings, Object.values(data.records), now.value, data.persisted, cloud.working))
 const copying = ref(false)
+
+// Синхронизация (sync delta, items 1, 2, 11)
+
+const syncState = computed(() => cloud.state(now.value))
+/** The status line while sync is on: the copy is in the bucket (its name with unbroken hyphens), or sync stopped */
+const syncLine = computed(() => cloud.meta ? `Работает офлайн, копия в бакете «${cloud.meta.bucket.replace(/-/g, '\u2011')}»${cloud.stopped ? ' · синхронизация остановлена' : ''}` : '')
 
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const loaded = shallowRef<{ name: string, snap: Snapshot } | null>(null)
@@ -140,9 +150,13 @@ const trashCount = computed(() => data.trash.length)
 
 function wipe() {
   const size = sizeText(measure({ pages: Object.values(data.pages), records: Object.values(data.records) }))
+  // While sync is on only this browser is cleared: sync turns off, its key goes, the bucket keeps its copy
+  const bucket = cloud.meta?.bucket.replace(/-/g, '\u2011')
   ui.confirm({
     title: 'Удалить всё?',
-    text: `Удалятся ${size}${key.value ? ' и ключ' : ''}, вернуть их будет нельзя. Сначала можно сохранить копию.`,
+    text: bucket
+      ? `Удалятся ${size} и ключи этого браузера, синхронизация выключится. Копия в бакете «${bucket}» останется.`
+      : `Удалятся ${size}${key.value ? ' и ключ' : ''}, вернуть их будет нельзя. Сначала можно сохранить копию.`,
     action: 'Удалить всё',
     run: async () => {
       await data.wipe()
@@ -187,10 +201,12 @@ onMounted(() => {
       >
         <span
           class="mt-1.5 size-2 shrink-0 rounded-full"
-          :class="copiedAt ? 'bg-ok' : 'bg-faint'"
+          :class="cloud.on ? (cloud.stopped ? 'bg-warn' : 'bg-ok') : copiedAt ? 'bg-ok' : 'bg-faint'"
           aria-hidden="true"
         />
-        <span>Работает офлайн, всё в этом браузере · <span class="whitespace-nowrap">{{ copyState }}<template v-if="copyNeeded"> · <CopyMenu align="start">
+        <!-- While sync is on the data is no longer at risk of the browser clearing it: no «копии нет · Сохранить» -->
+        <span v-if="cloud.on">{{ syncLine }}</span>
+        <span v-else>Работает офлайн, всё в этом браузере · <span class="whitespace-nowrap">{{ copyState }}<template v-if="copyNeeded"> · <CopyMenu align="start">
           <button
             type="button"
             class="hit-44 cursor-pointer text-accent-ink hover:underline"
@@ -296,6 +312,27 @@ onMounted(() => {
         >
           Данные
         </h2>
+        <!-- Off: a grey «Подключить ›» like «Подключение»'s «Добавить ›»; stopped by an error: «Исправить ›» in accent -->
+        <SettingRow
+          v-if="!data.storageError"
+          label="Синхронизация"
+          icon="i-lucide-cloud"
+          :hint="syncState.text"
+          :hint-tone="syncState.warn ? 'warn' : undefined"
+          :dot="syncState.warn ? 'warn' : undefined"
+          :warn-dot="syncState.warn"
+          :value="!cloud.on ? 'Подключить' : cloud.meta?.error ? 'Исправить' : undefined"
+          :value-tone="cloud.meta?.error ? 'accent' : undefined"
+          opens
+          @open="syncEditor?.open()"
+        >
+          <UButton
+            :class="{ 'text-accent-ink': cloud.meta?.error }"
+            @click="syncEditor?.open()"
+          >
+            {{ !cloud.on ? 'Подключить' : cloud.meta?.error ? 'Исправить' : 'Открыть' }}
+          </UButton>
+        </SettingRow>
         <SettingRow
           v-if="data.persisted !== null && !data.storageError"
           label="Не удалять при нехватке места"
@@ -391,7 +428,7 @@ onMounted(() => {
           </UButton>
         </SettingRow>
         <p class="px-5 pt-3.5 text-13 leading-normal text-toned lg:px-0 lg:pt-4.5 lg:text-sm">
-          Синхронизации между устройствами нет: данные переносятся экспортом. Ключ хранится здесь же и уходит только в выбранный сервис.
+          Ключи хранятся только в этом браузере: в копию и в бакет они не попадают.
         </p>
       </section>
 
@@ -436,6 +473,7 @@ onMounted(() => {
       @change="onFile"
     >
     <ConnectionEditor ref="keyEditor" />
+    <SyncEditor ref="syncEditor" />
     <CopyMenu
       v-if="!isDesktop"
       v-model:open="copying"
