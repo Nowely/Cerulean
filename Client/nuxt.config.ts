@@ -47,6 +47,12 @@ export default defineNuxtConfig({
     fonts: false
   },
 
+  // Nuxt's own hourly look at builds/latest.json would reload on the next route change, and the service worker would
+  // serve that reload the old build again: plugins/app-update.client.ts handles new versions instead
+  experimental: {
+    checkOutdatedBuildInterval: false
+  },
+
   compatibilityDate: '2025-01-15',
 
   // The SPA shell is written to index.html at build time, so the service worker can precache it and the
@@ -90,9 +96,10 @@ export default defineNuxtConfig({
     ]
   },
 
-  // Installable, and the whole app is cached by a service worker: it opens without a network
+  // Installable, and the whole app is cached by a service worker: it opens without a network. A new build waits in the
+  // worker until plugins/app-update.client.ts switches to it at a safe moment, never in the middle of typing
   pwa: {
-    registerType: 'autoUpdate',
+    registerType: 'prompt',
     manifest: {
       name: 'Cerulean',
       short_name: 'Cerulean',
@@ -113,7 +120,8 @@ export default defineNuxtConfig({
       globPatterns: ['**/*.{js,css,html,svg,png,woff2}']
     },
     client: {
-      installPrompt: false
+      installPrompt: false,
+      registerPlugin: false
     }
   }
 })
