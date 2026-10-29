@@ -13,7 +13,7 @@ import { useDataStore } from '~/stores/data'
 import { useJournalStore, type Filed } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
 import { UNDO_MS, useNotify } from '~/composables/useNotify'
-import { useUpdateHold } from '~/composables/useAppUpdate'
+import { applyUpdate, bannerHidden, keepDraft, takeDraft, updateStale, useUpdateHold } from '~/composables/useAppUpdate'
 import { useNow } from '~/composables/useNow'
 import { useFind } from '~/composables/useFind'
 import { useSpeech } from '~/composables/useSpeech'
@@ -34,6 +34,7 @@ import ComposerField from './ComposerField.vue'
 import MentionRow from './MentionRow.vue'
 import PlaceChip from './PlaceChip.vue'
 import PlacesPopover from './PlacesPopover.vue'
+import UpdateBanner from '~/components/shell/UpdateBanner.vue'
 
 const props = withDefaults(defineProps<{
   /** home: Главная · page: a page's own field · today: Сегодня (Задачи, due today) */
@@ -82,6 +83,24 @@ const picked = ref<Id | null>(props.mode === 'home' ? ui.homePlace : null)
 watch(picked, (id) => {
   if (props.mode === 'home') ui.homePlace = id
 })
+
+// ---------- a new version (update-banner.md, U1) ----------
+
+/** Over the closed field, where a notice shows, and gone while a notice holds the slot */
+const banner = computed(() => updateStale.value && !bannerHidden.value && !open.value && !ui.notice)
+const draftAt = props.mode === 'home' ? 'home' : `${props.mode}:${props.pageId ?? ''}`
+// «Обновить» reloads: the words typed here come back in the same field
+const kept = takeDraft(draftAt)
+if (kept) {
+  title.value = kept.title
+  note.value = kept.note
+  links.value = kept.links
+  if (kept.picked && data.pages[kept.picked]) picked.value = kept.picked
+}
+function update() {
+  if (title.value.trim() || note.value.trim()) keepDraft({ where: draftAt, title: title.value, note: note.value, links: links.value, picked: picked.value })
+  void applyUpdate()
+}
 /** Places picked on rows of the list, by the row's title (item 8) */
 const rows = ref<Record<string, Id>>({})
 /** The places popover: over the bar's chip, or over row `i`'s chip */
@@ -552,6 +571,11 @@ function titleKey(e: KeyboardEvent) {
       :mention="mention"
       @pick="t => field?.pick(t)"
       @closed="focusTitle"
+    />
+
+    <UpdateBanner
+      v-if="banner"
+      @update="update"
     />
 
     <!-- Closed: the pill. The words not yet sent stay in ink («Продолжить: …») -->
