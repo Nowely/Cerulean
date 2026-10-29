@@ -250,6 +250,14 @@ Source: `handoff/computer-delta.md` (25 items) and `client-brief-computer.md`; J
 - **2026-10-28 · «Быстрый старт» names the field by the layout it was made in** (item 23, our call): «… в поле внизу» on a phone, «… в поле слева внизу» on a computer, picked when the first run is made, so the record never changes under the person. Code: `domain/seed.ts` (`firstRun`), `stores/data.ts` (`madeOnDesk`).
 - **2026-10-28 · Our calls, not in the delta:** the left header keeps the phone's 20 px title (the canvas draws 24); the notices keep the app's clocks (6 s after a send, 8 s after a move); `PageAside` is not shown on a computer; «Связано» shows inside the record; Настройки keep the desktop rows of v22 (the canvas draws the phone's rows in the right column, «the same rows» read as the same set); a page or record opened from Поиск or a link opens on the right like any other.
 
+## New versions of the app
+
+Source: Josh saw an open app keep the old build after a deploy (29 Oct, 08:09Z) and chose option В (19:57Z): switch silently at a safe moment, plus a quiet notice when an update waits through a long session. Checks: `scripts/app-update.mjs` (`upd-…`) against two real builds.
+
+- **2026-10-29 · The service worker waits for our word** (option В): `registerType: 'prompt'`, the module's own client plugin off; `plugins/app-update.client.ts` registers the worker. A new build is looked for when the app comes back to the front, every 15 minutes while in front and when the network returns (before, only when the page loaded, so an app resumed from the background never updated, and a cold start reloaded silently whenever the new build was ready, even mid-typing). Nuxt's hourly `builds/latest.json` check is off (`checkOutdatedBuildInterval: false`): it reloaded on the next route change into the same cached build. Code: `nuxt.config.ts`, `plugins/app-update.client.ts`.
+- **2026-10-29 · A safe moment** (our call): the app is hidden, or it has just opened or come back and the person has not tapped or typed yet; and in both cases no field, input or editor has focus and no field holds unsent words (`useUpdateHold` in `FlowField` and `AppComposer`; text in pages and records is already saved, and the store is flushed before the switch). The switch reloads every open tab, since the old code cannot load its lazy parts from the new worker; a tab being typed in reloads when it leaves the field or goes to the background. Code: `composables/useAppUpdate.ts`.
+- **2026-10-29 · The long-session notice waits for its mockup:** `updateStale` turns on after an update has waited 30 minutes with the app in front; nothing shows it until the mockups thread draws the notice and acceptance passes.
+
 ## Not built on purpose
 
 - Ideas 3 (desktop Главная as a desk) and 5 (date swipe) from v21. Source: Josh, 20 Oct 19:09.

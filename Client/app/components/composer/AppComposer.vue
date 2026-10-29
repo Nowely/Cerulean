@@ -33,6 +33,7 @@ import DestChip from './DestChip.vue'
 import RecordDest, { type RecordDestKind } from './RecordDest.vue'
 import ComposerField from './ComposerField.vue'
 import MentionRow from './MentionRow.vue'
+import { useUpdateHold } from '~/composables/useAppUpdate'
 
 const props = withDefaults(defineProps<{
   /**
@@ -59,6 +60,8 @@ const online = useOnline()
 const later = useLater()
 
 const text = ref('')
+// Unsent words are not saved anywhere: a new version of the app waits for them
+useUpdateHold(() => !!text.value.trim())
 /** What the field's chips point at («@» picks), in the order they stand */
 const links = ref<Id[]>([])
 const field = useTemplateRef<InstanceType<typeof ComposerField>>('field')

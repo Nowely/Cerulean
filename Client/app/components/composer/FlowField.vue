@@ -13,6 +13,7 @@ import { useDataStore } from '~/stores/data'
 import { useJournalStore, type Filed } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
 import { UNDO_MS, useNotify } from '~/composables/useNotify'
+import { useUpdateHold } from '~/composables/useAppUpdate'
 import { useNow } from '~/composables/useNow'
 import { useFind } from '~/composables/useFind'
 import { useSpeech } from '~/composables/useSpeech'
@@ -67,6 +68,8 @@ const links = ref<Id[]>([])
 const note = ref('')
 /** The note line was filled by the model's reading, not typed: a new reading may replace it (item 23) */
 const noteBy = ref<'model' | null>(null)
+// Unsent words are not saved anywhere: a new version of the app waits for them
+useUpdateHold(() => !!(title.value.trim() || note.value.trim()))
 /** The date words dropped with a tap on the date chip: while typed the same, no date (item 7) */
 const noDate = ref<string | null>(null)
 /** The model's own date dropped the same way, for the words it was read from */
