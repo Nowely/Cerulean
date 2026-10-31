@@ -1,0 +1,30 @@
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+
+
+:root{--bg:#EDEDEA;--fg:#29292C;--muted:#67676B;--line:#D9D9D5;--btn:#FFFFFF}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D151A;--fg:#D3DCE1;--muted:#8B9AA3;--line:#33414A;--btn:#1A2329;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0D151A;--fg:#D3DCE1;--muted:#8B9AA3;--line:#33414A;--btn:#1A2329;color-scheme:dark}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font:400 14px/1.4 Onest,system-ui,sans-serif;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0;overflow:hidden}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:center;padding-block:12px 10px}
+.bar b{font-weight:600}
+.bar select,.bar button{font:inherit;color:var(--fg);background:var(--btn);border:1px solid var(--line);border-radius:8px;height:34px;padding:0 10px;max-width:min(420px,100%)}
+.bar button{cursor:pointer}
+.bar button:disabled{opacity:.4;cursor:default}
+.stage{display:flex;justify-content:center}
+.phone{width:390px;height:844px;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--line),0 12px 40px rgba(0,0,0,.18);transform-origin:top center;flex:none}
+.phone.wide{border-radius:10px}
+#root{width:100%;height:100%}
+/* On a touch screen: the whole screen, no frame, the phone's keyboard */
+html.live body{padding:0}
+html.live .bar{display:none}
+html.live .phone{width:100vw;height:auto;border-radius:0;box-shadow:none;transform:none!important}
+html.live #root{position:fixed;left:0;top:0;width:100vw;height:var(--vvh,100dvh)}
+html.live .app{width:100vw!important;height:var(--vvh,100dvh)!important}
+html.live .kbd{display:none!important}
+html.live .app.kb{padding-bottom:0!important}
+html.live .stb,html.live .hind{display:none!important}
+html.live .app{--sat:env(safe-area-inset-top,0px)}
+html.live .app:not(.kb) .dock{padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}
+/* iOS zooms into a field under 16px: the note line reads 16 on a real phone */
+html.live .cl2 textarea,html.live .cl2::after{font-size:16px!important}

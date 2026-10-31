@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Лист синхронизации</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.t-light{--bg:#FCFCFB;--surface:#F1F1EF;--trk:#EAEAE8;--seg-on:#FFFFFF;--seg-shadow:0 1px 2px rgba(20,20,25,.12);--hover:#F4F4F2;--pressed:#E6E6E4;--sel:#ECECEA;--fresh:#E5EDF3;--bubble:#F1F1EF;--line:#E4E4E1;--line2:#CDCDC9;--ring:#7C7C79;--ink:#161618;--text:#29292C;--muted:#4E4E52;--faint:#67676B;--placeholder-lg:#7E7E82;--accent:#1F5F8B;--accent-ink:#1A4F75;--on-accent:#FFFFFF;--accent-soft:#E5EDF3;--text-sel:#B9D2E6;--warn:#A4401C;--warn-ink:#8E3613;--ok:#3B6F4B;--knob:#FFFFFF;--scrim:rgba(20,26,33,.32);--float:0 6px 24px rgba(20,26,33,.08);--side:#F1F1EF;--side-hover:#E9E9E7;--side-sel:#E2E2E0;--rail:#EAEAE8;--panel:#FFFFFF;--elev:#FFFFFF;--kb-bg:#D3D7DD;--kb-key:#FFFFFF;--kb-key2:#AEB4BD;--kb-ink:#141A21;--c-green:#2E7D55;--c-blue:#1F5F8B;--c-brown:#8B6446;--c-yellow:#9A6F0E;--c-pink:#B0457A;--c-purple:#6E55B5;--c-gray:#66707C;--c-teal:#1C7A74;--b-green:#E3F2EA;--b-blue:#E5EDF3;--b-brown:#F1E9E2;--b-yellow:#F7EED3;--b-pink:#F7E6EF;--b-purple:#ECE8F7;--b-gray:#ECEFF2;--b-teal:#DDF0EE;--c-green-ink:#176B44;--c-blue-ink:#1F5F8B;--c-brown-ink:#795335;--c-yellow-ink:#7F5500;--c-pink-ink:#9D3369;--c-purple-ink:#644AA9;--c-gray-ink:#565F6B;--c-teal-ink:#006863;--chip:#FFFFFF;--chip-pressed:#DEDEDB;--chip-elev:#EAEAE8;--chip-elev-pressed:#D2D2CE;--warn-fill:#A4401C;--on-warn:#FFFFFF;--warn-soft:#F6EAE4}
+.t-dark{--bg:#161F26;--surface:#0D151A;--trk:#0D151A;--seg-on:#27333B;--seg-shadow:none;--hover:#1B252C;--pressed:#232E36;--sel:#1D282F;--fresh:#153045;--bubble:#0D151A;--line:#232D33;--line2:#33414A;--ring:#7B8990;--ink:#E9F0F2;--text:#D3DCE1;--muted:#A5B4BB;--faint:#8B9AA3;--placeholder-lg:#6F7E87;--accent:#78B2DF;--accent-ink:#ADD3F3;--on-accent:#0A1723;--accent-soft:#153045;--text-sel:#27496A;--warn:#EF9F67;--warn-ink:#F4B88D;--ok:#8EC899;--knob:#FFFFFF;--scrim:rgba(0,0,0,.55);--float:0 6px 24px rgba(0,0,0,.4);--side:#0B1216;--side-hover:#131B21;--side-sel:#1D282F;--rail:#0B1216;--panel:#1A2329;--elev:#1A2329;--kb-bg:#2B2F35;--kb-key:#4A4F57;--kb-key2:#363A41;--kb-ink:#EEF2F5;--c-green:#6FBF8F;--c-blue:#78B2DF;--c-brown:#C29A7C;--c-yellow:#D9B04E;--c-pink:#E07FAE;--c-purple:#A592E8;--c-gray:#9AA5B1;--c-teal:#5CC1B8;--b-green:#17352A;--b-blue:#153045;--b-brown:#33281F;--b-yellow:#362D14;--b-pink:#3A1F2D;--b-purple:#2A2440;--b-gray:#252B31;--b-teal:#123230;--c-green-ink:#72C291;--c-blue-ink:#7CB6E3;--c-brown-ink:#CBA384;--c-yellow-ink:#D9B04E;--c-pink-ink:#EB89B8;--c-purple-ink:#AF9CF3;--c-gray-ink:#A1ACB8;--c-teal-ink:#5CC1B8;--chip:#212C33;--chip-pressed:#303D46;--chip-elev:#27333B;--chip-elev-pressed:#3A4852;--warn-fill:#A84A26;--on-warn:#FFFFFF;--warn-soft:#33241D}
+/* The main flow's one stylesheet: the screen (flow/Flow.html) and every part on the «Компоненты» page (flow/parts/*.html)
+   carry all of it, in this order, so a part looks the same alone and inside a screen (the canvas puts each file's
+   <helmet> on the page once) */
+/* The main flow (22 Oct reset): first open → first record → its note, on the canvas's own metrics. Nothing on the way
+   explains itself in words: the place name on the field is what Авто decided, the row and one toast are the result */
+.app{--pgbg:var(--bg);width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;font-family:Onest,system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+.app button,.app input,.app textarea{font-family:inherit}
+.app.kb{padding-bottom:286px}
+/* The phone's own edges (fresh review S9): the artboard draws the status bar and the home indicator so the height is
+   honest; the live prototype pads by the phone's insets instead */
+.app{--sat:47px}
+.app:not(.desk){padding-top:var(--sat)}
+.stb{position:absolute;left:0;right:0;top:0;height:47px;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 46px;box-sizing:border-box;color:var(--ink);font-size:16px;font-weight:600;pointer-events:none}
+.stb svg{display:block}
+.stb.off rect:nth-of-type(-n+4),.stb.off path{opacity:.25}
+.hind{position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:var(--ink);z-index:6;pointer-events:none}
+.app.kb .hind{background:var(--kb-ink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.noscroll{scrollbar-width:none}
+.noscroll::-webkit-scrollbar{display:none}
+input:focus,textarea:focus{outline:none}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.ib{position:relative;width:44px;height:44px;flex:0 0 44px;border:0;border-radius:12px;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.ib:active,.sv:active,.lit:active,.addr:active,.pi:active,.backb:active{background:var(--pressed)}
+/* Главная: the title role (24/600), Найти and «⋯» (Журнал moves into «⋯»); rows are one line, no status under a name */
+.hh{display:flex;align-items:center;height:52px;flex:0 0 52px;padding:0 4px 0 16px}
+.hht{flex:1;min-width:0;margin:0;font-size:24px;font-weight:600;letter-spacing:-.015em;color:var(--ink)}
+.home{flex:1;min-height:0;overflow-y:auto;padding:0 8px 16px}
+.sv{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 8px;border:0;border-radius:12px;background:transparent;color:var(--ink);text-align:left;cursor:pointer;box-sizing:border-box}
+.tile{position:relative;width:18px;height:18px;flex:0 0 18px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted)}
+.svn{flex:0 1 auto;min-width:0;font-size:16px;font-weight:500;line-height:22px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ndot{flex:0 0 6px;width:6px;height:6px;border-radius:3px;background:var(--muted)}
+/* «Со сводкой» (Josh 22 Oct: each page is a card, like a letter or a chat): a plate, the name with how many are open on
+   the right (Reminders, Things), and what is in it under the name, cut where it ends (Mail, Telegram); an empty page is its
+   name alone, it fills in with the first record */
+.home.cards .sv{min-height:60px;padding:8px}
+.home.cards .tile{width:36px;height:36px;flex:0 0 36px;border-radius:10px}
+.t-light .home.cards .tile{background:var(--surface)}
+.t-dark .home.cards .tile{background:var(--chip)}
+.svb{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.svt{display:flex;align-items:baseline;gap:6px;min-width:0}
+.svt .svn{flex:0 1 auto}
+.svtm{flex:0 0 auto;font-size:15px;line-height:20px;color:var(--faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+.svs{display:flex;align-items:center;gap:10px;min-width:0}
+.svsx{flex:1;min-width:0;font-size:14px;line-height:19px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home.cards .ndot{flex-basis:8px;width:8px;height:8px;border-radius:4px}
+/* each card is a part in its own box on the canvas, so «next card» is a class (nx), not a sibling selector */
+.home.cards .sv.nx{margin-top:2px}
+/* The dot sits at the right edge in both views (Telegram, Mail) */
+.svt .ndot{margin-left:auto}
+/* «Компактный»: the classic list, names only */
+.home.compact .sv{min-height:44px}
+/* Главная «⋯»: the view first, then Журнал and Настройки */
+.mwash{position:absolute;inset:0;z-index:5;border:0;padding:0;background:transparent;cursor:default}
+.hmenu{position:absolute;right:16px;top:48px;width:232px;padding:6px;border:1px solid var(--line);border-radius:14px;background:var(--elev);box-shadow:var(--float);box-sizing:border-box;z-index:6}
+.t-dark .hmenu{border-color:var(--line2)}
+.hmc{padding:4px 10px 2px;font-size:12px;font-weight:500;letter-spacing:.02em;line-height:20px;color:var(--muted)}
+.hsep{height:1px;margin:6px 4px;background:var(--line)}
+/* A row that just got a record keeps the fresh tint for 4 s, then fades in 1 s (as on pages, v22) */
+@keyframes frf{to{background:transparent}}
+.sv.fresh{background:var(--fresh);animation:frf 1s ease 4s forwards}
+.t-light .home.cards .sv.fresh .tile{background:var(--elev)}
+.t-dark .home.cards .sv.fresh .tile{background:var(--surface)}
+.sh{display:flex;align-items:center;margin-top:16px}
+.shn{flex:1;min-width:0;padding:0 8px;font-size:12px;font-weight:500;letter-spacing:.02em;line-height:24px;color:var(--muted)}
+.ib.shp{width:40px;height:32px;flex:0 0 40px;border-radius:8px;color:var(--muted)}
+.ib.shp::after{content:'';position:absolute;left:-2px;right:-2px;top:-8px;bottom:-4px}
+/* One field on Главная and on pages: closed, a 44px pill with the place and the example; open, a card over the keyboard */
+.dock{flex:0 0 auto;padding:6px 12px 34px;display:flex;flex-direction:column;gap:8px;position:relative;z-index:3;background:var(--pgbg)}
+.app.kb .dock{padding-bottom:8px}
+.cmp{position:relative;display:flex;align-items:center;gap:2px;min-height:44px;padding:3px;border:1px solid var(--line2);border-radius:22px;background:var(--elev);box-sizing:border-box}
+.t-dark .cmp,.t-dark .cmpc{border-color:var(--line2)}
+.dest{position:relative;display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 6px 0 11px;border:0;border-radius:18px;background:transparent;color:var(--muted);font-size:15px;font-weight:500;cursor:pointer;white-space:nowrap;flex:0 0 auto;max-width:164px;box-sizing:border-box}
+.dest::after{content:'';position:absolute;left:0;right:0;top:-4px;bottom:-4px}
+.dest span{overflow:hidden;text-overflow:ellipsis}
+.dest svg{flex:0 0 13px;color:var(--faint)}
+/* Авто's decision is the place itself, tinted like a recognised date (one look for «recognised»); it deepens for a moment
+   when it changes. A place picked by hand is plain */
+.dest.auto{background:var(--accent-soft);color:var(--accent-ink)}
+@keyframes dch{from{background:color-mix(in srgb,var(--accent) 30%,var(--accent-soft))}to{background:var(--accent-soft)}}
+.dest.flash{animation:dch .9s ease-out}
+.dest:active{background:var(--pressed)}
+.cmpt{flex:1;min-width:0;align-self:stretch;margin:-3px 0;display:block;padding:0 6px;border:0;background:transparent;color:var(--faint);font-size:16px;line-height:44px;text-align:left;cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Unsent words stay in the closed field (Mail, Telegram drafts) */
+.cmpt.draft{color:var(--ink)}
+.snd::after,.cmp .ib::after{content:'';position:absolute;inset:-4px}
+.snd{position:relative;width:36px;height:36px;flex:0 0 36px;border:0;border-radius:18px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.cmp .ib,.cmpc .ib{width:36px;height:36px;flex:0 0 36px;border-radius:18px}
+.wash{position:absolute;inset:0;z-index:2;border:0;padding:0;background:color-mix(in srgb,var(--bg) 62%,transparent);cursor:default}
+.cmpc{position:relative;display:flex;flex-direction:column;gap:2px;padding:10px 6px 6px;border:1px solid var(--line);border-radius:20px;background:var(--elev);box-shadow:var(--float);box-sizing:border-box}
+.cl{position:relative;display:grid;min-width:0}
+.cl::after{content:attr(data-v) ' ';visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word}
+.cl::after,.cl textarea,.clh{grid-area:1/1;min-width:0;border:0;margin:0;font:inherit;padding:2px 10px;box-sizing:border-box;overflow-wrap:break-word;white-space:pre-wrap}
+.cl textarea{width:100%;background:transparent;resize:none;overflow:hidden;caret-color:var(--accent)}
+.cl1::after,.cl1 textarea,.cl1 .clh{font-size:17px;line-height:24px;min-height:28px}
+.cl1 textarea{color:var(--ink)}
+.cl2::after,.cl2 textarea{font-size:16px;line-height:22px;min-height:26px;max-height:110px}
+.cl2 textarea{color:var(--text);overflow-y:auto}
+.cl textarea::placeholder{color:var(--faint)}
+/* A recognised date is tinted under the text where it was typed; the words stay the words (Todoist) */
+.clh{color:transparent;pointer-events:none}
+.clh mark{--mk:color-mix(in srgb,var(--accent) 22%,var(--elev));background:var(--mk);color:transparent;border-radius:4px;box-shadow:0 0 0 2px var(--mk)}
+.cbar{display:flex;align-items:center;gap:4px;margin-top:4px}
+.cbar .sp{flex:1}
+/* The date Авто read is a button: a tap drops it and keeps the words as typed (Todoist) */
+.cdue{position:relative;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px 0 7px;border:0;border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer}
+.cdue::after{content:'';position:absolute;left:0;right:0;top:-8px;bottom:-8px}
+.cdue .x{margin-left:1px;opacity:.7}
+/* Several records in one line (a list of things to buy by the rules; anything with a model): the records that will be
+   added, each with its place (Todoist Ramble, Extract tasks). One record never shows a list: its fields fill in */
+.drs{display:flex;flex-direction:column;margin:6px 4px 0;border-top:1px solid var(--line);transition:opacity .15s}
+/* While the words change, the last reading dims and can't be touched until the next one */
+.drs.stale{opacity:.5;pointer-events:none}
+.t-dark .drs{border-color:var(--line2)}
+.dr{display:flex;align-items:flex-start;gap:10px;padding:8px 0 6px 6px;min-height:44px;box-sizing:border-box}
+.dr + .dr{border-top:1px solid var(--line)}
+.t-dark .dr + .dr{border-color:var(--line2)}
+.drbu{flex:0 0 6px;width:6px;height:6px;margin:8px 6px 0 6px;border-radius:3px;background:var(--faint)}
+.drb{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.drt{font-size:16px;line-height:22px;color:var(--ink);overflow-wrap:break-word}
+.drn{font-size:14px;line-height:19px;color:var(--muted);overflow-wrap:break-word}
+.drn .due{color:var(--accent-ink)}
+.dr .dest{height:30px;margin-top:-3px;font-size:14px;padding:0 6px 0 9px;max-width:132px}
+.dr .dest::after{top:-7px;bottom:-7px}
+@keyframes drin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.dr{animation:drin .22s ease-out both}
+/* The places: a popover over the field's chip, the current one ticked */
+.plp{position:absolute;left:2px;bottom:calc(100% + 8px);width:232px;padding:6px;border:1px solid var(--line);border-radius:14px;background:var(--elev);box-shadow:var(--float);box-sizing:border-box;z-index:5}
+.t-dark .plp{border-color:var(--line2)}
+.pi{display:flex;align-items:center;gap:12px;width:100%;height:44px;padding:0 10px;border:0;border-radius:10px;background:transparent;color:var(--ink);font-size:16px;text-align:left;cursor:pointer;box-sizing:border-box}
+.pi svg{color:var(--muted);flex:0 0 18px}
+.pi .tick{margin-left:auto;color:var(--accent-ink)}
+.pi.on{background:var(--sel)}
+.hmenu .pi.on{background:transparent}
+.toast{display:flex;align-items:center;gap:2px;min-height:48px;box-sizing:border-box;background:var(--ink);color:var(--bg);border-radius:12px;padding:2px 4px 2px 14px;font-size:14px;box-shadow:var(--float)}
+.toastt{flex:1;min-width:0;padding:6px 0;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast button{border:0;background:transparent;color:inherit;font-size:14px;font-weight:500;padding:0 10px;height:44px;cursor:pointer;white-space:nowrap}
+/* Pages and records */
+.pgh{position:relative;display:flex;align-items:center;height:44px;flex:0 0 44px;padding:0 6px 0 4px}
+.pgh .sp{flex:1}
+.backb{display:flex;align-items:center;gap:2px;height:44px;padding:0 10px 0 4px;border:0;border-radius:12px;background:transparent;color:var(--accent-ink);font-size:16px;cursor:pointer;max-width:240px}
+.backb span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pgs{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 0 16px}
+.pgtr{display:flex;align-items:center;gap:10px;padding:0 16px}
+.pgtr .tile{width:24px;height:24px;flex:0 0 24px}
+.pgt{flex:1;min-width:0;margin:0;font-size:20px;line-height:1.3;font-weight:600;letter-spacing:-.015em;color:var(--ink);overflow-wrap:break-word}
+.pgti{display:block;width:100%;margin:0;border:0;padding:0;background:transparent;font-size:20px;line-height:1.3;font-weight:600;letter-spacing:-.015em;color:var(--ink);caret-color:var(--accent);box-sizing:border-box}
+.pgti::placeholder{color:var(--placeholder-lg);font-weight:500}
+.vbar{display:flex;align-items:center;gap:24px;margin-top:8px;padding:0 16px;border-bottom:1px solid var(--line)}
+.vt{height:44px;padding:0;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:transparent;color:var(--muted);font-size:15px;cursor:pointer;white-space:nowrap}
+.vt.on{color:var(--ink);font-weight:500;border-bottom-color:var(--ink)}
+.list{padding-top:6px}
+.li{position:relative;display:flex;align-items:flex-start;min-height:44px;margin:0 4px;border-radius:10px;padding:0 12px 0 0}
+.li.fresh{background:var(--fresh);animation:frf 1s ease 4s forwards}
+.chk{position:relative;width:44px;height:44px;flex:0 0 44px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.ckb{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:1.5px solid var(--ring);box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:var(--on-accent)}
+.ckb svg{width:12px;height:12px}
+.ckb.on{background:var(--muted);border-color:var(--muted)}
+.ckb.lg{width:24px;height:24px;flex:0 0 24px}
+.lit{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;min-height:44px;border:0;border-radius:8px;background:transparent;color:var(--ink);font-size:16px;text-align:left;cursor:pointer;padding:4px 2px;box-sizing:border-box}
+.litx{display:flex;min-width:0;line-height:22px}
+.litn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lit.done .litx,.lit.done .litn{color:var(--faint);text-decoration:line-through}
+.lits{font-size:14px;line-height:19px;color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
+/* the name gives way to the quantity, which is never cut (acceptance of PR #17) */
+.litq{flex:none;margin-left:6px;color:var(--muted)}
+.mv{flex:0 0 auto;align-self:center;display:flex;align-items:center;justify-content:center;min-width:44px;height:44px;margin-right:-8px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:14px;font-weight:500;cursor:pointer;box-sizing:border-box}
+.pi.sugp{background:var(--accent-soft);color:var(--accent-ink)}
+.rpop{left:auto;right:4px;bottom:auto;top:46px;z-index:6}
+.pnew{color:var(--muted)}
+div.pnew{box-shadow:inset 0 0 0 1px var(--line2);cursor:text}
+.pnin{flex:1;min-width:0;height:40px;border:0;padding:0;background:transparent;color:var(--ink);font-size:16px;font-family:inherit;caret-color:var(--accent);outline:none}
+.pnin::placeholder{color:var(--faint)}
+.lits .due{color:var(--accent-ink)}
+.liin{flex:1;min-width:0;height:44px;border:0;padding:0 2px;background:transparent;color:var(--ink);font-size:16px;caret-color:var(--accent)}
+.liin::placeholder{color:var(--faint)}
+/* «+ Новая запись» and «+ Подпункт»: the list's last line, on the list's grid, muted; a tap makes a line in place */
+.addr{display:flex;align-items:center;gap:0;width:calc(100% - 8px);min-height:44px;margin:0 4px;padding:0 12px 0 2px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:16px;text-align:left;cursor:pointer;box-sizing:border-box}
+.addr .pl{width:42px;flex:0 0 42px;display:flex;align-items:center;justify-content:center;color:var(--faint)}
+.empty{padding:14px 16px 4px;font-size:15px;color:var(--faint)}
+/* A record: circle and title, the properties (one line per value, then «+ Свойство»), the body, the subitems */
+.rh{display:flex;align-items:flex-start;gap:2px;padding:6px 16px 0 4px}
+.rh .chk{width:44px;height:44px;flex:0 0 44px;margin:-7px 0 -7px 0;justify-content:center}
+.pp{display:flex;align-items:center;min-height:40px;padding:0 16px;font-size:15px}
+.ppk{flex:0 0 112px;color:var(--muted)}
+.ppv{flex:1;min-width:0;color:var(--ink)}
+.ppv.due{color:var(--accent-ink)}
+.addp{display:flex;align-items:center;width:calc(100% - 8px);min-height:44px;margin:0 4px;padding:0 12px 0 0;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:16px;text-align:left;cursor:pointer;box-sizing:border-box}
+.addp .pl{width:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:center;color:var(--faint)}
+.addp:active{background:var(--pressed)}
+.props{padding-top:10px}
+.bd{margin:14px 16px 0;font-size:16px;line-height:24px;color:var(--text);overflow-wrap:break-word;cursor:text;min-height:24px}
+.bd.ph{color:var(--faint)}
+.bl{position:relative;min-height:24px}
+.bl + .bl{margin-top:4px}
+.bl.h{margin-top:14px;font-size:20px;line-height:28px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.bl.h:first-child{margin-top:0}
+.bl.ul,.bl.ol{padding-left:24px}
+.bl.ul + .bl.ul,.bl.ol + .bl.ol{margin-top:2px}
+.bl.ul::before{content:'';position:absolute;left:9px;top:10px;width:5px;height:5px;border-radius:50%;background:var(--faint)}
+.bl.q{padding-left:14px}
+.bl.q::before{content:'';position:absolute;left:0;top:2px;bottom:2px;width:2px;border-radius:1px;background:var(--line2)}
+.bln{position:absolute;left:0;width:18px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.bli{display:block;width:100%;min-height:24px;margin:0;border:0;padding:0;background:transparent;font:inherit;color:inherit;letter-spacing:inherit;caret-color:var(--accent)}
+.bli::placeholder{color:var(--faint);font-weight:400}
+.subcap{padding:18px 16px 0;font-size:12px;font-weight:500;letter-spacing:.02em;line-height:24px;color:var(--muted)}
+.subs{padding-top:2px}
+.bd + .subs .addr{margin-top:8px}
+/* The editing bar takes the field's slot while the text has focus: the 44px pill, tools, «Готово» (v23) */
+.eb{display:flex;align-items:center;min-height:44px;padding:0 1px;border:1px solid var(--line);border-radius:22px;background:var(--elev);box-sizing:border-box}
+.t-dark .eb{border-color:var(--line2)}
+.ebt{position:relative;width:44px;height:44px;flex:0 0 44px;border:0;border-radius:12px;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.ebt:active{background:var(--pressed)}
+.ebt.off{color:var(--faint);cursor:default}
+.ebt.on{background:var(--accent-soft);color:var(--accent-ink)}
+.ebh{font-size:17px;font-weight:600;line-height:1}
+.ebs{flex:1}
+.ebd{height:44px;flex:0 0 auto;padding:0 12px 0 8px;border:0;border-radius:12px;background:transparent;color:var(--accent-ink);font-size:15px;font-weight:500;cursor:pointer;white-space:nowrap}
+/* A new page: the title field and, above the keyboard, what to start with; it goes once the page has anything in it */
+.pgst{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:0 4px}
+.chip::after{content:'';position:absolute;left:0;right:0;top:-4px;bottom:-4px}
+.pgstl{flex:0 0 100%;padding-left:0;font-size:12px;font-weight:500;letter-spacing:.02em;line-height:24px;color:var(--muted)}
+.pgst .chip{padding:0 12px 0 9px}
+/* Under a page's title: the rest of the page is where its text goes (Notion), a tap puts the caret there */
+.pgfill{min-height:360px;cursor:text}
+.chip{position:relative;display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;height:36px;padding:0 12px 0 9px;border:0;border-radius:8px;background:var(--chip);color:var(--text);font-size:14px;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.t-light .chip{box-shadow:inset 0 0 0 1px var(--line)}
+.t-dark .chip{background:var(--chip-elev)}
+.chip svg{color:var(--muted)}
+.chip:active{background:var(--chip-pressed)}
+.main{flex:1;min-height:0;display:flex;flex-direction:column}
+.col{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+/* The computer (Josh 28 Oct, «Как Telegram»): the left column is Главная itself, phone-wide, with its field at the bottom;
+   the open page is on the right in a 720 column (Apple Mail: the list beside the open letter; Notion 2026: Home moved into
+   the sidebar). One list of pages, never a copy of it. No keyboard and no wash: the field opens in place */
+.app.desk{width:1440px;height:900px;flex-direction:row}
+.lc{position:relative;flex:0 0 390px;width:390px;min-height:0;display:flex;flex-direction:column;border-right:1px solid var(--line);box-sizing:border-box}
+.lc .hh{height:60px;flex-basis:60px;padding-top:8px}
+.lc .hmenu{top:56px}
+.lc .dock{padding:6px 12px 16px}
+.desk .main{flex:1;min-width:0;display:flex;flex-direction:column}
+.desk .col{width:100%;max-width:752px;margin:0 auto}
+.desk .pgh{height:56px;flex-basis:56px;padding-top:12px}
+.desk .pgt,.desk .pgti{font-size:30px}
+.desk .pgtr .tile{width:28px;height:28px;flex-basis:28px}
+.desk .cmpc{box-shadow:none}
+.desk .sv:hover,.desk .li:hover{background:var(--hover)}
+/* The left column on its own surface, like Mail's and Notion's sidebars (review 28 Oct, 12): hover and the open page's card
+   in the sidebar's own steps, quiet like Notion's current page; plates lift off it */
+.side{--pgbg:var(--side);--tilebg:var(--elev);background:var(--side)}
+.t-dark .side,.t-dark.side{--tilebg:var(--chip)}
+.side .sv:hover{background:var(--side-hover)}
+.side .sv.sel,.side .sv.sel:hover{background:var(--side-sel)}
+.side .home.cards .tile{background:var(--tilebg)}
+/* On a computer a filled row means «open» (Mail, Finder): «new» goes on the card's plate and the record's left edge, and
+   goes after the same 4 s (review 28 Oct, 8) */
+.side .sv.fresh{animation:none}
+.side .sv.fresh:not(.sel){background:transparent}
+.side .sv.fresh:not(.sel):hover{background:var(--side-hover)}
+.side .sv.fresh .tile{color:var(--accent);animation:frt 1s ease 4s forwards}
+.side .home.cards .sv.fresh .tile{background:var(--accent-soft)}
+@keyframes frt{to{color:var(--muted);background:var(--tilebg)}}
+.desk .li.fresh{background:transparent;animation:none}
+.desk .li.fresh:hover{background:var(--hover)}
+.desk .li.fresh::before{content:'';position:absolute;left:2px;top:10px;bottom:10px;width:3px;border-radius:2px;background:var(--accent);animation:frb 1s ease 4s forwards}
+@keyframes frb{to{opacity:0}}
+/* Page actions at the window's top-right, as in Notion and Mail (review 28 Oct, 10) */
+.desk .main{container-type:inline-size}
+.desk .pgh>.ib{position:absolute;top:12px;right:calc(12px - (100cqw - 100%) / 2)}
+.app:focus{outline:none}
+.desk .pgtr{padding-left:12px}
+.desk .cmpc:focus-within{border-color:var(--ring)}
+.desk .li .mv{opacity:0}
+.desk .li:hover .mv,.desk .li:focus-within .mv,.desk .li .mv[aria-expanded="true"]{opacity:1}
+.pgst.inpg{padding:12px 16px 4px}
+/* the sync sheet is a window on the computer */
+/* The window grows down from a fixed top, so its fields stay put when an error line comes (macOS sheets) */
+.desk .sheet{left:50%;right:auto;top:160px;bottom:auto;width:440px;max-height:calc(100% - 208px);transform:translateX(-50%);border-radius:16px;padding:20px 24px 24px}
+.desk .grab{display:none}
+.t-dark.desk .sheet{border:1px solid var(--line2)}
+.plp.end{left:auto;right:2px}
+/* The keyboard, as on every phone state */
+.kbd{position:absolute;left:0;right:0;bottom:0;height:286px;background:var(--kb-bg);color:var(--kb-ink);padding:0 3px;box-sizing:border-box;z-index:4}
+.kbs{display:flex;height:44px;align-items:center}
+.kbs span{flex:1;text-align:center;font-size:16px;border-left:1px solid var(--kb-key2)}
+.kbs span:first-child{border-left:0}
+.kbr{display:flex;justify-content:center;gap:5px;margin-bottom:11px}
+.k{flex:0 0 30px;height:42px;border-radius:6px;background:var(--kb-key);display:flex;align-items:center;justify-content:center;font-size:21px;box-shadow:0 1px 0 var(--kb-key2)}
+.k.w{flex:0 0 42px;background:var(--kb-key2);font-size:15px}
+.k.e{flex:0 0 32px;background:var(--kb-key2);font-size:17px}
+.k.sp{flex:1 1 auto;font-size:15px}
+.k.go{flex:0 0 88px;background:var(--accent);color:var(--on-accent);font-size:15px}
+.k.go.ret{background:var(--kb-key2);color:var(--kb-ink)}
+/* Sync through S3 (28 Oct brief): Настройки as the app draws them today, one new row in «Данные», its sheet like
+   «Подключение», and one quiet glyph on Главная's header when something is wrong for long (Things Cloud: the state and
+   the error live in the setting; Google Docs: a status beside the title only when it matters) */
+.sts{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 0 24px}
+.stt{padding:2px 16px 0}
+.stl{display:flex;gap:8px;margin:6px 16px 2px;font-size:14px;line-height:20px;color:var(--muted)}
+.stl .lk{font-size:14px}
+.sdot{flex:0 0 8px;width:8px;height:8px;margin-top:6px;border-radius:4px;background:var(--faint)}
+.sdot.ok{background:var(--ok)}
+.sdot.warn{background:var(--warn)}
+.srh .sdot{margin:0 6px 0 0;display:inline-block;vertical-align:1px}
+.stc{margin:0;padding:16px 16px 2px;font-size:14px;line-height:24px;font-weight:400;color:var(--muted)}
+.srow{display:flex;align-items:center;gap:14px;width:100%;min-height:56px;padding:9px 16px 9px 18px;border:0;background:transparent;text-align:left;cursor:pointer;color:var(--ink);box-sizing:border-box}
+.srow:active{background:var(--pressed)}
+.sico{flex:0 0 20px;color:var(--muted)}
+.srb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.srl{font-size:17px;line-height:22px;color:var(--ink)}
+.srow.warn .srl,.srow.warn .sico{color:var(--warn-ink)}
+.srh{font-size:14px;line-height:19px;color:var(--muted)}
+.srh.warn{color:var(--warn-ink)}
+.srv{flex:0 0 auto;font-size:16px;color:var(--muted);white-space:nowrap}
+.srv.acc{color:var(--accent-ink)}
+.chev{flex:0 0 16px;color:var(--faint)}
+.sw{flex:0 0 42px;width:42px;height:26px;border-radius:13px;background:var(--trk);position:relative}
+.sw.on{background:var(--accent)}
+.sw span{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:10px;background:var(--knob);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.sw.on span{left:19px}
+.stn{margin:12px 20px 0;font-size:13px;line-height:1.45;color:var(--muted)}
+.lk{border:0;padding:0;background:transparent;color:var(--accent-ink);font:inherit;cursor:pointer;text-decoration:none}
+.sysg{color:var(--muted)}
+.sysg.warn{color:var(--warn-ink)}
+.scrim{position:absolute;inset:0;z-index:7;border:0;padding:0;background:var(--scrim);cursor:default}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:8;max-height:calc(100% - 56px);overflow-y:auto;padding:8px 20px 34px;border-radius:16px 16px 0 0;background:var(--elev);box-shadow:var(--float);box-sizing:border-box;color:var(--ink)}
+.t-dark .sheet{border-top:1px solid var(--line2)}
+.t-dark .sheet .btn:not(.pri){background:var(--chip-elev)}
+.grab{width:36px;height:5px;margin:0 auto 14px;border-radius:3px;background:var(--line2)}
+.shh{margin:0 0 12px;font-size:20px;line-height:26px;font-weight:600;letter-spacing:-.015em}
+.fld{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.fl{font-size:14px;line-height:18px;color:var(--muted)}
+.fiw{position:relative}
+.fi{width:100%;height:48px;padding:0 12px;border:1px solid var(--line2);border-radius:10px;background:var(--elev);color:var(--ink);font-size:16px;box-sizing:border-box;outline:none}
+.fi:focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.fi.err{border-color:var(--warn)}
+.fi[readonly]{color:var(--muted)}
+.fi.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:15px;letter-spacing:.01em}
+.fiw .fi{padding-right:48px}
+.eye{position:absolute;right:2px;top:2px;width:44px;height:44px;border:0;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ferr{margin:6px 0 0;font-size:14px;line-height:19px;color:var(--warn-ink)}
+.sother{display:inline-flex;align-items:center;height:44px;margin-top:2px;font-size:15px}
+.shint{margin:4px 0 0;font-size:14px;line-height:1.45;color:var(--muted)}
+.snote{margin:8px 0 0;padding:10px 12px;border-radius:10px;background:var(--warn-soft);color:var(--ink);font-size:14px;line-height:1.45}
+.snote b{font-weight:600;color:var(--warn-ink)}
+.shb{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.btn{height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--surface);color:var(--ink);font-size:16px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn.pri{background:var(--accent);color:var(--on-accent)}
+.btn.off{opacity:.45;cursor:default}
+.spin{width:16px;height:16px;border-radius:8px;border:2px solid currentColor;border-right-color:transparent;box-sizing:border-box;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sst{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:15px;line-height:20px;color:var(--text)}
+.sst.warn{color:var(--warn-ink)}
+.skv{margin:12px 0 0;padding:0;border-top:1px solid var(--line)}
+.skv div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.skv dt{font-size:15px;color:var(--muted)}
+.skv dd{margin:0;min-width:0;font-size:15px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.skv dd.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px}
+.sacts{display:flex;flex-direction:column;margin-top:8px}
+.sact{display:flex;align-items:center;gap:12px;height:48px;width:100%;padding:0;border:0;background:transparent;color:var(--accent-ink);font-size:16px;text-align:left;cursor:pointer}
+.sact.warn{color:var(--warn-ink)}
+/* Parts (Josh 28 Oct: components as in Figma). Inside a screen a part adds no box of its own; alone on the «Компоненты»
+   page it stands on the screen's ground in its theme */
+.nest{display:contents}
+/* the canvas mounts each part in a <div class="sc-host">, a block of its own; inside a screen (and inside a part shown
+   alone) that box goes too, so the screen lays out as if the part's markup were written in place */
+.app .sc-host,.kit .sc-host{display:contents}
+/* alone, the list of pages stands where it is drawn, not above a field */
+.kit > .plp{position:relative;left:auto;bottom:auto}
+.kit{position:relative;min-height:100%;box-sizing:border-box;font-family:Onest,system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.kit button,.kit input,.kit textarea{font-family:inherit}
+/* Iteration 3 (Josh 29 Oct, the phone). Section captions as in Codex: the name folds its section (the chevron turns, a
+   folded one says how many it holds), «⋯» and «+» on the right of every caption; a compact menu at the dots */
+.sh{position:relative}
+.shf{display:inline-flex;align-items:center;gap:4px;max-width:100%;height:24px;margin:0;padding:0;border:0;background:transparent;font:inherit;letter-spacing:inherit;color:inherit;cursor:pointer;position:relative}
+.shf::after{content:'';position:absolute;left:-8px;right:-8px;top:-10px;bottom:-10px}
+.shnt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shc{flex:none;font-variant-numeric:tabular-nums}
+.shv{flex:none;color:var(--faint);transition:transform .15s ease-out}
+.shv.shut{transform:rotate(-90deg)}
+.sh.i3h .ib.shp{width:36px;flex-basis:36px}
+.sh.i3h .ib.shp + .ib.shp{margin-right:2px}
+.shi{flex:1;min-width:0;height:36px;margin:0 4px 0 0;padding:0 8px;border:0;border-radius:8px;background:var(--elev);box-shadow:0 0 0 1px var(--accent);color:var(--ink);font-size:15px;font-weight:500;caret-color:var(--accent)}
+.hmenu .pin{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.piv{flex:none;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;color:var(--muted)}
+.pi.warn,.pi.warn svg{color:var(--warn-ink)}
+.smenu{left:auto;right:2px;top:calc(100% + 2px);width:232px}
+/* A held card (item 10; iOS context menus): it lifts off the screen onto the raised surface with a shadow, the rest steps
+   back under a veil, its menu opens under it (over it when the card is low); dragged, it follows the finger */
+.svw{position:relative}
+.svw.lifted{z-index:6}
+.svw.lifted .sv{background:var(--elev);box-shadow:var(--float),0 0 0 1px var(--line);transform:scale(1.02);transition:transform .15s ease-out,box-shadow .15s}
+.t-dark .svw.lifted .sv{box-shadow:var(--float),0 0 0 1px var(--line2)}
+.svw.dragging .sv{transform:scale(1.04);box-shadow:0 12px 32px rgba(20,26,33,.16),0 0 0 1px var(--line)}
+.t-dark .svw.dragging .sv{box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 0 1px var(--line2)}
+.i3 .sv{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.cmenu{left:8px;right:auto;top:calc(100% + 8px);width:256px}
+.cmenu.up{top:auto;bottom:calc(100% + 8px)}
+.lwash{position:absolute;inset:0;z-index:5;border:0;padding:0;background:color-mix(in srgb,var(--pgbg) 55%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:default}
+.kit > .hmenu{position:relative;left:auto;right:auto;top:auto;bottom:auto}
+/* The icon bare, without its plate (item 5; Notion, Codex): the glyph alone in a 24 px place */
+.app.bare .home.cards .sv .tile{width:24px;height:24px;flex-basis:24px;background:transparent}
+.app.bare.desk .side .home.cards .sv.fresh .tile{background:transparent}
+/* Surfaces (item 7, Josh's card 29 Oct «Без плашек + серая»): Главная lies on the side surface, as the computer's left
+   column does; pages and records stay on paper, so a card opened is a sheet laid over the list */
+.app.surf-a.v-home:not(.desk){--pgbg:var(--side);background:var(--side)}
+/* A notice goes sideways under the finger (item 2) */
+.toast{touch-action:pan-y;-webkit-user-select:none;user-select:none}
+/* The update banner: the notices' place over the closed field, quiet: the field's own surface and edge, no dark fill */
+.toast.upd{gap:10px;padding-left:14px;background:var(--elev);color:var(--text);border:1px solid var(--line2);box-shadow:none}
+.toast.upd svg{flex:0 0 18px;color:var(--muted)}
+.toast.upd button{color:var(--accent-ink)}
+/* Покупки by department (item 3): from two departments on, each caption is the department's chip, in its colour */
+.grh{margin:0;padding:12px 12px 2px}
+.grb{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 4px;border:0;background:transparent;color:var(--faint);cursor:pointer}
+.opt{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:6px;font-size:14px;font-weight:500;white-space:nowrap}
+.opt.c-yellow{background:var(--b-yellow);color:var(--c-yellow-ink)}
+.opt.c-blue{background:var(--b-blue);color:var(--c-blue-ink)}
+.opt.c-green{background:var(--b-green);color:var(--c-green-ink)}
+.opt.c-brown{background:var(--b-brown);color:var(--c-brown-ink)}
+.opt.c-purple{background:var(--b-purple);color:var(--c-purple-ink)}
+.opt.c-gray{background:var(--b-gray);color:var(--c-gray-ink)}
+/* Iteration 3, the big topics (Josh 29 Oct: option A everywhere) */
+.opt.c-teal{background:var(--b-teal);color:var(--c-teal-ink)}
+.opt.c-pink{background:var(--b-pink);color:var(--c-pink-ink)}
+/* A page's icon is a button: it opens «Значок и цвет» (Notion); its colour is the person's choice, grey by default */
+.tileb{border:0;padding:0;margin:0;background:transparent;border-radius:6px;cursor:pointer}
+.tc-blue{color:var(--c-blue)}.tc-green{color:var(--c-green)}.tc-teal{color:var(--c-teal)}.tc-yellow{color:var(--c-yellow)}
+.tc-brown{color:var(--c-brown)}.tc-pink{color:var(--c-pink)}.tc-purple{color:var(--c-purple)}
+/* Subitems (item 17): one step in is 32 px, up to three levels; «1/3» and the chevron on the right fold them */
+.list{position:relative}
+.li.lv1{margin-left:36px}
+.li.lv2{margin-left:68px}
+.fold{flex:none;display:inline-flex;align-items:center;gap:2px;height:44px;margin-right:-8px;padding:0 6px 0 10px;border:0;background:transparent;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums;cursor:pointer}
+.fold svg{color:var(--faint);transition:transform .15s ease-out}
+.fold.shut svg{transform:rotate(-90deg)}
+.i3 .lit{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+/* A held row (as a held card on Главная): it lifts with its menu; dragged, it follows the finger with its subitems; the
+   row under the finger's middle lights up (let go: inside it); between rows a line at the depth it will take */
+.li.lifted{z-index:6;background:var(--elev);box-shadow:var(--float),0 0 0 1px var(--line);transform:scale(1.02);transition:transform .15s ease-out,box-shadow .15s}
+.t-dark .li.lifted{box-shadow:var(--float),0 0 0 1px var(--line2)}
+.li.dragging{box-shadow:0 12px 32px rgba(20,26,33,.16),0 0 0 1px var(--line)}
+.t-dark .li.dragging{box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 0 1px var(--line2)}
+.li.onto{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.dline{position:absolute;right:12px;height:2px;border-radius:1px;background:var(--accent);pointer-events:none;z-index:7}
+.dline::before{content:'';position:absolute;left:-6px;top:-3px;width:8px;height:8px;border-radius:50%;border:2px solid var(--accent);background:var(--pgbg,var(--bg));box-sizing:border-box}
+.li .cmenu{left:44px;top:calc(100% + 6px);width:280px}
+.li .cmenu.up{top:auto;bottom:calc(100% + 6px)}
+/* The stock on the right of a row (Josh 29 Oct): have of need, no plate (Josh 22:14Z); a tap opens − and + in its place; 1 or 0
+   left is orange (the warning colour) */
+.mp{position:relative;flex:none;align-self:center;height:30px;margin:0 0 0 8px;padding:0;border:0;background:transparent;color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums;cursor:pointer}
+.mp::after{content:'';position:absolute;inset:-7px -12px}
+.mp.low{color:var(--warn-ink)}
+.mps{flex:none;align-self:center;display:inline-flex;align-items:center;height:36px;margin:0 -14px 0 8px}
+.mpb{width:44px;height:36px;border:0;padding:0;border-radius:10px;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.mpb:active{background:var(--pressed)}
+.mpv{min-width:34px;text-align:center;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.mps.low .mpv{color:var(--warn-ink)}
+/* Views (item 12): the tabs scroll, «+» after them makes a new view; the filter button on the right is blue while a
+   filter of the person's own is on, and each such filter is a chip under the tabs, «×» takes it off (item 13) */
+.vbar{gap:8px}
+.vtabs{flex:1;min-width:0;display:flex;align-items:center;gap:24px;overflow-x:auto}
+.vadd{display:flex;align-items:center;justify-content:center;width:32px;flex:none;color:var(--faint)}
+.vse{flex:none;margin-right:-6px}
+.vfi{flex:none;margin-right:-10px}
+.vfi.on{color:var(--accent-ink)}
+.fchips{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px 2px}
+.fch{display:inline-flex;align-items:center;height:32px;border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);font-size:14px}
+.fchb{height:32px;padding:0 2px 0 10px;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.fchx{position:relative;width:30px;height:32px;border:0;padding:0;background:transparent;color:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fchx::after{content:'';position:absolute;inset:-6px -2px}
+/* The table on a phone (item 12): the name and its mark stay on the left, the columns scroll sideways */
+.tvw{overflow-x:auto;margin-top:6px}
+.tvr{display:flex;width:max-content;min-width:100%;border-bottom:1px solid var(--line)}
+.tvc{flex:none;display:flex;align-items:center;min-height:44px;padding:0 10px;box-sizing:border-box;border-right:1px solid var(--line);font-size:15px;color:var(--text)}
+.tvhc{min-height:36px;font-size:13px;font-weight:500;color:var(--muted)}
+.tvt{position:sticky;left:0;z-index:1;width:176px;padding:0 8px 0 4px;background:var(--pgbg,var(--bg))}
+.tvt.tvhc{padding-left:16px}
+.tvt.lv1{padding-left:24px}
+.tvt.lv2{padding-left:44px}
+.tvt .chk{width:40px;height:44px;flex:0 0 40px}
+.tvn{flex:1;min-width:0;height:44px;border:0;padding:0;background:transparent;color:var(--ink);font-size:15px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.tvn.done{color:var(--faint);text-decoration:line-through}
+.w-dept{width:156px}.w-qty{width:108px}.w-stock{width:80px}.w-note{width:190px}.w-at{width:108px}.w-room{width:120px}.w-due{width:116px}
+.tvcb{width:100%;min-width:0;height:44px;border:0;padding:0;background:transparent;color:inherit;font-size:15px;text-align:left;display:flex;align-items:center;cursor:pointer}
+.tvx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvc.on{box-shadow:inset 0 0 0 2px var(--accent)}
+.tvc.low .tvx{color:var(--warn-ink)}
+.tvc.due .tvx{color:var(--accent-ink)}
+.tvadd{width:44px;justify-content:center;padding:0;border:0;background:transparent;color:var(--faint);cursor:pointer}
+/* The record card (item 11): its properties as one line of chips under the title, aligned with it; «+» adds one */
+.rchips{display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;padding:12px 16px 0}
+.rcp{position:relative;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 2px;border:0;border-radius:8px;background:transparent;color:var(--text);font-size:14px;font-variant-numeric:tabular-nums;cursor:pointer;box-sizing:border-box}
+button.rcp::after{content:'';position:absolute;inset:-6px -2px}
+.rcp .opt{height:28px}
+.rpl{padding:0}
+.rpl svg{color:var(--muted)}
+.rpl.due,.rpl.due svg{color:var(--accent-ink)}
+.rst{padding:0;gap:0;margin:0 -10px;cursor:default}
+.rst .mpb{width:36px;height:32px}
+.rstv{display:inline-flex;align-items:center;gap:6px;padding:0 2px;color:var(--ink)}
+.rstv svg{color:var(--muted)}
+.rst.low .rstv,.rst.low .rstv svg{color:var(--warn-ink)}
+.radd{width:24px;justify-content:center;color:var(--faint)}
+.rpl.low,.rpl.low svg{color:var(--warn-ink)}
+.subf{position:relative;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0;border:0;background:transparent;font:inherit;letter-spacing:inherit;color:inherit;cursor:pointer}
+.subf::after{content:'';position:absolute;inset:-10px -8px}
+.subn{color:var(--faint);font-variant-numeric:tabular-nums}
+.rmeta{padding:20px 16px 8px;font-size:13px;line-height:18px;color:var(--faint)}
+.rmeta p{margin:0}
+/* The model's functions in Настройки (item 15): one that needs a key, without one, is greyed and says so */
+.srow.dim .srl,.srow.dim .sico{color:var(--faint)}
+.srow.dim{cursor:default}
+/* The choosing sheet (part ListSheet) */
+.lshh{display:flex;align-items:center;gap:8px;min-height:32px;margin:0 0 8px}
+.lshh .shh{flex:1;min-width:0;margin:0}
+.lsbk{margin-left:-12px}
+.lshd{font-size:14px;color:var(--accent-ink)}
+.lsrs{font-size:15px}
+.lscap{margin:14px 0 4px;font-size:12px;font-weight:500;letter-spacing:.02em;line-height:24px;color:var(--muted)}
+.lsrows{margin:0 -8px}
+.lsrows.sep{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.lsr{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--ink);font-size:16px;text-align:left;cursor:pointer;box-sizing:border-box}
+.lsr:active{background:var(--pressed)}
+.lsl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lsv{flex:none;max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lsr.set .lsv{color:var(--accent-ink)}
+.lsr.base{cursor:default;color:var(--muted)}
+.lsr.base .lsv{font-size:13px;color:var(--faint)}
+.lsr.none .lsv{color:var(--faint)}
+.lsr.warn,.lsr.warn .lsi{color:var(--warn-ink)}
+.lsr.off{opacity:.45;cursor:default}
+.lsi{flex:none;color:var(--muted)}
+.lsb{flex:none;width:20px;height:20px;border-radius:5px;border:1.5px solid var(--ring);box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:transparent}
+.lsb.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.lstk{flex:none;color:var(--accent-ink)}
+.lsr .chev{flex:none;color:var(--faint)}
+.lstiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+.lst{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:88px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font-size:14px;cursor:pointer}
+.lst svg{color:var(--muted)}
+.lst.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.lsicons{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.lsic{height:48px;border:0;padding:0;border-radius:10px;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lsic.on{background:var(--accent-soft);color:var(--accent-ink)}
+.lscols{display:flex;flex-wrap:wrap;gap:12px;padding:4px 2px}
+.cdot{position:relative;width:32px;height:32px;padding:0;border:0;border-radius:50%;cursor:pointer}
+.cdot::after{content:'';position:absolute;inset:-6px}
+.cdot.on{box-shadow:0 0 0 2px var(--elev),0 0 0 4px var(--ink)}
+.cdot.c-none{background:var(--muted)}.cdot.c-blue{background:var(--c-blue)}.cdot.c-green{background:var(--c-green)}.cdot.c-teal{background:var(--c-teal)}
+.cdot.c-yellow{background:var(--c-yellow)}.cdot.c-brown{background:var(--c-brown)}.cdot.c-pink{background:var(--c-pink)}.cdot.c-purple{background:var(--c-purple)}/* «Настроить вид» in the choosing sheet: the name field, segmented choices, rows with a line between them, switches */
+.lsfi{display:flex;align-items:center;margin-top:2px}
+.lsseg{display:flex;gap:2px;padding:2px;border-radius:12px;background:var(--trk)}
+.lssg{flex:1 1 0;min-width:0;height:34px;padding:0 6px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.lssg.on{background:var(--seg-on);color:var(--ink);font-weight:500;box-shadow:var(--seg-shadow)}
+.lsrows.lines{margin-top:8px}
+.lsrows.lines .lsr{border-radius:0;box-shadow:inset 0 -1px 0 var(--line)}
+.lsrows.lines .lsr:last-child{box-shadow:none}
+.lsrows.acts{margin-top:8px}
+.lsrows.acts .lsr{min-height:44px}
+.lssub{font-size:13px;color:var(--muted)}
+.lsr .sw{flex:0 0 42px}
+</style>
+</helmet>
+<div class="{{kit}}" style="{{box}}">
+  <sc-if value="{{sy.open}}" hint-placeholder-val="{{false}}">
+    <button class="scrim" type="button" aria-label="Закрыть" onClick="{{sy.close}}"></button>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sy-h">
+      <div class="grab" aria-hidden="true"></div>
+      <h2 class="shh" id="sy-h">Синхронизация</h2>
+      <sc-if value="{{sy.isForm}}" hint-placeholder-val="{{true}}">
+        <dc-import name="Field" fid="f-sb" label="Бакет" value="{{sy.bucket}}" placeholder="cerulean" cls="{{sy.bucketCls}}" change="{{sy.onBucket}}" hint-size="100%,74px"></dc-import>
+        <sc-if value="{{sy.hasBucketErr}}" hint-placeholder-val="{{false}}"><p class="ferr" role="alert">{{sy.bucketErr}}</p></sc-if>
+        <dc-import name="Field" fid="f-sk" label="ID ключа" value="{{sy.keyId}}" placeholder="YCAJE…" cls="mono {{sy.keyCls}}" change="{{sy.onKeyId}}" hint-size="100%,74px"></dc-import>
+        <dc-import name="Field" fid="f-ss" label="Секретный ключ" value="{{sy.secret}}" placeholder="YCP…" cls="mono {{sy.keyCls}}" change="{{sy.onSecret}}" type="{{sy.secType}}" eye="{{true}}" eye-aria="{{sy.eyeAria}}" eye-pressed="{{sy.eyePressed}}" eye-tap="{{sy.toggleEye}}" hint-size="100%,74px"></dc-import>
+        <sc-if value="{{sy.hasKeyErr}}" hint-placeholder-val="{{false}}"><p class="ferr" role="alert">{{sy.keyErr}}</p></sc-if>
+        <sc-if value="{{sy.otherShut}}" hint-placeholder-val="{{true}}"><button class="lk sother" type="button" aria-expanded="false" onClick="{{sy.openOther}}">Другой адрес</button></sc-if>
+        <sc-if value="{{sy.otherOpen}}" hint-placeholder-val="{{false}}">
+          <dc-import name="Field" fid="f-se" label="Адрес" value="storage.yandexcloud.net" placeholder="" cls="" change="{{noop}}" hint-size="100%,74px"></dc-import>
+          <dc-import name="Field" fid="f-sr" label="Регион" value="ru-central1" placeholder="" cls="" change="{{noop}}" hint-size="100%,74px"></dc-import>
+        </sc-if>
+        <sc-if value="{{sy.noReach}}" hint-placeholder-val="{{true}}"><p class="shint">Бакету нужен доступ из браузера (CORS): <button class="lk" type="button" onClick="{{noop}}">как настроить</button></p></sc-if>
+        <sc-if value="{{sy.hasReach}}" hint-placeholder-val="{{false}}"><div class="snote" role="alert"><b>Браузер не достучался до бакета «{{sy.bucketShown}}».</b> Проверьте название и правило CORS в бакете: источники *, методы GET, PUT и HEAD, заголовки *, а среди открытых заголовков (Expose headers) ETag. <button class="lk" type="button" onClick="{{noop}}">Как настроить</button></div></sc-if>
+        <div class="shb"><button class="btn" type="button" onClick="{{sy.close}}">Отмена</button><button class="btn pri {{sy.goCls}}" type="button" aria-disabled="{{sy.goOff}}" onClick="{{sy.connect}}"><sc-if value="{{sy.checking}}" hint-placeholder-val="{{false}}"><span class="spin" aria-hidden="true"></span></sc-if>{{sy.goText}}</button></div>
+      </sc-if>
+      <sc-if value="{{sy.isOn}}" hint-placeholder-val="{{false}}">
+        <sc-if value="{{sy.noNewer}}" hint-placeholder-val="{{true}}"><p class="sst {{sy.stateCls}}" role="status"><sc-if value="{{sy.hasDot}}" hint-placeholder-val="{{false}}"><span class="sdot {{sy.dotCls}}" aria-hidden="true"></span></sc-if><span>{{sy.state}}</span></p></sc-if>
+        <sc-if value="{{sy.hasNewer}}" hint-placeholder-val="{{false}}"><div class="snote" role="status"><b>Бакет записан новой версией Cerulean.</b> Эта версия только читает его, правки остаются на устройстве. Обновите приложение.</div></sc-if>
+        <dl class="skv"><div><dt>Бакет</dt><dd>{{sy.bucket}}</dd></div><div><dt>ID ключа</dt><dd class="mono">{{sy.keyId}}</dd></div><div><dt>Секретный ключ</dt><dd class="mono">{{sy.secretMasked}}</dd></div></dl>
+        <div class="sacts">
+          <sc-if value="{{sy.canNow}}" hint-placeholder-val="{{true}}"><button class="sact" type="button" onClick="{{sy.now}}">Синхронизировать сейчас</button></sc-if>
+          <sc-if value="{{sy.isErr}}" hint-placeholder-val="{{false}}"><button class="sact" type="button" onClick="{{sy.rekey}}">Ввести ключ заново</button></sc-if>
+          <button class="sact warn" type="button" onClick="{{sy.off}}">Отключить</button>
+        </div>
+        <div class="shb"><button class="btn pri" type="button" onClick="{{sy.close}}">Готово</button></div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}, "variant": {"editor": "enum", "options": ["Форма", "Неверный ключ", "Подключено", "Ошибка", "Окно на компьютере"], "default": "Форма"}, "sy": {"editor": null}, "$preview": {"width": 390, "height": 760}}'>
+class Component extends DCLogic {
+  // The sheet of «Синхронизация» in Настройки: the form until it connects (fields, the CORS line, «Подключить» after a test
+  // read and write), then what is connected, «Синхронизировать сейчас» and «Отключить». In a screen: sy
+  renderVals() {
+    var solo = this.props.sy == null;
+    var t = this.props.theme === 'dark' ? 't-dark' : 't-light', v = this.props.variant || 'Форма', noop = function () {};
+    var desk = v === 'Окно на компьютере', form = v === 'Форма' || v === 'Неверный ключ' || desk, bad = v === 'Неверный ключ', err = v === 'Ошибка';
+    var sy = { open: true, isForm: form, isOn: !form, close: noop, bucket: form ? (bad ? 'cerulean-josh' : '') : 'cerulean-josh',
+      keyId: form ? (bad ? 'YCAJEk3Lr7pQ2vXa9mT1sBwZ' : '') : 'YCAJEk3Lr7pQ2vXa9mT1sBwZ', secret: bad ? 'YCPs7kQm2xLw' : '',
+      onBucket: noop, onKeyId: noop, onSecret: noop, secType: 'password', eyeAria: 'Показать ключ', eyePressed: 'false', toggleEye: noop,
+      otherShut: true, otherOpen: false, openOther: noop,
+      hasBucketErr: false, bucketErr: '', bucketCls: '', hasKeyErr: bad, keyErr: 'Неверный ключ: ID или секрет не подходят', keyCls: bad ? 'err' : '',
+      hasReach: false, noReach: true, bucketShown: '', checking: false, goText: 'Подключить', goOff: bad ? 'false' : 'true', goCls: bad ? '' : 'off', connect: noop,
+      state: err ? 'Ошибка: ключ больше не подходит' : 'Синхронизировано · 5 мин назад', dotCls: err ? 'warn' : '', hasDot: err, stateCls: err ? 'warn' : '',
+      hasNewer: false, noNewer: true, secretMasked: '••••••••3f9a', canNow: !err, isErr: err, now: noop, rekey: noop, off: noop };
+    return { kit: solo ? 'kit ' + t + (desk ? ' desk' : '') : 'nest', box: solo ? 'height: 760px' : '', sy: solo ? sy : this.props.sy, noop: noop };
+  }
+}
+</script>
+</body>
+</html>

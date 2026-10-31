@@ -1,0 +1,1678 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-19T12:40:00Z"
+  },
+  "title": "Cerulean — макеты",
+  "launch": {
+    "view": "canvas",
+    "page": "i3"
+  },
+  "pages": [
+    {
+      "id": "i3",
+      "name": "Итерация 3: Главная"
+    },
+    {
+      "id": "i3b",
+      "name": "Итерация 3: списки и новая версия"
+    },
+    {
+      "id": "i3big",
+      "name": "Итерация 3: большие темы"
+    },
+    {
+      "id": "flow",
+      "name": "Основной путь"
+    },
+    {
+      "id": "dflow",
+      "name": "Компьютер: основной путь"
+    },
+    {
+      "id": "dhome",
+      "name": "Компьютер: Главная и модель"
+    },
+    {
+      "id": "sync",
+      "name": "Синхронизация через S3"
+    },
+    {
+      "id": "dsync",
+      "name": "Компьютер: синхронизация"
+    },
+    {
+      "id": "parts",
+      "name": "Компоненты"
+    }
+  ],
+  "designSystems": [],
+  "boards": {
+    "I3Home.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "И1. Главная через десять дней: свои секции «Дом» и «Личное»; у каждой подписи «⋯» и «+», имя сворачивает; значки без плашки, Главная на боковой поверхности",
+      "is_interactive": true,
+      "page": "i3"
+    },
+    "I3SecMenu.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "И2. «⋯» у «Дом»: компактное меню у точек: Переименовать, Изменить порядок, Новая секция, Удалить секцию (страницы уйдут в «Мои страницы», уведомление с «Отменить»)",
+      "is_interactive": true,
+      "page": "i3"
+    },
+    "I3Hold.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "И3. Удержание 0,4 с на «Ремонт»: карточка приподнялась (вибрация), остальное под вуалью, меню под ней; отпустил без движения — меню остаётся",
+      "is_interactive": true,
+      "page": "i3"
+    },
+    "I3Drag.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "И4. Повёл пальцем: меню ушло, карточка едет за пальцем; в «Дом» между Покупками и Делами по дому расступилось место",
+      "is_interactive": true,
+      "page": "i3"
+    },
+    "I3Dropped.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "И5. Отпустил: «Ремонт» в «Дом»; другая секция — уведомление «Перемещено в Дом · Отменить» (в своей секции переносится молча)",
+      "is_interactive": true,
+      "page": "i3"
+    },
+    "I3Swipe.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "И6. Уведомление смахивается в сторону: идёт за пальцем, уходит после трети ширины или быстрого взмаха; сделанное остаётся",
+      "is_interactive": true,
+      "page": "i3"
+    },
+    "I3Shop1.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИС1. Пустые Покупки, первая вещь «Хлеб»: просто строка, без заголовка отдела",
+      "is_interactive": true,
+      "page": "i3b"
+    },
+    "I3Page.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИС2. Отделов два и больше: подпись каждого — его цветной чип; внутри отдела новое внизу («Молоко» подсвечено); страница на бумаге (вариант А)",
+      "is_interactive": true,
+      "page": "i3b"
+    },
+    "I3Inbox.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИС3. Входящие: новое встаёт в конец, под старым («Позвонить в сервис» только что записано)",
+      "is_interactive": true,
+      "page": "i3b"
+    },
+    "I3Update.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИС4. Новая версия ждала 30 минут при открытом приложении: тихая строка на месте уведомлений над закрытым полем, «Обновить»; смахивается до следующего запуска",
+      "is_interactive": true,
+      "page": "i3b"
+    },
+    "DeskI3Update.dc.html": {
+      "x": 0,
+      "y": 1300,
+      "w": 1440,
+      "h": 900,
+      "title": "ИК1. Компьютер: та же строка в левой колонке над полем; Главная со значками без плашки и секциями с «⋯» и «+»",
+      "is_interactive": true,
+      "page": "i3b"
+    },
+    "Flow.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П1. Первое открытие: Входящие, Сегодня, «Быстрый старт» (что попробовать, отмечается галочками) и пустые Покупки, Задачи, Идеи; в поле место «Входящие» и пример",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowTyping.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П2. Пишет «Купить молоко»: без модели место само не меняется, остаётся «Входящие»; под названием строка «Заметка»",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowNote.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П3. Место выбрано рукой («Покупки»), дописана заметка, ↑ активна",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowPlace.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П4. Место не то: тап по месту открывает список страниц, текущее отмечено",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowPlaceNew.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П5. Нужной страницы нет: «Новая страница» в конце списка, имя пишется прямо там, Enter создаёт её и кладёт запись туда",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowDate.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П6. Дата в тексте подсвечена, рядом срок (тап убирает его, слова остаются); место без модели — «Входящие»",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowFiled.dc.html": {
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П7. Результат: карточка «Покупки» ожила («молоко», у имени 1), без точки; тост «Добавлено в Покупки · Отменить»; поле открыто и пустое, место «Покупки» осталось",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowUndo.dc.html": {
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П8. После «Отменить»: записи нет, слова вернулись в поле вместе с заметкой и местом, курсор в конце",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowPage.dc.html": {
+      "x": 3760,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П9. Покупки: количество рядом с названием («Яйца 10 шт»), под «Молоко» заметка до двух строк, «+ Новая запись» в конце; поле без подсказки",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowInbox.dc.html": {
+      "x": 4230,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П10. Входящие: у каждой записи справа кнопка «Переместить»; заметка до двух строк",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowInboxMove.dc.html": {
+      "x": 4700,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П11. Тап по кнопке: список страниц прямо у записи и «Новая страница»; выбор переносит запись, тост «Перемещено в … · Отменить»",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowRec.dc.html": {
+      "x": 5170,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П12. Запись: свойства, текст заметки, «+ Подпункт»; нижнего поля нет",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowBody.dc.html": {
+      "x": 5640,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П13. Пишет заметку: «- » даёт список, панель над клавиатурой, «Готово»",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowSub.dc.html": {
+      "x": 6110,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П14. Подпункт строкой: новая строка с кружком прямо в записи",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowNewPage.dc.html": {
+      "x": 6580,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "П15. Своя страница: курсор в названии, ниже место для текста; «Начать с»: Список, Список покупок, Список дел",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowWeek.dc.html": {
+      "x": 0,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "ПГ1. Со сводкой: каждая страница карточкой, как письмо или чат: имя и рядом сколько открыто, ниже что в ней (дела со временем первыми); без точек",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowMenu.dc.html": {
+      "x": 470,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "ПГ2. «⋯» Главной: вид «Со сводкой» или «Компактный», ниже Журнал и Настройки",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowCompact.dc.html": {
+      "x": 940,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "ПГ3. Компактный: классический список, только имена",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowAi.dc.html": {
+      "x": 0,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ПИ1. С моделью Главная та же; пример в поле — две вещи одной строкой",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowAiSplit.dc.html": {
+      "x": 470,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ПИ2. Одна строка, две записи: модель показывает, что добавит: «Молоко» с заметкой в Покупки, «Позвонить маме» со сроком в Задачи; место меняется тапом",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowAiFiled.dc.html": {
+      "x": 940,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ПИ3. Добавлено в Покупки и Задачи: обе карточки ожили («завтра 10:00 позвонить маме»), одна отмена на обе записи",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowAiWeek.dc.html": {
+      "x": 1410,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ПИ4. Через неделю: «сыр и пазл для Пети» — сыр в Покупки, пазл на свою страницу «Подарки» (правила положили бы оба в Покупки)",
+      "is_interactive": true,
+      "page": "flow"
+    },
+    "FlowDesk.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д1. Первое открытие: слева Главная (Входящие, Сегодня, «Быстрый старт», пустые страницы) и поле внизу с примером; справа открыт «Быстрый старт», его карточка отмечена",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskNote.dc.html": {
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д2. Пишет «Купить молоко», место выбрано рукой («Покупки»), заметка; поле открывается на месте, без затемнения",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskPlace.dc.html": {
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д3. Клик по месту: Список страниц над полем, текущее отмечено, «Новая страница» в конце",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskFiled.dc.html": {
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д4. Записано: значок «Покупок» синий (новое), над полем «Добавлено в Покупки · Отменить»; справа открытое не меняется",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskPage.dc.html": {
+      "x": 6240,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д5. Клик по карточке: Покупки справа, их карточка отмечена; поле слева так и пишет во Входящие, пока место не выбрано",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskInboxMove.dc.html": {
+      "x": 7800,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д6. Входящие справа: у записи кнопка «Переместить», список страниц прямо у строки",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskRec.dc.html": {
+      "x": 9360,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д7. Запись справа: «‹ Покупки», свойства, заметка, «+ Подпункт»; Главная слева на месте",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskBody.dc.html": {
+      "x": 10920,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д8. Пишет заметку: «- » даёт список; панели «Готово» нет, Esc заканчивает, второй Esc возвращает к Покупкам",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskNewPage.dc.html": {
+      "x": 12480,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Д9. «+» у «Мои страницы»: новая страница справа, курсор в названии, «Начать с» под ним; поле слева не меняется",
+      "is_interactive": true,
+      "page": "dflow"
+    },
+    "FlowDeskWeek.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДГ1. Через неделю, со сводкой: слева карточки с тем, что в каждой; справа Покупки, новое «Молоко» отмечено полоской слева",
+      "is_interactive": true,
+      "page": "dhome"
+    },
+    "FlowDeskMenu.dc.html": {
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДГ2. «⋯» Главной в левой колонке: вид, Журнал, Настройки",
+      "is_interactive": true,
+      "page": "dhome"
+    },
+    "FlowDeskCompact.dc.html": {
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДГ3. Компактный: слева только имена, справа та же страница",
+      "is_interactive": true,
+      "page": "dhome"
+    },
+    "FlowDeskAiSplit.dc.html": {
+      "x": 0,
+      "y": 1356,
+      "w": 1440,
+      "h": 900,
+      "title": "ДИ1. С моделью: одна строка, две записи прямо в поле слева; место каждой меняется кликом",
+      "is_interactive": true,
+      "page": "dhome"
+    },
+    "FlowDeskAiFiled.dc.html": {
+      "x": 1560,
+      "y": 1356,
+      "w": 1440,
+      "h": 900,
+      "title": "ДИ2. Добавлено в Покупки и Задачи: обе карточки ожили, одна отмена на обе",
+      "is_interactive": true,
+      "page": "dhome"
+    },
+    "FlowDeskAiWeek.dc.html": {
+      "x": 3120,
+      "y": 1356,
+      "w": 1440,
+      "h": 900,
+      "title": "ДИ3. Через неделю: сыр в Покупки, пазл на свою страницу «Подарки»",
+      "is_interactive": true,
+      "page": "dhome"
+    },
+    "SyncSettings.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С1. Настройки как в приложении сейчас; в «Данных» новая первая строка «Синхронизация · Выключена · Подключить ›» (серым, как «Добавить ›»)",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncForm.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С2. Тап по строке: окно как «Подключение»: Бакет, ID ключа, Секретный ключ, «Другой адрес», одна строка про CORS; «Подключить» ждёт всех трёх полей",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncPaste.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С3. Строка «бакет ID секрет», вставленная в любое поле, сама расходится по трём; ключ скрыт, «Подключить» активна",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncCheck.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С4. «Подключить»: пробное чтение и запись в бакет, «Проверка…»; пока не прошло, ничего не сохраняется",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncBadKey.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С5. Неверный ключ: сказано под ключом, поля выделены, ничего не сохранено",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncNoAccess.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С6. Бакет ответил, но ключ не пускает: «нужна роль storage.editor» под бакетом",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncReach.dc.html": {
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С7. Бакет не ответил браузеру (нет такого или нет CORS — браузер их не различает): одна заметка с обеими причинами и правилом CORS вместо строки-подсказки",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncMerged.dc.html": {
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С8. Подключено без вопросов: «Синхронизировано · только что», вверху «копия в бакете» вместо «копии нет»; уведомление «Из бакета добавлено: 1 страница, 3 записи». «Не удалять при нехватке места» остаётся: неотправленное без сети живёт только здесь",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncMergedHome.dc.html": {
+      "x": 3760,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С9. Главная после объединения: вторая «Покупки» с другого устройства рядом со своей, Входящие и Сегодня по одной",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncOn.dc.html": {
+      "x": 4230,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С10. Повторный тап: состояние, бакет, ID, ключ скрыт; «Синхронизировать сейчас» и «Отключить», без значков",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncOff.dc.html": {
+      "x": 4700,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С11. После «Отключить»: строка «Выключена», уведомление с «Отменить»; данные на устройстве и в бакете остались",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncWait.dc.html": {
+      "x": 5170,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С12. Главная: больше 10 минут без сети с неотправленным, и только тогда тихий значок в заголовке; обычная синхронизация не видна",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncErr.dc.html": {
+      "x": 5640,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С13. Ошибка, которую повторы не сняли: в строке «Ошибка: ключ больше не подходит · Исправить»; то же окно, «Ввести ключ заново» вместо «Синхронизировать сейчас», «Отключить» на месте",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncErrHome.dc.html": {
+      "x": 6110,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С14. Та же ошибка на Главной: облако с «!» в цвете предупреждения; тап открывает окно синхронизации",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncNewer.dc.html": {
+      "x": 6580,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "С15. Бакет записан новой версией приложения: одна заметка в окне, эта версия только читает, правки остаются на устройстве",
+      "is_interactive": true,
+      "page": "sync"
+    },
+    "SyncDeskSettings.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДС1. Настройки справа (из «⋯» Главной): в «Данных» строка «Синхронизация · Выключена · Подключить ›»",
+      "is_interactive": true,
+      "page": "dsync"
+    },
+    "SyncDeskForm.dc.html": {
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДС2. Окно синхронизации посередине: Бакет, ID ключа, Секретный ключ, строка про CORS; «Подключить» ждёт всех трёх полей",
+      "is_interactive": true,
+      "page": "dsync"
+    },
+    "SyncDeskBadKey.dc.html": {
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДС3. Неверный ключ: сказано под ключом, поля выделены, ничего не сохранено",
+      "is_interactive": true,
+      "page": "dsync"
+    },
+    "SyncDeskMerged.dc.html": {
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДС4. Подключено без вопросов: над полем слева «Из бакета добавлено: 1 страница, 3 записи»; вторая «Покупки» в списке",
+      "is_interactive": true,
+      "page": "dsync"
+    },
+    "SyncDeskOn.dc.html": {
+      "x": 6240,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДС5. Повторный клик: состояние, бакет, ID, ключ скрыт; «Синхронизировать сейчас» и «Отключить»",
+      "is_interactive": true,
+      "page": "dsync"
+    },
+    "SyncDeskErrHome.dc.html": {
+      "x": 7800,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "ДС6. Ошибка, которую повторы не сняли: облако с «!» в шапке Главной слева; клик открывает окно",
+      "is_interactive": true,
+      "page": "dsync"
+    },
+    "Menu.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 280,
+      "h": 340,
+      "title": "К14.1. Основа: удержанная карточка",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Menu2.dc.html": {
+      "x": 344,
+      "y": 0,
+      "w": 280,
+      "h": 340,
+      "title": "К14.2. «⋯» своей секции",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Menu3.dc.html": {
+      "x": 688,
+      "y": 0,
+      "w": 280,
+      "h": 340,
+      "title": "К14.3. «⋯» у «Мои страницы»",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "StatusBar.dc.html": {
+      "x": 0,
+      "y": 796,
+      "w": 390,
+      "h": 47,
+      "title": "К1.1. Основа: обычная",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "StatusBar2.dc.html": {
+      "x": 454,
+      "y": 796,
+      "w": 390,
+      "h": 47,
+      "title": "К1.2. Без сети: полоски бледные",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Keyboard.dc.html": {
+      "x": 0,
+      "y": 1299,
+      "w": 390,
+      "h": 286,
+      "title": "К2.1. Основа: в поле, клавиша «Записать»",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Keyboard2.dc.html": {
+      "x": 454,
+      "y": 1299,
+      "w": 390,
+      "h": 286,
+      "title": "К2.2. В тексте и названии: клавиша «ввод»",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Composer.dc.html": {
+      "x": 0,
+      "y": 2041,
+      "w": 390,
+      "h": 420,
+      "title": "К3.1. Основа: закрыто, пример и место",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Composer2.dc.html": {
+      "x": 454,
+      "y": 2041,
+      "w": 390,
+      "h": 420,
+      "title": "К3.2. Пишет: ↑ активна",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Composer3.dc.html": {
+      "x": 908,
+      "y": 2041,
+      "w": 390,
+      "h": 420,
+      "title": "К3.3. Дата в словах: подсветка и срок",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Composer4.dc.html": {
+      "x": 1362,
+      "y": 2041,
+      "w": 390,
+      "h": 420,
+      "title": "К3.4. Тап по месту: Список страниц",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Composer5.dc.html": {
+      "x": 1816,
+      "y": 2041,
+      "w": 390,
+      "h": 420,
+      "title": "К3.5. С моделью: две записи одной строкой",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "PageRow.dc.html": {
+      "x": 0,
+      "y": 2917,
+      "w": 390,
+      "h": 84,
+      "title": "К4.1. Основа: со сводкой",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "PageRow2.dc.html": {
+      "x": 454,
+      "y": 2917,
+      "w": 390,
+      "h": 84,
+      "title": "К4.2. Сразу после записи: подсветка 4 с",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "PageRow3.dc.html": {
+      "x": 908,
+      "y": 2917,
+      "w": 390,
+      "h": 84,
+      "title": "К4.3. Вид «Компактный»: только имя",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "RecordRow.dc.html": {
+      "x": 0,
+      "y": 3457,
+      "w": 390,
+      "h": 300,
+      "title": "К5.1. Основа: количество рядом с названием",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "RecordRow2.dc.html": {
+      "x": 454,
+      "y": 3457,
+      "w": 390,
+      "h": 300,
+      "title": "К5.2. Заметка второй строкой",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "RecordRow3.dc.html": {
+      "x": 908,
+      "y": 3457,
+      "w": 390,
+      "h": 300,
+      "title": "К5.3. Срок и заметка",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "RecordRow4.dc.html": {
+      "x": 1362,
+      "y": 3457,
+      "w": 390,
+      "h": 300,
+      "title": "К5.4. Сделано",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "RecordRow5.dc.html": {
+      "x": 1816,
+      "y": 3457,
+      "w": 390,
+      "h": 300,
+      "title": "К5.5. Во Входящих: кнопка «Переместить»",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "RecordRow6.dc.html": {
+      "x": 2270,
+      "y": 3457,
+      "w": 390,
+      "h": 300,
+      "title": "К5.6. Тап по кнопке: Список страниц у строки",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Check.dc.html": {
+      "x": 0,
+      "y": 4213,
+      "w": 64,
+      "h": 64,
+      "title": "К6.1. Основа",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Check2.dc.html": {
+      "x": 128,
+      "y": 4213,
+      "w": 64,
+      "h": 64,
+      "title": "К6.2. Отмечена",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Check3.dc.html": {
+      "x": 256,
+      "y": 4213,
+      "w": 64,
+      "h": 64,
+      "title": "К6.3. В шапке записи",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Check4.dc.html": {
+      "x": 384,
+      "y": 4213,
+      "w": 64,
+      "h": 64,
+      "title": "К6.4. В шапке, отмечена",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "PlaceList.dc.html": {
+      "x": 0,
+      "y": 4733,
+      "w": 264,
+      "h": 300,
+      "title": "К7.1. Основа: текущее место отмечено",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "PlaceList2.dc.html": {
+      "x": 328,
+      "y": 4733,
+      "w": 264,
+      "h": 300,
+      "title": "К7.2. «Новая страница»: имя пишется прямо в списке",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Sheet.dc.html": {
+      "x": 0,
+      "y": 5489,
+      "w": 390,
+      "h": 760,
+      "title": "К8.1. Основа: форма",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Sheet2.dc.html": {
+      "x": 454,
+      "y": 5489,
+      "w": 390,
+      "h": 760,
+      "title": "К8.2. Неверный ключ",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Sheet3.dc.html": {
+      "x": 908,
+      "y": 5489,
+      "w": 390,
+      "h": 760,
+      "title": "К8.3. Подключено",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Sheet4.dc.html": {
+      "x": 1362,
+      "y": 5489,
+      "w": 390,
+      "h": 760,
+      "title": "К8.4. Ошибка, которую повторы не сняли",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Field.dc.html": {
+      "x": 0,
+      "y": 6705,
+      "w": 390,
+      "h": 110,
+      "title": "К9.1. Основа: бакет",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Field2.dc.html": {
+      "x": 454,
+      "y": 6705,
+      "w": 390,
+      "h": 110,
+      "title": "К9.2. Секретный ключ: скрыт, глаз показывает",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Field3.dc.html": {
+      "x": 908,
+      "y": 6705,
+      "w": 390,
+      "h": 110,
+      "title": "К9.3. Неверный ключ: строка выделена",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "HomePane.dc.html": {
+      "x": 0,
+      "y": 7271,
+      "w": 390,
+      "h": 640,
+      "title": "К10.1. Основа: со сводкой",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "HomePane2.dc.html": {
+      "x": 454,
+      "y": 7271,
+      "w": 390,
+      "h": 640,
+      "title": "К10.2. Вид «Компактный»",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "HomePane3.dc.html": {
+      "x": 908,
+      "y": 7271,
+      "w": 390,
+      "h": 640,
+      "title": "К10.3. «⋯»: вид, Журнал, Настройки",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Toast.dc.html": {
+      "x": 0,
+      "y": 8367,
+      "w": 390,
+      "h": 72,
+      "title": "К11.1. Основа: с «Отменить»",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Toast2.dc.html": {
+      "x": 454,
+      "y": 8367,
+      "w": 390,
+      "h": 72,
+      "title": "К11.2. Без отмены: только что случилось",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Toast3.dc.html": {
+      "x": 908,
+      "y": 8367,
+      "w": 390,
+      "h": 72,
+      "title": "К11.3. Смахивается: идёт за пальцем и бледнеет",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Toast4.dc.html": {
+      "x": 1362,
+      "y": 8367,
+      "w": 390,
+      "h": 72,
+      "title": "К11.4. Новая версия: тихая строка на поверхности поля, «Обновить»",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "PagePane.dc.html": {
+      "x": 0,
+      "y": 8895,
+      "w": 390,
+      "h": 760,
+      "title": "К12.1. Основа: телефон, Покупки",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "RecPane.dc.html": {
+      "x": 0,
+      "y": 10111,
+      "w": 390,
+      "h": 760,
+      "title": "К13.1. Основа: телефон, Молоко",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "LeftCol.dc.html": {
+      "x": 0,
+      "y": 11327,
+      "w": 390,
+      "h": 900,
+      "title": "КК1.1. Основа: открыта страница, её карточка отмечена",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "LeftCol2.dc.html": {
+      "x": 454,
+      "y": 11327,
+      "w": 390,
+      "h": 900,
+      "title": "КК1.2. После записи: уведомление, поле открыто, новое на значке Покупок",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "PagePane2.dc.html": {
+      "x": 0,
+      "y": 12683,
+      "w": 1050,
+      "h": 900,
+      "title": "КК2.1. Покупки: без «‹ Главная», «⋯» в углу окна, новое отмечено полоской слева",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "PagePane3.dc.html": {
+      "x": 1114,
+      "y": 12683,
+      "w": 1050,
+      "h": 900,
+      "title": "КК2.2. Новая страница: «Начать с» под названием",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "RecPane2.dc.html": {
+      "x": 0,
+      "y": 14039,
+      "w": 1050,
+      "h": 900,
+      "title": "КК3.1. Молоко: «‹ Покупки» к странице, Esc тоже",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "Sheet5.dc.html": {
+      "x": 0,
+      "y": 15395,
+      "w": 600,
+      "h": 760,
+      "title": "КК4.1. Окно посередине, верх на месте",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "I3Nest.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИЗ1. Ремонт",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3NestHold.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИЗ2. Удержание 0,4 с на «Купить краску»",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3NestDrag.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИЗ3. Повёл пальцем",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3NestDrop.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИЗ4. Отпустил",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Card.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "ИЗ5. Карточка записи",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Prod.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Хлеб: отдел, «1 из 2 шт» оранжевым (пора брать), «годен до завтра»; без подложек, тап по числу открывает − и +",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Stock.dc.html": {
+      "x": 0,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "Вид «Запасы»: «Осталось» как «есть/норма», «шт» не пишется, другая единица пишется («2/4 уп»); 1 и меньше — оранжевым",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Step.dc.html": {
+      "x": 470,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "Тап по «3/5» у Колы: в строке «− 3/5 шт +», каждый тап на один; через 3 с без касаний снова число",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Low.dc.html": {
+      "x": 940,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "ИТ3. Осталась одна",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3NewView.dc.html": {
+      "x": 1410,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "«+» после вкладок: новый вид, сначала раскладка с картинкой (как «+ Add view» в Notion); встаёт после текущей вкладки",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Table.dc.html": {
+      "x": 1880,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "ИТ5. Вид «Таблица»",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3ViewSet.dc.html": {
+      "x": 2350,
+      "y": 1300,
+      "w": 390,
+      "h": 844,
+      "title": "Тап по открытой вкладке: «Настроить вид» как в приложении; «Справа в строке» решает, что видно в строке (Количество, Осталось)",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Filter.dc.html": {
+      "x": 0,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "Кнопка справа от вкладок: «Фильтр и сортировка» одной шторкой: сортировка, «Куплено», свойства с вариантами",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3FilterVals.dc.html": {
+      "x": 470,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ИТ8. «Отдел»",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Filtered.dc.html": {
+      "x": 940,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ИТ9. Свой фильтр виден чипом «Отдел",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Readd.dc.html": {
+      "x": 1410,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ИТ10. Написал «молоко», а Молоко было в «Куплено»",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Ai.dc.html": {
+      "x": 1880,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ИФ1. Настройки без ключа",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Aion.dc.html": {
+      "x": 2350,
+      "y": 2600,
+      "w": 390,
+      "h": 844,
+      "title": "ИФ2. С ключом",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Dacha.dc.html": {
+      "x": 0,
+      "y": 3900,
+      "w": 390,
+      "h": 844,
+      "title": "ИФ3. «+» у «Дом», название «Дача»",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3Icon.dc.html": {
+      "x": 470,
+      "y": 3900,
+      "w": 390,
+      "h": 844,
+      "title": "ИФ4. Тап по значку страницы",
+      "is_interactive": true,
+      "page": "i3big"
+    }
+  },
+  "order": [
+    "I3Home.dc.html",
+    "I3SecMenu.dc.html",
+    "I3Hold.dc.html",
+    "I3Drag.dc.html",
+    "I3Dropped.dc.html",
+    "I3Swipe.dc.html",
+    "I3Shop1.dc.html",
+    "I3Page.dc.html",
+    "I3Inbox.dc.html",
+    "I3Update.dc.html",
+    "DeskI3Update.dc.html",
+    "Flow.dc.html",
+    "FlowTyping.dc.html",
+    "FlowNote.dc.html",
+    "FlowPlace.dc.html",
+    "FlowPlaceNew.dc.html",
+    "FlowDate.dc.html",
+    "FlowFiled.dc.html",
+    "FlowUndo.dc.html",
+    "FlowPage.dc.html",
+    "FlowInbox.dc.html",
+    "FlowInboxMove.dc.html",
+    "FlowRec.dc.html",
+    "FlowBody.dc.html",
+    "FlowSub.dc.html",
+    "FlowNewPage.dc.html",
+    "FlowWeek.dc.html",
+    "FlowMenu.dc.html",
+    "FlowCompact.dc.html",
+    "FlowAi.dc.html",
+    "FlowAiSplit.dc.html",
+    "FlowAiFiled.dc.html",
+    "FlowAiWeek.dc.html",
+    "FlowDesk.dc.html",
+    "FlowDeskNote.dc.html",
+    "FlowDeskPlace.dc.html",
+    "FlowDeskFiled.dc.html",
+    "FlowDeskPage.dc.html",
+    "FlowDeskInboxMove.dc.html",
+    "FlowDeskRec.dc.html",
+    "FlowDeskBody.dc.html",
+    "FlowDeskNewPage.dc.html",
+    "FlowDeskWeek.dc.html",
+    "FlowDeskMenu.dc.html",
+    "FlowDeskCompact.dc.html",
+    "FlowDeskAiSplit.dc.html",
+    "FlowDeskAiFiled.dc.html",
+    "FlowDeskAiWeek.dc.html",
+    "SyncSettings.dc.html",
+    "SyncForm.dc.html",
+    "SyncPaste.dc.html",
+    "SyncCheck.dc.html",
+    "SyncBadKey.dc.html",
+    "SyncNoAccess.dc.html",
+    "SyncReach.dc.html",
+    "SyncMerged.dc.html",
+    "SyncMergedHome.dc.html",
+    "SyncOn.dc.html",
+    "SyncOff.dc.html",
+    "SyncWait.dc.html",
+    "SyncErr.dc.html",
+    "SyncErrHome.dc.html",
+    "SyncNewer.dc.html",
+    "SyncDeskSettings.dc.html",
+    "SyncDeskForm.dc.html",
+    "SyncDeskBadKey.dc.html",
+    "SyncDeskMerged.dc.html",
+    "SyncDeskOn.dc.html",
+    "SyncDeskErrHome.dc.html",
+    "Menu.dc.html",
+    "Menu2.dc.html",
+    "Menu3.dc.html",
+    "StatusBar.dc.html",
+    "StatusBar2.dc.html",
+    "Keyboard.dc.html",
+    "Keyboard2.dc.html",
+    "Composer.dc.html",
+    "Composer2.dc.html",
+    "Composer3.dc.html",
+    "Composer4.dc.html",
+    "Composer5.dc.html",
+    "PageRow.dc.html",
+    "PageRow2.dc.html",
+    "PageRow3.dc.html",
+    "RecordRow.dc.html",
+    "RecordRow2.dc.html",
+    "RecordRow3.dc.html",
+    "RecordRow4.dc.html",
+    "RecordRow5.dc.html",
+    "RecordRow6.dc.html",
+    "Check.dc.html",
+    "Check2.dc.html",
+    "Check3.dc.html",
+    "Check4.dc.html",
+    "PlaceList.dc.html",
+    "PlaceList2.dc.html",
+    "Sheet.dc.html",
+    "Sheet2.dc.html",
+    "Sheet3.dc.html",
+    "Sheet4.dc.html",
+    "Field.dc.html",
+    "Field2.dc.html",
+    "Field3.dc.html",
+    "HomePane.dc.html",
+    "HomePane2.dc.html",
+    "HomePane3.dc.html",
+    "Toast.dc.html",
+    "Toast2.dc.html",
+    "Toast3.dc.html",
+    "Toast4.dc.html",
+    "PagePane.dc.html",
+    "RecPane.dc.html",
+    "LeftCol.dc.html",
+    "LeftCol2.dc.html",
+    "PagePane2.dc.html",
+    "PagePane3.dc.html",
+    "RecPane2.dc.html",
+    "Sheet5.dc.html",
+    "I3Nest.dc.html",
+    "I3NestHold.dc.html",
+    "I3NestDrag.dc.html",
+    "I3NestDrop.dc.html",
+    "I3Card.dc.html",
+    "I3Prod.dc.html",
+    "I3Stock.dc.html",
+    "I3Step.dc.html",
+    "I3Low.dc.html",
+    "I3NewView.dc.html",
+    "I3Table.dc.html",
+    "I3ViewSet.dc.html",
+    "I3Filter.dc.html",
+    "I3FilterVals.dc.html",
+    "I3Filtered.dc.html",
+    "I3Readd.dc.html",
+    "I3Ai.dc.html",
+    "I3Aion.dc.html",
+    "I3Dacha.dc.html",
+    "I3Icon.dc.html"
+  ],
+  "notes": {
+    "t_i3_flowi3": {
+      "x": 0,
+      "y": -300,
+      "text": "Варианты А: значки без плашки, Главная на боковой поверхности, страницы и записи на бумаге",
+      "kind": "title1",
+      "maxW": 2740,
+      "page": "i3"
+    },
+    "t_i3b_flowi3l": {
+      "x": 0,
+      "y": -300,
+      "text": "Телефон: Итерация 3: списки и новая версия",
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "i3b"
+    },
+    "t_i3b_flowi3d": {
+      "x": 0,
+      "y": 1000,
+      "text": "Компьютер: баннер новой версии в левой колонке над полем; значки без плашки, секции с «⋯» и «+»",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "i3b"
+    },
+    "t_flow_flow": {
+      "x": 0,
+      "y": -300,
+      "text": "Телефон: Основной путь",
+      "kind": "title1",
+      "maxW": 6970,
+      "page": "flow"
+    },
+    "t_flow_flowhome": {
+      "x": 0,
+      "y": 1000,
+      "text": "Телефон: Основной путь",
+      "kind": "title1",
+      "maxW": 1330,
+      "page": "flow"
+    },
+    "t_flow_flowai": {
+      "x": 0,
+      "y": 2300,
+      "text": "Телефон: Основной путь",
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "flow"
+    },
+    "t_dflow_flowdesk": {
+      "x": 0,
+      "y": -300,
+      "text": "Компьютер: основной путь; слева Главная с полем, справа открытая страница. Окно от 1200 px как здесь (текст страницы до 752 px по центру); 900–1199 px: Главная 320 px; уже 900 px: как телефон, с «‹ Главная». Клавиши: Esc закрывает верхнее (список, окно, меню, поле, запись → страница)",
+      "kind": "title1",
+      "maxW": 13920,
+      "page": "dflow"
+    },
+    "t_dhome_flowdeskhome": {
+      "x": 0,
+      "y": -300,
+      "text": "Компьютер: Главная через неделю, два вида",
+      "kind": "title1",
+      "maxW": 4560,
+      "page": "dhome"
+    },
+    "t_dhome_flowdeskai": {
+      "x": 0,
+      "y": 1056,
+      "text": "Компьютер: с моделью (ветка «с ИИ»)",
+      "kind": "title1",
+      "maxW": 4560,
+      "page": "dhome"
+    },
+    "t_sync_flowsync": {
+      "x": 0,
+      "y": -300,
+      "text": "Телефон: Синхронизация через S3",
+      "kind": "title1",
+      "maxW": 6970,
+      "page": "sync"
+    },
+    "t_dsync_flowdesksync": {
+      "x": 0,
+      "y": -300,
+      "text": "Компьютер: синхронизация через S3",
+      "kind": "title1",
+      "maxW": 9240,
+      "page": "dsync"
+    },
+    "t_parts_part14": {
+      "x": 0,
+      "y": -300,
+      "text": "Меню (Menu): у удержанной карточки и у «⋯» секции; компактное, не шторка",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part1": {
+      "x": 0,
+      "y": 496,
+      "text": "Строка состояния (StatusBar): вверху каждого экрана телефона",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part2": {
+      "x": 0,
+      "y": 999,
+      "text": "Клавиатура (Keyboard): пока открыто поле или пишется текст",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part3": {
+      "x": 0,
+      "y": 1741,
+      "text": "Поле (Composer): внизу Главной и страницы, на компьютере внизу левой колонки; внутри Список страниц",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part4": {
+      "x": 0,
+      "y": 2617,
+      "text": "Карточка страницы (PageRow): Главная, оба вида",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part5": {
+      "x": 0,
+      "y": 3157,
+      "text": "Строка записи (RecordRow): страницы и Входящие; внутри Отметка и Список страниц",
+      "kind": "title1",
+      "maxW": 2660,
+      "page": "parts"
+    },
+    "t_parts_part6": {
+      "x": 0,
+      "y": 3913,
+      "text": "Отметка (Check): строки записей, подпункты, шапка записи",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part7": {
+      "x": 0,
+      "y": 4433,
+      "text": "Список страниц (PlaceList): место в поле и «Переместить» во Входящих",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part8": {
+      "x": 0,
+      "y": 5189,
+      "text": "Лист синхронизации (Sheet): Настройки, на компьютере окно; внутри Поле формы",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part9": {
+      "x": 0,
+      "y": 6405,
+      "text": "Поле формы (Field): лист синхронизации",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part10": {
+      "x": 0,
+      "y": 6971,
+      "text": "Главная (HomePane): экран телефона и левая колонка компьютера; внутри Карточки страниц",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part11": {
+      "x": 0,
+      "y": 8067,
+      "text": "Уведомление (Toast): над полем; что случилось и «Отменить»",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part12": {
+      "x": 0,
+      "y": 8595,
+      "text": "Страница (PagePane): открытая страница на телефоне и справа на компьютере; внутри Строки записей",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part13": {
+      "x": 0,
+      "y": 9811,
+      "text": "Запись (RecPane): открытая запись на телефоне и справа на компьютере; внутри Отметка",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_partd1": {
+      "x": 0,
+      "y": 11027,
+      "text": "Компьютер. Левая колонка (LeftCol): Главная на своём фоне, уведомление и поле; внутри Главная, Уведомление, Поле",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_partd2": {
+      "x": 0,
+      "y": 12383,
+      "text": "Компьютер. Страница справа: та же часть Страница (PagePane) в ширину окна",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_partd3": {
+      "x": 0,
+      "y": 13739,
+      "text": "Компьютер. Запись справа: та же часть Запись (RecPane) в ширину окна",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_partd4": {
+      "x": 0,
+      "y": 15095,
+      "text": "Компьютер. Окно синхронизации: та же часть Лист (Sheet), вариант «Окно на компьютере»",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "n_archive": {
+      "x": -560,
+      "y": 0,
+      "w": 440,
+      "size": "m",
+      "fill": "gray",
+      "page": "flow",
+      "text": "Старые страницы (v16–v24, компьютер, «Принципы v23») теперь на отдельном холсте «Cerulean — архив макетов»: https://claude.ai/artifact/Lr6efHnvZg7vwos1SkAYUf\n\nОбщие части экранов: страница «Компоненты»."
+    }
+  }
+}
