@@ -697,6 +697,69 @@
       "is_interactive": true,
       "page": "parts"
     },
+    "TableView.dc.html": {
+      "x": 0,
+      "y": 16611,
+      "w": 390,
+      "h": 360,
+      "title": "К15.1. Основа: Покупки",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "TableView2.dc.html": {
+      "x": 454,
+      "y": 16611,
+      "w": 390,
+      "h": 360,
+      "title": "К15.2. Ремонт: комната, срок, подпункт с отступом",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "ListSheet.dc.html": {
+      "x": 0,
+      "y": 17427,
+      "w": 390,
+      "h": 760,
+      "title": "К16.1. Основа: новый вид",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "ListSheet2.dc.html": {
+      "x": 454,
+      "y": 17427,
+      "w": 390,
+      "h": 760,
+      "title": "К16.2. Настроить вид",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "ListSheet3.dc.html": {
+      "x": 908,
+      "y": 17427,
+      "w": 390,
+      "h": 760,
+      "title": "К16.3. Фильтр и сортировка",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "ListSheet4.dc.html": {
+      "x": 1362,
+      "y": 17427,
+      "w": 390,
+      "h": 760,
+      "title": "К16.4. Значения свойства галочками",
+      "is_interactive": true,
+      "page": "parts"
+    },
+    "ListSheet5.dc.html": {
+      "x": 1816,
+      "y": 17427,
+      "w": 390,
+      "h": 760,
+      "title": "К16.5. Значок и цвет",
+      "is_interactive": true,
+      "page": "parts"
+    },
     "StatusBar.dc.html": {
       "x": 0,
       "y": 796,
@@ -1365,6 +1428,13 @@
     "Menu.dc.html",
     "Menu2.dc.html",
     "Menu3.dc.html",
+    "TableView.dc.html",
+    "TableView2.dc.html",
+    "ListSheet.dc.html",
+    "ListSheet2.dc.html",
+    "ListSheet3.dc.html",
+    "ListSheet4.dc.html",
+    "ListSheet5.dc.html",
     "StatusBar.dc.html",
     "StatusBar2.dc.html",
     "Keyboard.dc.html",
@@ -1525,6 +1595,22 @@
       "x": 0,
       "y": -300,
       "text": "Меню (Menu): у удержанной карточки и у «⋯» секции; компактное, не шторка",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part15": {
+      "x": 0,
+      "y": 16311,
+      "text": "Таблица (TableView): вид страницы таблицей; название слева на месте, столбцы листаются вбок",
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "parts"
+    },
+    "t_parts_part16": {
+      "x": 0,
+      "y": 17127,
+      "text": "Шторка выбора (ListSheet): новый вид, настройки вида, фильтр и значения, выбор у записи, значок и цвет",
       "kind": "title1",
       "maxW": 2400,
       "page": "parts"

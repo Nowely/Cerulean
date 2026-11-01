@@ -5,7 +5,7 @@
 - `main-flow-3-delta.md`: recovered at exactly 41,141 bytes, matching the exported project-file metadata.
 - Post-v14 adapter: 45/45 operations validated before writing; all five canonical documents changed.
 - Shared CSS: the v14 stylesheet was byte-identical in all 18 components before the edits. The updated region was synchronized from Flow to the other 17 components.
-- `canvas.json`: 138 existing files, 138 order entries, no missing board files; 20 reconstructed boards on `i3big`.
+- `canvas.json`: 145 existing board files, 145 order entries, no missing board files; 20 reconstructed boards on `i3big` and seven К15/К16 variants, with 32 notes.
 
 ## Browser checks
 
@@ -20,7 +20,15 @@ Server: `http://127.0.0.1:8765`.
 - `i3viewset`: «Настроить вид» and «Справа в строке» render.
 - `i3filter`: «Фильтр и сортировка» renders.
 - Canvas `I3Stock.dc.html` renders the same values and toolbar in light and dark themes.
+- All seven К15/К16 variants rendered in both themes (14 checks by Astra).
 - Desktop `deskrec` renders without console errors.
+
+## Final review fixes
+
+- Stock mutations now preserve `unit`: browser checks produced `1/4 уп`, `3/4 уп` and `4/4 уп`, including refill; default rows still fold to `3/5` and open as `3/5 шт`.
+- Desktop property selection is enabled only for the record's `opt` sheet: `deski3update` → «Хлеб» → «Отдел» opens the options, and choosing «Прочее» updates the chip and closes the sheet. Other desktop sheets retain their previous behaviour.
+- К15/К16 boards use the exact variants from transcript event 10225; К16.2 uses the final «Настроить вид» title from event 10750. Their placement is explicitly reconstructed.
+- The old `deskrec` state remains historical; the final desktop card is exercised through `deski3update`.
 
 Screenshots are in this directory.
 

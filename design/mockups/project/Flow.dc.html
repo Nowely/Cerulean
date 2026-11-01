@@ -636,7 +636,7 @@ button.rcp::after{content:'';position:absolute;inset:-6px -2px}
   <!-- after the dock in the DOM (stacking by z-index), so the field is never rebuilt when the wash comes or goes -->
   <sc-if value="{{hasWash}}" hint-placeholder-val="{{false}}"><button class="wash" type="button" aria-label="Свернуть поле" onClick="{{closeCmp}}"></button></sc-if>
   <sc-if value="{{isPhone}}" hint-placeholder-val="{{true}}"><dc-import name="Sheet" sy="{{sy}}" hint-size="0px,0px"></dc-import></sc-if>
-  <sc-if value="{{isPhone}}" hint-placeholder-val="{{true}}"><dc-import name="ListSheet" ls="{{ls}}" hint-size="0px,0px"></dc-import></sc-if>
+  <sc-if value="{{hasListSheet}}" hint-placeholder-val="{{true}}"><dc-import name="ListSheet" ls="{{ls}}" hint-size="0px,0px"></dc-import></sc-if>
   </div></div>
   <sc-if value="{{isDesk}}" hint-placeholder-val="{{false}}"><dc-import name="Sheet" sy="{{sy}}" hint-size="0px,0px"></dc-import></sc-if>
   <sc-if value="{{kb}}" hint-placeholder-val="{{false}}">
@@ -1558,7 +1558,7 @@ class Component extends DCLogic {
   // notice says so (no «Отменить»: «+» takes it out again). The buttons fold back to the number after 3 s without a touch
   stepStock(r, d) {
     var s = this.state, self = this, was = this.low(r);
-    r.stock = { have: Math.max(0, Math.min(99, r.stock.have + d)), need: r.stock.need };
+    r.stock = { have: Math.max(0, Math.min(99, r.stock.have + d)), need: r.stock.need, unit: r.stock.unit };
     var now = this.low(r), t = s.toast;
     if (now) { r.done = false; r.doneAt = null; }
     if (now && !was) { t = { text: r.title + ' теперь в «Купить»' }; this.toastLater(t); }
@@ -1764,7 +1764,7 @@ class Component extends DCLogic {
     var self = this;
     r.done = !r.done; r.doneAt = r.done ? Date.now() : null;
     // A thing kept at home is full again once bought (Josh 29 Oct 21:30Z)
-    if (r.done && r.stock && this.state.i3) { r.stock = { have: Math.max(r.stock.have, r.stock.need), need: r.stock.need }; r.want = false; }
+    if (r.done && r.stock && this.state.i3) { r.stock = { have: Math.max(r.stock.have, r.stock.need), need: r.stock.need, unit: r.stock.unit }; r.want = false; }
     this.setState({});
     if (r.done && typeof setTimeout !== 'undefined') setTimeout(function () { self.setState({}); }, 1550);
   }
@@ -1818,7 +1818,7 @@ class Component extends DCLogic {
         menu: lift && lift.phase === 'menu' ? liftMenu(p) : [] };
     };
     var kbOn = s.kb && !s.desk;
-    var vm = { isPhone: !s.desk, themeClass: (theme === 'dark' ? 't-dark' : 't-light') + (kbOn ? ' kb' : '') + (s.desk ? ' desk' : '') +
+    var vm = { isPhone: !s.desk, hasListSheet: !s.desk || (s.sheet && s.sheet.kind === 'opt'), themeClass: (theme === 'dark' ? 't-dark' : 't-light') + (kbOn ? ' kb' : '') + (s.desk ? ' desk' : '') +
         (s.i3 ? ' i3' + (bare ? ' bare' : '') + ' surf-' + s.i3.surf : '') + (s.view === 'home' ? ' v-home' : ''), start: s.start, noop: noop,
       homeView: s.homeView,
       menu: { open: !!s.menu, expanded: s.menu ? 'true' : 'false',
@@ -2366,7 +2366,7 @@ class Component extends DCLogic {
     var SEC = function (x) { return Object.assign({ hasCap: !!x.cap, cap: '', cls: '', isRows: false, rows: [], isTiles: false, tiles: [], isIcons: false, icons: [], isColors: false, colors: [], isField: false, text: '', isSeg: false, segs: [] }, x); };
     var ls = { open: false, close: closeSh, title: '', hasBack: false, back: noop, hasHead: false, head: '', hasReset: false, reset: noop, secs: [],
       hasFoot: false, hasFootL: false, footL: '', footLTap: noop, footR: 'Готово', footRTap: closeSh };
-    if (sh && pS && !s.desk) {
+    if (sh && pS && (!s.desk || sh.kind === 'opt')) {
       var vws = this.viewsOf(pS), vw = vws.filter(function (v) { return v.id === s.tab[pS.id]; })[0] || vws[0], vfk = pS.id + ':' + vw.id, vf = s.filt[vfk] || {};
       var LAY = [['list', 'Список', I.list], ['table', 'Таблица', I.table], ['board', 'Доска', I.board], ['cal', 'Календарь', I.cal]];
       var layName = function (l) { return LAY.filter(function (x) { return x[0] === l; })[0][1]; };

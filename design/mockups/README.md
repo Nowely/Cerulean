@@ -22,10 +22,10 @@ Use HTTP rather than `file://`: both viewers fetch component sources.
 
 ## Current state
 
-- 18 shared components; 140 `.dc.html` files including artboard wrappers.
-- 138 boards in 9 Canvas pages, 30 notes.
+- 18 shared components; 145 `.dc.html` files including artboard wrappers.
+- 145 boards in 9 Canvas pages, 32 notes.
 - 89 prototype states.
-- 20 reconstructed boards on «Итерация 3: большие темы».
+- 20 reconstructed boards on «Итерация 3: большие темы» and seven К15/К16 component variants.
 - Four rejected B-variant boards and their note are retired.
 - 45 recorded post-v14 operations are applied to the five affected components.
 - The updated shared CSS is synchronized across all 18 components.
@@ -73,17 +73,17 @@ No build step is required for local viewing. `recovery/baseline-build.py` is kep
 
 - All 89 prototype states rendered without page errors.
 - All 20 reconstructed big-topic Canvas boards rendered without page errors.
-- Stock values, units and `− / +` interaction were exercised, including the low-stock notice and folding.
+- Stock values, units and `− / +` interaction were exercised, including the low-stock notice and folding. Non-default units are preserved on decrement, increment and refill.
 - Card properties have no backgrounds or plus border.
-- Canvas stock was checked in light and dark themes; the older desktop `deskrec` state was checked for runtime compatibility.
+- Canvas stock and all seven К15/К16 variants were checked in light and dark themes.
+- The final desktop record card was opened through `deski3update`; property selection was checked by changing «Отдел» and closing the sheet.
 
 See `recovery/VALIDATION.md` for details.
 
 ## Limitations
 
 - The original `make.py`, `flowplay.mjs`, full `screens.json`, `spec/spec.md` and authoring history were not recovered. Do not claim this tree is the original `99ac6ff` source.
-- Big-topic Canvas wrappers and their coordinates are reconstructed; the original complete parts pages are unavailable. `TableView.dc.html` and `ListSheet.dc.html` exist, but their К15/К16 variant boards are not registered.
+- Big-topic Canvas wrappers, К15/К16 placement and their coordinates are reconstructed; the original absolute layout is unavailable.
 - The Canvas viewer is a focused viewer, not the original full editor.
-- The final desktop record-card changes in the delta are not covered by the old `deskrec` state and still need design review.
-- Pre-existing v14 behaviour is preserved: after decrementing or refilling a non-default unit, the stepper can show `шт` instead of `уп`. This is a candidate for the next review, not a replay correction made silently here.
+- The old `deskrec` state intentionally keeps the historical card. The final i3 desktop card is available through `deski3update`; no separate `deski3card` state is registered.
 - Google Fonts still requires network access for the intended Onest rendering; offline fallback fonts depend on the browser.
