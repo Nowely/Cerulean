@@ -30,6 +30,7 @@ Use HTTP rather than `file://`: both viewers fetch component sources.
 - 45 recorded post-v14 operations are applied to the five affected components.
 - The updated shared CSS is synchronized across all 18 components.
 - `recovery/handoff/main-flow-3-delta.md` is recovered at exactly 41,141 bytes, matching the exported metadata.
+- `handoff/` contains the updated proposed delta and client brief; implementation is waiting for approval of their open decisions.
 
 `manifest.json` describes the current files and hashes. `recovery/baseline-manifest.json` preserves the earlier v14 baseline manifest.
 
