@@ -2,6 +2,7 @@
 """Write a manifest of the current recovered files; never rewrites the sources."""
 import hashlib
 import json
+import re
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[1]
@@ -39,6 +40,7 @@ manifest = {
         "retiredNotes": ["t_i3_flowi3v"],
         "bigTopicBoardsAdded": True,
         "bigTopicBoardsReconstructed": 20,
+        "stockDesignBoardsAdded": 4,
     },
     "outputs": {
         "dcHtmlFiles": len(files),
@@ -47,7 +49,7 @@ manifest = {
         "order": len(canvas["order"]),
         "notes": len(canvas.get("notes", {})),
         "pages": len(canvas["pages"]),
-        "prototypeStates": 89,
+        "prototypeStates": len(re.findall(r'<option value="([^"]+)"', (WORKSPACE / "prototype.html").read_text())),
     },
     "files": {f"project/{path.name}": entry(path) for path in files},
     "runtime": entry(PROJECT / "support.js"),

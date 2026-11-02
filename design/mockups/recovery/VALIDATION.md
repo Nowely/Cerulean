@@ -32,6 +32,12 @@ Server: `http://127.0.0.1:8765`.
 
 Screenshots are in this directory.
 
+## Later stock design (2 Nov 2026)
+
+`tools/check-stock.mjs` exercised the proposed opt-in on an existing example page, including cancellation and preservation of its displayed tabs and records; the shared card/table editor; decimal values; the agreed low-stock boundary; `0/1` refill; returning an existing `5/5` record and undo; a desktop card; and the Canvas stock-editor board in light and dark. It also opened all 24 current big-topic Canvas boards and 93 prototype states without page errors.
+
+This validates only the local prototype. It does not validate real data persistence, S3, arbitrary existing page schemas, accessibility on a real phone or implementation in `Client/`.
+
 ## Evidence boundaries
 
 - This is a runnable reconstruction from generated v14 documents and recorded edits, not a byte-exact recovery of commit `99ac6ff`.

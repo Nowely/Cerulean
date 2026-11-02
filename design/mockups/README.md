@@ -22,10 +22,10 @@ Use HTTP rather than `file://`: both viewers fetch component sources.
 
 ## Current state
 
-- 18 shared components; 145 `.dc.html` files including artboard wrappers.
-- 145 boards in 9 Canvas pages, 32 notes.
-- 89 prototype states.
-- 20 reconstructed boards on «Итерация 3: большие темы» and seven К15/К16 component variants.
+- 18 shared components; 149 `.dc.html` files including artboard wrappers.
+- 149 boards in 9 Canvas pages, 32 notes.
+- 93 prototype states.
+- 20 reconstructed boards and four new stock-design boards on «Итерация 3: большие темы», plus seven К15/К16 component variants.
 - Four rejected B-variant boards and their note are retired.
 - 45 recorded post-v14 operations are applied to the five affected components.
 - The updated shared CSS is synchronized across all 18 components.
@@ -59,6 +59,14 @@ python3 tools/validate.py
 python3 tools/manifest.py          # refresh hashes only; does not rewrite sources
 ```
 
+With the server running and Playwright installed in `Client/`, the stock-design browser check is:
+
+```sh
+node tools/check-stock.mjs
+```
+
+The four new states are `#i3stocksetup`, `#i3stocksetupconfirm`, `#i3stockedit` and `#i3stocktable`. The proposed interaction and its limits are described in [`handoff/stock-design.md`](handoff/stock-design.md). It is a prototype for review, not an implementation in `Client/`.
+
 No build step is required for local viewing. `recovery/baseline-build.py` is kept only as evidence of the one-time v14 extraction. **It is not a rebuild command for the recovered state**: running it would discard later edits.
 
 ## Recovery evidence
@@ -72,8 +80,8 @@ No build step is required for local viewing. `recovery/baseline-build.py` is kep
 
 ## Checks performed
 
-- All 89 prototype states rendered without page errors.
-- All 20 reconstructed big-topic Canvas boards rendered without page errors.
+- All 93 prototype states rendered without page errors.
+- All 24 big-topic Canvas boards rendered without page errors.
 - Stock values, units and `− / +` interaction were exercised, including the low-stock notice and folding. Non-default units are preserved on decrement, increment and refill.
 - Card properties have no backgrounds or plus border.
 - Canvas stock and all seven К15/К16 variants were checked in light and dark themes.
@@ -84,7 +92,7 @@ See `recovery/VALIDATION.md` for details.
 ## Limitations
 
 - The original `make.py`, `flowplay.mjs`, full `screens.json`, `spec/spec.md` and authoring history were not recovered. Do not claim this tree is the original `99ac6ff` source.
-- Big-topic Canvas wrappers, К15/К16 placement and their coordinates are reconstructed; the original absolute layout is unavailable.
+- Big-topic Canvas wrappers, К15/К16 placement and their coordinates are reconstructed; the original absolute layout is unavailable. The four stock-design boards are new, not recovered historical artifacts.
 - The Canvas viewer is a focused viewer, not the original full editor.
 - The old `deskrec` state intentionally keeps the historical card. The final i3 desktop card is available through `deski3update`; no separate `deski3card` state is registered.
 - Google Fonts still requires network access for the intended Onest rendering; offline fallback fonts depend on the browser.

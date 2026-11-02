@@ -1233,7 +1233,7 @@
       "y": 1300,
       "w": 390,
       "h": 844,
-      "title": "Вид «Запасы»: «Осталось» как «есть/норма», «шт» не пишется, другая единица пишется («2/4 уп»); 1 и меньше — оранжевым",
+      "title": "ИТ1. Запасы: не больше 1 и ниже нормы — оранжевым; единица относится к записи",
       "is_interactive": true,
       "page": "i3big"
     },
@@ -1351,6 +1351,42 @@
       "w": 390,
       "h": 844,
       "title": "ИФ4. Тап по значку страницы",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3StockSetup.dc.html": {
+      "x": 0,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "ИП1. Существующая страница: включить запасы без изменения видов",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3StockSetupConfirm.dc.html": {
+      "x": 470,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "ИП2. Подключение запасов: что добавится",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3StockEdit.dc.html": {
+      "x": 940,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "ИП3. Карточка: остаток, норма и единица",
+      "is_interactive": true,
+      "page": "i3big"
+    },
+    "I3StockTable.dc.html": {
+      "x": 1410,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "ИП4. Таблица: тот же редактор остатка",
       "is_interactive": true,
       "page": "i3big"
     }
@@ -1500,7 +1536,11 @@
     "I3Ai.dc.html",
     "I3Aion.dc.html",
     "I3Dacha.dc.html",
-    "I3Icon.dc.html"
+    "I3Icon.dc.html",
+    "I3StockSetup.dc.html",
+    "I3StockSetupConfirm.dc.html",
+    "I3StockEdit.dc.html",
+    "I3StockTable.dc.html"
   ],
   "notes": {
     "t_i3_flowi3": {

@@ -575,6 +575,11 @@ button.rcp::after{content:'';position:absolute;inset:-6px -2px}
 .lsrows.acts .lsr{min-height:44px}
 .lssub{font-size:13px;color:var(--muted)}
 .lsr .sw{flex:0 0 42px}
+.stcopy{margin:0 0 18px;color:var(--muted);font-size:15px;line-height:1.45}
+.stfield{display:grid;gap:6px;margin:0 0 14px;color:var(--muted);font-size:13px}
+.stinput{box-sizing:border-box;width:100%;height:44px;padding:0 12px;border:1px solid var(--line2);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px}
+.stinput:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sterror{margin:0 0 12px;color:var(--warn-ink);font-size:13px}
 </style>
 </helmet>
 <div class="app {{themeClass}}" data-start="{{start}}" tabindex="-1" onKeyDown="{{appKey}}" onClick="{{appClick}}">
@@ -637,6 +642,21 @@ button.rcp::after{content:'';position:absolute;inset:-6px -2px}
   <sc-if value="{{hasWash}}" hint-placeholder-val="{{false}}"><button class="wash" type="button" aria-label="Свернуть поле" onClick="{{closeCmp}}"></button></sc-if>
   <sc-if value="{{isPhone}}" hint-placeholder-val="{{true}}"><dc-import name="Sheet" sy="{{sy}}" hint-size="0px,0px"></dc-import></sc-if>
   <sc-if value="{{hasListSheet}}" hint-placeholder-val="{{true}}"><dc-import name="ListSheet" ls="{{ls}}" hint-size="0px,0px"></dc-import></sc-if>
+  <sc-if value="{{stockUI.open}}" hint-placeholder-val="{{false}}">
+    <button class="scrim" type="button" aria-label="Закрыть" onClick="{{stockUI.close}}"></button>
+    <div class="sheet stsheet" role="dialog" aria-modal="true" aria-labelledby="stock-title">
+      <div class="grab" aria-hidden="true"></div>
+      <h2 class="shh" id="stock-title">{{stockUI.title}}</h2>
+      <p class="stcopy">{{stockUI.description}}</p>
+      <sc-if value="{{stockUI.edit}}" hint-placeholder-val="{{false}}">
+        <label class="stfield">Осталось<input class="stinput" type="text" inputmode="decimal" value="{{stockUI.have}}" onChange="{{stockUI.onHave}}" autocomplete="off"></label>
+        <label class="stfield">Норма<input class="stinput" type="text" inputmode="decimal" value="{{stockUI.need}}" onChange="{{stockUI.onNeed}}" autocomplete="off"></label>
+        <label class="stfield">Единица<input class="stinput" type="text" value="{{stockUI.unit}}" onChange="{{stockUI.onUnit}}" autocomplete="off"></label>
+        <sc-if value="{{stockUI.hasError}}" hint-placeholder-val="{{false}}"><p class="sterror" role="alert">{{stockUI.error}}</p></sc-if>
+      </sc-if>
+      <div class="shb"><button class="btn" type="button" onClick="{{stockUI.close}}">Отмена</button><button class="btn pri" type="button" onClick="{{stockUI.save}}">{{stockUI.action}}</button></div>
+    </div>
+  </sc-if>
   </div></div>
   <sc-if value="{{isDesk}}" hint-placeholder-val="{{false}}"><dc-import name="Sheet" sy="{{sy}}" hint-size="0px,0px"></dc-import></sc-if>
   <sc-if value="{{kb}}" hint-placeholder-val="{{false}}">
@@ -644,7 +664,7 @@ button.rcp::after{content:'';position:absolute;inset:-6px -2px}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["light", "dark", "system"], "default": "light"}, "start": {"editor": "enum", "options": ["first", "typing", "note", "place", "placenew", "date", "filed", "undo", "page", "inbox", "inboxmove", "rec", "body", "sub", "newpage", "week", "menu", "compact", "ai", "aisplit", "aifiled", "aiweek", "settings", "syncform", "syncpaste", "synccheck", "syncbadkey", "syncnoaccess", "syncreach", "syncmerged", "syncmergedhome", "syncon", "syncoff", "syncwait", "syncerr", "syncerrhome", "syncnewer", "deskfirst", "desknote", "deskplace", "deskfiled", "deskpage", "deskinboxmove", "deskrec", "deskbody", "desknewpage", "deskweek", "deskmenu", "deskcompact", "deskaisplit", "deskaifiled", "deskaiweek", "desksettings", "desksyncform", "desksyncbadkey", "desksyncmerged", "desksyncon", "desksyncerrhome", "i3home", "i3secmenu", "i3hold", "i3drag", "i3dropped", "i3swipe", "i3shop1", "i3page", "i3inbox", "i3update", "deski3update", "i3nest", "i3nesthold", "i3nestdrag", "i3nestdrop", "i3card", "i3prod", "i3stock", "i3step", "i3low", "i3newview", "i3table", "i3viewset", "i3filter", "i3filtervals", "i3filtered", "i3readd", "i3ai", "i3aion", "i3dacha", "i3icon"], "default": "first"}, "$preview": {"width": 390, "height": 844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["light", "dark", "system"], "default": "light"}, "start": {"editor": "enum", "options": ["first", "typing", "note", "place", "placenew", "date", "filed", "undo", "page", "inbox", "inboxmove", "rec", "body", "sub", "newpage", "week", "menu", "compact", "ai", "aisplit", "aifiled", "aiweek", "settings", "syncform", "syncpaste", "synccheck", "syncbadkey", "syncnoaccess", "syncreach", "syncmerged", "syncmergedhome", "syncon", "syncoff", "syncwait", "syncerr", "syncerrhome", "syncnewer", "deskfirst", "desknote", "deskplace", "deskfiled", "deskpage", "deskinboxmove", "deskrec", "deskbody", "desknewpage", "deskweek", "deskmenu", "deskcompact", "deskaisplit", "deskaifiled", "deskaiweek", "desksettings", "desksyncform", "desksyncbadkey", "desksyncmerged", "desksyncon", "desksyncerrhome", "i3home", "i3secmenu", "i3hold", "i3drag", "i3dropped", "i3swipe", "i3shop1", "i3page", "i3inbox", "i3update", "deski3update", "i3nest", "i3nesthold", "i3nestdrag", "i3nestdrop", "i3card", "i3prod", "i3stock", "i3step", "i3low", "i3newview", "i3table", "i3viewset", "i3filter", "i3filtervals", "i3filtered", "i3readd", "i3ai", "i3aion", "i3dacha", "i3icon", "i3stocksetup", "i3stocksetupconfirm", "i3stockedit", "i3stocktable"], "default": "first"}, "$preview": {"width": 390, "height": 844}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -696,7 +716,8 @@ class Component extends DCLogic {
     // (13), the shopping list (16), the model's functions and icons (15)
     var I3 = ['i3home', 'i3secmenu', 'i3hold', 'i3drag', 'i3dropped', 'i3swipe', 'i3update', 'i3shop1', 'i3page', 'i3inbox',
       'i3nest', 'i3nesthold', 'i3nestdrag', 'i3nestdrop', 'i3card', 'i3prod', 'i3newview', 'i3table', 'i3viewset', 'i3filter',
-      'i3filtervals', 'i3filtered', 'i3readd', 'i3stock', 'i3step', 'i3low', 'i3ai', 'i3aion', 'i3dacha', 'i3icon'];
+      'i3filtervals', 'i3filtered', 'i3readd', 'i3stock', 'i3step', 'i3low', 'i3ai', 'i3aion', 'i3dacha', 'i3icon',
+      'i3stocksetup', 'i3stocksetupconfirm', 'i3stockedit', 'i3stocktable'];
     var i3 = I3.indexOf(start) >= 0;
     // A week later: every page has records, two own pages; the cards say what is in each without opening it
     if (start === 'week' || start === 'compact' || start === 'menu' || start === 'aiweek' || sync || i3) {
@@ -739,7 +760,7 @@ class Component extends DCLogic {
       // (Grocy's minimum stock): 1 or 0 left puts the thing into «Купить» by itself, «Куплено» fills it up again
       var sr = function (t) { return s.recs.filter(function (r) { return r.page === 'shop' && r.title === t; })[0]; };
       sr('Яйца').qty = '10 шт'; sr('Сыр').qty = '300 г'; sr('Молоко').qty = '2 л';
-      Object.assign(sr('Хлеб'), { stock: { have: 1, need: 2 }, best: 'до завтра' });
+      Object.assign(sr('Хлеб'), { stock: { have: 1, need: 2 } });
       s.recs = s.recs.concat([R3('shop', 'Йогурт', 9 * D, { stock: { have: 2, need: 5 } }), R3('shop', 'Кола', 9 * D - 5, { stock: { have: 3, need: 5 } }),
         R3('shop', 'Туалетная бумага', 9 * D - 9, { stock: { have: 2, need: 4, unit: 'уп' } })]);
       // Properties of a page (items 11–13): Ремонт has a room, Покупки a department (set by itself) and a quantity
@@ -786,6 +807,22 @@ class Component extends DCLogic {
       if (start === 'i3stock') at('shop', { tab: { shop: 'stock' } });
       if (start === 'i3step') at('shop', { tab: { shop: 'stock' }, step: sr('Кола').id });
       if (start === 'i3low') { at('shop', { tab: { shop: 'stock' }, step: sr('Кола').id }); sr('Кола').stock.have = 1; s.toast = { text: 'Кола теперь в «Купить»', keep: true }; }
+      if (start === 'i3stocksetup' || start === 'i3stocksetupconfirm') {
+        var shop = this.pageIn(s, 'shop'); shop.stockEnabled = false;
+        s.recs.filter(function (r) { return r.page === 'shop'; }).forEach(function (r) { delete r.stock; });
+        s.views.shop = [{ id: 'open', name: 'Купить', layout: 'list', show: 'open' },
+          { id: 'custom', name: 'На неделю', layout: 'list', show: 'open' }, { id: 'done', name: 'Куплено', layout: 'list', show: 'done' }];
+        at('shop', { tab: { shop: 'open' }, sheet: start === 'i3stocksetupconfirm' ? { kind: 'stockSetup' } : null });
+      }
+      if (start === 'i3stockedit') {
+        s.view = 'rec'; s.pageId = 'shop'; s.recId = sr('Кола').id; s.from = 'page';
+        s.sheet = { kind: 'stockEdit', rid: sr('Кола').id };
+        s.stockDraft = { have: '3', need: '5', unit: 'шт', error: '' };
+      }
+      if (start === 'i3stocktable') {
+        at('shop', { tab: { shop: 'stockTable' } });
+        s.views.shop = this.defViews(this.pageIn(s, 'shop')).concat([{ id: 'stockTable', name: 'Таблица', layout: 'table', show: 'stock' }]);
+      }
       // Views over one table (item 12) and the filter (item 13), on Покупки
       if (start === 'i3newview') at('shop', { sheet: { kind: 'newview' } });
       if (start === 'i3table') { at('shop', { tab: { shop: 'v1' } }); s.views.shop = this.defViews(this.pageIn(s, 'shop')); s.views.shop.splice(1, 0, { id: 'v1', name: 'Таблица', layout: 'table', show: 'open' }); }
@@ -966,12 +1003,18 @@ class Component extends DCLogic {
   recSnap(st) { return (st || this.state).recs.map(function (x) { return { id: x.id, parent: x.parent || null, ord: x.ord, page: x.page }; }); }
   pageIn(st, id) { return st.pages.filter(function (p) { return p.id === id; })[0]; }
 
-  // The stock (Josh 29 Oct 21:30Z, Grocy's minimum stock): have of need; 1 or 0 left, or past its date, means buy
-  low(r) { return !!r.stock && (r.stock.have <= 1 || r.best === 'вчера'); }
+  low(r) { return !!r.stock && r.stock.have <= 1 && r.stock.have < r.stock.need; }
   // Its unit (Josh 22:15Z): «шт» goes without saying in a row and a table, any other unit is written («2/4 уп»); the card and
   // the open − and + always say it
-  stockShort(r) { var u = r.stock.unit; return r.stock.have + '/' + r.stock.need + (u && u !== 'шт' ? ' ' + u : ''); }
-  stockFull(r, of) { return r.stock.have + (of ? ' из ' : '/') + r.stock.need + ' ' + (r.stock.unit || 'шт'); }
+  stockNumber(n) { return String(n).replace('.', ','); }
+  stockShort(r) { var u = r.stock.unit; return this.stockNumber(r.stock.have) + '/' + this.stockNumber(r.stock.need) + (u && u !== 'шт' ? ' ' + u : ''); }
+  stockFull(r, of) { return this.stockNumber(r.stock.have) + (of ? ' из ' : '/') + this.stockNumber(r.stock.need) + ' ' + (r.stock.unit || 'шт'); }
+  openStock(r) {
+    var stock = r.stock || {};
+    this.setState({ sheet: { kind: 'stockEdit', rid: r.id }, step: null, cell: null,
+      stockDraft: { have: stock.have == null ? '' : String(stock.have).replace('.', ','),
+        need: stock.need == null ? '' : String(stock.need).replace('.', ','), unit: stock.unit || 'шт', error: '' } });
+  }
   // What «Купить» holds: a thing kept at home while it runs low, any other thing until it is bought
   toBuy(r) { return r.stock ? this.low(r) || !!r.want : !r.done; }
   inView(r, v) { return v.show === 'done' ? r.done : v.show === 'stock' ? !!r.stock : v.show === 'all' ? true : this.isOpen(r); }
@@ -983,7 +1026,7 @@ class Component extends DCLogic {
   // Views over one table (item 12): «Купить» and «Куплено» as the app has them, «Запасы» for things kept at home
   defViews(p) {
     var a = { id: 'open', name: p.buy ? 'Купить' : 'Список', layout: 'list', show: 'open' }, b = { id: 'done', name: p.buy ? 'Куплено' : 'Сделано', layout: 'list', show: 'done' };
-    return p.buy ? [a, { id: 'stock', name: 'Запасы', layout: 'list', show: 'stock' }, b] : [a, b];
+    return p.buy && p.stockEnabled !== false ? [a, { id: 'stock', name: 'Запасы', layout: 'list', show: 'stock' }, b] : [a, b];
   }
   // «Справа в строке» of a view (the app's switches): Купить shows the amount and what is left, Запасы what is left, Куплено
   // the amount; other pages their due date; the note glyph is on unless switched off
@@ -1254,7 +1297,7 @@ class Component extends DCLogic {
     var back = [];
     drafts = drafts.filter(function (d) { var b = self.revive(d.place, d.title); if (b) back.push(b); return !b; });
     var nid = s.nid, onPage = here, fresh = {}, seen = Object.assign({}, s.seen), places = [], unseen = Object.assign({}, s.unseen);
-    back.forEach(function (b) { fresh[onPage ? b.id : b.page] = true; });
+    back.forEach(function (b) { fresh[onPage ? b.record.id : b.record.page] = true; });
     var made = drafts.map(function (d) {
       var r = { id: 'r' + (nid++), page: d.place, title: d.title, ts: Date.now(), done: false, due: d.due || null, body: lines(d.note || ''), subs: [] };
       fresh[onPage ? r.id : d.place] = true;
@@ -1267,7 +1310,7 @@ class Component extends DCLogic {
     });
     var ids = made.map(function (r) { return r.id; });
     // «Отменить» takes the records back and gives the words back to the field (Josh 28 Oct, 6)
-    var toast = !made.length && back.length ? { text: back.map(function (b) { return b.title; }).join(', ') + ' снова в «Купить»', undo: true, revive: back.map(function (b) { return b.id; }) }
+    var toast = !made.length && back.length ? { text: back.map(function (b) { return b.record.title; }).join(', ') + ' снова в «Купить»', undo: true, revive: back.map(function (b) { return b.before; }) }
       : (made.every(showsHere) ? null : { text: 'Добавлено ' + this.into(this.placesText(places)), undo: ids,
       restore: { title: c.title, note: c.note, place: c.place, by: c.by, noDate: c.noDate } });
     // The field stays under the finger, empty, with the keyboard (Telegram): the next record is one tap less. A place picked
@@ -1558,7 +1601,7 @@ class Component extends DCLogic {
   // notice says so (no «Отменить»: «+» takes it out again). The buttons fold back to the number after 3 s without a touch
   stepStock(r, d) {
     var s = this.state, self = this, was = this.low(r);
-    r.stock = { have: Math.max(0, Math.min(99, r.stock.have + d)), need: r.stock.need, unit: r.stock.unit };
+    r.stock = { have: Math.max(0, r.stock.have + d), need: r.stock.need, unit: r.stock.unit };
     var now = this.low(r), t = s.toast;
     if (now) { r.done = false; r.doneAt = null; }
     if (now && !was) { t = { text: r.title + ' теперь в «Купить»' }; this.toastLater(t); }
@@ -1573,9 +1616,10 @@ class Component extends DCLogic {
     if (!s.i3 || !x || !p || !p.buy) return null;
     var r = s.recs.filter(function (q) { return q.page === pid && !q.parent && q.title.toLowerCase() === x && !self.toBuy(q); })[0];
     if (!r) return null;
+    var before = { id: r.id, done: r.done, doneAt: r.doneAt, want: r.want };
     if (r.stock) r.want = true;
     r.done = false; r.doneAt = null;
-    return r;
+    return { record: r, before: before };
   }
 
   // Sync through S3. The row's second line and the sheet's state line say the same thing (Things Cloud: the last sync and
@@ -1660,7 +1704,10 @@ class Component extends DCLogic {
     // A deleted record comes back with its subitems
     if (t && t.gone) { this.setState({ recs: s.recs.concat(t.gone), toast: null }); return; }
     // A thing brought back from «Куплено» goes back there (item 16)
-    if (t && t.revive) { t.revive.forEach(function (id) { var r = self.rec(id); if (r) { r.done = true; r.want = false; } }); this.setState({ toast: null, fresh: {} }); return; }
+    if (t && t.revive) { t.revive.forEach(function (saved) { var r = self.rec(typeof saved === 'string' ? saved : saved.id); if (r) {
+      if (typeof saved === 'string') { r.done = true; r.want = false; }
+      else { r.done = saved.done; r.doneAt = saved.doneAt; r.want = saved.want; }
+    } }); this.setState({ toast: null, fresh: {} }); return; }
     ids = [].concat(ids);
     var fresh = Object.assign({}, s.fresh), unseen = {};
     ids.forEach(function (id) { var r = self.rec(id); if (r) delete fresh[r.page]; delete fresh[id]; });
@@ -1818,7 +1865,7 @@ class Component extends DCLogic {
         menu: lift && lift.phase === 'menu' ? liftMenu(p) : [] };
     };
     var kbOn = s.kb && !s.desk;
-    var vm = { isPhone: !s.desk, hasListSheet: !s.desk || (s.sheet && s.sheet.kind === 'opt'), themeClass: (theme === 'dark' ? 't-dark' : 't-light') + (kbOn ? ' kb' : '') + (s.desk ? ' desk' : '') +
+    var vm = { isPhone: !s.desk, hasListSheet: !s.desk || (s.sheet && (s.sheet.kind === 'opt' || s.sheet.kind === 'addStock')), themeClass: (theme === 'dark' ? 't-dark' : 't-light') + (kbOn ? ' kb' : '') + (s.desk ? ' desk' : '') +
         (s.i3 ? ' i3' + (bare ? ' bare' : '') + ' surf-' + s.i3.surf : '') + (s.view === 'home' ? ' v-home' : ''), start: s.start, noop: noop,
       homeView: s.homeView,
       menu: { open: !!s.menu, expanded: s.menu ? 'true' : 'false',
@@ -2042,7 +2089,7 @@ class Component extends DCLogic {
         rows: flatten(shown).map(function (f) {
           var r = f.r, note = (r.body[0] && r.body[0].t) || '';
           var src = p.collect ? self.page(r.page).name : '';
-          var sub = [src, r.best ? 'годен ' + r.best : '', note].filter(Boolean).join(' · ');
+          var sub = [src, note].filter(Boolean).join(' · ');
           // Subitems (item 17): «1/3» and a chevron on the right fold them; the hold lifts the row with its menu
           var kd = s.i3 ? self.kids(r) : [], kdone = kd.filter(function (x) { return x.done; }).length, folded = !!s.rfold[r.id];
           var lift = s.lift && s.lift.rid === r.id ? s.lift : null, onto = !!s.lift && s.lift.onto === r.id;
@@ -2104,7 +2151,7 @@ class Component extends DCLogic {
           if (!t) { self.setState({ adding: false, kb: false }); return; }
           var back = self.revive(p.id, t);
           if (back) {
-            var bt = { text: back.title + ' снова в «Купить»', undo: true, revive: [back.id] }, bf = {}; bf[back.id] = true;
+            var bt = { text: back.record.title + ' снова в «Купить»', undo: true, revive: [back.before] }, bf = {}; bf[back.record.id] = true;
             self.setState({ addText: '', fresh: bf, toast: bt }); self.toastLater(bt); self.focusSoon('f-add'); return;
           }
           var r = { id: 'r' + s.nid, page: p.collect ? 'tasks' : p.id, title: t.charAt(0).toUpperCase() + t.slice(1), ts: Date.now(), done: false, due: p.collect ? 'сегодня' : null, body: [], subs: [] };
@@ -2141,6 +2188,7 @@ class Component extends DCLogic {
       // that scroll sideways, «+» in the header adds one; a tap on a cell changes it, a choice opens its values
       var cols = p.buy ? [['dept', 'Отдел'], ['qty', 'Количество'], ['stock', 'Осталось'], ['note', 'Заметка'], ['at', 'Добавлено']]
         : this.propsOf(p).filter(function (x) { return x.key !== 'due'; }).map(function (x) { return [x.key, x.name]; }).concat([['due', 'Срок'], ['note', 'Заметка'], ['at', 'Добавлено']]);
+      if (p.buy && p.stockEnabled === false) cols = cols.filter(function (c) { return c[0] !== 'stock'; });
       var cell = function (r, k, name) {
         var on = s.cell === r.id + ':' + k, x = { cls: 'tvc w-' + k + (on ? ' on' : ''), isOpt: false, optCls: '', text: '',
           tap: function () { self.setState({ cell: on ? null : r.id + ':' + k }); } };
@@ -2150,7 +2198,7 @@ class Component extends DCLogic {
         if (o || k === 'dept' || (self.propOf(p, k) && k !== 'stock' && k !== 'due')) x.tap = function () { self.setState({ sheet: { kind: 'opt', rid: r.id, prop: k } }); };
         if (o) { x.isOpt = true; x.optCls = 'c-' + o[2]; x.text = o[1]; }
         else if (k === 'qty') x.text = r.qty || '';
-        else if (k === 'stock') { x.text = r.stock ? self.stockShort(r) : ''; if (self.low(r)) x.cls += ' low'; }
+        else if (k === 'stock') { x.text = r.stock ? self.stockShort(r) : ''; if (self.low(r)) x.cls += ' low'; x.tap = function () { self.openStock(r); }; }
         else if (k === 'note') x.text = (r.body[0] && r.body[0].t) || '';
         else if (k === 'at') x.text = self.timeLabel(r.ts);
         else if (k === 'due') { x.text = r.due || ''; x.cls += ' due'; }
@@ -2202,7 +2250,7 @@ class Component extends DCLogic {
             self.setState({ subAdding: false, subText: '', kb: false });
           }, 120);
         },
-        hasChips: false, chips: [], hasRows: true, hasMeta: false, meta: [], subFoldable: false, subPlain: true, subCount: '', subChev: '', subExp: 'true', subFold: noop
+        hasChips: false, chips: [], hasRows: true, hasMeta: false, meta: [], addProp: noop, subFoldable: false, subPlain: true, subCount: '', subChev: '', subExp: 'true', subFold: noop
       };
       // Iteration 3, the record card (item 11, Notion's pinned properties): the properties as one line of chips under the
       // title, a tap changes one; the note; «Подпункты 1/3» folds; «Добавлено» last, small. Subitems are records (item 17)
@@ -2215,16 +2263,13 @@ class Component extends DCLogic {
           var o = self.optOf(rp, pr.key, (r.props || {})[pr.key]);
           if (o) chips.push(C({ isOpt: true, optCls: 'c-' + o[2], text: o[1], aria: pr.name + ': ' + o[1] + '. Изменить', tap: optSheet(pr.key) }));
         });
-        // The stock as in a row: the number, a tap opens − and +, they fold back after 3 s; no plates under the chips (Josh 22:14Z)
-        if (r.stock) chips.push(s.step === r.id ? C({ isStep: true, text: this.stockFull(r, true), cls: this.low(r) ? 'low' : '', aria: 'Осталось: ' + this.stockFull(r, true),
-          hasIcon: true, icon: I.box, dec: function () { self.stepStock(r, -1); }, inc: function () { self.stepStock(r, 1); }, decAria: 'Меньше', incAria: 'Больше' })
-          : C({ isPlain: true, hasIcon: true, icon: I.box, text: this.stockFull(r, true), cls: this.low(r) ? 'low' : '', aria: 'Осталось: ' + this.stockFull(r, true) + '. Изменить',
-            tap: function () { self.setState({ step: r.id }); self.stepLater(r.id); } }));
+        if (r.stock) chips.push(C({ isPlain: true, hasIcon: true, icon: I.box, text: this.stockFull(r, true), cls: this.low(r) ? 'low' : '',
+          aria: 'Осталось: ' + this.stockFull(r, true) + '. Изменить', tap: function () { self.openStock(r); } }));
         if (r.qty) chips.push(C({ isPlain: true, text: r.qty, aria: 'Количество: ' + r.qty + '. Изменить' }));
-        if (r.best) chips.push(C({ isPlain: true, hasIcon: true, icon: I.hourglass, text: 'годен ' + r.best, aria: 'Годен ' + r.best + '. Изменить' }));
         if (r.due) chips.push(C({ isPlain: true, hasIcon: true, icon: I.cal, text: r.due, cls: 'due', aria: 'Срок: ' + r.due + '. Изменить' }));
         var child = function (t) { return { id: 'r' + self.state.nid, page: r.page, parent: r.id, title: t.charAt(0).toUpperCase() + t.slice(1), ts: Date.now(), done: false, body: [], subs: [] }; };
         Object.assign(vm.rc, { hasChips: true, chips: chips, hasRows: false, hasMeta: true, meta: [{ t: 'Добавлено ' + this.atLabel(r.ts) }],
+          addProp: rp.buy && rp.stockEnabled !== false && !r.stock ? function () { self.setState({ sheet: { kind: 'addStock', rid: r.id } }); } : noop,
           hasSubs: kd.length > 0, subFoldable: true, subPlain: false, subCount: kdone + '/' + kd.length, subChev: cf ? 'shut' : '', subExp: cf ? 'false' : 'true',
           subFold: function () { var c2 = Object.assign({}, s.cfold); if (cf) delete c2[r.id]; else c2[r.id] = true; self.setState({ cfold: c2 }); },
           subs: cf ? [] : kd.map(function (x) {
@@ -2366,7 +2411,7 @@ class Component extends DCLogic {
     var SEC = function (x) { return Object.assign({ hasCap: !!x.cap, cap: '', cls: '', isRows: false, rows: [], isTiles: false, tiles: [], isIcons: false, icons: [], isColors: false, colors: [], isField: false, text: '', isSeg: false, segs: [] }, x); };
     var ls = { open: false, close: closeSh, title: '', hasBack: false, back: noop, hasHead: false, head: '', hasReset: false, reset: noop, secs: [],
       hasFoot: false, hasFootL: false, footL: '', footLTap: noop, footR: 'Готово', footRTap: closeSh };
-    if (sh && pS && (!s.desk || sh.kind === 'opt')) {
+    if (sh && pS && sh.kind !== 'stockEdit' && sh.kind !== 'stockSetup' && (!s.desk || sh.kind === 'opt' || sh.kind === 'addStock')) {
       var vws = this.viewsOf(pS), vw = vws.filter(function (v) { return v.id === s.tab[pS.id]; })[0] || vws[0], vfk = pS.id + ':' + vw.id, vf = s.filt[vfk] || {};
       var LAY = [['list', 'Список', I.list], ['table', 'Таблица', I.table], ['board', 'Доска', I.board], ['cal', 'Календарь', I.cal]];
       var layName = function (l) { return LAY.filter(function (x) { return x[0] === l; })[0][1]; };
@@ -2394,6 +2439,7 @@ class Component extends DCLogic {
         var shownOf = this.shownOf(pS, vw);
         var SH = pS.buy ? [['qty', 'Количество', 'текст'], ['dept', 'Отдел', 'выбор'], ['stock', 'Осталось', 'число'], ['due', 'Срок', 'дата'], ['note', 'Заметка', '']]
           : this.propsOf(pS).filter(function (pr) { return pr.key !== 'due'; }).map(function (pr) { return [pr.key, pr.name, 'выбор']; }).concat([['due', 'Срок', 'дата'], ['note', 'Заметка', '']]);
+        if (pS.buy && pS.stockEnabled === false) SH = SH.filter(function (x) { return x[0] !== 'stock'; });
         ls.title = 'Настроить вид'; ls.hasFoot = false;
         ls.secs = [SEC({ cap: 'Название вида', isField: true, text: vw.name })].concat(stockV ? [] : [SEC({ cap: 'Откуда записи', isSeg: true, segs: [['Эта страница', true], ['Все страницы', false], ['Выбранные', false]].map(function (x) {
           return { name: x[0], cls: x[1] ? 'on' : '', pressed: x[1] ? 'true' : 'false', tap: noop }; }) })], [
@@ -2425,6 +2471,9 @@ class Component extends DCLogic {
               self.setState({ views: views2, tab: t2, sheet: null, toast: t }); self.toastLater(t);
             } })
           ] })]);
+        if (pS.buy && pS.stockEnabled === false) ls.secs.splice(ls.secs.length - 1, 0,
+          SEC({ isRows: true, cls: 'lines', rows: [LR({ label: 'Включить запасы', hasIcon: true, icon: I.box, chev: true,
+            tap: function () { self.setState({ sheet: { kind: 'stockSetup' } }); } })] }));
       }
       if (sh.kind === 'filter' && !sh.prop) {
         // Notion's «Filter» and «Sort» in one sheet behind the bar's button: «Сортировка» on top, then «Сделано» (what the view
@@ -2476,6 +2525,12 @@ class Component extends DCLogic {
           } });
         }) })];
       }
+      if (sh.kind === 'addStock') {
+        var addRecord = this.rec(sh.rid);
+        ls.title = 'Добавить свойство';
+        ls.secs = [SEC({ isRows: true, rows: [LR({ label: 'Осталось', hasIcon: true, icon: I.box, chev: true,
+          tap: function () { self.openStock(addRecord); } })] })];
+      }
       if (sh.kind === 'icon') {
         // Three that fit the name on top (rules without a key, the model with one), then all, then the colour (grey by default)
         var pg = this.page(sh.pid), first = this.iconFor(pg.name) || I.doc;
@@ -2491,6 +2546,39 @@ class Component extends DCLogic {
       }
     }
     vm.ls = ls;
+    var stockEdit = !!(sh && pS && sh.kind === 'stockEdit'), stockSetup = !!(sh && pS && sh.kind === 'stockSetup');
+    var draft = s.stockDraft || { have: '', need: '', unit: '', error: '' };
+    var setStockDraft = function (key, e) {
+      var next = Object.assign({}, self.state.stockDraft); next[key] = e.target.value; next.error = '';
+      self.setState({ stockDraft: next }); self.keep(e);
+    };
+    vm.stockUI = { open: stockEdit || stockSetup, edit: stockEdit, title: stockSetup ? 'Включить запасы' : 'Осталось',
+      description: stockSetup ? 'Добавим вид «Запасы» и свойства для остатка и нормы. Существующие записи, виды и настройки останутся без изменений.'
+        : 'Для «' + (stockEdit ? this.rec(sh.rid).title : '') + '». Единица меняется без пересчёта количества.',
+      have: draft.have, need: draft.need, unit: draft.unit, error: draft.error, hasError: !!draft.error,
+      action: stockSetup ? 'Включить' : 'Готово', close: closeSh,
+      onHave: function (e) { setStockDraft('have', e); }, onNeed: function (e) { setStockDraft('need', e); },
+      onUnit: function (e) { setStockDraft('unit', e); },
+      save: function () {
+        if (stockSetup) {
+          var oldViews = self.viewsOf(pS), views2 = Object.assign({}, s.views), name = 'Запасы', n = 1, id = 'stock';
+          while (oldViews.some(function (v) { return v.name === name; })) name = 'Запасы ' + (++n);
+          while (oldViews.some(function (v) { return v.id === id; })) id = 'stock' + n++;
+          pS.stockEnabled = true;
+          views2[pS.id] = oldViews.some(function (v) { return v.show === 'stock'; }) ? oldViews.slice() : oldViews.concat([{ id: id, name: name, layout: 'list', show: 'stock' }]);
+          var t = { text: 'Запасы включены' };
+          self.setState({ views: views2, sheet: null, toast: t }); self.toastLater(t); return;
+        }
+        var d = self.state.stockDraft, textHave = d.have.trim(), textNeed = d.need.trim(), re = /^-?\d+(?:[.,]\d+)?$/;
+        var have = Number(textHave.replace(',', '.')), need = Number(textNeed.replace(',', '.'));
+        if (!re.test(textHave) || !re.test(textNeed) || !Number.isFinite(have) || !Number.isFinite(need)) {
+          self.setState({ stockDraft: Object.assign({}, d, { error: 'Укажите остаток и норму числами.' }) }); return;
+        }
+        var rr = self.rec(sh.rid), was = self.low(rr);
+        rr.stock = Object.assign({}, rr.stock || {}, { have: have, need: need, unit: d.unit.trim() });
+        if (self.low(rr) && !was) { rr.done = false; rr.doneAt = null; }
+        self.setState({ sheet: null, stockDraft: null, step: null, cell: null });
+      } };
 
     // The dock: on Главная and pages the field (closed or open); on a record only the editing bar, while text has focus;
     // Настройки have no field, only the notice when there is one

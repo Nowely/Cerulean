@@ -4,7 +4,11 @@ Items 1–11 are the small notes; items 12–22 are the big topics (the hold and
 
 **Status: proposal for approval, not implemented in the app.** This is the working delta, based on the recovered draft in `../recovery/handoff/main-flow-3-delta.md`. The working Canvas and prototype are the local reconstruction in `design/mockups/`, not published Canvas 87 or prototype 15, and are not a byte-exact recovery of `99ac6ff`. Everything not named here stays as merged in PRs #16–#19. Item 11 was merged separately in PR #19; item 8 covers the remaining shared notice swipe.
 
-**Approval blockers:** stock expiry, per-item units, re-adding a full-stock item, behaviour of saved shopping departments with the AI switch off, existing shopping pages, sort precedence and the scope of desktop nesting need decisions. See `client-brief-main-flow-3.md` before implementation. Until then, retain the wording below as the recovered proposal rather than treating an ambiguity as resolved by the prototype.
+**Approved clarification (2 Nov 2026):** a tracked amount is low when it is at most 1 **and** below its norm, including fractional values. One shared editor on the record card and in a table cell changes the remaining amount, norm and that record's unit; the list keeps quick − / + controls. Product expiry and buying by date are outside this iteration. Ordinary task due dates remain unchanged.
+
+**Approved clarification (2 Nov 2026):** writing an item already in «Запасы» but absent from «Купить» adds the existing record to «Купить» without a duplicate or a change to its stock amount. This iteration includes an explicit way to enable stock tracking on an existing shopping page without overwriting its settings. The exact interaction and data handling need design and compatibility checks.
+
+**Status:** the local prototype now demonstrates the clarified quantity rule, shared editor and opt-in flow for an existing shopping page; see `stock-design.md`. Those additions are a design proposal, not a claim that the historical prototype included them. Other agent-selected defaults are identified in `client-brief-main-flow-3.md`, not silently promoted to explicit user choices. The brief and implementation plan still await approval before client changes.
 
 - **Why:** Josh tried the app on his phone and sent 17 notes on 29 Oct at 19:51Z («Давай предпримем новую итерацию»). At 20:19Z he chose to take all of them in one round and one PR. The rule of 28 Oct still holds: touch a minimum, and change anything else only on his command.
 - **Where:**
@@ -34,7 +38,7 @@ Items 1–11 are the small notes; items 12–22 are the big topics (the hold and
 | The sliders button opens «Настроить вид» | It opens «Фильтр и сортировка» | Josh 13, the same (items 15, 17) |
 | v22: a table on a phone is drawn as cards | A real table: the name column stays, the others scroll sideways | Josh 12, the same (item 16) |
 | «Фильтр»: fixed chip sets (Срок, Сделано, Метка) | One sheet: sort, «Сделано», every choice property with ticks; a filter on a property is a chip under the tabs | Josh 13, the same (item 17) |
-| Stock: an always-visible «− value +» and a second line «мало · норма N»; low = value < norm | «value/norm» in the row, − and + on a tap for 3 s; low = 1 or 0 left, in orange | Josh 16 at 21:30Z; his card «Тап по 3/5: − и +» 21:36Z (item 18) |
+| Stock: an always-visible «− value +» and a second line «мало · норма N»; low = value < norm | «value/norm» in the row, − and + on a tap for 3 s; low = value ≤ 1 and value < norm, in orange | Josh 16 at 21:30Z; «Тап по 3/5: − и +» 21:36Z; clarification 2 Nov (item 18) |
 | «Купить» never shows a thing with «Осталось»; «Запасы» only in the demo | A low thing joins «Купить» by itself, ticking it refills it; the Покупки template has «Осталось» and «Запасы» | Josh 16 at 21:30Z (item 18) |
 | Settings group «Раскладка» | Group «ИИ», one switch per function | Josh 15, option A (item 21) |
 
@@ -193,7 +197,7 @@ Items 1–11 are the small notes; items 12–22 are the big topics (the hold and
     - Today's one row per property with a label and «Добавлено» on top go. The computer's record (the right pane) takes the same order.
 
     **Check:**
-    - Open «Хлеб» (ИЗ6): «Хлеб и выпечка» as a chip, then «1 из 2 шт» in orange with a box icon, then «годен до завтра» with an hourglass, «+»; no grey plates behind them. «Добавлено сегодня, …» is the last line.
+    - Open «Хлеб» (ИЗ6): «Хлеб и выпечка» as a chip, then «1 из 2 шт» in orange with a box icon and «+»; no grey plates behind the values. «Добавлено сегодня, …» is the last line. The historical prototype's «годен до завтра» is not an expiry requirement for this iteration.
     - Open «Выбрать плитку в ванную» (ИЗ5): «Ванная», «сб, 2 ноя» in accent, the note «Белая матовая, 30×60. Затирка в тон», «Подпункты 1/3 ⌄» with three subitems. Tap «Ванная»: the choice sheet; pick «Кухня»: the chip reads «Кухня».
     - Tap «Подпункты 1/3»: the subitems fold.
     - Desktop at 1440×900: open a record from a page; the same value → note → subitems → «Добавлено» order is used. Open a choice property, select another option, and verify the value changes and the overlay closes. The reconstructed prototype can be exercised via `#deski3update` → «Хлеб» → «Отдел»; the older `#deskrec` remains historical.
@@ -245,14 +249,16 @@ Items 1–11 are the small notes; items 12–22 are the big topics (the hold and
 
 18. **«Осталось» on the row: the number and its norm, − and + on a tap** (ИТ1–ИТ3, ИЗ6; Josh 16 as he put it at 21:30Z; his card at 21:36Z «Тап по 3/5: − и +»; the unit, 22:15Z).
     - A number property with a norm (Покупки's «Осталось» with «Норма», as in the demo) shows on the row as «value/norm», 15 px tabular, `muted`, no plate, at the row's right (where «Справа в строке» has it on). The unit «шт» goes without saying; any other unit is written after it («2/4 уп»).
-    - 1 or 0 left is low: the number turns `--warn-ink` (orange). It replaces today's second line «мало · норма N» and today's rule «value < norm».
-    - A tap on the number opens «− value/norm unit +» in its place (44×36 px buttons, the value with its unit, «3/5 шт»); each tap is ±1 (0 to 99). It folds back to the number after 3 s without a touch. While it is open the list does not reorder under the finger. It replaces today's always-visible stepper.
-    - The record card shows it in full, «1 из 2 шт», with a 16 px box icon; a tap opens the same − and + (item 14).
+    - A tracked amount is low when it is at most 1 **and** below its norm: the number turns `--warn-ink` (orange). This includes fractions: `0,5/2` is low, while `1/1` and `0,5/0,5` are full. It replaces today's second line «мало · норма N» and today's rule «value < norm». An empty value is not zero and does not by itself enable tracking. Product expiry does not trigger a purchase in this iteration.
+    - A tap on the number opens «− value/norm unit +» in its place (44×36 px buttons, the value with its unit, «3/5 шт»); each tap is ±1. It folds back to the number after 3 s without a touch. While it is open the list does not reorder under the finger. It replaces today's always-visible stepper. Do not silently truncate existing fractional, negative or greater-than-99 values; validation and the range of new tracked amounts need an explicit implementation decision before coding.
+    - The record card shows it in full, «1 из 2 шт», with a 16 px box icon; a tap opens the shared amount, norm and unit editor (item 14). The list's − and + remain available without opening the card.
+    - One editor on the record card and in the table cell changes that record's remaining amount, norm and unit. The page defines the property; the record owns its values and can use a different unit from another record on the same page. Changing a unit does not automatically convert the numbers.
     - When a thing becomes low it goes into «Купить» by itself (its tick clears), and the notice says «Кола теперь в «Купить»» (no «Отменить»: «+» takes it out again).
     - Ticking it in «Купить» means it was bought: the value goes back to its norm (it stays in «Запасы», full).
     - «Купить» shows what is not bought, and a thing with «Осталось» only while it is low (today: never). «Справа в строке» of «Купить» has «Количество» and «Осталось» on; of «Запасы», «Осталось».
     - «Запасы» keeps the order the records were written in (no sort by what runs out).
     - The Покупки template gets «Осталось» (число, шт) with «Норма» and the view «Запасы» (filter: «Осталось» is not empty), as the demo has them, so a new Покупки page can keep stock.
+    - An existing shopping page offers an explicit way to enable stock tracking. It must not overwrite the page's existing settings, views or properties; the interaction and handling of existing data need a design and compatibility check before implementation.
 
     **Check:**
     - Покупки «Запасы» (ИТ1): Йогурт 2/5, Кола 3/5, Туалетная бумага 2/4 уп, Хлеб 1/2 in orange; no plates.
@@ -261,12 +267,16 @@ Items 1–11 are the small notes; items 12–22 are the big topics (the hold and
     - In «Настроить вид» of «Купить» switch «Осталось» off: «Хлеб» loses its «1/2».
     - New page from the template «Список покупок»: «Настроить вид» → «Справа в строке» lists «Осталось».
     - For an item with unit «уп», decrement and increment in the open stepper, then fold it: the unit remains «уп». Mark a low-stock item bought and reopen its stepper: the refilled value still has «уп». For «шт», the folded row omits the unit while the open stepper and record card include it.
+    - Check low-stock states `1/1` (not low), `0/1` (low), `1/5` (low), `0,5/2` (low) and `0,5/0,5` (not low). Mark a low `0/1` item bought: it becomes `1/1` and leaves «Купить».
+    - Change an item's remaining amount, norm and unit from the record card; open the same item in the table and verify the same values. Change them in the table and verify the card and list reflect the result, without changing other records.
+    - On an existing shopping page with customized views and properties, explicitly enable stock tracking: its existing settings, views and properties remain intact, and stock can be tracked on a record. Verify the specific interaction once designed.
 
 19. **Written again, it comes back** (ИТ10; Josh 16).
     - Writing a thing that is already in Покупки as bought («молоко» while «Молоко» is in «Куплено», case and «купить» ignored) brings that record back into «Купить» instead of making a second one: its department, quantity, note and «Осталось» stay. The notice says «Молоко снова в «Купить» · Отменить»; «Отменить» puts it back into «Куплено».
+    - Writing an existing item that appears in «Запасы» but is not in «Купить» explicitly adds that same record to «Купить», including when the stock is full (`5/5`); its remaining amount is unchanged and no duplicate is made. «Запасы», «Куплено» and «Купить» are views of the same records, not separate storage locations.
     - The same from the field on Главная and from «+ Новая запись».
 
-    **Check:** tick «Молоко»; in Покупки write «молоко» and Enter: one «Молоко» in «Купить», under «Молочное», with «2 л» and its note, and the notice above. «Отменить»: it is in «Куплено» again.
+    **Check:** tick «Молоко»; in Покупки write «молоко» and Enter: one «Молоко» in «Купить», under «Молочное», with «2 л» and its note, and the notice above. «Отменить»: it is in «Куплено» again. With «Кола» at `5/5` in «Запасы» and absent from «Купить», write «кола»: the same record appears in «Купить» at `5/5`, with no duplicate.
 
 20. **A department corrected by hand is remembered** (Josh 16).
     - When the person changes a record's «Отдел», the choice is remembered for that word (its first word, by stem), and the next record with it takes that department, with or without a key. Today the rules or the model choose again each time.

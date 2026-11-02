@@ -34,13 +34,13 @@ if missing:
 if set(order) != set(canvas["boards"]):
     raise RuntimeError("Canvas order and board registry differ")
 big = [name for name in order if canvas["boards"][name].get("page") == "i3big"]
-if len(big) != 20:
-    raise RuntimeError(f"Expected 20 big-topic boards, found {len(big)}")
+if len(big) != 24:
+    raise RuntimeError(f"Expected 24 big-topic boards, found {len(big)}")
 
 prototype = (WORKSPACE / "prototype.html").read_text()
 states = re.findall(r'<option value="([^"]+)"', prototype)
-if len(states) != 89:
-    raise RuntimeError(f"Expected 89 prototype states, found {len(states)}")
+if len(states) != 93:
+    raise RuntimeError(f"Expected 93 prototype states, found {len(states)}")
 print(json.dumps({
     "status": "ok",
     "components": len(components),
