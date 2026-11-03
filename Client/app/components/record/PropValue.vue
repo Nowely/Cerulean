@@ -1,19 +1,18 @@
 <script setup lang="ts">
-// One property of a record, edited in place: text and an empty number in a field, a number with a value on a
-// stepper, «Выбор» and Дата in a small sheet (a popover on desktop) — the options as their pills (v23), or the
-// days — and «Срок» with the same button and sheet as in a receipt. `open()` opens the control at once
-// (a property just picked in «+ Свойство»).
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
 import type { PropDef, Rec } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
 import { dueChoices } from '~/domain/dates'
-import { formatValue, hasValue, optionColor, optionOf, readNumber } from '~/domain/props'
+import { formatValue, hasValue, optionColor, optionOf, readNumber, TYPE_ICONS } from '~/domain/props'
+import { stockUnit } from '~/domain/stock'
 import DueButton from './DueButton.vue'
+import StockEditor from './StockEditor.vue'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import OptionPill from '../common/OptionPill.vue'
 
 const props = defineProps<{ rec: Rec, prop?: PropDef, due?: boolean, readonly?: boolean }>()
+const emit = defineEmits<{ closed: [] }>()
 const data = useDataStore()
 const now = useNow()
 const editing = ref(false)
@@ -21,19 +20,34 @@ const draft = ref('')
 const input = useTemplateRef<HTMLInputElement>('input')
 const dueButton = useTemplateRef<InstanceType<typeof DueButton>>('dueButton')
 const choosing = ref(false)
+const stockOpen = ref(false)
+const page = computed(() => data.pages[props.rec.pageId])
+const stock = computed(() => page.value?.stocks?.find(s => s.amountProp === props.prop?.id && s.normProp === props.prop?.normProp))
 
 const value = computed(() => props.prop ? props.rec.values[props.prop.id] ?? null : null)
 const text = computed(() => props.prop ? formatValue(props.prop, value.value, now.value) : '')
 /** A «Выбор» value reads as its pill, here as on the row */
 const pill = computed(() => optionOf(props.prop, value.value))
+const norm = computed(() => props.prop?.normProp ? props.rec.values[props.prop.normProp] : null)
+const hasNorm = computed(() => props.prop?.type === 'number' && hasValue(value.value) && typeof norm.value === 'number' && typeof value.value === 'number')
+const low = computed(() => hasNorm.value && Number(value.value) <= 1 && Number(value.value) < Number(norm.value))
+const display = computed(() => hasNorm.value
+  ? `${String(value.value).replace('.', ',')} из ${String(norm.value).replace('.', ',')}${stock.value && page.value ? ` ${stockUnit(props.rec, page.value, stock.value.amountProp)}` : props.prop?.unit ? ` ${props.prop.unit}` : ''}`
+  : text.value)
 
 function setValue(v: string | number | null) {
+  const before = props.rec.values[props.prop!.id]
   const { [props.prop!.id]: _old, ...rest } = props.rec.values
   data.updateRecord(props.rec.id, { values: hasValue(v) ? { ...rest, [props.prop!.id]: v } : rest })
+  if (props.prop?.type === 'select') data.teachDepartment(props.rec.id, props.prop.id, before, v)
 }
 
 async function edit() {
   if (props.readonly) return
+  if (stock.value) {
+    stockOpen.value = true
+    return
+  }
   draft.value = value.value === null ? '' : String(value.value).replace(/^(-?\d+)\.(\d+)$/, '$1,$2')
   editing.value = true
   await nextTick()
@@ -46,6 +60,11 @@ function saveText() {
   // A number keeps what reads as one; anything else leaves the old value
   setValue(props.prop!.type === 'number' ? (t === '' ? null : readNumber(t) ?? value.value) : t || null)
   editing.value = false
+  emit('closed')
+}
+function cancelEdit() {
+  editing.value = false
+  emit('closed')
 }
 
 function choose(v: string | number | null) {
@@ -73,8 +92,9 @@ defineExpose({
     v-if="due"
     ref="dueButton"
     :rec="rec"
-    variant="prop"
+    variant="card"
     :readonly="readonly"
+    @closed="emit('closed')"
   />
 
   <!-- «Выбор» and Дата: a sheet of the options (with their colour) or of the days -->
@@ -85,11 +105,13 @@ defineExpose({
     :subtitle="rec.text"
     width="w-72"
     align="start"
+    @closed="emit('closed')"
   >
     <template #trigger>
       <button
         type="button"
-        class="-mx-1.5 flex min-h-10 min-w-0 cursor-pointer items-center rounded-item px-1.5 text-left hover:bg-muted"
+        class="flex min-h-6 min-w-0 cursor-pointer items-center gap-1.5 text-left"
+        :aria-label="`${prop!.name}: ${text || 'Добавить'}`"
         :class="text ? 'text-highlighted' : 'text-toned'"
         :aria-expanded="choosing"
       >
@@ -99,8 +121,11 @@ defineExpose({
         />
         <span
           v-else
-          class="truncate"
-        >{{ text || (prop!.type === 'select' ? 'Выбрать' : 'Добавить') }}</span>
+          class="flex items-center gap-1.5"
+        ><UIcon
+          :name="TYPE_ICONS[prop!.type]"
+          class="size-4 shrink-0"
+        />{{ text || (prop!.type === 'select' ? 'Выбрать' : 'Добавить') }}</span>
       </button>
     </template>
     <div class="flex flex-col pb-1">
@@ -159,49 +184,11 @@ defineExpose({
   />
   <span
     v-else-if="sheeted"
-    class="text-highlighted"
-  >{{ text }}</span>
-
-  <!-- A number with a value: a stepper -->
-  <span
-    v-else-if="prop?.type === 'number' && hasValue(value) && !editing"
-    class="flex items-center gap-1"
-  >
-    <template v-if="!readonly">
-      <UButton
-        icon="i-lucide-minus"
-        size="sm"
-        square
-        :aria-label="`Меньше: ${prop.name}`"
-        @click="setValue(Math.max(0, Number(value ?? 0) - 1))"
-      />
-      <!-- A tap on the number types another one -->
-      <button
-        type="button"
-        class="h-8 min-w-10 cursor-pointer rounded-item px-1 text-center text-highlighted tabular-nums hover:bg-muted"
-        aria-live="polite"
-        :aria-label="`${prop.name}: ${text}. Изменить`"
-        @click="edit"
-      >
-        {{ String(value).replace('.', ',') }}
-      </button>
-      <UButton
-        icon="i-lucide-plus"
-        size="sm"
-        square
-        :aria-label="`Больше: ${prop.name}`"
-        @click="setValue(Number(value ?? 0) + 1)"
-      />
-      <span
-        v-if="prop.unit"
-        class="ml-1 text-toned"
-      >{{ prop.unit }}</span>
-    </template>
-    <span
-      v-else
-      class="text-highlighted"
-    >{{ text }}</span>
-  </span>
+    class="flex items-center gap-1.5 text-highlighted"
+  ><UIcon
+    :name="TYPE_ICONS[prop!.type]"
+    class="size-4 shrink-0"
+  />{{ text }}</span>
 
   <!-- Text, and a number still without one: a field -->
   <input
@@ -212,17 +199,30 @@ defineExpose({
     :inputmode="prop?.type === 'number' ? 'decimal' : undefined"
     :aria-label="prop?.name"
     @keydown.enter.prevent="saveText"
-    @keydown.esc="editing = false"
+    @keydown.esc="cancelEdit"
     @blur="saveText"
   >
   <button
     v-else
     type="button"
-    class="-mx-1.5 min-h-10 min-w-0 cursor-pointer truncate rounded-item px-1.5 text-left enabled:hover:bg-muted disabled:cursor-default"
-    :class="text ? 'text-highlighted' : 'text-toned'"
+    class="flex min-h-6 min-w-0 cursor-pointer items-center gap-1.5 text-left disabled:cursor-default"
+    :class="low ? 'text-warn' : text ? 'text-highlighted' : 'text-toned'"
     :disabled="readonly"
+    :aria-label="`${prop?.name}: ${display || 'Добавить'}`"
     @click="edit"
   >
-    {{ text || 'Добавить' }}
+    <UIcon
+      :name="hasNorm ? 'i-lucide-box' : TYPE_ICONS[prop!.type]"
+      class="size-4 shrink-0"
+    />
+    {{ display || 'Добавить' }}
   </button>
+  <StockEditor
+    v-if="page && stock"
+    v-model:open="stockOpen"
+    :page="page"
+    :rec="rec"
+    :stock="stock"
+    @closed="emit('closed')"
+  />
 </template>

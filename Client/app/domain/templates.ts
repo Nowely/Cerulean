@@ -57,9 +57,12 @@ export const DEPARTMENTS = ['Хлеб и выпечка', 'Молочное', '�
 const DEPARTMENT_COLORS: PageColor[] = ['yellow', 'blue', 'green', 'pink', 'brown', 'purple', 'gray']
 
 export function shoppingProps(): PropDef[] {
+  const norm = uid('f')
   return [
+    { id: uid('f'), name: 'Отдел', type: 'select', options: DEPARTMENTS.map((name, i) => ({ id: uid('o'), name, color: DEPARTMENT_COLORS[i] })) },
     { id: uid('f'), name: 'Количество', type: 'text' },
-    { id: uid('f'), name: 'Отдел', type: 'select', options: DEPARTMENTS.map((name, i) => ({ id: uid('o'), name, color: DEPARTMENT_COLORS[i] })) }
+    { id: uid('f'), name: 'Осталось', type: 'number', unit: 'шт', normProp: norm },
+    { id: norm, name: 'Норма', type: 'number', unit: 'шт' }
   ]
 }
 
@@ -73,14 +76,20 @@ export const TEMPLATES: Template[] = [
     hasDone: true,
     noun: ['купить', 'купить', 'купить'],
     props: shoppingProps,
-    views: props => [
-      listView('Купить', {
-        filter: [{ field: 'done', op: 'is', value: false }],
-        groupBy: props.find(p => p.name === 'Отдел')?.id ?? null,
-        shown: props.filter(p => p.name === 'Количество').map(p => p.id)
-      }),
-      listView('Куплено', { filter: [{ field: 'done', op: 'is', value: true }], shown: [] })
-    ]
+    views: (props) => {
+      const left = props.find(p => p.name === 'Осталось')!
+      const norm = props.find(p => p.id === left.normProp)!
+      return [
+        listView('Купить', {
+          filter: [{ field: 'done', op: 'is', value: false }],
+          groupBy: props.find(p => p.name === 'Отдел')?.id ?? null,
+          shown: props.filter(p => p.name === 'Количество' || p.name === 'Осталось').map(p => p.id),
+          stock: { mode: 'buy', amountProp: left.id, normProp: norm.id }
+        }),
+        listView('Запасы', { filter: [{ field: left.id, op: 'notEmpty' }], shown: [left.id], stock: { mode: 'stock', amountProp: left.id, normProp: norm.id } }),
+        listView('Куплено', { filter: [{ field: 'done', op: 'is', value: true }], shown: [] })
+      ]
+    }
   },
   {
     key: 'todo',
@@ -145,6 +154,8 @@ export function templateByKey(key: TemplateKey): Template {
 export function applyTemplate(page: Page, key: TemplateKey): Partial<Page> {
   const t = templateByKey(key)
   const props = t.props()
+  const views = t.views(props)
+  const left = key === 'shop' ? props.find(p => p.name === 'Осталось')! : undefined
   return {
     template: key,
     title: page.title.trim() ? page.title : t.name,
@@ -154,6 +165,7 @@ export function applyTemplate(page: Page, key: TemplateKey): Partial<Page> {
     hasDone: t.hasDone,
     noun: t.noun,
     props,
-    views: t.views(props)
+    views,
+    stocks: left ? [{ amountProp: left.id, normProp: left.normProp!, buyViewId: views[0]!.id, stockViewId: views[1]!.id }] : []
   }
 }

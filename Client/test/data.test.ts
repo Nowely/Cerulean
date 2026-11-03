@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '~/stores/data'
 import { demo } from '~/domain/seed'
-import { addedText, measure, mergeSnapshot, sizeText, toJSON, parseSnapshot, type Snapshot } from '~/domain/export'
+import { addedText, measure, mergeSnapshot, sizeText, toJSON, parseSnapshot, StockImportConflict, type Snapshot } from '~/domain/export'
 import { copyDue } from '~/domain/keep'
 import { DEFAULT_SETTINGS, newRecord } from '~/domain/factory'
 
@@ -18,11 +18,11 @@ async function tab(dbName = `data-${++n}`, opts: { demo?: boolean } = {}) {
   return { data, dbName }
 }
 
-/** A copy saved on another device: the demo with its own ids, as a file reads it back */
-function fileFrom(change?: (d: ReturnType<typeof demo>) => void): Snapshot {
-  const d = demo()
+/** A copy saved on another device, as a file reads it back */
+function fileFrom(change?: (d: ReturnType<typeof demo>) => void, source = demo()): Snapshot {
+  const d = parseSnapshot(toJSON({ ...source, settings: { ...DEFAULT_SETTINGS }, learned: {} }))
   change?.(d)
-  return parseSnapshot(toJSON({ ...d, settings: { ...DEFAULT_SETTINGS }, learned: {} }))
+  return parseSnapshot(toJSON(d))
 }
 
 /** What the user has, for comparing before and after (ids, order of keys and the sync stamp of an undone change aside) */
@@ -110,12 +110,21 @@ describe('«Загрузить копию»', () => {
       const dept = products.props.find(p => p.name === 'Отдел')!
       const dairy = dept.options!.find(o => o.name === 'Молочное')!
       d.records.push(newRecord({ pageId: products.id, text: 'Кефир', values: { [dept.id]: dairy.id } }))
-      d.records.push(newRecord({ pageId: products.id, text: 'молоко' })) // the same as «Молоко» here
+      d.records.find(r => r.pageId === products.id && r.text === 'Молоко')!.text = 'молоко'
+      const tasks = d.pages.find(p => p.title === 'Задачи')!
+      const tasksId = tasks.id
+      tasks.id = 'p-tasks-file'
+      for (const r of d.records) {
+        if (r.pageId === tasksId) r.pageId = tasks.id
+        if (r.guesses) r.guesses = r.guesses.map(id => id === tasksId ? tasks.id : id)
+      }
+      for (const e of d.entries) if (e.pageId === tasksId) e.pageId = tasks.id
+      d.records.push(newRecord({ pageId: tasks.id, text: 'позвонить стоматологу' })) // the same as «Позвонить стоматологу» here
       const personal = d.sections.find(s => s.name === 'Личное')!
-      const gifts = { ...products, id: 'p-gifts', title: 'Подарки', sectionId: personal.id, props: [], favorite: null }
+      const gifts = { ...d.pages.find(p => p.title === 'Книги')!, id: 'p-gifts', title: 'Подарки', sectionId: personal.id, props: [], favorite: null }
       d.pages.push(gifts)
       d.records.push(newRecord({ pageId: gifts.id, text: 'Книга маме' }))
-    })
+    }, here)
     const m = mergeSnapshot({ ...here, learned: {} }, file)
     expect(m.sections).toEqual([])
     expect(m.pages.map(p => p.title)).toEqual(['Подарки'])
@@ -140,7 +149,7 @@ describe('«Загрузить копию»', () => {
       d.records.push(newRecord({ pageId: products.id, text: 'Кефир', values: { 'f-shop': 'o-x' } }))
       d.pages.push({ ...d.pages.find(p => p.title === 'Книги')!, id: 'p-films', title: 'Фильмы', favorite: null })
       d.records.push(newRecord({ pageId: 'p-films', text: 'Дюна' }))
-    })
+    }, data.snapshot())
     const added = data.addSnapshot(file)
     expect(addedText({ pages: added.pages.length, records: added.records.length })).toBe('Добавлена 1 страница и 2 записи')
     const products = data.livePages.find(p => p.title === 'Покупки')!
@@ -162,6 +171,34 @@ describe('«Загрузить копию»', () => {
     const file = parseSnapshot(toJSON(data.snapshot()))
     const added = data.addSnapshot(file)
     expect([added.pages, added.records, added.sections]).toEqual([[], [], []])
+  })
+
+  it('rejects independent conflicting stock data without changing the store', async () => {
+    const { data, dbName } = await tab(undefined, { demo: true })
+    data.setSettings({ apiKey: 'sk-test', copiedAt: 123, homeRows: 'compact' })
+    await data.flush()
+    const contents = (store: typeof data) => {
+      const snapshot = store.snapshot()
+      const sort = <T extends { id: string }>(items: T[]) => [...items].sort((a, b) => a.id.localeCompare(b.id))
+      return JSON.parse(JSON.stringify({ ...snapshot, pages: sort(snapshot.pages), records: sort(snapshot.records),
+        sections: sort(snapshot.sections), entries: sort(snapshot.entries), settings: store.settings }))
+    }
+    const before = contents(data)
+    const file = fileFrom((d) => {
+      const books = d.pages.find(p => p.title === 'Книги')!
+      d.pages.push({ ...books, id: 'p-films', title: 'Фильмы', favorite: null })
+      d.records.push(newRecord({ pageId: 'p-films', text: 'Дюна' }))
+    })
+    const products = file.pages.find(p => p.title === 'Покупки')!
+    expect(products.id).not.toBe(data.livePages.find(p => p.title === 'Покупки')!.id)
+
+    expect(() => data.addSnapshot(file)).toThrow(StockImportConflict)
+    expect(contents(data)).toEqual(before)
+    await data.flush()
+    setActivePinia(createPinia())
+    const again = useDataStore()
+    await again.init({ dbName })
+    expect(contents(again)).toEqual(before)
   })
 
   it('«Заменить всё» keeps the key and how this browser keeps its data', async () => {

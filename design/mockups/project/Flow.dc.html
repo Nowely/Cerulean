@@ -830,8 +830,11 @@ class Component extends DCLogic {
       if (start === 'i3filter') at('shop', { sheet: { kind: 'filter' } });
       if (start === 'i3filtervals') at('shop', { sheet: { kind: 'filter', prop: 'dept' }, filt: { 'shop:open': { dept: ['milk'] } } });
       if (start === 'i3filtered') at('shop', { filt: { 'shop:open': { dept: ['milk'] } } });
-      // «молоко» written while Молоко was in «Куплено»: it comes back with its department and note, no second Молоко
-      if (start === 'i3readd') { at('shop'); s.fresh[shopRec('Молоко').id] = true; s.toast = { text: 'Молоко снова в «Купить»', undo: true, revive: [shopRec('Молоко').id], keep: true }; }
+      // The bought record and its stock remain; writing it again creates a separate record.
+      if (start === 'i3readd') {
+        at('shop'); Object.assign(shopRec('Молоко'), { done: true, stock: { have: 5, need: 5, unit: 'л' } });
+        var newMilk = R3('shop', 'Молоко', 0, { qty: '2 л' }); s.recs.push(newMilk); s.fresh[newMilk.id] = true;
+      }
       // The model's functions in Настройки (item 15), without a key and with one
       if (start === 'i3ai' || start === 'i3aion') { s.view = 'settings'; }
       // A new page in Дом named «Дача»: its icon is picked as the name is typed (rules without a key), then «Значок и цвет»
@@ -1293,11 +1296,7 @@ class Component extends DCLogic {
     // A pick by hand teaches Авто a word; without a model there is no Авто to teach
     if (s.ai) drafts.forEach(function (d) { if (d.byUser) self.learn(d.title, d.place); });
     if (s.ai && drafts.length === 1 && c.by === 'user') this.learn(drafts[0].title, c.place);
-    // A thing to buy that sits in «Куплено» comes back instead of a second one (iteration 3, item 16)
-    var back = [];
-    drafts = drafts.filter(function (d) { var b = self.revive(d.place, d.title); if (b) back.push(b); return !b; });
     var nid = s.nid, onPage = here, fresh = {}, seen = Object.assign({}, s.seen), places = [], unseen = Object.assign({}, s.unseen);
-    back.forEach(function (b) { fresh[onPage ? b.record.id : b.record.page] = true; });
     var made = drafts.map(function (d) {
       var r = { id: 'r' + (nid++), page: d.place, title: d.title, ts: Date.now(), done: false, due: d.due || null, body: lines(d.note || ''), subs: [] };
       fresh[onPage ? r.id : d.place] = true;
@@ -1310,9 +1309,8 @@ class Component extends DCLogic {
     });
     var ids = made.map(function (r) { return r.id; });
     // «Отменить» takes the records back and gives the words back to the field (Josh 28 Oct, 6)
-    var toast = !made.length && back.length ? { text: back.map(function (b) { return b.record.title; }).join(', ') + ' снова в «Купить»', undo: true, revive: back.map(function (b) { return b.before; }) }
-      : (made.every(showsHere) ? null : { text: 'Добавлено ' + this.into(this.placesText(places)), undo: ids,
-      restore: { title: c.title, note: c.note, place: c.place, by: c.by, noDate: c.noDate } });
+    var toast = made.every(showsHere) ? null : { text: 'Добавлено ' + this.into(this.placesText(places)), undo: ids,
+      restore: { title: c.title, note: c.note, place: c.place, by: c.by, noDate: c.noDate } };
     // The field stays under the finger, empty, with the keyboard (Telegram): the next record is one tap less. A place picked
     // by hand stays for the next record (Josh 28 Oct, 3); otherwise Главная's field starts at Входящие and a page's at the page
     var kept = c.by === 'user';
@@ -1610,18 +1608,6 @@ class Component extends DCLogic {
   }
   stepLater(id) { var self = this; clearTimeout(this._stt); if (typeof setTimeout !== 'undefined') this._stt = setTimeout(function () { if (self.state.step === id) self.setState({ step: null }); }, 3000); }
 
-  // A thing written again while it sits in «Куплено» comes back (item 16): its department, note and stock stay, no second one
-  revive(pid, title) {
-    var s = this.state, self = this, p = this.page(pid), x = (title || '').trim().toLowerCase().replace(/^(купить|докупить)\s+/, '');
-    if (!s.i3 || !x || !p || !p.buy) return null;
-    var r = s.recs.filter(function (q) { return q.page === pid && !q.parent && q.title.toLowerCase() === x && !self.toBuy(q); })[0];
-    if (!r) return null;
-    var before = { id: r.id, done: r.done, doneAt: r.doneAt, want: r.want };
-    if (r.stock) r.want = true;
-    r.done = false; r.doneAt = null;
-    return { record: r, before: before };
-  }
-
   // Sync through S3. The row's second line and the sheet's state line say the same thing (Things Cloud: the last sync and
   // the error live in the setting); a normal round trip shows nothing anywhere else
   syncState() {
@@ -1703,11 +1689,6 @@ class Component extends DCLogic {
     if (t && t.views) { var v2 = Object.assign({}, s.views); v2[t.views.pid] = t.views.list; this.setState({ views: v2, tab: t.views.tab, toast: null }); return; }
     // A deleted record comes back with its subitems
     if (t && t.gone) { this.setState({ recs: s.recs.concat(t.gone), toast: null }); return; }
-    // A thing brought back from «Куплено» goes back there (item 16)
-    if (t && t.revive) { t.revive.forEach(function (saved) { var r = self.rec(typeof saved === 'string' ? saved : saved.id); if (r) {
-      if (typeof saved === 'string') { r.done = true; r.want = false; }
-      else { r.done = saved.done; r.doneAt = saved.doneAt; r.want = saved.want; }
-    } }); this.setState({ toast: null, fresh: {} }); return; }
     ids = [].concat(ids);
     var fresh = Object.assign({}, s.fresh), unseen = {};
     ids.forEach(function (id) { var r = self.rec(id); if (r) delete fresh[r.page]; delete fresh[id]; });
@@ -2149,11 +2130,6 @@ class Component extends DCLogic {
           e.preventDefault();
           var t = s.addText.trim();
           if (!t) { self.setState({ adding: false, kb: false }); return; }
-          var back = self.revive(p.id, t);
-          if (back) {
-            var bt = { text: back.record.title + ' снова в «Купить»', undo: true, revive: [back.before] }, bf = {}; bf[back.record.id] = true;
-            self.setState({ addText: '', fresh: bf, toast: bt }); self.toastLater(bt); self.focusSoon('f-add'); return;
-          }
           var r = { id: 'r' + s.nid, page: p.collect ? 'tasks' : p.id, title: t.charAt(0).toUpperCase() + t.slice(1), ts: Date.now(), done: false, due: p.collect ? 'сегодня' : null, body: [], subs: [] };
           var fresh = {}; fresh[r.id] = true;
           self.setState({ recs: s.recs.concat([r]), nid: s.nid + 1, addText: '', fresh: fresh });

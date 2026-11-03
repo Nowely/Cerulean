@@ -5,9 +5,10 @@
 // opened from there (`anchor`), else at its own trigger. No ×: a tap outside, a swipe down or Esc closes it.
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import { COLOR_NAMES, GLYPHS, type Glyph, type PageColor } from '~/domain/types'
-import { findGlyphs, PAGE_CHOICES } from '~/domain/look'
+import { findGlyphs, PAGE_CHOICES, suggestedGlyphs } from '~/domain/look'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
+import { useBackLayer } from '~/composables/useBackLayer'
 
 const props = defineProps<{
   glyph: Glyph | null | undefined
@@ -20,6 +21,9 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ change: [patch: { glyph?: Glyph, color?: PageColor | null }] }>()
 const open = defineModel<boolean>('open', { default: false })
+useBackLayer(() => open.value, () => {
+  open.value = false
+})
 const { isDesktop } = useScreen()
 const later = useLater()
 
@@ -28,6 +32,11 @@ watch(open, (v) => {
   if (v) q.value = ''
 })
 const icons = computed(() => findGlyphs(q.value))
+const recommendations = computed(() => {
+  if (q.value.trim()) return []
+  const all = findGlyphs('')
+  return suggestedGlyphs(props.title).map(glyph => all.find(item => item.glyph === glyph)!).filter(Boolean)
+})
 const current = computed(() => props.glyph ?? 'doc')
 /** The selected icon shows in the page's colour, or neutral without one */
 const tint = computed(() => props.color ? `var(--c-${props.color})` : 'var(--muted)')
@@ -111,7 +120,35 @@ function openNow() {
           </template>
         </UInput>
         <div
-          class="grid grid-cols-8 gap-1 pt-2"
+          v-if="recommendations.length"
+          class="pt-3"
+        >
+          <p class="px-1 text-cap text-toned">
+            Подходят
+          </p>
+          <div
+            class="grid grid-cols-6 gap-1"
+            role="group"
+            aria-label="Рекомендуемые значки"
+          >
+            <button
+              v-for="x in recommendations"
+              :key="x.glyph"
+              type="button"
+              class="flex size-12 cursor-pointer items-center justify-center rounded-chip text-toned hover:bg-hover"
+              :aria-label="x.name"
+              :aria-pressed="x.glyph === current"
+              @click="emit('change', { glyph: x.glyph })"
+            >
+              <UIcon
+                :name="GLYPHS[x.glyph]"
+                class="size-5"
+              />
+            </button>
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-6 gap-1 pt-2"
           role="group"
           aria-label="Значок"
         >
@@ -122,7 +159,7 @@ function openNow() {
           >
             <button
               type="button"
-              class="flex size-10 cursor-pointer items-center justify-center rounded-chip"
+              class="flex size-12 cursor-pointer items-center justify-center rounded-chip"
               :class="x.glyph === current ? '' : 'text-toned hover:bg-hover hover:text-highlighted'"
               :style="x.glyph === current ? { background: `var(--b-${color ?? 'gray'})`, color: tint, boxShadow: `inset 0 0 0 1.5px ${tint}` } : undefined"
               :aria-label="x.name"
@@ -219,6 +256,34 @@ function openNow() {
           class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
           data-vaul-no-drag
         >
+          <div
+            v-if="recommendations.length"
+            class="px-3 pt-2"
+          >
+            <p class="px-3 text-cap text-toned">
+              Подходят
+            </p>
+            <div
+              class="grid grid-cols-6 gap-x-1.5"
+              role="group"
+              aria-label="Рекомендуемые значки"
+            >
+              <button
+                v-for="x in recommendations"
+                :key="x.glyph"
+                type="button"
+                class="flex h-12 cursor-pointer items-center justify-center rounded-card text-toned active:bg-pressed"
+                :aria-label="x.name"
+                :aria-pressed="x.glyph === current"
+                @click="emit('change', { glyph: x.glyph })"
+              >
+                <UIcon
+                  :name="GLYPHS[x.glyph]"
+                  class="size-5.5"
+                />
+              </button>
+            </div>
+          </div>
           <div
             class="grid grid-cols-6 gap-x-1.5 gap-y-1 px-3 pt-1.5"
             role="group"

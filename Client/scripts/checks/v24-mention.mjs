@@ -388,7 +388,7 @@ export default [
   { id: 'm24-d6-find', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/journal')
-    await p.keyboard.press('Control+k')
+    await p.keyboard.press('ControlOrMeta+k')
     await p.waitForTimeout(500)
     const options = () => p.getByRole('listbox', { name: 'Найденное' }).getByRole('option').evaluateAll(os => os.map(o => ({ text: o.innerText.split('\n').map(s => s.trim()).filter(Boolean), on: o.getAttribute('aria-selected') === 'true' })))
     expect(await shows(p.getByText('Открыто недавно', { exact: true })), 'no «Открыто недавно»')

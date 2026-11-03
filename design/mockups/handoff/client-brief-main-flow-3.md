@@ -1,6 +1,6 @@
 # Client brief: main flow, iteration 3
 
-**Status: proposed; wait for Josh's approval before changing `Client/`.** Implement in the existing PR #20 and branch `iteration-3-recovery`. The detailed scope, overrides and full acceptance checks are in [`main-flow-3-delta.md`](main-flow-3-delta.md). The unchanged historical draft is in `../recovery/handoff/main-flow-3-delta.md`.
+**Status: the decisions and scope of the current delta and the implementation plan are approved; app implementation is in progress on the branch for PR #20. Final acceptance and merge are not confirmed; see the PR for the published revision.** Implementation uses branch `iteration-3-recovery` for the existing PR #20. The detailed scope, overrides and full acceptance checks are in [`main-flow-3-delta.md`](main-flow-3-delta.md). The unchanged historical draft is in `../recovery/handoff/main-flow-3-delta.md`.
 
 ## Goal and boundaries
 
@@ -34,7 +34,7 @@ The checks here are entry points, not replacements for the full checks in the de
 | 16 | Real scrollable table on phone. | Scroll properties sideways while names stay fixed; edit an option and open a record. |
 | 17 | Filter and sort sheet, visible filter chips. | Filter by «Молочное», remove the chip and verify per-view state. |
 | 18 | Stock amount, norm, units and quick controls; explicit enablement on existing shopping pages. | Change `2/4 уп` with − and +, fold and refill: `уп` remains. Check `1/1` is full and `0/1`, `1/5`, `0,5/2` are low; edit the same amount, norm and unit in card and table. Enable tracking on an existing customized page without overwriting its settings. |
-| 19 | Bring an existing item back without duplication. | Write «молоко» again: one item returns with its properties; undo returns it to «Куплено». Write «кола» while its existing stock is `5/5` and it is absent from «Купить»: the same record returns at `5/5`. |
+| 19 | A repeated product input creates a new record. | Write an existing bought or stocked product again: a new record appears, the original and its stock remain unchanged, and no comparison dialog appears. |
 | 20 | Remember a manually corrected department. | Set «Кофе» to «Прочее»; add «кофе в зёрнах»: it uses «Прочее». |
 | 21 | Settings «ИИ» with function switches. | Without a key, key-dependent switches are unavailable; with a key, switch splitting off and verify one line stays one record. |
 | 22 | Suggest an icon for a new page. | Type «Дача», choose an icon and colour manually, then type more: the manual choice stays. |
@@ -55,10 +55,10 @@ Run `pnpm lint`, `pnpm typecheck` and `pnpm test` in `Client/`; run targeted bro
 
 **Confirmed on 2 Nov 2026:** product expiry is not part of this iteration. A tracked amount is low when it is at most 1 and below its norm, including fractions (`1/1` is full; `0/1`, `1/5` and `0,5/2` are low). The record card and the table cell use one editor for that record's remaining amount, norm and unit; the list keeps quick − / +. The page defines the property and the record owns its values. Changing a unit does not imply a conversion.
 
-**Also confirmed:** writing a product already present in «Запасы» but absent from «Купить» adds the existing record to «Купить» without duplicating it or changing its stock, even at `5/5`. This round includes an explicit way to enable stock tracking on an existing shopping page without overwriting its settings; the interaction and compatibility with existing data still need to be designed.
+**Revised by Josh:** writing a product creates a new record even when the name is already in «Куплено» or «Запасы». The existing record is not changed, and no automatic reuse or comparison dialog is added. This supersedes the earlier repeat-entry decision. Stock tracking on an existing shopping page remains explicit and must not overwrite its settings.
 
-The local prototype now demonstrates these clarifications and an opt-in flow for an existing shopping page; see `stock-design.md`. The interaction is a design proposal for review and does not simulate arbitrary existing schemas or real persistence. The historical recovery material remains unchanged.
+The local prototype demonstrates the revised repeat-entry rule as well as the shared editor and opt-in flow; see `stock-design.md`. The prototype does not simulate arbitrary existing schemas or real persistence. The historical recovery material remains unchanged.
 
 The following are implementation recommendations, not additional confirmed user decisions: append in manual order while respecting explicit sorting; preserve a user's AI off choice after reconnecting a key; keep routing and splitting independent; and allow desktop nesting through the existing drag handle while preserving menu and keyboard alternatives. Home summaries newest-first, hiding a swiped update banner until the next launch, hold-menu-then-drag and hiding `шт` in a folded row were previously communicated defaults, not all individually confirmed.
 
-The exact input range and validation of tracked amounts still need implementation analysis; do not silently truncate existing fractional, negative or greater-than-99 values. An empty value is not zero. When a property with «Осталось» is visible, do not infer that «Откуда записи» must be hidden solely from that fact; verify the intended view settings against the existing model.
+New tracked amounts are finite nonnegative numbers without an artificial maximum; minus at zero does nothing. Do not silently truncate existing fractional, negative or greater-than-99 values. An empty value is not zero. When a property with «Осталось» is visible, do not infer that «Откуда записи» must be hidden solely from that fact; verify the intended view settings against the existing model.

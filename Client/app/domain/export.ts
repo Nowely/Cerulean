@@ -5,8 +5,10 @@ import { formatDue } from './dates'
 import { count, normalize, PAGE_FORMS, RECORD_FORMS } from './text'
 import { uid } from './ids'
 import { readPage } from './templates'
-import { bodyMarkdown, bodyOf, remapMentions, type NameOf } from './body'
+import { bodyMarkdown, bodyOf, mentionIds, remapMentions, type NameOf } from './body'
 import { mdTitle } from './mention'
+import { clearMissingStockViews, stockUnit, stockView, uniqueStockName } from './stock'
+import { homeOrder, type HomePosition } from './homeOrder'
 
 export interface Snapshot {
   app: 'cerulean'
@@ -41,7 +43,8 @@ export function toMarkdown(pages: Page[], records: Rec[], sections: Section[], n
       .map((p) => {
         const v = r.values[p.id]
         if (v === null || v === undefined || v === '') return ''
-        const text = p.type === 'select' ? p.options?.find(o => o.id === v)?.name : `${v}${p.unit ? ` ${p.unit}` : ''}`
+        const unit = page.stocks?.some(s => s.amountProp === p.id) ? stockUnit(r, page, p.id) : p.unit
+        const text = p.type === 'select' ? p.options?.find(o => o.id === v)?.name : `${v}${unit ? ` ${unit}` : ''}`
         return text ? `${p.name}: ${text}` : ''
       })
       .filter(Boolean)
@@ -93,7 +96,7 @@ export function parseSnapshot(text: string): Snapshot {
     version: 1,
     exportedAt: s.exportedAt ?? 0,
     // An older copy reads as today's shape (v23: «Готово» → «Сделано»)
-    pages: s.pages.map(readPage),
+    pages: s.pages.map(readPage).map(clearMissingStockViews),
     records: s.records,
     sections: s.sections ?? [],
     entries: s.entries ?? [],
@@ -141,10 +144,37 @@ export interface Merge {
   learned: Learned
 }
 
+export type StockImportConflictReason = 'page-name' | 'page-id' | 'stock-schema' | 'record-name' | 'record-id' | 'stock-data' | 'record-links'
+
+/** The caller must stop the entire add-import and show this error before saving anything. */
+export class StockImportConflict extends Error {
+  readonly code = 'stock-import-conflict'
+
+  constructor(
+    readonly reason: StockImportConflictReason,
+    readonly pageId: Id,
+    readonly pageTitle: string,
+    readonly recordId?: Id,
+    readonly recordText?: string
+  ) {
+    super(`Не удалось добавить копию: на странице «${pageTitle || 'Без названия'}» есть конфликт запасов${recordText ? ` в записи «${recordText}»` : ''}. Данные не изменены.`)
+    this.name = 'StockImportConflict'
+  }
+}
+
+/** An imported stock view cannot be remapped without changing what its choice filter means. */
+export class FilterImportConflict extends StockImportConflict {
+  constructor(page: Page) {
+    super('stock-schema', page.id, page.title)
+    this.name = 'FilterImportConflict'
+    this.message = `Не удалось добавить копию: фильтр вида на странице «${page.title || 'Без названия'}» ссылается на удалённое свойство или вариант. Данные не изменены.`
+  }
+}
+
 /**
  * «Добавить к текущим»: sections and pages with the same name merge, a record with the same text on the same page
- * (under the same parent) is not doubled, and what the file brings goes below what is here. The file's trash,
- * Журнал and settings stay out. Ids already taken here get new ones.
+ * (under the same parent) is not doubled. A stock conflict throws StockImportConflict instead of returning a partial
+ * merge. What the file brings goes below what is here; trash, Журнал and settings stay out.
  */
 export function mergeSnapshot(here: Pick<Snapshot, 'pages' | 'records' | 'sections' | 'learned'>, file: Snapshot): Merge {
   const key = (s: string) => normalize(s)
@@ -178,23 +208,90 @@ export function mergeSnapshot(here: Pick<Snapshot, 'pages' | 'records' | 'sectio
   const favAt = maxOf([...livePages, ...liveRecords].map(x => x.favorite ?? -1)) + 1
   const fav = (f: number | null) => f === null ? null : favAt + f
   const pageAt = new Map<Id | null, number>()
+  // Read the source exactly as Главная does: Page.order first, creation time for Мои страницы,
+  // then the source's manual positions and import groups. Nothing here writes to either input.
+  const sourceLists = new Map<Id | null, Page[]>()
+  for (const page of file.pages.filter(p => !p.deletedAt).sort((a, b) => a.order - b.order)) {
+    const section = page.sectionId ?? null
+    if (section === null && page.kind !== 'page') continue
+    const list = sourceLists.get(section) ?? []
+    list.push(page)
+    sourceLists.set(section, list)
+  }
+  const sourcePositions = new Map<Page, number>()
+  for (const [section, list] of sourceLists) {
+    if (section === null) list.sort((a, b) => b.createdAt - a.createdAt)
+    homeOrder(list, section).forEach((page, position) => sourcePositions.set(page, position))
+  }
+  const sourceSections: (Id | null)[] = [null, ...[...file.sections].sort((a, b) => a.order - b.order).map(s => s.id)]
+  for (const section of sourceLists.keys()) if (!sourceSections.includes(section)) sourceSections.push(section)
+  const homeGroups = new Map<Id | null, string>()
+  const maximum = here.pages.reduce((max, page) => {
+    const match = /^home-import-v1:(\d{16}):/.exec(page.homeOrder?.importGroup ?? '')
+    if (!match) return max
+    const n = Number(match[1])
+    if (!Number.isSafeInteger(n)) throw new Error('Не удалось добавить копию: неверный порядок импортированных страниц')
+    return Math.max(max, n)
+  }, 0)
+  if (!Number.isSafeInteger(maximum + sourceSections.length)) throw new Error('Не удалось добавить копию: неверный порядок импортированных страниц')
+  const homeGroup = (section: Id | null) => {
+    let group = homeGroups.get(section)
+    if (!group) {
+      const index = sourceSections.indexOf(section)
+      group = `home-import-v1:${String(maximum + index + 1).padStart(16, '0')}:${uid('')}:${uid('')}`
+      homeGroups.set(section, group)
+    }
+    return group
+  }
   const nextPage = (sectionId: Id | null) => {
     const at = pageAt.get(sectionId) ?? maxOf(livePages.filter(p => p.sectionId === sectionId).map(p => p.order)) + 1
     pageAt.set(sectionId, at + 1)
     return at
   }
-  for (const p of file.pages.filter(p => !p.deletedAt).sort((a, b) => a.order - b.order)) {
-    const same = p.kind !== 'page'
-      ? livePages.find(x => x.kind === p.kind)
-      : p.title.trim() ? livePages.find(x => x.kind === 'page' && key(x.title) === key(p.title)) : undefined
+  for (const p of file.pages.filter(p => !p.deletedAt).sort((a, b) => a.order - b.order).map(clearMissingStockViews)) {
+    const names = p.kind !== 'page'
+      ? [...livePages, ...pages].filter(x => x.kind === p.kind)
+      : p.title.trim() ? [...livePages, ...pages].filter(x => x.kind === 'page' && key(x.title) === key(p.title)) : []
+    const sameId = here.pages.find(x => x.id === p.id)
+    const stockPage = !!(p.stocks?.length || sameId?.stocks?.length || names.some(x => x.stocks?.length))
+    if (stockPage && sameId && (sameId.deletedAt || sameId.kind !== p.kind)) {
+      throw new StockImportConflict('page-id', p.id, p.title)
+    }
+    if (stockPage && !sameId && names.length > 1) throw new StockImportConflict('page-name', p.id, p.title)
+    const same = stockPage && sameId
+      ? sameId
+      : p.kind !== 'page'
+        ? livePages.find(x => x.kind === p.kind)
+        : p.title.trim() ? livePages.find(x => x.kind === 'page' && key(x.title) === key(p.title)) : undefined
+    if (stockPage && !same && names.length) throw new StockImportConflict('page-name', p.id, p.title)
     if (same) {
       pageOf.set(p.id, same.id)
-      propsOf.set(p.id, mergeProps(changed.get(same.id) ?? same, p.props, page => changed.set(same.id, page)))
+      const mapping = mergeProps(changed.get(same.id) ?? same, p, page => changed.set(same.id, page))
+      propsOf.set(p.id, mapping)
+      const target = changed.get(same.id) ?? same
+      const memory = { ...target.departmentMemory }
+      let memoryChanged = false
+      for (const [sourceProp, words] of Object.entries(p.departmentMemory ?? {})) {
+        const source = p.props.find(prop => prop.id === sourceProp && prop.type === 'select')
+        const mapped = mapping.get(sourceProp)
+        if (!source || !mapped || !words || typeof words !== 'object') continue
+        const next = { ...memory[mapped.id] }
+        for (const [stem, option] of Object.entries(words)) {
+          const mappedOption = mapped.options.get(option)
+          if (!/^[a-zа-я0-9]{3,5}$/.test(stem) || !source.options?.some(o => o.id === option) || !mappedOption || Object.hasOwn(next, stem)) continue
+          next[stem] = mappedOption
+          memoryChanged = true
+        }
+        if (Object.keys(next).length) memory[mapped.id] = next
+      }
+      if (memoryChanged) changed.set(same.id, { ...target, departmentMemory: memory })
       continue
     }
     if (p.kind !== 'page') continue
     const sectionId = p.sectionId ? sectionOf.get(p.sectionId) ?? null : null
     const made = { ...p, id: own(p.id, 'p'), sectionId, order: nextPage(sectionId), favorite: fav(p.favorite) }
+    const imported: HomePosition = { ...p.homeOrder, sectionId, position: sourcePositions.get(p)!, importGroup: homeGroup(p.sectionId ?? null) }
+    made.homeOrder = imported
     pages.push(made)
     pageOf.set(p.id, made.id)
   }
@@ -202,7 +299,12 @@ export function mergeSnapshot(here: Pick<Snapshot, 'pages' | 'records' | 'sectio
   // Records: parents first, so that a subitem follows its parent (or the record here that parent matched)
   const recordOf = new Map<Id, Id>()
   const place = (pageId: Id, parentId: Id | null, text: string) => `${pageId}|${parentId ?? ''}|${key(text)}`
-  const index = new Map(liveRecords.map(r => [place(r.pageId, r.parentId, r.text), r.id]))
+  const index = new Map<string, Rec[]>()
+  for (const r of liveRecords) {
+    const k = place(r.pageId, r.parentId, r.text)
+    index.set(k, [...(index.get(k) ?? []), r])
+  }
+  const byId = new Map(here.records.map(r => [r.id, r]))
   const orderAt = new Map<string, number>()
   const nextOrder = (pageId: Id, parentId: Id | null) => {
     const k = `${pageId}|${parentId ?? ''}`
@@ -211,6 +313,7 @@ export function mergeSnapshot(here: Pick<Snapshot, 'pages' | 'records' | 'sectio
     return at
   }
   const records: Rec[] = []
+  const stockRefs: { source: Rec, page: Page, existing?: Rec }[] = []
   let left = file.records.filter(r => !r.deletedAt && pageOf.has(r.pageId)).sort((a, b) => a.order - b.order)
   while (left.length) {
     const ready = new Set(left.filter(r => !r.parentId || recordOf.has(r.parentId)))
@@ -219,9 +322,27 @@ export function mergeSnapshot(here: Pick<Snapshot, 'pages' | 'records' | 'sectio
     for (const r of ready) {
       const pageId = pageOf.get(r.pageId)!
       const parentId = r.parentId ? recordOf.get(r.parentId)! : null
-      const same = index.get(place(pageId, parentId, r.text))
+      const sourcePage = file.pages.find(p => p.id === r.pageId)!
+      const targetPage = changed.get(pageId) ?? livePages.find(p => p.id === pageId) ?? pages.find(p => p.id === pageId)!
+      const stockPage = !!(sourcePage.stocks?.length || targetPage.stocks?.length)
+      const candidates = index.get(place(pageId, parentId, r.text)) ?? []
+      const sameId = byId.get(r.id)
+      if (stockPage && sameId && (sameId.deletedAt || sameId.pageId !== pageId || sameId.parentId !== parentId)) {
+        throw new StockImportConflict('record-id', sourcePage.id, sourcePage.title, r.id, r.text)
+      }
+      if (stockPage && !sameId && taken.has(r.id)) {
+        throw new StockImportConflict('record-id', sourcePage.id, sourcePage.title, r.id, r.text)
+      }
+      if (stockPage && !sameId && candidates.length) {
+        throw new StockImportConflict('record-name', sourcePage.id, sourcePage.title, r.id, r.text)
+      }
+      const same = stockPage ? sameId : candidates[0]
       if (same) {
-        recordOf.set(r.id, same)
+        if (stockPage && !sameStockData(same, targetPage, r, sourcePage)) {
+          throw new StockImportConflict('stock-data', sourcePage.id, sourcePage.title, r.id, r.text)
+        }
+        if (stockPage) stockRefs.push({ source: r, page: sourcePage, existing: same })
+        recordOf.set(r.id, same.id)
         continue
       }
       const props = propsOf.get(r.pageId)
@@ -231,13 +352,35 @@ export function mergeSnapshot(here: Pick<Snapshot, 'pages' | 'records' | 'sectio
         if (to) values[to.id] = typeof value === 'string' ? to.options.get(value) ?? value : value
       }
       const made = { ...r, id: own(r.id, 'r'), pageId, parentId, values, order: nextOrder(pageId, parentId), favorite: fav(r.favorite) }
+      if (props) {
+        const remapStock = <T>(items: Record<Id, T> | undefined): Record<Id, T> | undefined => items && Object.fromEntries(
+          Object.entries(items).flatMap(([id, value]) => props.has(id) ? [[props.get(id)!.id, value]] : [])
+        )
+        made.stockUnits = remapStock(r.stockUnits)
+        made.stockBuy = remapStock(r.stockBuy)
+      }
       records.push(made)
+      if (stockPage) {
+        stockRefs.push({ source: r, page: sourcePage })
+        byId.set(made.id, made)
+        const k = place(pageId, parentId, made.text)
+        index.set(k, [...(index.get(k) ?? []), made])
+      }
       recordOf.set(r.id, made.id)
     }
   }
   // Links, mentions and guesses point at what they became here
   const to = (id: Id) => recordOf.get(id) ?? pageOf.get(id)
   const remap = (ids: Id[]) => ids.map(to).filter((id): id is Id => !!id)
+  for (const { source, page, existing } of stockRefs) {
+    const references = [source.links ?? [], source.mentions ?? [], source.body ? mentionIds(source.body) : []]
+    const mapped = references.map(remap)
+    const local = existing ? [existing.links ?? [], existing.mentions ?? [], existing.body ? mentionIds(existing.body) : []] : null
+    if (references.some((ids, i) => ids.length !== mapped[i]!.length)
+      || (local && mapped.some((ids, i) => JSON.stringify(ids) !== JSON.stringify(local[i])))) {
+      throw new StockImportConflict('record-links', page.id, page.title, source.id, source.text)
+    }
+  }
   for (const x of [...records, ...pages]) {
     if (x.body) x.body = remapMentions(x.body, to)
     if (x.mentions) x.mentions = remap(x.mentions)
@@ -257,22 +400,52 @@ export function mergeSnapshot(here: Pick<Snapshot, 'pages' | 'records' | 'sectio
 
 type PropMap = Map<Id, { id: Id, options: Map<Id, Id> }>
 
+function sameStockData(a: Rec, aPage: Page, b: Rec, bPage: Page): boolean {
+  const pairs = [...(aPage.stocks ?? []), ...(bPage.stocks ?? [])]
+  return pairs.every(s => a.values[s.amountProp] === b.values[s.amountProp]
+    && a.values[s.normProp] === b.values[s.normProp]
+    && a.stockUnits?.[s.amountProp] === b.stockUnits?.[s.amountProp]
+    && a.stockBuy?.[s.amountProp] === b.stockBuy?.[s.amountProp])
+}
+
 /**
- * A page here meets the same page from a file: properties match by name and type, options by name, and what the
- * file has on top is added to a copy of the page (`update` gets it). Returns how the file's ids are called here.
+ * Ordinary properties match by name and type, options by name. Stock pairs match only by their explicit IDs;
+ * otherwise they and their specialized views are added without changing existing views or properties.
  */
-function mergeProps(page: Page, from: PropDef[], update: (page: Page) => void): PropMap {
+function mergeProps(page: Page, source: Page, update: (page: Page) => void): PropMap {
+  for (const s of source.stocks ?? []) {
+    const amount = source.props.find(p => p.id === s.amountProp)
+    const norm = source.props.find(p => p.id === s.normProp)
+    const existing = page.stocks?.find(x => x.amountProp === s.amountProp && x.normProp === s.normProp)
+    const localAmount = page.props.find(p => p.id === s.amountProp)
+    const localNorm = page.props.find(p => p.id === s.normProp)
+    const invalid = !amount || !norm || amount.type !== 'number' || norm.type !== 'number' || amount.normProp !== norm.id
+      || (!!s.buyViewId && source.views.some(v => v.id === s.buyViewId) && !stockView(source, s, 'buy'))
+      || (!!s.stockViewId && source.views.some(v => v.id === s.stockViewId) && !stockView(source, s, 'stock'))
+    const collision = existing
+      ? !localAmount || !localNorm || localAmount.type !== amount?.type || localNorm.type !== norm?.type
+      || localAmount.normProp !== s.normProp || localAmount.unit !== amount?.unit || localNorm.unit !== norm?.unit
+      : !!localAmount || !!localNorm
+    if (invalid || collision) throw new StockImportConflict('stock-schema', source.id, source.title)
+  }
   const out: PropMap = new Map()
   let props = page.props
+  const stockIds = new Set((source.stocks ?? []).flatMap(s => [s.amountProp, s.normProp]))
+  const sameStockIds = new Set((source.stocks ?? []).filter(s => page.stocks?.some(x => x.amountProp === s.amountProp && x.normProp === s.normProp))
+    .flatMap(s => [s.amountProp, s.normProp]))
+  const added = new Set<Id>()
   const edit = (next: PropDef[]) => {
     props = next
     update({ ...page, props })
   }
-  for (const f of from) {
-    let mine = props.find(p => normalize(p.name) === normalize(f.name) && p.type === f.type)
+  for (const f of source.props) {
+    let mine = stockIds.has(f.id)
+      ? (sameStockIds.has(f.id) ? props.find(p => p.id === f.id && p.type === f.type) : undefined)
+      : props.find(p => !page.stocks?.some(s => s.amountProp === p.id || s.normProp === p.id) && ![...stockIds].some(id => out.get(id)?.id === p.id) && normalize(p.name) === normalize(f.name) && p.type === f.type)
     if (!mine) {
       // The options come over one by one below
-      mine = { ...f, id: props.some(p => p.id === f.id) ? uid('f') : f.id, options: f.options ? [] : undefined }
+      mine = { ...f, id: props.some(p => p.id === f.id) ? uid('f') : f.id, name: stockIds.has(f.id) ? uniqueStockName(f.name, props.map(p => p.name)) : f.name, options: f.options ? [] : undefined }
+      added.add(mine.id)
       edit([...props, mine])
     }
     const options = new Map<Id, Id>()
@@ -291,5 +464,41 @@ function mergeProps(page: Page, from: PropDef[], update: (page: Page) => void): 
     }
     out.set(f.id, { id: mine.id, options })
   }
+  if (props.some(p => added.has(p.id) && p.normProp && out.has(p.normProp) && out.get(p.normProp)!.id !== p.normProp)) {
+    props = props.map(p => added.has(p.id) && p.normProp && out.has(p.normProp) ? { ...p, normProp: out.get(p.normProp)!.id } : p)
+  }
+  let views = page.views
+  const stocks = [...(page.stocks ?? [])]
+  for (const s of source.stocks ?? []) {
+    const amount = out.get(s.amountProp)?.id
+    const norm = out.get(s.normProp)?.id
+    const buy = source.views.find(v => v.id === s.buyViewId)
+    const stock = source.views.find(v => v.id === s.stockViewId)
+    if (!amount || !norm || stocks.some(x => x.amountProp === amount && x.normProp === norm)) continue
+    const makeView = (v: NonNullable<typeof buy>) => {
+      const id = views.some(x => x.id === v.id) ? uid('v') : v.id
+      const field = (id: Id) => out.get(id)?.id ?? id
+      const used = new Set<Id>()
+      const selectFilters = v.selectFilters && Object.fromEntries(Object.entries(v.selectFilters).map(([propId, choices]) => {
+        const target = out.get(propId)
+        const sourceProp = source.props.find(p => p.id === propId && p.type === 'select')
+        if (!target || !sourceProp || used.has(target.id) || choices.some(id => !target.options.has(id))) throw new FilterImportConflict(source)
+        used.add(target.id)
+        return [target.id, choices.map(id => target.options.get(id)!)]
+      }))
+      const made = { ...v, id, name: uniqueStockName(v.name, views.map(x => x.name)),
+        filter: v.filter.map(rule => ({ ...rule, field: field(rule.field),
+          ...(typeof rule.value === 'string' ? { value: out.get(rule.field)?.options.get(rule.value) ?? rule.value } : {}) })),
+        ...(selectFilters ? { selectFilters } : {}),
+        groupBy: v.groupBy ? field(v.groupBy) : null, shown: v.shown.map(field),
+        stock: v.stock ? { ...v.stock, amountProp: amount, normProp: norm } : undefined }
+      views = [...views, made]
+      return id
+    }
+    const buyViewId = buy && makeView(buy)
+    const stockViewId = stock && makeView(stock)
+    stocks.push({ amountProp: amount, normProp: norm, ...(buyViewId ? { buyViewId } : {}), ...(stockViewId ? { stockViewId } : {}) })
+  }
+  if (props !== page.props || views !== page.views || stocks.length !== (page.stocks?.length ?? 0)) update({ ...page, props, views, ...(stocks.length ? { stocks } : {}) })
   return out
 }

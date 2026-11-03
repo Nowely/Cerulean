@@ -12,12 +12,15 @@ import { noneGone, stampOf, SYNC_KINDS, type CloudMeta, type First, type Gone, t
 import { DEFAULT_SETTINGS, newPage, newRecord, newSection } from '~/domain/factory'
 import { demo, firstRun, recentPages, type Dataset } from '~/domain/seed'
 import { learn, learnWord } from '~/domain/rules'
-import { doneIn, dropPlace, topOrder, type Group, type Leaving } from '~/domain/views'
+import { addLeaving, doneIn, dropPlace, groupRecords, leavingWithStock, topOrder, withoutLeaving, type Group, type Leaving } from '~/domain/views'
+import { purchaseStock } from '~/domain/stock'
 import { applyTemplate, readPage, TEMPLATES } from '~/domain/templates'
-import { convertValues, hasValue, orderFromListed, propKeys, propList } from '~/domain/props'
+import { convertValues, hasValue, isStockProperty, orderFromListed, propKeys, propList } from '~/domain/props'
 import { uid } from '~/domain/ids'
 import { copyDoc, findTemplate, withParagraph } from '~/domain/recordTemplates'
 import { retitle } from '~/domain/mention'
+import { homeOrder } from '~/domain/homeOrder'
+import { departmentProp, departmentStem } from '~/domain/departmentMemory'
 
 const TRASH_DAYS = 30
 
@@ -240,6 +243,13 @@ export const useDataStore = defineStore('data', () => {
     .filter(p => p.kind === 'page' && !p.sectionId && p.favorite === null)
     .sort((a, b) => b.createdAt - a.createdAt))
 
+  /** The legacy order is the baseline until a person drags; favourites stay in their section's order. */
+  function homePages(sectionId: Id | null): Page[] {
+    const list = livePages.value.filter(p => p.sectionId === sectionId && (sectionId !== null || p.kind === 'page'))
+    if (sectionId === null) list.sort((a, b) => b.createdAt - a.createdAt)
+    return homeOrder(list, sectionId)
+  }
+
   /** Избранное: pages and records with a position. Сегодня is not one: it sits at the top with Входящие (main flow, item 1) */
   const favorites = computed(() => [
     ...livePages.value.filter(p => p.favorite !== null && p.kind !== 'today').map(page => ({ kind: 'page' as const, page, at: page.favorite! })),
@@ -248,7 +258,7 @@ export const useDataStore = defineStore('data', () => {
 
   const trash = computed(() => [
     ...Object.values(pages.value).filter(p => p.deletedAt).map(page => ({ kind: 'page' as const, page, at: page.deletedAt! })),
-    ...Object.values(records.value).filter(r => r.deletedAt && !r.parentId && liveIds.value.has(r.pageId)).map(rec => ({ kind: 'record' as const, rec, at: rec.deletedAt! }))
+    ...Object.values(records.value).filter(r => r.deletedAt && (!r.parentId || records.value[r.parentId]?.deletedAt !== r.deletedAt) && liveIds.value.has(r.pageId)).map(rec => ({ kind: 'record' as const, rec, at: rec.deletedAt! }))
   ].sort((a, b) => b.at - a.at))
 
   const recent = computed(() => recentPages(entries.value))
@@ -528,7 +538,11 @@ export const useDataStore = defineStore('data', () => {
   function createPage(init: Partial<Page> = {}): Page {
     const now = Date.now()
     const inSection = livePages.value.filter(p => p.sectionId === (init.sectionId ?? null))
-    const page = newPage({ order: inSection.reduce((m, p) => Math.max(m, p.order), -1) + 1, ...init }, now)
+    const positions = inSection.filter(p => p.kind === 'page' && p.homeOrder?.sectionId === null && Number.isFinite(p.homeOrder.position)).map(p => p.homeOrder!.position)
+    const home = (init.sectionId ?? null) === null && init.homeOrder === undefined && positions.length
+      ? { homeOrder: { sectionId: null, position: positions.reduce((min, n) => Math.min(min, n), Infinity) - 1 } }
+      : {}
+    const page = newPage({ order: inSection.reduce((m, p) => Math.max(m, p.order), -1) + 1, ...home, ...init }, now)
     pages.value[page.id] = page
     save('pages', page)
     return pages.value[page.id]!
@@ -558,6 +572,45 @@ export const useDataStore = defineStore('data', () => {
     Object.assign(page, patch)
     save('pages', page, Object.keys(patch).every(k => QUIET_PAGE.has(k)))
     if (page.title !== was) follow(id, was, page.title)
+  }
+
+  /** Move relative to a page in the destination; only the two affected lists get positions. */
+  function placeHomePage(id: Id, sectionId: Id | null, before: Id | null) {
+    const page = pages.value[id]
+    if (!page || page.deletedAt || page.kind !== 'page' || (sectionId !== null && !sections.value[sectionId])) return null
+    const from = page.sectionId
+    const source = homePages(from)
+    const target = from === sectionId ? source : homePages(sectionId)
+    const dest = target.filter(p => p.id !== id)
+    const index = before === null ? dest.length : dest.findIndex(p => p.id === before)
+    if (index < 0) return null
+    dest.splice(index, 0, page)
+    if (from === sectionId && source.every((p, i) => p.id === dest[i]?.id)) return null
+    const affected = (from === sectionId ? dest : [...source.filter(p => p.id !== id), ...dest]).filter(p => p.kind === 'page')
+    const old = affected.map(p => ({ id: p.id, sectionId: p.sectionId, homeOrder: p.homeOrder ? { ...p.homeOrder } : undefined }))
+    const write = (list: Page[], section: Id | null) => list.forEach((p, position) => {
+      if (p.kind !== 'page') return
+      if (p.sectionId === section && p.homeOrder?.sectionId === section && p.homeOrder.position === position && p.homeOrder.importGroup === undefined) return
+      updatePage(p.id, { sectionId: section, homeOrder: { sectionId: section, position } })
+    })
+    if (from !== sectionId) write(source.filter(p => p.id !== id), from)
+    write(dest, sectionId)
+    const written = new Map(affected.map(p => [p.id, { sectionId: p.sectionId, homeOrder: p.homeOrder ? { ...p.homeOrder } : undefined }]))
+    return {
+      from,
+      undo: () => {
+        for (const previous of old) {
+          const current = pages.value[previous.id]
+          const after = written.get(previous.id)!
+          if (previous.sectionId === after.sectionId && previous.homeOrder?.sectionId === after.homeOrder?.sectionId
+            && previous.homeOrder?.position === after.homeOrder?.position && previous.homeOrder?.importGroup === after.homeOrder?.importGroup) continue
+          if (!current || current.deletedAt || current.sectionId !== after.sectionId
+            || current.homeOrder?.sectionId !== after.homeOrder?.sectionId || current.homeOrder?.position !== after.homeOrder?.position
+            || current.homeOrder?.importGroup !== after.homeOrder?.importGroup) continue
+          updatePage(previous.id, { sectionId: previous.sectionId, homeOrder: previous.homeOrder })
+        }
+      }
+    }
   }
 
   function removePage(id: Id) {
@@ -644,6 +697,12 @@ export const useDataStore = defineStore('data', () => {
   function updateProp(pageId: Id, propId: Id, patch: Partial<Omit<PropDef, 'id'>>) {
     const page = pages.value[pageId]
     if (!page) return
+    const prop = page.props.find(p => p.id === propId)
+    if (prop && isStockProperty(page, propId) && 'type' in patch && patch.type !== prop.type) {
+      const { type: _type, ...safe } = patch
+      if (!Object.keys(safe).length) return
+      patch = safe
+    }
     updatePage(pageId, { props: page.props.map(p => p.id === propId ? { ...p, ...patch } : p) })
   }
 
@@ -666,7 +725,18 @@ export const useDataStore = defineStore('data', () => {
     if (!page || !prop) return null
     const undo = keepProps(pageId, [propId])
     const count = propUsage(pageId, [propId], optionId)
-    updateProp(pageId, propId, { options: (prop.options ?? []).filter(o => o.id !== optionId) })
+    updatePage(pageId, {
+      props: page.props.map(p => p.id === propId ? { ...p, options: (p.options ?? []).filter(o => o.id !== optionId) } : p),
+      views: page.views.map((v) => {
+        const selected = v.selectFilters?.[propId]
+        if (!selected?.includes(optionId)) return v
+        const selectFilters = { ...v.selectFilters }
+        const remaining = selected.filter(id => id !== optionId)
+        if (remaining.length) selectFilters[propId] = remaining
+        else delete selectFilters[propId]
+        return { ...v, selectFilters }
+      })
+    })
     setValues(propId, new Map(allOf(pageId).filter(r => r.values[propId] === optionId).map(r => [r.id, null])))
     return { count, undo }
   }
@@ -675,22 +745,28 @@ export const useDataStore = defineStore('data', () => {
   function retypeProp(pageId: Id, propId: Id, type: PropType) {
     const page = pages.value[pageId]
     const prop = page?.props.find(p => p.id === propId)
-    if (!page || !prop || prop.type === type) return null
+    if (!page || !prop || prop.type === type || isStockProperty(page, propId)) return null
     const undo = keepProps(pageId, [propId])
     const entries = allOf(pageId).map(r => [r.id, r.values[propId] ?? null] as [Id, Rec['values'][string]])
     const out = convertValues(prop, type, entries, Date.now(), () => uid('o'))
+    const filtersRemoved = type === 'select' ? 0 : page.views.filter(v => (v.selectFilters?.[propId]?.length ?? 0) > 0).length
     updatePage(pageId, {
       props: page.props.map(p => p.id === propId ? out.prop : p),
       // A filter on one value no longer matches anything; «пусто» and «не пусто» still mean the same
-      views: page.views.map(v => ({
-        ...v,
-        filter: v.filter.filter(f => f.field !== propId || f.op !== 'is'),
-        groupBy: v.groupBy === propId && type !== 'select' ? null : v.groupBy
-      }))
+      views: page.views.map((v) => {
+        const selectFilters = v.selectFilters && { ...v.selectFilters }
+        if (type !== 'select' && selectFilters) delete selectFilters[propId]
+        return {
+          ...v,
+          ...(selectFilters ? { selectFilters } : {}),
+          filter: v.filter.filter(f => f.field !== propId || f.op !== 'is'),
+          groupBy: v.groupBy === propId && type !== 'select' ? null : v.groupBy
+        }
+      })
     })
     setValues(propId, out.values)
     const live = new Set(liveRecords.value.map(r => r.id))
-    return { dropped: out.dropped.filter(id => live.has(id)).length, undo }
+    return { dropped: out.dropped.filter(id => live.has(id)).length, filtersRemoved, undo }
   }
 
   /** A property leaves with every value it had (a number takes its «Норма» along) and with its place in the views */
@@ -699,17 +775,23 @@ export const useDataStore = defineStore('data', () => {
     const prop = page?.props.find(p => p.id === propId)
     if (!page || !prop) return null
     const ids = [propId, ...(prop.normProp ? [prop.normProp] : [])]
+    if (ids.some(id => isStockProperty(page, id))) return null
     const undo = keepProps(pageId, ids)
     const count = propUsage(pageId, ids)
     updatePage(pageId, {
       props: page.props.filter(p => !ids.includes(p.id)),
       propOrder: page.propOrder?.filter(k => !ids.includes(k)),
-      views: page.views.map(v => ({
-        ...v,
-        shown: v.shown.filter(k => !ids.includes(k)),
-        filter: v.filter.filter(f => !ids.includes(f.field)),
-        groupBy: v.groupBy === propId ? null : v.groupBy
-      }))
+      views: page.views.map((v) => {
+        const selectFilters = v.selectFilters && { ...v.selectFilters }
+        if (selectFilters) for (const id of ids) delete selectFilters[id]
+        return {
+          ...v,
+          ...(selectFilters ? { selectFilters } : {}),
+          shown: v.shown.filter(k => !ids.includes(k)),
+          filter: v.filter.filter(f => !ids.includes(f.field)),
+          groupBy: v.groupBy === propId ? null : v.groupBy
+        }
+      })
     })
     for (const id of ids) setValues(id, new Map(allOf(pageId).filter(r => id in r.values).map(r => [r.id, null])))
     return { count, undo }
@@ -736,9 +818,193 @@ export const useDataStore = defineStore('data', () => {
     const rec = records.value[id]
     if (!rec) return
     const was = rec.text
+    const oldPage = rec.pageId
     Object.assign(rec, patch)
     save('records', rec)
+    if (patch.pageId !== undefined && patch.pageId !== oldPage) {
+      const children = descendants([id]).slice(1).filter(r => r.pageId !== rec.pageId)
+      for (const child of children) child.pageId = rec.pageId
+      saveMany('records', children)
+    }
     if (rec.text !== was) follow(id, was, rec.text)
+  }
+
+  /** Only explicit manual choices call this; undo is guarded against later page edits. */
+  function teachDepartment(id: Id, propId: Id, before: Rec['values'][string] | undefined, after: Rec['values'][string] | undefined) {
+    const rec = records.value[id]
+    const page = rec && pages.value[rec.pageId]
+    const prop = page && departmentProp(page)
+    const stem = rec && departmentStem(rec.text)
+    if (!rec || rec.deletedAt || !page || page.deletedAt || !prop || prop.id !== propId || !stem
+      || before === after || typeof after !== 'string' || !prop.options?.some(o => o.id === after)) return
+    const old = page.departmentMemory?.[propId]?.[stem]
+    const next = { ...page.departmentMemory, [propId]: { ...page.departmentMemory?.[propId], [stem]: after } }
+    updatePage(page.id, { departmentMemory: next })
+    const stamp = page.updatedAt
+    return () => {
+      const current = pages.value[page.id]
+      if (!current || current.deletedAt || current.updatedAt !== stamp || current.departmentMemory?.[propId]?.[stem] !== after) return
+      const words = { ...current.departmentMemory[propId] }
+      if (old === undefined) delete words[stem]
+      else words[stem] = old
+      const memory = { ...current.departmentMemory }
+      if (Object.keys(words).length) memory[propId] = words
+      else delete memory[propId]
+      updatePage(current.id, { departmentMemory: Object.keys(memory).length ? memory : undefined })
+    }
+  }
+
+  /** Walk all descendants, including trash, independently of object insertion order. */
+  function descendants(ids: Id[]): Rec[] {
+    const children = new Map<Id, Rec[]>()
+    for (const rec of Object.values(records.value)) {
+      if (!rec.parentId) continue
+      const list = children.get(rec.parentId) ?? []
+      list.push(rec)
+      children.set(rec.parentId, list)
+    }
+    const seen = new Set<Id>()
+    const result: Rec[] = []
+    const queue = [...ids]
+    for (let i = 0; i < queue.length; i++) {
+      const id = queue[i]!
+      if (seen.has(id)) continue
+      seen.add(id)
+      const rec = records.value[id]
+      if (!rec) continue
+      result.push(rec)
+      for (const child of children.get(id) ?? []) queue.push(child.id)
+    }
+    return result
+  }
+
+  function canPlaceSubtree(id: Id, parentId: Id | null) {
+    const rec = records.value[id]
+    const parent = parentId ? records.value[parentId] : null
+    if (!rec || rec.deletedAt || (parentId && (!parent || parent.deletedAt || parent.pageId !== rec.pageId))) return false
+    const tree = descendants([id])
+    if (parentId && tree.some(r => r.id === parentId)) return false
+    let depth = 0
+    const ancestors = new Set<Id>()
+    for (let at = parent; at; at = at.parentId ? records.value[at.parentId] : undefined) {
+      if (ancestors.has(at.id) || at.deletedAt || at.pageId !== rec.pageId) return false
+      ancestors.add(at.id)
+      depth++
+      if (at.parentId && !records.value[at.parentId]) return false
+    }
+    const depths = new Map<Id, number>([[id, 0]])
+    for (const child of tree.slice(1)) depths.set(child.id, (depths.get(child.parentId!) ?? 3) + 1)
+    return depth + Math.max(...depths.values()) <= 2
+  }
+
+  /** Change a subtree's parent and position without creating cycles or a fourth list level. */
+  function placeSubtree(id: Id, parentId: Id | null, index: number) {
+    const rec = records.value[id]
+    if (!rec || !canPlaceSubtree(id, parentId)) return null
+    const siblings = (parentId ? subitemsOf(parentId) : recordsOf(rec.pageId))
+      .filter(r => r.id !== id).sort((a, b) => a.order - b.order)
+    const at = Math.max(0, Math.min(index, siblings.length))
+    const before = siblings[at - 1]
+    const after = siblings[at]
+    const order = before && after ? (before.order + after.order) / 2 : before ? before.order + 1 : after ? after.order - 1 : 0
+    const previous = { parentId: rec.parentId, order: rec.order }
+    updateRecord(id, { parentId, order })
+    return {
+      undo: () => {
+        if (canPlaceSubtree(id, previous.parentId)) updateRecord(id, previous)
+      }
+    }
+  }
+
+  /** A tree drop in a view: parent, group and manual order are one undoable action. */
+  function placeTreeRecord(pageId: Id, viewId: Id, groups: Group[], id: Id, parentId: Id | null, groupKey: string, index: number, now: number) {
+    const page = pages.value[pageId]
+    const view = page?.views.find(v => v.id === viewId)
+    const rec = records.value[id]
+    const targetGroup = groups.find(g => g.key === groupKey)
+    if (!page || !view || !rec || rec.pageId !== pageId || !targetGroup || !canPlaceSubtree(id, parentId)) return { ok: false as const, reason: 'invalid' as const }
+    function rootOf(r: Rec): Rec | undefined {
+      const seen = new Set<Id>()
+      let current = r
+      while (current.parentId) {
+        if (seen.has(current.id)) return
+        seen.add(current.id)
+        const parent = records.value[current.parentId]
+        if (!parent || parent.deletedAt || parent.pageId !== pageId) return
+        current = parent
+      }
+      return current
+    }
+    const originalRoot = rootOf(rec)
+    const sourceGroup = originalRoot && groups.find(g => g.records.some(r => r.id === originalRoot.id))
+    const targetRoot = parentId ? rootOf(records.value[parentId]!) : undefined
+    if (!sourceGroup || (parentId && (!targetRoot || !targetGroup.records.some(r => r.id === targetRoot.id)))) return { ok: false as const, reason: 'invalid' as const }
+    if (view.groupBy === 'due' && groupRecords([rec], 'due', page, now)[0]?.key !== groupKey) return { ok: false as const, reason: 'due-group' as const }
+    const prop = page.props.find(p => p.id === view.groupBy && p.type === 'select')
+    if (sourceGroup.key !== groupKey && !prop && view.groupBy !== 'due') return { ok: false as const, reason: 'invalid' as const }
+    const sort = view.sort
+    const onScreen = new Map(groups.flatMap(g => g.records).map((r, i) => [r.id, i]))
+    const orderOf = (r: Rec) => sort === 'manual' ? r.order : onScreen.get(r.id) ?? r.order
+    const siblings = (parentId ? subitemsOf(parentId) : targetGroup.records).filter(r => r.id !== id)
+    const at = Math.max(0, Math.min(index, siblings.length))
+    const before = siblings[at - 1]
+    const after = siblings[at]
+    // Child lists are always manual; visible roots take their current sorted order when the view becomes manual.
+    const beforeOrder = before && (parentId ? before.order : orderOf(before))
+    const afterOrder = after && (parentId ? after.order : orderOf(after))
+    let order = 0
+    if (beforeOrder !== undefined && afterOrder !== undefined) order = beforeOrder + (afterOrder - beforeOrder) / 2
+    else if (beforeOrder !== undefined) order = beforeOrder + 1
+    else if (afterOrder !== undefined) order = afterOrder - 1
+    if (!Number.isFinite(order) || (beforeOrder !== undefined && order <= beforeOrder) || (afterOrder !== undefined && order >= afterOrder)) return { ok: false as const, reason: 'order-conflict' as const }
+    const old = { parentId: rec.parentId, order: rec.order, hasGroup: !!prop && Object.hasOwn(rec.values, prop.id), group: prop ? rec.values[prop.id] : undefined }
+    const oldOption = prop?.options?.some(option => option.id === old.group) ?? false
+    const nextGroup = prop && (parentId === null || sourceGroup.key !== groupKey) ? (groupKey === 'none' ? null : groupKey) : undefined
+    const changeGroup = !!prop && nextGroup !== undefined && (!old.hasGroup || old.group !== nextGroup)
+    const changedOrders: { id: Id, parentId: Id | null, before: number, after: number }[] = []
+    if (sort !== 'manual') {
+      for (const [otherId, position] of onScreen) {
+        const other = records.value[otherId]
+        if (!other || other.id === id || other.order === position) continue
+        changedOrders.push({ id: other.id, parentId: other.parentId, before: other.order, after: position })
+        updateRecord(other.id, { order: position })
+      }
+      updatePage(pageId, { views: page.views.map(v => v.id === viewId ? { ...v, sort: 'manual' } : v) })
+    }
+    updateRecord(id, { parentId, order, ...(changeGroup && prop ? { values: { ...rec.values, [prop.id]: nextGroup! } } : {}) })
+    const undoDepartment = changeGroup && prop ? teachDepartment(id, prop.id, old.group, nextGroup) : undefined
+    const departmentVersion = changeGroup && prop && departmentProp(page)?.id === prop.id ? { stamp: page.updatedAt } : undefined
+    let undone = false
+    const undo = () => {
+      if (undone) return 'restored' as const
+      const current = records.value[id]
+      if (!pages.value[pageId] || pages.value[pageId]?.deletedAt || !current || current.deletedAt || current.pageId !== pageId || current.parentId !== parentId || current.order !== order || !canPlaceSubtree(id, old.parentId)) return 'conflict' as const
+      if (changedOrders.some((change) => {
+        const other = records.value[change.id]
+        return !other || !!other.deletedAt || other.pageId !== pageId || other.parentId !== change.parentId || other.order !== change.after
+      })) return 'conflict' as const
+      undone = true
+      let partial = false
+      let values: Rec['values'] | undefined
+      const currentProp = prop && pages.value[pageId]?.props.find(p => p.id === prop.id && p.type === 'select')
+      const optionKept = !oldOption || !!currentProp?.options?.some(option => option.id === old.group)
+      const departmentUnchanged = !departmentVersion || pages.value[pageId]?.updatedAt === departmentVersion.stamp
+      if (changeGroup && currentProp && optionKept && departmentUnchanged && current.values[currentProp.id] === nextGroup) {
+        values = { ...current.values }
+        if (old.hasGroup) values[currentProp.id] = old.group!
+        else delete values[currentProp.id]
+      } else if (changeGroup) partial = true
+      updateRecord(id, { parentId: old.parentId, order: old.order, ...(values ? { values } : {}) })
+      if (values) undoDepartment?.()
+      for (const change of changedOrders) {
+        updateRecord(change.id, { order: change.before })
+      }
+      const p = pages.value[pageId]
+      if (sort !== 'manual' && p?.views.find(v => v.id === viewId)?.sort === 'manual') updatePage(pageId, { views: p.views.map(v => v.id === viewId ? { ...v, sort } : v) })
+      else if (sort !== 'manual' && p?.views.find(v => v.id === viewId)?.sort !== sort) partial = true
+      return partial ? 'partial' as const : 'restored' as const
+    }
+    return { ok: true as const, undo, manual: sort !== 'manual', into: sourceGroup.key !== groupKey ? targetGroup : null }
   }
 
   /**
@@ -813,55 +1079,174 @@ export const useDataStore = defineStore('data', () => {
    */
   const leaving = ref<Leaving>({})
   const leaveTimers = new Map<Id, ReturnType<typeof setTimeout>>()
-  function toggleDone(id: Id) {
+  const purchases = new Map<Id, {
+    pageId: Id
+    viewId: Id
+    amountProp: Id
+    before: Rec
+    after: Rec
+  }>()
+  function toggleDone(id: Id, context?: { pageId: Id, viewId: Id }): 'invalid-norm' | 'conflict' | undefined {
     const rec = records.value[id]
     if (!rec) return
+    const pending = purchases.get(id)
+    if (pending && context?.pageId === pending.pageId && context.viewId === pending.viewId) {
+      const { before, after, amountProp } = pending
+      const changed = (key: 'done' | 'doneAt' | 'tickedAt') => !Object.is(before[key], after[key])
+      const amountChanged = !Object.is(before.values[amountProp], after.values[amountProp]) || (amountProp in before.values) !== (amountProp in after.values)
+      const buyChanged = (amountProp in (before.stockBuy ?? {})) !== (amountProp in (after.stockBuy ?? {}))
+        || !Object.is(before.stockBuy?.[amountProp], after.stockBuy?.[amountProp])
+      if (rec.deletedAt || rec.pageId !== pending.pageId || rec.parentId || id in waiting.value
+        || (['done', 'doneAt', 'tickedAt'] as const).some(key => changed(key) && !Object.is(rec[key], after[key]))
+        || (amountChanged && (!Object.is(rec.values[amountProp], after.values[amountProp]) || (amountProp in rec.values) !== (amountProp in after.values)))
+        || (buyChanged && (!Object.is(rec.stockBuy?.[amountProp], after.stockBuy?.[amountProp]) || (amountProp in (rec.stockBuy ?? {})) !== (amountProp in (after.stockBuy ?? {}))))) return 'conflict'
+      const patch: Partial<Rec> = {}
+      if (changed('done')) patch.done = before.done
+      if (changed('doneAt')) patch.doneAt = before.doneAt
+      if (changed('tickedAt')) patch.tickedAt = before.tickedAt
+      if (amountChanged) {
+        const values = { ...rec.values }
+        if (amountProp in before.values) values[amountProp] = before.values[amountProp]!
+        else delete values[amountProp]
+        patch.values = values
+      }
+      if (buyChanged) {
+        const stockBuy = { ...rec.stockBuy }
+        if (before.stockBuy && amountProp in before.stockBuy) stockBuy[amountProp] = before.stockBuy[amountProp]!
+        else delete stockBuy[amountProp]
+        patch.stockBuy = !before.stockBuy && !Object.keys(stockBuy).length ? undefined : stockBuy
+      }
+      clearTimeout(leaveTimers.get(id))
+      leaveTimers.delete(id)
+      purchases.delete(id)
+      leaving.value = withoutLeaving(leaving.value, id)
+      updateRecord(id, patch)
+      return
+    }
+
+    const page = context && pages.value[context.pageId]
+    const view = page?.views.find(v => v.id === context?.viewId)
+    if (context && !view) return
+    const configs = view ? page?.stocks?.filter(s => s.buyViewId === view.id && s.amountProp === view.stock?.amountProp && s.normProp === view.stock?.normProp) ?? [] : []
+    const candidate = page && !page.deletedAt && page.kind === 'page' && rec.pageId === page.id && !rec.deletedAt && !rec.parentId
+      && view?.stock?.mode === 'buy' && (!view.from || view.from === 'self') && configs.length === 1
+      ? configs[0]
+      : undefined
+    const relevant = candidate && page?.stocks?.filter(s => s.amountProp === candidate.amountProp || s.normProp === candidate.amountProp
+      || s.amountProp === candidate.normProp || s.normProp === candidate.normProp)
+    const amounts = page?.props.filter(p => p.id === candidate?.amountProp) ?? []
+    const norms = page?.props.filter(p => p.id === candidate?.normProp) ?? []
+    const stock = candidate && candidate.amountProp !== candidate.normProp && relevant?.length === 1 && amounts.length === 1
+      && norms.length === 1 && amounts[0]?.type === 'number' && amounts[0].normProp === candidate.normProp && norms[0]?.type === 'number'
+      ? candidate
+      : undefined
+    const amount = stock && rec.values[stock.amountProp]
+    const tracked = amount !== undefined && amount !== null && amount !== ''
     const now = Date.now()
+    const bought = stock && tracked && !rec.done && !(id in leaving.value) ? purchaseStock(rec, stock, now) : undefined
+    if (stock && tracked && !rec.done && !(id in leaving.value)) {
+      if (id in waiting.value) return 'conflict'
+      if (!bought) return 'invalid-norm'
+    }
     clearTimeout(leaveTimers.get(id))
     leaveTimers.delete(id)
+    purchases.delete(id)
     if (id in leaving.value) {
-      const { [id]: _, ...rest } = leaving.value
-      leaving.value = rest
+      leaving.value = withoutLeaving(leaving.value, id)
     } else {
-      leaving.value = { ...leaving.value, [id]: rec.done }
+      leaving.value = addLeaving(leaving.value, id, rec.done)
+      if (bought && stock) leaving.value = leavingWithStock(leaving.value, id, rec, stock.amountProp)
       leaveTimers.set(id, setTimeout(() => {
         leaveTimers.delete(id)
-        const { [id]: _, ...rest } = leaving.value
-        leaving.value = rest
+        purchases.delete(id)
+        leaving.value = withoutLeaving(leaving.value, id)
       }, LEAVE_MS))
     }
-    updateRecord(id, rec.done ? { done: false, doneAt: undefined, tickedAt: now } : { done: true, doneAt: now, tickedAt: now })
+    if (bought && stock && context) {
+      const before = { ...rec, values: { ...rec.values }, stockBuy: rec.stockBuy && { ...rec.stockBuy } }
+      const patch: Partial<Rec> = { done: bought.done, doneAt: bought.doneAt, tickedAt: bought.tickedAt, values: bought.values }
+      if (rec.stockBuy && stock.amountProp in rec.stockBuy) patch.stockBuy = bought.stockBuy
+      updateRecord(id, patch)
+      purchases.set(id, { ...context, amountProp: stock.amountProp, before, after: { ...rec, values: { ...rec.values }, stockBuy: rec.stockBuy && { ...rec.stockBuy } } })
+    } else updateRecord(id, rec.done ? { done: false, doneAt: undefined, tickedAt: now } : { done: true, doneAt: now, tickedAt: now })
   }
 
-  /** Moves records to another page: the «уточнить» tag goes, values move by property name, Авто learns the words */
-  function moveRecords(ids: Id[], pageId: Id, opts: { teach?: boolean } = {}) {
+  /** Check the entire selection against a real or not-yet-created destination. */
+  function checkMoveRecords(ids: Id[], target: Page): { ok: true } | { ok: false, reason: 'stock-conflict' } {
+    const knownStocks = Object.values(pages.value).flatMap(p => p.stocks ?? [])
+    const conflicts = descendants(ids).some((record) => {
+      const from = pages.value[record.pageId]
+      if (from?.id === target.id) return false
+      const hasData = (id: Id) => id in record.values || id in (record.stockUnits ?? {}) || id in (record.stockBuy ?? {})
+      const sameStock = (amountProp: Id, normProp: Id) => (target.stocks ?? []).some(s => s.amountProp === amountProp && s.normProp === normProp)
+      for (const stock of from?.stocks ?? []) {
+        if ([stock.amountProp, stock.normProp].some(hasData) && !sameStock(stock.amountProp, stock.normProp)) return true
+      }
+      const metadata = new Set([...Object.keys(record.stockUnits ?? {}), ...Object.keys(record.stockBuy ?? {})])
+      const hidden = new Set([...Object.keys(record.values).filter(id => !from?.props.some(p => p.id === id)), ...metadata])
+      for (const id of hidden) {
+        if ((from?.stocks ?? []).some(s => s.amountProp === id || s.normProp === id)) continue
+        const candidates = knownStocks.filter(s => s.amountProp === id || (!metadata.has(id) && s.normProp === id))
+        if ((metadata.has(id) && !candidates.length) || candidates.some(s => !sameStock(s.amountProp, s.normProp))) return true
+      }
+      for (const stock of target.stocks ?? []) {
+        if ((from?.stocks ?? []).some(s => s.amountProp === stock.amountProp && s.normProp === stock.normProp)) continue
+        if ([stock.amountProp, stock.normProp].some(id => hasData(id) && from?.props.some(p => p.id === id))) return true
+      }
+      return false
+    })
+    return conflicts ? { ok: false, reason: 'stock-conflict' } : { ok: true }
+  }
+
+  /** Moves records to another page only after the whole selection passes preflight. */
+  function moveRecords(ids: Id[], pageId: Id, opts: { teach?: boolean } = {}): { ok: true } | { ok: false, reason: 'stock-conflict' | 'missing-target' } {
     const target = pages.value[pageId]
-    if (!target) return
+    if (!target) return { ok: false, reason: 'missing-target' }
+    const checked = checkMoveRecords(ids, target)
+    if (!checked.ok) return checked
     const order = topOrder(recordsOf(pageId))
-    ids.forEach((id, i) => {
+    const selected = new Set(ids)
+    const covered = new Set(ids.flatMap(id => descendants([id]).slice(1).map(r => r.id)).filter(id => selected.has(id)))
+    const roots = [...selected].filter(id => !covered.has(id))
+    const targetStockIds = new Set((target.stocks ?? []).flatMap(s => [s.amountProp, s.normProp]))
+    roots.forEach((id, i) => {
       const rec = records.value[id]
       if (!rec) return
-      const from = pages.value[rec.pageId]
-      const values: Rec['values'] = {}
-      for (const [propId, value] of Object.entries(rec.values)) {
-        const prop = from?.props.find(p => p.id === propId)
-        const to = prop && target.props.find(p => p.name === prop.name && p.type === prop.type)
-        if (!prop || !to) continue
-        if (prop.type === 'select') {
-          const name = prop.options?.find(o => o.id === value)?.name
-          const option = to.options?.find(o => o.name === name)
-          if (option) values[to.id] = option.id
-        } else {
-          values[to.id] = value
+      const moved = descendants([id]).map((record) => {
+        const from = pages.value[record.pageId]
+        const values: Rec['values'] = { ...record.values }
+        const sourceStockIds = new Set([
+          ...(from?.stocks ?? []).flatMap(s => [s.amountProp, s.normProp]),
+          ...Object.keys(record.stockUnits ?? {}),
+          ...Object.keys(record.stockBuy ?? {})
+        ])
+        for (const [propId, value] of Object.entries(record.values)) {
+          if (sourceStockIds.has(propId)) continue
+          const prop = from?.props.find(p => p.id === propId)
+          const to = prop && target.props.find(p => !targetStockIds.has(p.id) && p.name === prop.name && p.type === prop.type)
+          if (!prop || !to) continue
+          const mapped = prop.type === 'select'
+            ? to.options?.find(o => o.name === prop.options?.find(option => option.id === value)?.name)?.id
+            : value
+          // Never overwrite an existing value belonging to another source property.
+          if (mapped === undefined || (to.id in values && to.id !== propId && values[to.id] !== mapped)) continue
+          if (!(to.id in values)) values[to.id] = mapped
         }
-      }
-      updateRecord(id, { pageId, values, order: order - ids.length + i + 1, tags: [], guesses: undefined, parentId: null })
-      for (const sub of subitemsOf(id)) updateRecord(sub.id, { pageId })
+        return {
+          id: record.id,
+          patch: {
+            ...(Object.keys(values).length !== Object.keys(record.values).length ? { values } : {})
+          }
+        }
+      })
+      updateRecord(id, { pageId, ...moved[0]!.patch, order: order - roots.length + i + 1, tags: [], guesses: undefined, parentId: null })
+      for (const child of moved.slice(1)) if (Object.keys(child.patch).length) updateRecord(child.id, child.patch)
       if (opts.teach !== false && target.kind === 'page') {
         learned.value = learn(learned.value, rec.text, pageId)
       }
     })
     saveLearned()
+    return { ok: true }
   }
 
   /** A place picked by hand on send: Авто learns the title's first word for it, silently (main flow, item 5) */
@@ -872,11 +1257,10 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function removeRecords(ids: Id[]) {
-    const now = Date.now()
-    for (const id of ids) {
-      updateRecord(id, { deletedAt: now })
-      for (const sub of subitemsOf(id)) updateRecord(sub.id, { deletedAt: now })
-    }
+    let now = Date.now()
+    const used = new Set(Object.values(records.value).map(r => r.deletedAt).filter((at): at is number => !!at))
+    while (used.has(now)) now++
+    for (const rec of descendants(ids)) if (!rec.deletedAt) updateRecord(rec.id, { deletedAt: now })
   }
 
   function restoreRecords(ids: Id[]) {
@@ -884,10 +1268,8 @@ export const useDataStore = defineStore('data', () => {
       const rec = records.value[id]
       if (!rec) continue
       const at = rec.deletedAt
-      updateRecord(id, { deletedAt: null })
-      for (const sub of Object.values(records.value)) {
-        if (sub.parentId === id && sub.deletedAt === at) updateRecord(sub.id, { deletedAt: null })
-      }
+      if (!at) continue
+      for (const child of descendants([id])) if (child.deletedAt === at) updateRecord(child.id, { deletedAt: null })
     }
   }
 
@@ -908,19 +1290,51 @@ export const useDataStore = defineStore('data', () => {
     const orders = sort === 'manual' ? (r: Rec) => r.order : (r: Rec) => onScreen.get(r.id) ?? r.order
     const place = dropPlace(groups, prop, rec, to, index, orders)
     if (!place) return null
-    const before = recordsOf(pageId).map(r => ({ id: r.id, order: r.order, values: r.values }))
+    const old = { parentId: rec.parentId, order: rec.order, hasGroup: !!prop && Object.hasOwn(rec.values, prop.id), group: prop ? rec.values[prop.id] : undefined }
+    const oldOption = prop?.options?.some(option => option.id === old.group) ?? false
+    const nextGroup = place.into && prop ? place.values[prop.id] : undefined
+    const changedOrders: { id: Id, parentId: Id | null, before: number, after: number }[] = []
     if (sort !== 'manual') {
-      for (const [id, i] of onScreen) if (records.value[id]?.order !== i) updateRecord(id, { order: i })
+      for (const [id, i] of onScreen) {
+        const other = records.value[id]
+        if (!other || id === recId || other.order === i) continue
+        changedOrders.push({ id, parentId: other.parentId, before: other.order, after: i })
+        updateRecord(id, { order: i })
+      }
       updatePage(pageId, { views: page.views.map(v => v.id === viewId ? { ...v, sort: 'manual' } : v) })
     }
     updateRecord(recId, { order: place.order, values: place.values })
+    const undoDepartment = place.into && prop ? teachDepartment(recId, prop.id, old.group, nextGroup) : undefined
+    const departmentVersion = place.into && prop && departmentProp(page)?.id === prop.id ? { stamp: page.updatedAt } : undefined
+    let undone = false
     const undo = () => {
-      for (const b of before) {
-        const r = records.value[b.id]
-        if (r && (r.order !== b.order || r.values !== b.values)) updateRecord(b.id, { order: b.order, values: b.values })
+      if (undone) return 'restored' as const
+      const current = records.value[recId]
+      if (!pages.value[pageId] || pages.value[pageId]?.deletedAt || !current || current.deletedAt || current.pageId !== pageId || current.parentId !== old.parentId || current.order !== place.order) return 'conflict' as const
+      if (changedOrders.some((change) => {
+        const other = records.value[change.id]
+        return !other || !!other.deletedAt || other.pageId !== pageId || other.parentId !== change.parentId || other.order !== change.after
+      })) return 'conflict' as const
+      undone = true
+      let partial = false
+      let values: Rec['values'] | undefined
+      const currentProp = prop && pages.value[pageId]?.props.find(p => p.id === prop.id && p.type === 'select')
+      const optionKept = !oldOption || !!currentProp?.options?.some(option => option.id === old.group)
+      const departmentUnchanged = !departmentVersion || pages.value[pageId]?.updatedAt === departmentVersion.stamp
+      if (place.into && currentProp && optionKept && departmentUnchanged && current.values[currentProp.id] === nextGroup) {
+        values = { ...current.values }
+        if (old.hasGroup) values[currentProp.id] = old.group!
+        else delete values[currentProp.id]
+      } else if (place.into) partial = true
+      updateRecord(recId, { order: old.order, ...(values ? { values } : {}) })
+      if (values) undoDepartment?.()
+      for (const change of changedOrders) {
+        updateRecord(change.id, { order: change.before })
       }
       const p = pages.value[pageId]
-      if (p && sort !== 'manual') updatePage(pageId, { views: p.views.map(v => v.id === viewId ? { ...v, sort } : v) })
+      if (sort !== 'manual' && p?.views.find(v => v.id === viewId)?.sort === 'manual') updatePage(pageId, { views: p.views.map(v => v.id === viewId ? { ...v, sort } : v) })
+      else if (sort !== 'manual' && p?.views.find(v => v.id === viewId)?.sort !== sort) partial = true
+      return partial ? 'partial' as const : 'restored' as const
     }
     return { into: place.into, manual: sort !== 'manual', undo }
   }
@@ -935,8 +1349,7 @@ export const useDataStore = defineStore('data', () => {
 
   /** Gone for good: used by «Отменить» in a receipt and by emptying the trash */
   function purgeRecords(ids: Id[]) {
-    const all = new Set(ids)
-    for (const r of Object.values(records.value)) if (r.parentId && all.has(r.parentId)) all.add(r.id)
+    const all = new Set([...ids, ...descendants(ids).map(r => r.id)])
     for (const id of all) delete records.value[id]
     drop('records', [...all])
   }
@@ -1017,10 +1430,10 @@ export const useDataStore = defineStore('data', () => {
 
   // sections
 
-  /** A new section goes last, or right under `after` (from a section's «⋯») */
-  function createSection(name: string, after?: Id): Section {
+  /** A new section goes last, after `after`, or first when `after` is null */
+  function createSection(name: string, after?: Id | null): Section {
     const list = sectionList.value
-    const at = after ? list.findIndex(x => x.id === after) + 1 : list.length
+    const at = after === null ? 0 : after ? list.findIndex(x => x.id === after) + 1 : list.length
     const made = newSection(name, at)
     sections.value[made.id] = made
     const s = sections.value[made.id]!
@@ -1328,12 +1741,12 @@ export const useDataStore = defineStore('data', () => {
 
   return {
     pages, records, sections, entries, settings, learned, ready, storageError, writeFailed, persisted, waiting,
-    livePages, liveRecords, inbox, clarify, sectionList, recentlyMade, favorites, trash, recent,
+    livePages, liveRecords, inbox, clarify, sectionList, recentlyMade, homePages, favorites, trash, recent,
     recordsOf, subitemsOf, linksOf, relatedOf, mentioned, nameOf, placeOf, setBody,
-    init, setSettings, toggleFolded, clearWriteFailed, persist, hold, release, takeWaiting,
-    createPage, createFromTemplate, createNamed, updatePage, removePage, restorePage, visitPage, toggleFavorite,
+    init, setSettings, toggleFolded, clearWriteFailed, persist, hold, release, takeWaiting, teachDepartment,
+    createPage, createFromTemplate, createNamed, updatePage, placeHomePage, removePage, restorePage, visitPage, toggleFavorite,
     propUsage, addProp, updateProp, moveProp, removeOption, retypeProp, removeProp,
-    addRecord, updateRecord, toggleLink, toggleDone, leaving, moveRecords, teach, placeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
+    addRecord, updateRecord, toggleLink, toggleDone, leaving, checkMoveRecords, moveRecords, teach, placeRecord, canPlaceSubtree, placeSubtree, placeTreeRecord, removeRecords, restoreRecords, clearDone, purgeRecords, purgePages, emptyTrash,
     appendParagraph, templateOf, makeTemplate, updateTemplate, removeTemplate, fillFromTemplate,
     createSection, updateSection, moveSection, removeSection,
     addEntry, updateEntry,

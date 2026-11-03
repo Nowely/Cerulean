@@ -15,7 +15,7 @@ const bg = l => l.evaluate(e => getComputedStyle(e).backgroundColor)
 const hex = h => `rgb(${[1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(', ')})`
 const rowOf = (p, name) => p.locator('main [data-rows] .group\\/row').filter({ has: p.locator('[data-row-text]', { hasText: name }) })
 const rowNames = p => p.locator('main [data-rows] [data-row-text]').allInnerTexts().then(t => t.map(x => x.split('\n')[0].replace(/\u00a0/g, ' ').trim()))
-const plate = (p, name) => card(p, name).locator('[data-plate]')
+const glyph = (p, name) => card(p, name).locator('[data-home-glyph]')
 const marked = (p, name) => card(p, name).evaluate(e => e.getAttribute('aria-current') === 'page')
 const pageTitle = p => p.title().then(t => t.replace(/ · Cerulean$/, ''))
 /** The left edge of the first line of text inside an element */
@@ -116,7 +116,7 @@ export default [
     expect(col.w === 752 && Math.abs(col.l - (390 + (1050 - 752) / 2)) <= 1, `the content column: ${JSON.stringify(col)}`)
     // Найти is the magnifier in the left header, and Ctrl K stays
     expect(await side(p).getByRole('button', { name: 'Найти', exact: true }).isVisible(), 'no magnifier in the left header')
-    await p.keyboard.press('Control+k')
+    await p.keyboard.press('ControlOrMeta+k')
     expect(await p.getByRole('combobox', { name: 'Найти' }).isVisible({ timeout: 3000 }).catch(() => false) || await p.getByRole('dialog').first().isVisible(), 'Ctrl K opened nothing')
   } },
 
@@ -147,7 +147,7 @@ export default [
     await p.waitForFunction(() => document.title.startsWith('Входящие ·'))
   } },
 
-  // 3 (Д1, ДГ1, КК1). The left column's own surface: open card darker than the hovered one, plates lifted, in both themes
+  // 3 (Д1, ДГ1, КК1). The left column's own surface; iteration 3 item 4 removes icon plates
   ...[['light', { side: '#F1F1EF', hover: '#E9E9E7', sel: '#E2E2E0' }], ['dark', { side: '#0B1216', hover: '#131B21', sel: '#1D282F' }]].map(([scheme, c]) => ({ id: `pc-3-surface-${scheme}`, device: { ...DESKTOP, colorScheme: scheme }, run: async (p) => {
     await first(p)
     expect(await bg(side(p)) === hex(c.side), `the column: ${await bg(side(p))}`)
@@ -164,9 +164,7 @@ export default [
     await card(p, 'Быстрый старт').hover()
     await p.waitForTimeout(250)
     expect(await bg(card(p, 'Быстрый старт')) === hex(c.sel), 'the open card changed under the pointer')
-    const tile = await bg(plate(p, 'Покупки'))
-    const want = await p.evaluate(s => getComputedStyle(document.documentElement).getPropertyValue(s === 'dark' ? '--chip' : '--elev').trim(), scheme)
-    expect(tile === hex(want), `the plate: ${tile}, want ${want}`)
+    expect(await bg(glyph(p, 'Покупки')) === 'rgba(0, 0, 0, 0)', 'the home icon has a plate')
     // The field's card stays --elev with its border
     const elev = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--elev').trim())
     expect(await bg(pill(p)) === hex(elev), `the field: ${await bg(pill(p))}`)
@@ -349,15 +347,15 @@ export default [
     expect((await noticeText(p)).startsWith('Добавлено во Входящие'), `notice: ${await noticeText(p)}`)
   } },
 
-  // 13 (Д4, ДГ1, КК1, КК2). «New» is the plate and the bar, never a fill; both go after 4 s + 1 s
+  // 13 (Д4, ДГ1, КК1, КК2). Iteration 3 item 4 changes «new» from a plate to an accented glyph
   ...['light', 'dark'].map(scheme => ({ id: `pc-13-new-${scheme}`, device: { ...DESKTOP, colorScheme: scheme }, run: async (p) => {
     await first(p)
     const fill = await bg(card(p, 'Покупки'))
     await write(p, 'Купить молоко', 'Покупки')
     const vars = await p.evaluate(() => ['--accent-soft', '--accent'].map(v => getComputedStyle(document.documentElement).getPropertyValue(v).trim()))
     await p.waitForTimeout(150)
-    expect(await bg(plate(p, 'Покупки')) === hex(vars[0]), `the plate: ${await bg(plate(p, 'Покупки'))}, --accent-soft ${vars[0]}`)
-    expect(await plate(p, 'Покупки').locator('.text-accent').count() === 1, 'the icon is not in the accent')
+    expect(await bg(glyph(p, 'Покупки')) === 'rgba(0, 0, 0, 0)', 'the icon has a plate')
+    expect(await glyph(p, 'Покупки').locator('.text-accent').count() === 1, 'the icon is not in the accent')
     expect(await bg(card(p, 'Покупки')) === fill && !(await card(p, 'Покупки').evaluate(e => e.className.includes('fresh-tint'))), 'the card is filled')
     await openCard(p, 'Покупки')
     const row = rowOf(p, 'Молоко')
@@ -373,7 +371,7 @@ export default [
     await p.mouse.move(5, 5)
     await p.waitForTimeout(5600)
     expect((await bar()).op < 0.05, `the bar stayed: ${JSON.stringify(await bar())}`)
-    expect(await bg(plate(p, 'Покупки')) !== hex(vars[0]), 'the plate stayed blue')
+    expect(await glyph(p, 'Покупки').locator('.text-accent').count() === 0, 'the glyph stayed accented')
   } })),
 
   // 14 (Д4). «во» before в or ф and a consonant
@@ -682,7 +680,7 @@ export default [
     expect(wide <= 0, `scrolls sideways by ${wide}`)
   } })),
 
-  // 25 (ДИ1–ДИ3). With a model, the left field splits one line into two records, files both, one «Отменить», two plates
+  // 25 (ДИ1–ДИ3). With a model the left field files both records; iteration 3 item 4 accents their bare glyphs
   { id: 'pc-25-model', device: DESKTOP, run: async (p) => {
     await first(p)
     await fakeModel(p, READINGS)
@@ -695,8 +693,7 @@ export default [
     await p.keyboard.press('Enter')
     await p.waitForTimeout(500)
     expect((await noticeText(p)).startsWith('Добавлено в Покупки и Задачи'), `notice: ${await noticeText(p)}`)
-    const soft = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent-soft').trim())
-    expect(await bg(plate(p, 'Покупки')) === hex(soft) && await bg(plate(p, 'Задачи')) === hex(soft), 'both plates are not blue')
+    expect(await glyph(p, 'Покупки').locator('.text-accent').count() === 1 && await glyph(p, 'Задачи').locator('.text-accent').count() === 1, 'both glyphs are not accented')
     await notice(p).first().getByRole('button', { name: 'Отменить' }).click()
     await p.waitForTimeout(300)
     expect(!(await recs(p)).length, 'one «Отменить» did not take both back')

@@ -28,6 +28,27 @@ export function findGlyphs(query: string): { glyph: Glyph, name: string }[] {
     .map(([glyph, words]) => ({ glyph, name: glyphName(words) }))
 }
 
+const ICON_RULES: { words: string[], icons: [Glyph, Glyph, Glyph] }[] = [
+  { words: ['дач', 'сад'], icons: ['tree', 'sun', 'plant'] },
+  { words: ['подар'], icons: ['gift', 'heart', 'star'] },
+  { words: ['отпуск', 'поезд'], icons: ['plane', 'sun', 'globe'] },
+  { words: ['книг'], icons: ['book', 'study', 'doc'] },
+  { words: ['ремонт'], icons: ['roller', 'tool', 'home'] },
+  { words: ['дом', 'уборк'], icons: ['home', 'sun', 'plant'] },
+  { words: ['покуп', 'продукт'], icons: ['basket', 'bag', 'food'] },
+  { words: ['дела', 'задач'], icons: ['check', 'cal', 'flag'] },
+  { words: ['иде'], icons: ['bulb', 'star', 'doc'] },
+  { words: ['здоров', 'спорт'], icons: ['heart', 'gym', 'pill'] },
+  { words: ['машин'], icons: ['car', 'tool', 'key'] },
+  { words: ['кот', 'собак'], icons: ['paw', 'heart', 'home'] }
+]
+
+/** Suggestions are deterministic offline; unknown names get the plain page icon. */
+export function suggestedGlyphs(title: string): [Glyph, Glyph, Glyph] {
+  const words = fold(title).split(/[^\p{L}\p{N}]+/u)
+  return ICON_RULES.find(rule => words.some(word => rule.words.some(prefix => word.startsWith(prefix))))?.icons ?? ['doc', 'star', 'heart']
+}
+
 /** Glyph families (v24 fixes, 13): the calendar has a second glyph, the calendar with a row of three dots */
 const FAMILIES: Partial<Record<Glyph, Glyph[]>> = { cal: ['cal', 'calweek'] }
 

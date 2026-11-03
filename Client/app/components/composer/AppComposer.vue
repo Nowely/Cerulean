@@ -387,7 +387,12 @@ async function submit(opts: { record?: boolean } = {}) {
     const p = target
     const by = template.value?.id
     byTemplate.value = null
-    const drafts = p.kind === 'inbox' ? [{ text: capitalize(t), due: null, values: {} }] : onDay(draftsFor(t, p, Date.now()), onCalendar.value)
+    const drafts = p.kind === 'inbox'
+      ? [{ text: capitalize(t), due: null, values: {} }]
+      : onDay(draftsFor(t, p, Date.now(), {
+          split: data.settings.aiSplit !== false,
+          department: data.settings.aiDepartment !== false
+        }), onCalendar.value)
     const ids = [...drafts].reverse().map(d => data.addRecord({ pageId: p.id, text: d.text, due: d.due, values: d.values, via: 'manual' }).id)
     if (by) for (const id of ids) data.fillFromTemplate(id, by)
     journal.linkWords(ids, linked)

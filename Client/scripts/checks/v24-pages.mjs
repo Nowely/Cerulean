@@ -4,6 +4,7 @@
 // «На неделе» (the fifth starter and the page in Избранное) belongs to the collect slice: where it is not there yet,
 // the checks say so in passing and test the rest.
 import { DESKTOP, MOBILE, expect, open, shows, store } from './lib.mjs'
+import { PICKER_NAMES } from './v23-look.mjs'
 
 // ---------- helpers ----------
 
@@ -17,22 +18,18 @@ async function openPage(p, title) {
 /** A row of a page «⋯» or of a section «⋯»: a menu item on desktop, a sheet row on a phone */
 const menuRow = (p, name) => p.getByRole('menuitem', { name }).or(p.getByRole('dialog').getByRole('button', { name })).first()
 
-/** «Новая страница» from a section's «⋯» (Дом) or from Главная's, the title still focused */
-async function newPage(p, from = 'Дом') {
+/** «Новая страница» from Дом's «+», the title still focused */
+async function newPage(p) {
   await open(p, '/')
-  const more = from === 'Главная'
-    ? p.getByRole('button', { name: 'Действия с Главной' })
-    : p.getByRole('button', { name: `Действия с секцией «${from}»` }).filter({ visible: true })
-  await more.first().click()
-  await p.waitForTimeout(500)
-  await menuRow(p, 'Новая страница').click()
+  const section = p.getByRole('button', { name: 'Действия с секцией «Дом»' }).locator('xpath=..')
+  await section.getByRole('button', { name: 'Новая страница' }).click()
   await p.waitForURL(/\/p\//)
   const title = p.getByRole('textbox', { name: 'Название страницы' })
   await title.and(p.locator(':focus')).waitFor({ timeout: 3000 })
   return title
 }
 
-/** «Ремонт на кухне», made from Дом's «⋯» and named, the keyboard down */
+/** «Ремонт на кухне», made from Дом's «+» and named, the keyboard down */
 async function kitchen(p) {
   const title = await newPage(p)
   await title.fill('Ремонт на кухне')
@@ -151,7 +148,7 @@ export default [
     const undo = async () => {
       const button = bar(p).getByRole('button', { name: 'Отменить ввод' })
       // With nothing left to undo ↶ is off, and a tap does nothing
-      if (how === 'keys') await p.keyboard.press('Control+z')
+      if (how === 'keys') await p.keyboard.press('ControlOrMeta+z')
       else if (await button.isEnabled()) await button.click()
       await p.waitForTimeout(600)
     }
@@ -209,7 +206,7 @@ export default [
       if (await button.isEnabled()) await button.click()
     } else {
       expect(await inNote(p), 'the note lost the caret')
-      await p.keyboard.press('Control+z')
+      await p.keyboard.press('ControlOrMeta+z')
     }
     await p.waitForTimeout(600)
     const after = await made()
@@ -287,7 +284,7 @@ export default [
       const w = await iconOf(week.first())
       expect(w === 'i-cer:calendar-week' && w !== today, `На неделе wears ${w}`)
     } else console.log('      (no «На неделе» on Главная yet: the collect slice adds it)')
-    // «Значок и цвет» → «календ»: «Календарь», «Неделя»; 36 icons
+    // «Значок и цвет» → «календ»: «Календарь», «Неделя»; the new tree and roller are also offered
     await openPage(p, 'Идеи')
     await p.getByRole('button', { name: 'Действия со страницей' }).first().click()
     await p.waitForTimeout(400)
@@ -295,8 +292,8 @@ export default [
     const sheet = p.getByRole('dialog', { name: /^Значок и цвет/ })
     expect(await shows(sheet), 'no «Значок и цвет»')
     const icons = sheet.getByRole('group', { name: 'Значок' }).getByRole('button')
-    expect(await icons.count() === 36, `${await icons.count()} icons, not 36`)
     const all = await icons.evaluateAll(els => els.map(e => e.getAttribute('aria-label')))
+    expect(JSON.stringify(all) === JSON.stringify(PICKER_NAMES), 'the icon list or accessible names changed')
     expect(all.indexOf('Неделя') === all.indexOf('Календарь') + 1, '«Неделя» does not follow «Календарь»')
     await sheet.getByRole('textbox', { name: 'Найти значок' }).fill('календ')
     await p.waitForTimeout(200)
@@ -311,12 +308,14 @@ export default [
   // above the notice its «Все страницы» raises
   { id: 'p24-1-how-notice-desk', device: { ...DESKTOP, viewport: { width: 1280, height: 720 } }, run: async (p) => {
     await kitchen(p)
-    await p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first().click()
+    const more = p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first()
+    await more.click()
     await p.waitForTimeout(500)
     await p.getByRole('menuitem', { name: 'Настроить вид' }).first().click()
     await p.waitForTimeout(900)
     const sheet = p.getByRole('dialog', { name: /^Настроить вид/ })
     expect(await shows(sheet), '«⋯» did not open «Настроить вид»')
+    expect(await more.evaluate(el => document.activeElement === el), 'the page menu lost focus while opening «Настроить вид»')
     await sheet.getByRole('radio', { name: 'Все страницы' }).click()
     await p.waitForTimeout(700)
     const notice = p.locator('[data-notice]')
@@ -327,12 +326,45 @@ export default [
         .filter(([x, y]) => !document.elementFromPoint(x, y)?.closest('[data-notice]')).length
     })
     expect(!covered, `the popover covers the notice (${covered} of 5 points)`)
+    await p.keyboard.press('Escape')
+    await sheet.waitFor({ state: 'hidden' })
   } },
+  { id: 'p24-1-how-name-phone', device: MOBILE, run: async (p) => {
+    await kitchen(p)
+    const more = p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first()
+    await more.click()
+    await menuRow(p, 'Настроить вид').click()
+    const sheet = p.getByRole('dialog', { name: 'Настроить вид', exact: true })
+    expect(await shows(sheet), 'no named «Настроить вид» sheet')
+    await p.keyboard.press('Escape')
+    await sheet.waitFor({ state: 'hidden' })
+    await more.and(p.locator(':focus')).waitFor()
+  } },
+  ...[['phone', MOBILE], ['desktop', DESKTOP]].map(([name, device]) => ({ id: `p24-1-overlay-names-${name}`, device, run: async (p) => {
+    await openPage(p, 'Покупки')
+    const more = p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first()
+    await more.click()
+    await menuRow(p, 'Что сюда класть').click()
+    const description = p.getByRole('dialog', { name: 'Что сюда класть: Покупки', exact: true })
+    expect(await shows(description), 'no named «Что сюда класть» dialog')
+    const text = description.getByRole('textbox', { name: 'Что сюда класть' })
+    await text.and(p.locator(':focus')).waitFor()
+    await p.keyboard.press('Escape')
+    await description.waitFor({ state: 'hidden' })
+    await more.and(p.locator(':focus')).waitFor()
+    const tab = p.getByRole('tab', { name: 'Купить', exact: true })
+    await tab.click()
+    const settings = p.getByRole('dialog', { name: 'Настроить вид', exact: true })
+    expect(await shows(settings), 'no named «Настроить вид» from the tab')
+    await p.keyboard.press('Escape')
+    await settings.waitFor({ state: 'hidden' })
+    await tab.and(p.locator(':focus')).waitFor()
+  } })),
   // «any preview shows no lines»: Найти's preview of an empty page
   { id: 'p24-1-never-desk', device: DESKTOP, run: async (p) => {
     await open(p, '/')
     await store(p, data => data.createPage({ title: 'Ремонт на кухне' }))
-    await p.keyboard.press('Control+k')
+    await p.keyboard.press('ControlOrMeta+k')
     await p.waitForTimeout(400)
     await p.getByRole('combobox', { name: 'Найти' }).fill('ремонт')
     await p.waitForTimeout(500)

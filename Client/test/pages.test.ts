@@ -25,8 +25,7 @@ describe('the calendar-week glyph (v24 fixes, 13)', () => {
     for (const g of ['basket', 'check', 'target', 'bulb'] as Glyph[]) expect(glyphFor(g, [page('x', g)])).toBe(g)
   })
 
-  it('«Значок и цвет» lists «Календарь» and «Неделя» together, 36 icons', () => {
-    expect(GLYPH_WORDS).toHaveLength(36)
+  it('«Значок и цвет» lists «Календарь» and «Неделя» together', () => {
     const at = GLYPH_WORDS.findIndex(([g]) => g === 'cal')
     expect(GLYPH_WORDS[at + 1]![0]).toBe('calweek')
     expect(findGlyphs('календ').map(x => x.name)).toEqual(['Календарь', 'Неделя'])

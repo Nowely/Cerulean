@@ -8,12 +8,16 @@ import { classify, rank, templateFor } from '~/domain/rules'
 import { draftsFor, preview, readModel, splitRoute, type Draft, type LineContext, type LineDraft, type Part, type Preview } from '~/domain/auto'
 import { cleanRecordText, dropPrefix, isQuestion, isSearch, parseDue } from '~/domain/parse'
 import { answer } from '~/domain/search'
-import { newEntry } from '~/domain/factory'
+import { newEntry, newPage } from '~/domain/factory'
+import { applyTemplate, TEMPLATES } from '~/domain/templates'
+import { capitalize } from '~/domain/text'
+import { useNotify } from '~/composables/useNotify'
 import { noteDoc } from '~/domain/body'
 import { dayKey } from '~/domain/dates'
 import { addQty, duplicateOf, qtyProp } from '~/domain/merge'
 import { onlyCollects } from '~/domain/collect'
 import { menLinks } from '~/domain/mention'
+import { applyDepartment, departmentProp } from '~/domain/departmentMemory'
 
 /** What one send of the field filed: its Журнал line, the records in order, the pages they went to */
 export interface Filed {
@@ -23,7 +27,7 @@ export interface Filed {
 }
 
 /** A page, a new page (a starter's name makes it from that starter), a starter itself, or «Оставить там» */
-export type Choice = { pageId: Id } | { newPage: string } | { template: TemplateKey } | { keep: true }
+export type Choice = { pageId: Id } | { newPage: string } | { newList: string } | { template: TemplateKey } | { keep: true }
 
 function isOnline() {
   return typeof navigator === 'undefined' || navigator.onLine !== false
@@ -31,6 +35,7 @@ function isOnline() {
 
 export const useJournalStore = defineStore('journal', () => {
   const data = useDataStore()
+  const notify = useNotify()
   /** Receipts whose 15 s undo line is still running */
   const fresh = ref<Set<Id>>(new Set())
   /** Models calls in flight, so a second «online» event does not run them twice */
@@ -41,10 +46,24 @@ export const useJournalStore = defineStore('journal', () => {
   const targets = () => data.livePages.filter(p => !onlyCollects(p))
   /** A key is set and the service refused it: Авто files by the simple rules and the receipt says so */
   const keyRefused = () => isConnected(data.settings) && data.settings.keyState === 'bad'
+  const endOf = (pageId: Id) => data.recordsOf(pageId).reduce((last, r) => Math.max(last, r.order), -1) + 1
+  const drafts = (text: string, page: Page, now: number) => draftsFor(text, page, now, {
+    split: data.settings.aiSplit !== false,
+    department: data.settings.aiDepartment !== false
+  })
+
+  function departmentValues(page: Page, text: string, values: Rec['values']) {
+    if (data.settings.aiDepartment !== false) return applyDepartment(page, text, values)
+    const prop = departmentProp(page)
+    if (!prop || !(prop.id in values)) return values
+    const next = { ...values }
+    delete next[prop.id]
+    return next
+  }
 
   /** The chip while typing in Авто: a clear rule shows its page; with a reachable model an unclear line stays «Авто» */
   function previewFor(text: string): Preview {
-    return preview(text, { pages: targets(), learned: data.learned, recent: data.recent, model: hasModel() && isOnline() })
+    return preview(text, { pages: targets(), learned: data.learned, recent: data.recent, model: hasModel() && isOnline(), route: data.settings.aiRoute !== false, split: data.settings.aiSplit !== false })
   }
 
   /** Records on a page in the order they were written (each goes on top, so they are added last first) */
@@ -54,7 +73,7 @@ export const useJournalStore = defineStore('journal', () => {
       pageId: page.id,
       text: d.text,
       due: d.due ?? (opts.day ? { date: opts.day } : null),
-      values: d.values,
+      values: departmentValues(page, d.text, d.values),
       body: noteDoc(d.note ?? ''),
       via: opts.via ?? 'chat',
       addedAt: now
@@ -86,20 +105,27 @@ export const useJournalStore = defineStore('journal', () => {
    */
   async function placeParts(entry: Entry, parts: Part[], opts: { day?: string } = {}): Promise<Entry> {
     const now = Date.now()
-    const decided = await Promise.all(parts.map(async (part): Promise<{ page?: Page, drafts: Draft[], part: Part }> => {
+    const decided = await Promise.all(parts.map(async (part): Promise<{ page?: Page, part: Part, result?: ModelResult }> => {
       const page = validPage(part.pageId)
-      if (page) return { page, drafts: draftsFor(part.text, page, now), part }
-      if (!hasModel() || !isOnline()) return { drafts: [], part }
+      if (page) return { page, part }
+      if (!hasModel() || !isOnline()) return { part }
       try {
         const r = await askModel(data.settings, part.text, targets(), now)
         const read = readModel(r, part.text, '', lineContext(now))
         const p = validPage(read[0]?.pageId ?? null)
-        return p ? { page: p, drafts: read.filter(d => d.pageId === p.id), part } : { drafts: [], part }
+        return p ? { page: p, part, result: r } : { part }
       } catch {
-        return { drafts: [], part }
+        return { part }
       }
     }))
-    const ids = decided.flatMap(d => d.page ? addDrafts(d.page, d.drafts, opts) : [addToInbox(d.part.text, { day: opts.day, guesses: d.part.guesses })])
+    if (data.entries.find(e => e.id === entry.id)?.kind !== 'pending') return entry
+    if (data.settings.aiRoute === false || data.settings.aiSplit === false) return localRoute(entry, entry.text, opts, now)
+    const ids = decided.flatMap((d) => {
+      const page = d.page && validPage(d.page.id)
+      if (!page) return [addToInbox(d.part.text, { day: opts.day, guesses: d.part.guesses })]
+      const current = d.result ? readModel(d.result, d.part.text, '', lineContext(now)).filter(x => x.pageId === page.id) : drafts(d.part.text, page, now)
+      return current.length ? addDrafts(page, current, opts) : [addToInbox(d.part.text, { day: opts.day, guesses: d.part.guesses })]
+    })
     data.updateEntry(entry.id, { kind: 'routed', pageId: data.records[ids[0]!]?.pageId, recordIds: ids, split: true, hits: undefined })
     fresh.value.add(entry.id)
     return entry
@@ -110,11 +136,51 @@ export const useJournalStore = defineStore('journal', () => {
     if (pageId && !Object.values(data.records).some(r => r.pageId === pageId)) data.purgePages([pageId])
   }
 
-  /** The page a choice points at, made now when it is new */
-  function targetOf(choice: Exclude<Choice, { keep: true }>): Page | undefined {
-    if ('pageId' in choice) return data.pages[choice.pageId]
-    if ('template' in choice) return data.createFromTemplate(choice.template)
-    return choice.newPage.trim() ? data.createNamed(choice.newPage) : data.createPage({ title: '' })
+  function planTarget(choice: Exclude<Choice, { keep: true }>): { page: Page, create: boolean } | undefined {
+    if ('pageId' in choice) {
+      const page = data.pages[choice.pageId]
+      return page ? { page, create: false } : undefined
+    }
+    if ('newList' in choice) {
+      const title = capitalize(choice.newList)
+      const same = data.livePages.find(p => (p.kind === 'page' || p.kind === 'inbox') && p.title.trim().toLowerCase() === title.toLowerCase())
+      return same ? { page: same, create: false } : { page: newPage({ title, glyph: 'list' }), create: true }
+    }
+    const title = 'newPage' in choice && choice.newPage.trim() ? choice.newPage : ''
+    const template = 'template' in choice ? choice.template : TEMPLATES.find(t => t.name.toLowerCase() === title.trim().toLowerCase() && !data.livePages.some(p => p.template === t.key))?.key
+    const page = newPage({ title: template ? '' : title })
+    if (template) Object.assign(page, applyTemplate(page, template))
+    return { page, create: true }
+  }
+
+  function commitTarget(plan: { page: Page, create: boolean }): Page {
+    if (!plan.create) return plan.page
+    const { order: _order, ...init } = plan.page
+    return data.createPage(init)
+  }
+
+  /** Include all records a clarification would resolve, not just the selected row. */
+  function clarificationIds(ids: Id[], onlyTagged = false) {
+    const all = new Set(ids)
+    for (const id of ids) {
+      if (onlyTagged && !data.records[id]?.tags.includes('clarify')) continue
+      const entry = [...data.entries].reverse().find(e => (e.kind === 'ask' || e.kind === 'offline') && e.recordIds?.includes(id))
+      for (const recId of entry?.recordIds ?? []) if (data.records[recId]) all.add(recId)
+    }
+    return [...all]
+  }
+
+  function planMove(ids: Id[], choice: Exclude<Choice, { keep: true }>, clarify = false) {
+    const target = planTarget(choice)
+    if (!target) return { ok: false as const, reason: 'missing-target' as const }
+    const checked = data.checkMoveRecords(clarify ? clarificationIds(ids, true) : ids, target.page)
+    return checked.ok ? { ok: true as const, target } : checked
+  }
+
+  function moveRefused(reason: 'stock-conflict' | 'missing-target') {
+    notify(reason === 'stock-conflict'
+      ? 'Не удалось переместить: настройки запасов на страницах несовместимы.'
+      : 'Не удалось переместить: страница не найдена.', undefined, undefined, { keepCard: true })
   }
 
   /** Not placed: one record in Входящие with «уточнить», and the Уточнение asks about that same record */
@@ -184,35 +250,40 @@ export const useJournalStore = defineStore('journal', () => {
   async function route(entry: Entry, text: string, opts: { day?: string, record?: boolean } = {}): Promise<Entry> {
     const now = Date.now()
     if (!opts.record && isSearch(text)) return found(entry, text)
-    const split = splitRoute(text, targets(), data.learned, data.recent)
+    const split = data.settings.aiRoute !== false && data.settings.aiSplit !== false && splitRoute(text, targets(), data.learned, data.recent)
     if (split) return placeParts(entry, split, opts)
     const rules = classify(text, targets(), data.learned, data.recent)
-    const rulePage = validPage(rules.pageId)
-    if (rulePage && (!hasModel() || data.settings.rulesFirst)) return place(entry, rulePage, draftsFor(text, rulePage, now), opts)
+    const rulePage = data.settings.aiRoute === false ? undefined : validPage(rules.pageId)
+    if (rulePage && (!hasModel() || data.settings.rulesFirst)) return place(entry, rulePage, drafts(text, rulePage, now), opts)
     // Авто never makes a page (main flow, item 5): an unclear line asks in Журнал, as before
-    const unclear = (guesses: Id[], newName: string | null) => ask(entry, text, guesses, newName, opts.day)
+    const unclear = (guesses: Id[], newName: string | null) => data.settings.aiRoute === false
+      ? place(entry, data.inbox, drafts(text, data.inbox, now), opts)
+      : ask(entry, text, guesses, newName, opts.day)
     if (!hasModel()) return unclear(rules.guesses, rules.newName)
-    if (!isOnline()) return park(entry, text, opts.day)
+    if (!isOnline()) return data.settings.aiRoute === false ? unclear(rules.guesses, rules.newName) : park(entry, text, opts.day)
 
     let result: ModelResult
     busy.add(entry.id)
     try {
       result = await askModel(data.settings, text, targets(), now)
+      if (data.entries.find(e => e.id === entry.id)?.kind !== 'pending') return entry
       if (data.settings.keyState !== 'ok') data.setSettings({ keyState: 'ok' })
     } catch (e) {
+      if (data.entries.find(e => e.id === entry.id)?.kind !== 'pending') return entry
       const reason = e instanceof ModelError ? e.reason : 'other'
       if (reason === 'key' || reason === 'model') data.setSettings({ keyState: 'bad' })
+      if (data.settings.aiRoute === false) return unclear(rules.guesses, rules.newName)
       if (reason === 'offline' && !isOnline()) return park(entry, text, opts.day)
       // «Нет сети» only without a network: a service that never answers is a slow model
       if (reason === 'timeout' || reason === 'offline') return wait(entry, text, rules.guesses, opts.day)
-      return rulePage ? place(entry, rulePage, draftsFor(text, rulePage, now), opts) : unclear(rules.guesses, rules.newName)
+      return rulePage ? place(entry, rulePage, drafts(text, rulePage, now), opts) : unclear(rules.guesses, rules.newName)
     } finally {
       busy.delete(entry.id)
     }
     // Only an explicit search gives the found card: a question the model saw is written down like any line
-    if (result.kind === 'question') return rulePage ? place(entry, rulePage, draftsFor(text, rulePage, now), opts) : unclear(rules.guesses, rules.newName)
+    if (result.kind === 'question') return localRoute(entry, text, opts, now)
     // Each record on the page the model put it; a line no page fits asks, as Журнал always did
-    const read = readModel(result, text, '', lineContext(now)).filter(d => validPage(d.pageId))
+    const read = readModel(result, text, '', lineContext(now)).filter(d => (d.pageId === data.inbox.id && data.settings.aiRoute === false) || validPage(d.pageId))
     if (!read.length) return unclear(rules.guesses, rules.newName)
     const pages = [...new Set(read.map(d => d.pageId))]
     if (pages.length === 1) return place(entry, data.pages[pages[0]!]!, read, opts)
@@ -222,9 +293,16 @@ export const useJournalStore = defineStore('journal', () => {
     return entry
   }
 
+  function localRoute(entry: Entry, text: string, opts: { day?: string }, now: number): Entry {
+    if (data.settings.aiRoute === false) return place(entry, data.inbox, drafts(text, data.inbox, now), opts)
+    const rules = classify(text, targets(), data.learned, data.recent)
+    const page = validPage(rules.pageId)
+    return page ? place(entry, page, drafts(text, page, now), opts) : ask(entry, text, rules.guesses, rules.newName, opts.day)
+  }
+
   /** What Авто reads a line against: the pages it files to, what it learned, the pages written to lately */
   function lineContext(now: number): LineContext {
-    return { pages: targets(), inboxId: data.inbox.id, learned: data.learned, recent: data.recent, now }
+    return { pages: targets(), inboxId: data.inbox.id, learned: data.learned, recent: data.recent, now, route: data.settings.aiRoute !== false, split: data.settings.aiSplit !== false, department: data.settings.aiDepartment !== false }
   }
 
   /**
@@ -242,10 +320,13 @@ export const useJournalStore = defineStore('journal', () => {
     const page = dest === 'auto' ? undefined : data.pages[dest]
     if (page) {
       if (page.kind === 'inbox') {
-        data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, recordIds: [addToInbox(t, { tags: [] })] })
-        fresh.value.add(entry.id)
+        if (hasModel() && data.settings.aiSplit !== false) place(entry, page, drafts(t, page, Date.now()), { day })
+        else {
+          data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, recordIds: [addToInbox(t, { tags: [] })] })
+          fresh.value.add(entry.id)
+        }
       } else {
-        place(entry, page, draftsFor(t, page, Date.now()), { day })
+        place(entry, page, drafts(t, page, Date.now()), { day })
       }
       linkWords(entry.recordIds ?? [], entry.links)
       return entry
@@ -261,15 +342,16 @@ export const useJournalStore = defineStore('journal', () => {
    */
   function write(text: string, drafts: LineDraft[], opts: { here: (d: LineDraft) => boolean, links?: Id[] }): Filed {
     const at = Date.now()
-    const ids = [...drafts].reverse().map(d => data.addRecord({
+    const ids = drafts.map(d => data.addRecord({
       pageId: d.pageId,
       text: d.text,
       due: d.due,
-      values: d.values,
+      values: departmentValues(data.pages[d.pageId]!, d.text, d.values),
       body: noteDoc(d.note),
       via: opts.here(d) ? 'manual' : 'chat',
-      addedAt: at
-    }).id).reverse()
+      addedAt: at,
+      order: endOf(d.pageId)
+    }).id)
     linkWords(ids, opts.links)
     const pages = [...new Set(drafts.map(d => d.pageId))]
     const entry = data.addEntry(newEntry({ at, text, kind: 'routed', pageId: pages[0], recordIds: ids, ...(pages.length > 1 ? { split: true } : {}), ...(opts.links?.length ? { links: opts.links } : {}) }))
@@ -282,18 +364,18 @@ export const useJournalStore = defineStore('journal', () => {
     if (!drafts.length || old.some(r => !r || r.deletedAt)) return null
     const same = drafts.length === old.length && drafts.every((d, i) => {
       const r = old[i]!
-      return r.pageId === d.pageId && r.text === d.text && docOf(r) === d.note && JSON.stringify(r.due) === JSON.stringify(d.due)
+      return r.pageId === d.pageId && r.text === d.text && docOf(r) === d.note && JSON.stringify(r.due) === JSON.stringify(d.due) && JSON.stringify(r.values) === JSON.stringify(departmentValues(data.pages[d.pageId]!, d.text, d.values))
     })
     if (same) return null
     const at = old[0]!.addedAt
     const ids = drafts.map((d, i) => {
-      const fields = { pageId: d.pageId, text: d.text, due: d.due, values: d.values, body: noteDoc(d.note), via: opts.here(d) ? 'manual' as const : 'chat' as const, addedAt: at }
+      const fields = { pageId: d.pageId, text: d.text, due: d.due, values: departmentValues(data.pages[d.pageId]!, d.text, d.values), body: noteDoc(d.note), via: opts.here(d) ? 'manual' as const : 'chat' as const, addedAt: at }
       const r = old[i]
       if (r) {
-        data.updateRecord(r.id, { ...fields, note: '', parentId: null })
+        data.updateRecord(r.id, { ...fields, note: '', parentId: null, ...(r.pageId !== d.pageId ? { order: endOf(d.pageId) } : {}) })
         return r.id
       }
-      return data.addRecord(fields).id
+      return data.addRecord({ ...fields, order: endOf(d.pageId) }).id
     })
     data.purgeRecords(filed.ids.slice(drafts.length))
     const pages = [...new Set(drafts.map(d => d.pageId))]
@@ -309,11 +391,19 @@ export const useJournalStore = defineStore('journal', () => {
    */
   async function lateRead(filed: Filed, title: string, note: string, ctx: LineContext, opts: { here: (d: LineDraft) => boolean, keepTitle: (d: LineDraft) => LineDraft }, then: (f: Filed) => void) {
     if (!hasModel() || !isOnline()) return
+    const before = JSON.stringify(filed.ids.map(id => data.records[id]))
+    const entry = JSON.stringify(data.entries.find(e => e.id === filed.entryId))
+    const kept = note.trim() ? opts.keepTitle({ pageId: filed.pages[0]!, text: title, due: null, values: {}, note: '', by: 'auto' }) : null
     try {
       const result = await askModel(data.settings, title, targets(), ctx.now)
-      const read = readModel(result, title, note, ctx)
-      const drafts = read.length === 1 ? [opts.keepTitle(read[0]!)] : read
-      const again = refile(filed, drafts, opts)
+      if (!hasModel() || before !== JSON.stringify(filed.ids.map(id => data.records[id])) || entry !== JSON.stringify(data.entries.find(e => e.id === filed.entryId))) return
+      if (data.settings.aiSplit === false && filed.ids.length > 1) return
+      if (data.settings.aiRoute === false && filed.pages.length > 1) return
+      const place = data.settings.aiRoute === false && !ctx.place ? { pageId: filed.pages[0]!, by: 'user' as const } : ctx.place
+      const current = { ...ctx, pages: targets(), place, route: data.settings.aiRoute !== false && !ctx.place, split: data.settings.aiSplit !== false, department: data.settings.aiDepartment !== false }
+      const read = readModel(result, title, note, current)
+      const next = read.length === 1 && kept ? [{ ...read[0]!, text: kept.text, note: kept.note }] : read
+      const again = refile(filed, next, opts)
       if (again) then(again)
     } catch (e) {
       const reason = e instanceof ModelError ? e.reason : 'other'
@@ -341,10 +431,18 @@ export const useJournalStore = defineStore('journal', () => {
       data.updateEntry(entry.id, { kind: 'routed', pageId: data.inbox.id })
       return data.inbox
     }
-    const page = targetOf(choice)
-    if (!page) return
+    const plan = planMove(ids, choice)
+    if (!plan.ok) {
+      moveRefused(plan.reason)
+      return
+    }
+    const page = commitTarget(plan.target)
     if (entry.learned) forget(entry.id)
-    data.moveRecords(ids, page.id)
+    const moved = data.moveRecords(ids, page.id)
+    if (!moved.ok) {
+      moveRefused(moved.reason)
+      return
+    }
     // Chosen by hand: why Авто filed it no longer matters, and the receipt offers to remember the choice (v22, U5)
     data.updateEntry(entry.id, { kind: 'routed', pageId: page.id, moved: !wasAsk, made: false, note: undefined, learn: page.kind === 'page', learned: false })
     if (made !== page.id) dropIfEmpty(made)
@@ -419,9 +517,17 @@ export const useJournalStore = defineStore('journal', () => {
       data.updateRecord(recId, { tags: [], guesses: undefined })
       page = data.inbox
     } else {
-      page = targetOf(choice)
-      if (!page) return
-      data.moveRecords([recId], page.id)
+      const plan = planMove([recId], choice)
+      if (!plan.ok) {
+        moveRefused(plan.reason)
+        return
+      }
+      page = commitTarget(plan.target)
+      const moved = data.moveRecords([recId], page.id)
+      if (!moved.ok) {
+        moveRefused(moved.reason)
+        return
+      }
     }
     // The line keeps where it was sent (a series stays one receipt); the receipt reads each row's page
     data.updateEntry(entry.id, { kind: 'routed', note: undefined })
@@ -439,6 +545,16 @@ export const useJournalStore = defineStore('journal', () => {
 
   /** «Не туда» on a series: every line goes to the one page the choice makes or names */
   function chooseAll(entryIds: Id[], choice: Choice): Page | undefined {
+    if (!('keep' in choice)) {
+      const ids = entryIds.flatMap(id => data.entries.find(e => e.id === id)?.recordIds ?? []).filter(id => !!data.records[id])
+      if (!ids.length) return
+      const plan = planMove(ids, choice)
+      if (!plan.ok) {
+        moveRefused(plan.reason)
+        return
+      }
+      choice = { pageId: commitTarget(plan.target).id }
+    }
     const made = entryIds.map(id => data.entries.find(e => e.id === id)).filter(e => e?.made).map(e => e!.pageId)
     let page: Page | undefined
     for (const id of entryIds) page = choose(id, page ? { pageId: page.id } : choice) ?? page
@@ -456,8 +572,17 @@ export const useJournalStore = defineStore('journal', () => {
       data.updateRecord(recId, { tags: [], guesses: undefined })
       return data.inbox
     }
-    const page = targetOf(choice)
-    if (page) data.moveRecords([recId], page.id)
+    const plan = planMove([recId], choice)
+    if (!plan.ok) {
+      moveRefused(plan.reason)
+      return
+    }
+    const page = commitTarget(plan.target)
+    const moved = data.moveRecords([recId], page.id)
+    if (!moved.ok) {
+      moveRefused(moved.reason)
+      return
+    }
     return page
   }
 
@@ -466,10 +591,30 @@ export const useJournalStore = defineStore('journal', () => {
    * Журнал lines about them return to how they were, and a page the change made goes again while it is empty.
    */
   function undoable<T>(recIds: Id[], run: () => T): { result: T, undo: () => void } {
-    const ids = new Set(recIds)
-    for (const r of Object.values(data.records)) if (r.parentId && ids.has(r.parentId)) ids.add(r.id)
-    const recs = [...ids].map(id => data.records[id]).filter((r): r is Rec => !!r)
-      .map(r => ({ id: r.id, pageId: r.pageId, parentId: r.parentId, tags: [...r.tags], guesses: r.guesses, values: { ...r.values }, order: r.order }))
+    const children = new Map<Id, Id[]>()
+    for (const r of Object.values(data.records)) {
+      if (!r.parentId) continue
+      const siblings = children.get(r.parentId) ?? []
+      siblings.push(r.id)
+      children.set(r.parentId, siblings)
+    }
+    const ids = new Set<Id>()
+    const visit = (roots: Id[], seen: Set<Id>) => {
+      const queue = [...roots]
+      for (let i = 0; i < queue.length; i++) {
+        const id = queue[i]!
+        if (seen.has(id) || !data.records[id]) continue
+        seen.add(id)
+        queue.push(...(children.get(id) ?? []))
+      }
+    }
+    visit(recIds, ids)
+    // Restore ancestors first: changing a page also carries its descendants.
+    const ordered = new Set<Id>()
+    visit([...ids].filter(id => !data.records[id]?.parentId || !ids.has(data.records[id]!.parentId!)), ordered)
+    visit([...ids], ordered) // malformed cycles still terminate
+    const recs = [...ordered].map(id => data.records[id]).filter((r): r is Rec => !!r)
+      .map(r => ({ id: r.id, pageId: r.pageId, parentId: r.parentId, tags: [...r.tags], guesses: r.guesses && [...r.guesses], values: { ...r.values }, stockUnits: r.stockUnits && { ...r.stockUnits }, stockBuy: r.stockBuy && { ...r.stockBuy }, order: r.order }))
     const lines = data.entries.filter(e => e.recordIds?.some(id => ids.has(id)))
       .map(e => ({ id: e.id, kind: e.kind, pageId: e.pageId, moved: e.moved, made: e.made, note: e.note, learn: e.learn, learned: e.learned }))
     const before = new Set(Object.keys(data.pages))
@@ -530,5 +675,5 @@ export const useJournalStore = defineStore('journal', () => {
     }
   }
 
-  return { fresh, hasModel, targets, write, refile, lateRead, previewFor, send, linkWords, record, retry, choose, chooseOne, chooseAll, chooseForRecord, undoable, guessesFor, undo, settle, resume, remember, forget, duplicateFor, merge }
+  return { fresh, hasModel, targets, write, refile, lateRead, previewFor, send, linkWords, record, retry, choose, chooseOne, chooseAll, chooseForRecord, planMove, commitTarget, moveRefused, clarificationIds, undoable, guessesFor, undo, settle, resume, remember, forget, duplicateFor, merge }
 })

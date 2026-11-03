@@ -1,6 +1,5 @@
 <script setup lang="ts">
-// The views of a page as underlined tabs. A tap on the current tab, a long press on any tab, or a right-click,
-// the menu key or Shift+F10 opens the view menu: «Купить · список», «Настроить вид», «Новый вид», «Удалить вид»
+// A tap on the current tab opens its settings; a hold, right-click or menu key opens its menu.
 // (instant, with «Отменить»; the last view cannot go). Tabs that do not fit scroll, and the strip fades over its
 // last 32px, so the first tab is never cut and the icons beside the strip never move.
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
@@ -8,10 +7,11 @@ import type { Id, Page, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNotify } from '~/composables/useNotify'
 import { LAYOUT_NAMES } from '~/domain/templates'
+import { removePageView, undoPageView } from '~/domain/stock'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 
 const props = defineProps<{ page: Page, views: ViewDef[], current: ViewDef, readonly?: boolean }>()
-const emit = defineEmits<{ select: [id: Id | null], settings: [], add: [] }>()
+const emit = defineEmits<{ select: [id: Id | null], settings: [], add: [anchor?: HTMLElement] }>()
 const data = useDataStore()
 const notify = useNotify()
 
@@ -30,16 +30,21 @@ const items = computed<MenuItem[][]>(() => [
 
 /** Instant, with «Отменить» that puts the views back as they were and selects the deleted one again */
 function remove(view: ViewDef) {
-  const before = props.page.views
-  if (before.length < 2) return
-  data.updatePage(props.page.id, { views: before.filter(v => v.id !== view.id) })
+  const pageId = props.page.id
+  const page = data.pages[pageId]
+  const result = page && removePageView(page, view.id)
+  if (!result) return
+  data.updatePage(pageId, { views: result.page.views, stocks: result.page.stocks })
   emit('select', null)
   notify(`Вид «${view.name}» удалён`, { label: 'Отменить', run: () => {
-    data.updatePage(props.page.id, { views: before })
-    emit('select', view.id)
+    const current = data.pages[pageId]
+    const restored = current && undoPageView(current, result.removed)
+    if (!restored) return
+    data.updatePage(pageId, { views: restored.views, stocks: restored.stocks })
+    if (props.page.id === pageId) emit('select', view.id)
   } })
 }
-defineExpose({ remove })
+defineExpose({ remove, currentTab: () => strip.value?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]') ?? null })
 
 // ---------- opening the menu ----------
 
@@ -48,7 +53,7 @@ function tap(v: ViewDef) {
     pressed = false
     return
   }
-  if (v.id === props.current.id && !props.readonly) menuOpen.value = true
+  if (v.id === props.current.id && !props.readonly) emit('settings')
   else emit('select', v.id)
 }
 
@@ -112,25 +117,35 @@ watch(() => props.views.map(v => v.name).join(), () => nextTick(measure))
       v-for="v in views"
       :key="v.id"
     >
-      <ActionMenu
+      <div
         v-if="v.id === current.id && !readonly"
-        v-model:open="menuOpen"
-        :items="items"
-        :title="v.name"
-        :caption="LAYOUT_NAMES[v.layout].toLowerCase()"
-        label="Меню вида"
-        labelled
-        divided
-        align="start"
+        class="relative shrink-0"
       >
+        <ActionMenu
+          v-model:open="menuOpen"
+          :items="items"
+          :title="v.name"
+          :caption="LAYOUT_NAMES[v.layout].toLowerCase()"
+          label="Меню вида"
+          bare
+          labelled
+          divided
+          align="start"
+        >
+          <button
+            type="button"
+            tabindex="-1"
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0"
+          />
+        </ActionMenu>
         <button
           type="button"
           role="tab"
           aria-selected="true"
-          aria-haspopup="menu"
-          :aria-expanded="menuOpen"
+          aria-haspopup="dialog"
           class="flex h-11 shrink-0 cursor-pointer items-center whitespace-nowrap border-b-2 border-accent px-3 text-15 font-medium text-highlighted lg:-mb-px lg:h-10 lg:px-0.5"
-          @click.stop="tap(v)"
+          @click="tap(v)"
           @pointerdown="down($event, v)"
           @pointermove="move"
           @pointerup="up"
@@ -140,7 +155,7 @@ watch(() => props.views.map(v => v.name).join(), () => nextTick(measure))
         >
           {{ v.name }}
         </button>
-      </ActionMenu>
+      </div>
       <button
         v-else
         type="button"
@@ -159,5 +174,18 @@ watch(() => props.views.map(v => v.name).join(), () => nextTick(measure))
         {{ v.name }}
       </button>
     </template>
+    <button
+      v-if="!readonly"
+      type="button"
+      class="flex size-11 shrink-0 cursor-pointer items-center justify-center text-dimmed hover:text-highlighted"
+      aria-label="Новый вид"
+      aria-haspopup="dialog"
+      @click="emit('add', $event.currentTarget as HTMLElement)"
+    >
+      <UIcon
+        name="i-lucide-plus"
+        class="size-5"
+      />
+    </button>
   </div>
 </template>

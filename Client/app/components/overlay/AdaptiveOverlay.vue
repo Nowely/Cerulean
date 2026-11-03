@@ -11,6 +11,7 @@
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
+import { useBackLayer } from '~/composables/useBackLayer'
 import { useNoticeLift } from '~/composables/useNotify'
 import { useUiStore } from '~/stores/ui'
 import NoticeSlot from '../shell/NoticeSlot.vue'
@@ -45,6 +46,9 @@ const props = withDefaults(defineProps<{
 // `closed`: the overlay is gone and focus is back, so the next one can open (a sheet that leads to another)
 const emit = defineEmits<{ closed: [] }>()
 const open = defineModel<boolean>('open', { default: false })
+useBackLayer(() => open.value, () => {
+  open.value = false
+})
 const { isDesktop } = useScreen()
 const later = useLater()
 const ui = useUiStore()
@@ -141,7 +145,7 @@ const sheetNotice = useTemplateRef<{ showing: boolean }>('sheetNotice')
     v-else-if="isDesktop && later.ready.value"
     v-model:open="open"
     :reference="reference"
-    :content="{ side, align, sideOffset: 6, collisionPadding: padding, onCloseAutoFocus: () => emit('closed'), onEscapeKeyDown: onEscape }"
+    :content="{ side, align, 'sideOffset': 6, 'collisionPadding': padding, 'aria-label': title, 'onCloseAutoFocus': () => emit('closed'), 'onEscapeKeyDown': onEscape }"
   >
     <slot name="trigger" />
     <template #content>

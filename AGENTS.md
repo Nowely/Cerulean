@@ -14,6 +14,8 @@ Read this first. The product is the client in `Client/`, a Notion-like browser a
 
 ## The loop
 
+See [docs/design-workflow.md](docs/design-workflow.md) for the workflow for future features, from request and prototype approval through acceptance.
+
 Each mockup iteration goes through the same steps:
 
 1. The mockups thread publishes a new canvas version and a delta in which every item has a check line.

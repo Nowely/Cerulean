@@ -69,7 +69,7 @@ export default [
   { id: 'B12', device: MOBILE, run: async (p) => {
     await open(p, '/')
     await p.getByRole('link', { name: /^Идеи/ }).first().click()
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
+    await p.getByRole('tab', { selected: true }).click()
     await p.getByRole('button', { name: 'Новое свойство' }).click()
     // v22: the property editor took the inline form's place, with the same guarantee
     await p.getByRole('textbox', { name: 'Название', exact: true }).fill('Статус')

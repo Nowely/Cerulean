@@ -16,6 +16,7 @@ import { formatDue, isOverdue } from '~/domain/dates'
 import { nb } from '~/domain/text'
 import { recordSummary } from '~/domain/summary'
 import { formatValue, optionColor, optionOf } from '~/domain/props'
+import { departmentProp } from '~/domain/departmentMemory'
 import RecordMark from '../../common/RecordMark.vue'
 import OptionPill from '../../common/OptionPill.vue'
 import ActionMenu, { type MenuItem } from '../../overlay/ActionMenu.vue'
@@ -29,6 +30,15 @@ const notify = useNotify()
 const peek = usePeek()
 const propSheets = usePropSheets()
 
+function toggle(rec: Rec) {
+  const context = !props.readonly && !rec.parentId && (!props.view.from || props.view.from === 'self')
+    ? { pageId: props.page.id, viewId: props.view.id }
+    : undefined
+  const result = data.toggleDone(rec.id, context)
+  if (result === 'invalid-norm') notify('Укажите неотрицательную норму запаса перед покупкой')
+  else if (result === 'conflict') notify('Запись изменилась. Обновите её и попробуйте снова')
+}
+
 const prop = computed<PropDef | undefined>(() => {
   const chosen = props.page.props.find(p => p.id === props.view.groupBy && p.type === 'select')
   return chosen ?? props.page.props.find(p => p.type === 'select')
@@ -37,7 +47,7 @@ const prop = computed<PropDef | undefined>(() => {
 const stage = ref<string | null>(null)
 const columns = computed(() => {
   if (!prop.value) return []
-  const list = sortRecords(filterRecords(props.records, props.view), props.view.sort)
+  const list = sortRecords(filterRecords(props.records, props.view, data.leaving, now.value), props.view.sort)
   const opts = prop.value.options ?? []
   // A column of an option is named by its pill (v23); «Без статуса» stays plain text
   const cols = opts.map(o => ({ id: o.id, name: o.name, color: optionColor(opts, o) as PageColor | null, records: list.filter(r => r.values[prop.value!.id] === o.id) }))
@@ -80,12 +90,19 @@ function moveTo(rec: Rec, colId: string) {
   const col = columns.value.find(c => c.id === colId)
   if (!p || !col) return
   const before = rec.values[p.id] ?? null
-  data.updateRecord(rec.id, { values: { ...rec.values, [p.id]: colId === 'none' ? null : colId } })
+  const next = colId === 'none' ? null : colId
+  data.updateRecord(rec.id, { values: { ...rec.values, [p.id]: next } })
+  const undoDepartment = data.teachDepartment(rec.id, p.id, before, next)
+  const ownPage = data.pages[rec.pageId]
+  const departmentVersion = ownPage && departmentProp(ownPage)?.id === p.id ? { stamp: ownPage.updatedAt } : undefined
   notify(`${rec.text} → ${col.name}`, {
     label: 'Отменить',
     run: () => {
       const cur = data.records[rec.id]
-      if (cur) data.updateRecord(rec.id, { values: { ...cur.values, [p.id]: before } })
+      if (cur && cur.values[p.id] === next && (!departmentVersion || data.pages[cur.pageId]?.updatedAt === departmentVersion.stamp)) {
+        data.updateRecord(rec.id, { values: { ...cur.values, [p.id]: before } })
+        undoDepartment?.()
+      }
     }
   }, 8000)
 }
@@ -181,7 +198,7 @@ const menuFor = (rec: Rec, colId: string): MenuItem[][] => [
             :page="page"
             area="tight"
             class="lg:mt-0.5"
-            @toggle="data.toggleDone(r.id)"
+            @toggle="toggle(r)"
           />
           <button
             type="button"

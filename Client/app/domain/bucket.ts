@@ -4,7 +4,7 @@
 import type { ConnectionField, Entry, Id, KeepingField, Page, Rec, Section, Settings } from './types'
 import type { Learned } from './rules'
 import { readPage } from './templates'
-import { isEmptyDoc, remapMentions } from './body'
+import { bodyOf, isEmptyDoc, remapMentions } from './body'
 import { count, normalize, PAGE_FORMS, plural, RECORD_FORMS } from './text'
 import { formatMoment } from './dates'
 
@@ -160,25 +160,22 @@ export interface First {
   here: Side
   /** What goes from here: its own Входящие and Сегодня and the untouched pages the bucket has, with their examples */
   dropped: Record<SyncKind, Id[]>
-  /**
-   * What goes from the bucket: its untouched pages this device has by name, with their examples, by the stamp each has
-   * there. They are deleted with a tombstone, so the other device takes this device's page in their place
-   */
+  /** Bucket pages and their examples retired in favor of this device's pages */
   retired: Record<SyncKind, Record<Id, number>>
   /** What came from the bucket, for the receipt */
   added: { pages: number, records: number }
 }
 
 /**
- * The first connect (sync delta, item 8): no question is asked. Входящие and Сегодня merge by kind, and everything
- * else is added, a page of the same name included (two «Покупки» side by side). One exception, both ways: a page with
- * nothing of the person's on it (no record but the first run's examples, not even in Корзина, and no note) whose name
- * the other side has is that side's page, so neither a new device nor the bucket of one doubles the starter pages.
- * Things with the same id on both sides (this device was connected before) are one thing: the later version wins, as
- * on every round trip
+ * The first connect merges Входящие and Сегодня by kind, and keeps same-name pages with the person's data separate.
+ * An apparently untouched page of the same name can stand for the other side's page, but a stamped edit, remembered
+ * departments, favorite or active home order keeps it. Old unstamped edits may not be distinguishable from starters.
+ * The same id is one object and follows the usual last-write-wins rule.
  */
 export function firstMerge(here: Side, there: Side): First {
   const live = <T extends { id: Id, deletedAt?: number | null }>(xs: T[], gone: Record<Id, number>) => xs.filter(x => !x.deletedAt && gone[x.id] === undefined)
+  const ordered = (p: Page) => !!p.homeOrder && p.homeOrder.sectionId === p.sectionId && Number.isFinite(p.homeOrder.position)
+  const changedPage = (p: Page) => p.updatedAt !== undefined || p.departmentMemory !== undefined || p.favorite != null || ordered(p)
   const theirPages = live(there.pages, there.gone.pages)
   const theirIds = new Set<Id>([...there.pages, ...there.records].map(x => x.id))
   const to = new Map<Id, Id>()
@@ -191,23 +188,22 @@ export function firstMerge(here: Side, there: Side): First {
       taken.add(t.id)
     }
   }
-  const owned = new Set(here.records.filter(r => !r.seed).map(r => r.pageId))
+  const owned = new Set(here.records.filter(r => !r.seed || r.updatedAt !== undefined).map(r => r.pageId))
   const starters = new Set<Id>()
   for (const p of here.pages) {
-    if (p.kind !== 'page' || p.deletedAt || !p.title.trim() || theirIds.has(p.id) || owned.has(p.id) || !isEmptyDoc(p.body ?? null)) continue
+    if (p.kind !== 'page' || p.deletedAt || !p.title.trim() || theirIds.has(p.id) || owned.has(p.id) || changedPage(p) || !isEmptyDoc(bodyOf(p))) continue
     const t = theirPages.find(x => x.kind === 'page' && !taken.has(x.id) && normalize(x.title) === normalize(p.title))
     if (!t) continue
     to.set(p.id, t.id)
     taken.add(t.id)
     starters.add(p.id)
   }
-  // The other way: the bucket's untouched page goes, this device's page of that name stands for it
   const mineIds = new Set<Id>([...here.pages, ...here.records].map(x => x.id))
-  const theirOwned = new Set(there.records.filter(r => !r.seed).map(r => r.pageId))
+  const theirOwned = new Set(there.records.filter(r => !r.seed || r.updatedAt !== undefined).map(r => r.pageId))
   const retired: First['retired'] = { pages: {}, records: {}, sections: {}, entries: {} }
   const kept = new Set<Id>()
   for (const t of theirPages) {
-    if (t.kind !== 'page' || !t.title.trim() || mineIds.has(t.id) || taken.has(t.id) || theirOwned.has(t.id) || !isEmptyDoc(t.body ?? null)) continue
+    if (t.kind !== 'page' || !t.title.trim() || mineIds.has(t.id) || taken.has(t.id) || theirOwned.has(t.id) || changedPage(t) || !isEmptyDoc(bodyOf(t))) continue
     const h = here.pages.find(p => p.kind === 'page' && !p.deletedAt && !to.has(p.id) && !kept.has(p.id) && normalize(p.title) === normalize(t.title))
     if (!h) continue
     kept.add(h.id)

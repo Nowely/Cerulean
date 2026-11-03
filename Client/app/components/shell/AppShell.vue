@@ -13,6 +13,7 @@ import { useViewport } from '~/composables/useViewport'
 import { useOpenedTracking } from '~/composables/useOpened'
 import { FOCUS_PROXY_ID } from '~/composables/useCreatePage'
 import { useLater } from '~/composables/useLater'
+import { useBackHistory } from '~/composables/useBackLayer'
 import { useNotify } from '~/composables/useNotify'
 import { useUiStore } from '~/stores/ui'
 import { useDataStore } from '~/stores/data'
@@ -31,6 +32,7 @@ const peek = usePeek()
 const find = useFind()
 const route = useRoute()
 const router = useRouter()
+useBackHistory()
 const colorMode = useColorMode()
 const ui = useUiStore()
 const data = useDataStore()

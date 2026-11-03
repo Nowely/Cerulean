@@ -24,8 +24,8 @@ export default [
     expect(end <= 320 - 16 + 1, `«Срок» ends at ${Math.round(end)}`)
     const date = await due.locator('span').first().evaluate(s => s.scrollWidth <= s.clientWidth + 1)
     expect(date, 'the date itself is cut')
-    const progress = await p.getByText(/^\d+ из \d+$/).first().evaluate(s => s.getBoundingClientRect().height)
-    expect(progress < 30, `«3 из 6» wraps (${progress} high)`)
+    const progress = await p.getByRole('button', { name: 'Подпункты 3/6' }).evaluate(s => s.getBoundingClientRect().height)
+    expect(progress < 30, `«Подпункты 3/6» wraps (${progress} high)`)
   } },
   // Цели: «Полумарафон к маю» was cut to «Полум…» by «3/6», the note glyph, «В процессе» and the date: the values go
   // to line 2 and the name is whole, at 390 and 320; a row with room keeps one line

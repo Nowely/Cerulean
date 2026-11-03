@@ -3,6 +3,7 @@
 import { computed } from 'vue'
 import { useUiStore } from '~/stores/ui'
 import { useScreen } from '~/composables/useScreen'
+import { useBackLayer } from '~/composables/useBackLayer'
 
 const ui = useUiStore()
 const { isDesktop } = useScreen()
@@ -14,6 +15,9 @@ const open = computed({
 })
 /** A question that waits for a choice: an `alertdialog` (Reka passes the role through to its content) */
 const alert = { role: 'alertdialog' } as object
+useBackLayer(() => open.value, () => {
+  open.value = false
+})
 function run() {
   const c = ui.confirming
   ui.confirming = null

@@ -104,7 +104,7 @@ describe('demo summaries match the spec', () => {
   const line = (title: string) => summaryText(pageSummary(page(title), top(title), NOW, d.records))
 
   it('home rows', () => {
-    expect(line('Покупки')).toBe('6 купить · хлеб, молоко, сыр +3')
+    expect(line('Покупки')).toBe('8 купить · хлеб, молоко, сыр +5')
     expect(line('Задачи')).toBe('3 дела · оплатить интернет, позвонить стоматологу, вернуть книгу в библиотеку') // v23 B1: overdue leads the summary; the list keeps manual order
     expect(line('Цели')).toBe('2 цели · полумарафон к маю, 24 книги за год')
     expect(line('Книги')).toBe('1 книга · «Атомные привычки»')
@@ -124,7 +124,7 @@ describe('demo summaries match the spec', () => {
   })
 
   it('page sub-lines', () => {
-    expect(pageSubline(page('Покупки'), top('Покупки'), NOW)).toBe('6 купить · 2 заканчиваются')
+    expect(pageSubline(page('Покупки'), top('Покупки'), NOW)).toBe('8 купить · 2 заканчиваются')
     expect(pageSubline(page('Задачи'), top('Задачи'), NOW)).toBe('3 дела · 1 просрочено')
     expect(pageSubline(page('Входящие'), top('Входящие'), NOW)).toBe('2 уточнить')
     expect(pageSubline(page('Сегодня'), [], NOW, d.records)).toBe('3 дела со всех страниц · 1 просрочено')
@@ -149,8 +149,42 @@ describe('demo summaries match the spec', () => {
   it('«Купить» is grouped by Отдел in department order', () => {
     const p = page('Покупки')
     const groups = applyView(p, top('Покупки'), p.views[0]!, NOW)
-    expect(groups.map(g => g.label)).toEqual(['Хлеб и выпечка', 'Молочное', 'Овощи и фрукты', 'Бытовая химия'])
-    expect(groups[1]!.records.map(r => r.text)).toEqual(['Молоко', 'Сыр', 'Яйца'])
+    expect(groups.map(g => g.label)).toEqual(['Без отдела', 'Хлеб и выпечка', 'Молочное', 'Овощи и фрукты', 'Бытовая химия'])
+    expect(groups[0]!.records.map(r => r.text)).toEqual(expect.arrayContaining(['Яблоки', 'Туалетная бумага']))
+    expect(groups[0]!.records).toHaveLength(2)
+    expect(groups[2]!.records.map(r => r.text)).toEqual(['Молоко', 'Сыр', 'Яйца'])
+  })
+
+  it('includes only the low demo stocks in «Купить»', () => {
+    const p = page('Покупки')
+    const left = p.props.find(prop => prop.name === 'Осталось')!
+    const norm = p.props.find(prop => prop.name === 'Норма')!
+    const recs = top('Покупки')
+    const stocks = ['Яблоки', 'Туалетная бумага', 'Куриная грудка', 'Макароны'].map(text => recs.find(r => r.text === text)!)
+    expect(stocks.map(r => [r.text, r.values[left.id], r.values[norm.id]])).toEqual([
+      ['Яблоки', 0, 3], ['Туалетная бумага', 1, 2], ['Куриная грудка', 2, 1], ['Макароны', 3, 1]
+    ])
+    const buy = p.views.find(v => v.name === 'Купить')!
+    const names = applyView(p, recs, buy, NOW).flatMap(g => g.records.map(r => r.text))
+    expect(names).toEqual(expect.arrayContaining(['Яблоки', 'Туалетная бумага']))
+    expect(names).not.toContain('Куриная грудка')
+    expect(names).not.toContain('Макароны')
+  })
+
+  it('shows stock in «Купить» only at most one and below its norm', () => {
+    const p = page('Покупки')
+    const left = p.props.find(prop => prop.name === 'Осталось')!
+    const norm = p.props.find(prop => prop.name === 'Норма')!
+    const apple = top('Покупки').find(r => r.text === 'Яблоки')!
+    const stock = (amount: number, target: number) => ({ ...apple, values: { ...apple.values, [left.id]: amount, [norm.id]: target } })
+    const buy = p.views.find(v => v.name === 'Купить')!
+    const shown = (amount: number, target: number) => applyView(p, [stock(amount, target)], buy, NOW).flatMap(g => g.records)
+    expect(shown(0, 1)).toHaveLength(1)
+    expect(shown(1, 2)).toHaveLength(1)
+    expect(shown(0.5, 2)).toHaveLength(1)
+    expect(shown(1, 1)).toHaveLength(0)
+    expect(shown(0.5, 0.5)).toHaveLength(0)
+    expect(shown(2, 3)).toHaveLength(0)
   })
 
   it('search answers a question and groups recent things', () => {
@@ -161,7 +195,7 @@ describe('demo summaries match the spec', () => {
   it('export keeps everything readable and round-trips JSON', () => {
     const md = toMarkdown(d.pages, d.records, d.sections, NOW)
     expect(md).toContain('### Покупки')
-    expect(md).toContain('- [ ] Молоко · Количество: 2 л, Отдел: Молочное')
+    expect(md).toContain('- [ ] Молоко · Отдел: Молочное, Количество: 2 л')
     expect(md).toContain('  - [ ] Взять два десятка, если будет скидка')
     const json = toJSON({ ...d, settings: { model: 'fast', rulesFirst: true, homeRows: 'summary', dismissed: [] }, learned: {} }, NOW)
     expect(json).not.toContain('apiKey')
@@ -217,7 +251,7 @@ describe('simple rules', () => {
     const dept = p.props.find(x => x.name === 'Отдел')!
     const drafts = draftsFor('кефир 1 л, батон и сметана', p, NOW)
     expect(drafts.map(x => x.text)).toEqual(['Кефир', 'Батон', 'Сметана'])
-    expect(drafts[0]!.values[p.props[0]!.id]).toBe('1 л')
+    expect(drafts[0]!.values[p.props.find(x => x.name === 'Количество')!.id]).toBe('1 л')
     expect(dept.options!.find(o => o.id === guessOption('батон', dept))!.name).toBe('Хлеб и выпечка')
     // A routing prefix is dropped on a list page too
     expect(draftsFor('покупки: хлеб', p, NOW).map(x => x.text)).toEqual(['Хлеб'])
@@ -228,7 +262,7 @@ describe('duplicates (v22, G3)', () => {
   const d = liveDemo()
   const shop = d.pages.find(p => p.title === 'Покупки')!
   const milk = d.records.find(r => r.text === 'Молоко')!
-  const typed = { ...milk, id: 'new', values: { [shop.props[0]!.id]: '1 л' } }
+  const typed = { ...milk, id: 'new', values: { [shop.props.find(p => p.name === 'Количество')!.id]: '1 л' } }
   it('finds the open record on the same page that says the same thing', () => {
     expect(duplicateOf({ ...typed, text: 'молоко' }, d.records)?.id).toBe(milk.id)
     // Not itself, not a record of the same send, not a ticked one, not on another page
@@ -280,12 +314,12 @@ describe('Уточнение offers an existing page, not «Новая стра�
 describe('properties (v22 item 30)', () => {
   const d = liveDemo()
   const shop = d.pages.find(p => p.title === 'Покупки')!
-  const [qty, dept, left, norm] = shop.props as [PropDef, PropDef, PropDef, PropDef]
+  const [qty, dept, left, norm] = ['Количество', 'Отдел', 'Осталось', 'Норма'].map(name => shop.props.find(p => p.name === name)!) as [PropDef, PropDef, PropDef, PropDef]
   let n = 0
   const id = () => `n${++n}`
 
   it('lists the own properties, then Срок and Заметка; a «Норма» goes with its number', () => {
-    expect(propList(shop).map(p => p.name)).toEqual(['Количество', 'Отдел', 'Осталось', 'Срок', 'Заметка'])
+    expect(propList(shop).map(p => p.name)).toEqual(['Отдел', 'Количество', 'Осталось', 'Срок', 'Заметка'])
     expect(propList(shop).filter(p => p.builtin).map(p => p.key)).toEqual(['due', 'note'])
     expect(propList(shop, { norms: true }).map(p => p.name)).toContain('Норма')
     expect(orderFromListed(shop, ['due', left.id, qty.id, dept.id, 'note'])).toEqual(['due', left.id, norm.id, qty.id, dept.id, 'note'])
@@ -297,7 +331,7 @@ describe('properties (v22 item 30)', () => {
     expect(propKeys({ ...shop, props: [...shop.props, extra], propOrder: order })).toEqual(['due', qty.id, dept.id, left.id, norm.id, 'x', 'note'])
     expect(propKeys({ ...shop, props: [extra], propOrder: ['note', 'due'] })).toEqual(['x', 'note', 'due'])
     // A page from before v22 has no order: own ones, Срок, Заметка
-    expect(propKeys({ ...shop, propOrder: undefined })).toEqual([qty.id, dept.id, left.id, norm.id, 'due', 'note'])
+    expect(propKeys({ ...shop, propOrder: undefined })).toEqual([dept.id, qty.id, left.id, norm.id, 'due', 'note'])
   })
 
   it('turns text into options and back, keeping the options and their colours aside', () => {
@@ -364,9 +398,12 @@ describe('properties (v22 item 30)', () => {
   it('puts «Без отдела» first, and only while a record is in it', () => {
     const recs = d.records.filter(r => r.pageId === shop.id && !r.parentId)
     const view = shop.views[0]!
-    const loose = recs.map(r => r.text === 'Хлеб' ? { ...r, values: { ...r.values, [dept.id]: null } } : r)
+    const dairy = dept.options!.find(o => o.name === 'Молочное')!.id
+    const assigned = recs.map(r => r.values[dept.id] == null ? { ...r, values: { ...r.values, [dept.id]: dairy } } : r)
+    const loose = assigned.map(r => r.text === 'Хлеб' ? { ...r, values: { ...r.values, [dept.id]: null } } : r)
     expect(applyView(shop, loose, view, NOW).map(g => g.label)).toEqual(['Без отдела', 'Молочное', 'Овощи и фрукты', 'Бытовая химия'])
-    expect(applyView(shop, recs, view, NOW)[0]!.label).toBe('Хлеб и выпечка')
+    expect(applyView(shop, loose, view, NOW)[0]!.records.map(r => r.text)).toEqual(['Хлеб'])
+    expect(applyView(shop, assigned, view, NOW).map(g => g.label)).toEqual(['Хлеб и выпечка', 'Молочное', 'Овощи и фрукты', 'Бытовая химия'])
   })
 })
 
@@ -390,13 +427,20 @@ describe('v23 look: option pills, page colours, icons, «Сделано»', () =
     for (const t of TEMPLATES) expect(applyTemplate(d.pages.find(p => p.title === 'Идеи')!, t.key)).not.toHaveProperty('color')
   })
 
-  it('«Значок и цвет» offers 36 icons that Russian words find', () => {
-    expect(GLYPH_WORDS).toHaveLength(36)
+  it('«Значок и цвет» offers the specified icons that Russian words find', () => {
+    const icons = [
+      'basket', 'check', 'home', 'bulb', 'flag', 'target', 'book', 'gift', 'cal', 'calweek', 'doc', 'bag',
+      'car', 'plane', 'phone', 'pill', 'paw', 'plant', 'tree', 'roller', 'tool', 'key', 'cup', 'money',
+      'stroller', 'music', 'camera', 'heart', 'gym', 'work', 'pin', 'film', 'sun', 'study', 'globe', 'food', 'moon', 'hills'
+    ]
+    expect(GLYPH_WORDS.map(([glyph]) => glyph)).toEqual(icons)
     for (const [g] of GLYPH_WORDS) expect(GLYPHS[g]).toBeTruthy()
-    expect(findGlyphs('')).toHaveLength(36)
+    expect(findGlyphs('').map(x => x.glyph)).toEqual(icons)
     expect(findGlyphs('маш').map(x => x.name)).toEqual(['Машина'])
     expect(findGlyphs('  Дом ').map(x => x.glyph)).toEqual(['home'])
-    expect(findGlyphs('ремонт').map(x => x.glyph)).toEqual(['home', 'car', 'tool'])
+    expect(findGlyphs('ремонт').map(x => x.glyph)).toEqual(['home', 'car', 'roller', 'tool'])
+    expect(findGlyphs('дерев').map(x => x.glyph)).toEqual(['tree'])
+    expect(findGlyphs('валик').map(x => x.glyph)).toEqual(['roller'])
     expect(findGlyphs('елка')).toEqual([])
     expect(findGlyphs('учеба').map(x => x.glyph)).toEqual(['book', 'study'])
   })

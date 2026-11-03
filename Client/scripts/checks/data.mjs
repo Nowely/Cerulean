@@ -40,10 +40,16 @@ const keeping = (page, persisted) => page.addInitScript((value) => {
   })
 }, persisted)
 
-/** A copy from another device: this database's demo with fresh ids, one more page and two more records */
-const copyFile = page => store(page, (data) => {
+/** A copy from another device, with one more page and two more records; stock identities can stay shared. */
+const copyFile = (page, sharedStockIds = false) => store(page, (data, sharedStockIds) => {
   const s = JSON.parse(JSON.stringify(data.snapshot()))
   const ids = new Map()
+  if (sharedStockIds) {
+    for (const p of s.pages.filter(p => p.stocks?.length)) {
+      ids.set(p.id, p.id)
+      for (const r of s.records.filter(r => r.pageId === p.id)) ids.set(r.id, r.id)
+    }
+  }
   const id = x => x && (ids.get(x) ?? ids.set(x, `${x}-file`).get(x))
   for (const p of s.pages) {
     p.id = id(p.id)
@@ -57,7 +63,7 @@ const copyFile = page => store(page, (data) => {
   const products = s.pages.find(p => p.title === 'Покупки')
   s.records.push({ ...s.records.find(r => r.pageId === products.id && !r.parentId), id: 'r-kefir', text: 'Кефир', favorite: null, deletedAt: null })
   return JSON.stringify({ app: 'cerulean', version: 1, exportedAt: Date.now(), ...s, entries: [] })
-})
+}, sharedStockIds)
 
 async function pickFile(page, text) {
   const chooser = page.waitForEvent('filechooser')
@@ -152,7 +158,7 @@ export default [
   { id: 'v22-28-add', device: MOBILE, run: async (p) => {
     await open(p, '/settings')
     const before = await fingerprint(p)
-    await pickFile(p, await copyFile(p))
+    await pickFile(p, await copyFile(p, true))
     const sheet = p.getByRole('alertdialog')
     expect(await shows(sheet.getByText(/В файле cerulean-2026-09-12\.json \d+ страниц\S* и \d+ запис\S*\. Здесь сейчас \d+ страниц\S* и \d+ запис\S*\./)), 'the sheet does not give both counts')
     await sheet.getByRole('button', { name: 'Добавить к текущим' }).click()

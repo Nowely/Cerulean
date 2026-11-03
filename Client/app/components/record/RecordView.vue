@@ -51,14 +51,8 @@ const editable = computed(() => full.value || props.edit)
 const page = computed(() => data.pages[props.rec.pageId])
 const parent = computed(() => props.rec.parentId ? data.records[props.rec.parentId] : undefined)
 const subs = computed(() => data.subitemsOf(props.rec.id))
-// Open subitems first; the done ones fold into «3 сделано ›». One ticked while the record is open stays in its
-// place, struck through, until the record is opened again
-const openedAt = ref(Date.now())
-watch(() => props.rec.id, () => openedAt.value = Date.now())
-const stays = (s: Rec) => !s.done || (s.tickedAt ?? 0) >= openedAt.value
-const openSubs = computed(() => subs.value.filter(stays))
-const doneSubs = computed(() => subs.value.filter(s => !stays(s)))
-const doneShown = ref(false)
+const subsOpen = ref(true)
+watch(() => props.rec.id, () => subsOpen.value = true)
 const done = computed(() => subs.value.filter(s => s.done).length)
 const links = computed(() => data.linksOf(props.rec.id))
 const linksTitle = useId()
@@ -75,20 +69,17 @@ watch([() => ui.focusTitle, titleField], async ([id, field]) => {
 const bodyBox = useTemplateRef<HTMLElement>('bodyBox')
 const tail = useFreshTail(() => full.value ? props.rec.id : undefined, bodyBox)
 
-// Properties in the page's order. Empty ones are hidden, except one just picked in «+ Свойство»: it stays
-// while the record is open, even empty (B12: never every empty property at once)
+// A just-picked empty value stays until its editor closes.
 const added = ref<Id[]>([])
 watch(() => props.rec.id, () => {
   added.value = []
 })
-const listed = computed(() => page.value ? propList(page.value, { norms: true }) : [])
-/** «Добавлено» leads, then «Срок», then the page's properties in its order (main flow, item 13) */
+const listed = computed(() => page.value ? propList(page.value) : [])
 const rows = computed(() => listed.value.filter((p) => {
   if (p.key === 'note') return false
-  // On desktop the empty Срок row offers «Добавить срок»
-  if (p.key === 'due') return !!props.rec.due || added.value.includes('due') || (isDesktop.value && !glance.value)
+  if (p.key === 'due') return !!props.rec.due || added.value.includes('due')
   return hasValue(props.rec.values[p.key]) || added.value.includes(p.key)
-}).sort((a, b) => Number(b.key === 'due') - Number(a.key === 'due')))
+}))
 /** «+ Свойство» lists what the record does not show yet; Заметка has its own row, «Норма» goes with its number */
 const addable = computed(() => listed.value.filter(p => p.key !== 'note' && !rows.value.includes(p) && !(p.prop && isNorm(page.value!, p.prop))))
 
@@ -128,6 +119,9 @@ function picked() {
   const run = afterPick
   afterPick = null
   run?.()
+}
+function valueClosed(key: Id) {
+  added.value = added.value.filter(id => id !== key)
 }
 
 /** «+ Подпункт»: the subitem goes to the end of the list, with the fresh tint */
@@ -214,78 +208,30 @@ function openPlace() {
       />
     </div>
 
-    <!-- «Добавлено», «Срок», then the properties in the page's order: empty ones are hidden -->
-    <dl
-      class="mt-2.5 px-4 text-15 lg:mt-5 lg:px-0"
-      :class="!full ? 'lg:px-4' : ''"
+    <div
+      class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 pr-4 pl-14 text-15 lg:mt-3 lg:pr-0 lg:pl-11"
+      :class="!full ? 'lg:pr-4 lg:pl-15' : ''"
+      data-record-values
     >
-      <div class="flex min-h-10 items-center">
-        <dt class="w-28 shrink-0 text-toned">
-          Добавлено
-        </dt>
-        <dd class="text-highlighted">
-          {{ formatAdded(rec.addedAt, now) }}
-        </dd>
-      </div>
-      <div
+      <PropValue
         v-for="p in rows"
         :key="p.key"
-        class="flex min-h-10 items-center"
-      >
-        <dt class="w-28 shrink-0 text-toned">
-          {{ p.name }}
-        </dt>
-        <dd class="flex min-w-0 flex-1 items-center">
-          <PropValue
-            :ref="el => keepValue(p.key, el)"
-            :rec="rec"
-            :prop="p.prop"
-            :due="p.key === 'due'"
-            :readonly="glance"
-          />
-        </dd>
-      </div>
-      <!-- A single subitem shows its own state, a bar would only repeat it -->
-      <div
-        v-if="subs.length > 1"
-        class="flex min-h-10 items-center"
-      >
-        <dt class="w-28 shrink-0 text-toned">
-          Прогресс
-        </dt>
-        <dd class="flex min-w-0 flex-1 items-center gap-2.5">
-          <span
-            v-if="!glance"
-            class="h-1.5 w-40 min-w-0 overflow-hidden rounded-full bg-trk"
-            role="img"
-            :aria-label="`${done} из ${subs.length}`"
-          >
-            <span
-              class="block h-full rounded-full bg-toned"
-              :style="{ width: `${(done / subs.length) * 100}%` }"
-            />
-          </span>
-          <span class="shrink-0 text-highlighted tabular-nums">{{ done }} из {{ subs.length }}</span>
-        </dd>
-      </div>
-      <div
+        :ref="el => keepValue(p.key, el)"
+        :rec="rec"
+        :prop="p.prop"
+        :due="p.key === 'due'"
+        :readonly="glance"
+        @closed="valueClosed(p.key)"
+      />
+      <span
         v-if="rec.tags.includes('clarify')"
-        class="flex min-h-10 items-center"
-      >
-        <dt class="w-28 shrink-0 text-toned">
-          Метка
-        </dt>
-        <dd class="text-accent-ink">
-          уточнить
-        </dd>
-      </div>
+        class="text-accent-ink"
+      >уточнить</span>
       <div
         v-if="!glance"
-        class="flex gap-3"
-        :class="full ? '-mx-4 lg:mx-0' : '-ml-1'"
+        class="flex items-center gap-3"
       >
-        <!-- «+ Свойство»: only what the record does not show yet, and «Новое свойство…» (B12); on the full page the
-             shared add row (main flow, item 13) -->
+        <!-- Only values absent from the card, and «Новое свойство…» -->
         <AdaptiveOverlay
           v-if="addable.length || page?.kind === 'page'"
           :open="picking"
@@ -297,22 +243,16 @@ function openPlace() {
           @closed="picked"
         >
           <template #trigger>
-            <AddRow
-              v-if="full"
-              label="Свойство"
-              :line="false"
-              class="flex-1"
-            />
             <button
-              v-else
               type="button"
-              class="flex h-11 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted lg:h-10"
+              class="hit-44 relative z-10 flex size-6 cursor-pointer items-center justify-center text-dimmed hover:text-highlighted"
+              aria-label="Добавить свойство"
               :aria-expanded="picking"
             >
               <UIcon
                 name="i-lucide-plus"
-                class="size-4.5"
-              />Свойство
+                class="size-6"
+              />
             </button>
           </template>
           <div class="flex flex-col pb-1">
@@ -349,24 +289,10 @@ function openPlace() {
             </template>
           </div>
         </AdaptiveOverlay>
-        <LinkPicker
-          v-if="!full"
-          :rec="rec"
-        >
-          <button
-            type="button"
-            class="flex h-11 cursor-pointer items-center gap-1.5 rounded-item pr-2 pl-1 text-toned hover:text-highlighted lg:h-10"
-          >
-            <UIcon
-              name="i-lucide-link"
-              class="size-4.5"
-            />Связать
-          </button>
-        </LinkPicker>
       </div>
-    </dl>
+    </div>
 
-    <!-- The body (v23): after «+ Свойство · Связать», never folded; empty, the faint «Заметка» -->
+    <!-- The body (v23): never folded; empty, the faint «Заметка» -->
     <div
       ref="bodyBox"
       class="relative isolate mt-3 mb-1.5 lg:mt-3.5"
@@ -390,6 +316,21 @@ function openPlace() {
         :editable="editable"
       />
     </div>
+
+    <LinkPicker
+      v-if="!full && !glance"
+      :rec="rec"
+    >
+      <button
+        type="button"
+        class="mx-4 flex h-11 cursor-pointer items-center gap-1.5 text-toned hover:text-highlighted"
+      >
+        <UIcon
+          name="i-lucide-link"
+          class="size-4.5"
+        />Связать
+      </button>
+    </LinkPicker>
 
     <!-- Связано: both ways; on a wide screen the record page shows it in a column instead -->
     <section
@@ -425,11 +366,23 @@ function openPlace() {
         class="px-4 pt-4.5 text-cap leading-6 text-toned lg:px-0 lg:pt-3 lg:pb-1 lg:leading-5"
         :class="!full ? 'lg:px-4' : ''"
       >
-        Подпункты
+        <button
+          type="button"
+          class="flex cursor-pointer items-center gap-1"
+          :aria-expanded="subsOpen"
+          @click="subsOpen = !subsOpen"
+        >
+          Подпункты {{ done }}/{{ subs.length }}
+          <UIcon
+            name="i-lucide-chevron-down"
+            class="size-3.5 transition-transform"
+            :class="{ '-rotate-90': !subsOpen }"
+          />
+        </button>
       </h2>
-      <ul v-if="subs.length && page">
+      <ul v-if="subs.length && page && subsOpen">
         <li
-          v-for="s in doneShown ? [...openSubs, ...doneSubs] : openSubs"
+          v-for="s in subs"
           :key="s.id"
         >
           <RecordRow
@@ -443,19 +396,6 @@ function openPlace() {
           />
         </li>
       </ul>
-      <button
-        v-if="doneSubs.length && page"
-        type="button"
-        class="mx-1 flex h-11 cursor-pointer items-center gap-1 rounded-item px-3 text-sm text-toned hover:bg-muted hover:text-highlighted active:bg-pressed lg:mx-0 lg:h-8 lg:px-1.5"
-        :aria-expanded="doneShown"
-        @click="doneShown = !doneShown"
-      >
-        {{ doneSubs.length }} сделано<UIcon
-          name="i-lucide-chevron-right"
-          class="size-3.5 text-dimmed transition-transform"
-          :class="{ 'rotate-90': doneShown }"
-        />
-      </button>
       <AddRow
         v-if="full"
         label="Подпункт"
@@ -463,5 +403,12 @@ function openPlace() {
         @add="addSub"
       />
     </section>
+    <p
+      class="mt-4 px-4 text-13 text-dimmed lg:px-0"
+      :class="!full ? 'lg:px-4' : ''"
+      data-record-added
+    >
+      Добавлено {{ formatAdded(rec.addedAt, now) }}
+    </p>
   </div>
 </template>

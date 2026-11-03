@@ -4,9 +4,7 @@
 // page, cut where the line ends. An empty page is its name alone. No dot for what is new (Josh 28 Oct, 2): the tint after
 // a send says where it went. «Компактный»: a plain 44px list, glyph and name.
 // The row's right end belongs to the page «⋯» (hover and keyboard focus on desktop); on a phone a long press opens it.
-// In a computer's left column (computer delta, items 3, 13) the card lies on the column's surface: hover and the open page's
-// card in its own steps, the plate lifted off it, and «new» on the plate (accent-soft, the glyph in the accent) instead of
-// a fill, since a filled row means «open» there.
+// On a computer the open card and hovered card use different surfaces; a fresh record accents the glyph without a plate.
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from '#imports'
 import type { Page, Rec } from '~/domain/types'
@@ -18,16 +16,24 @@ import { useSide } from '~/composables/useSide'
 import { useOpenCard } from '~/composables/useRightPage'
 import { cardLine, type CardLine } from '~/domain/summary'
 import { lowerFirst } from '~/domain/text'
-import { pageColor } from '~/domain/look'
-import PageTile from '../common/PageTile.vue'
-import CountBadge from '../common/CountBadge.vue'
 import DotsButton from '../common/DotsButton.vue'
 import PageMenu from '../page/PageMenu.vue'
+import SectionSheet from '../page/SectionSheet.vue'
+import HomeRowContent from './HomeRowContent.vue'
+import HomeHoldMenu from './HomeHoldMenu.vue'
 
 const props = defineProps<{
   page?: Page
   rec?: Rec
   compact?: boolean
+  dragShift?: number
+  dragging?: boolean
+}>()
+const emit = defineEmits<{
+  dragStart: [page: Page, x: number, y: number, height: number]
+  dragMove: [x: number, y: number]
+  dragEnd: []
+  dragCancel: []
 }>()
 const data = useDataStore()
 const ui = useUiStore()
@@ -54,7 +60,7 @@ const late = computed(() => card.value.late ? { text: `${card.value.late} про
 // ---------- the fresh tint after a send from Главная's field (item 9): 4 s, then a 1 s fade ----------
 
 const lit = ref(false)
-const plate = ref(false)
+const freshGlyph = ref(false)
 let timers: ReturnType<typeof setTimeout>[] = []
 function clear() {
   timers.forEach(clearTimeout)
@@ -64,30 +70,69 @@ watch(() => props.page ? ui.freshPages[props.page.id] : undefined, (at) => {
   clear()
   const gone = at ? Date.now() - at : Infinity
   lit.value = gone < 5000
-  plate.value = gone < 4000
+  freshGlyph.value = gone < 4000
   if (lit.value) timers.push(setTimeout(() => lit.value = false, 5000 - gone))
-  if (plate.value) timers.push(setTimeout(() => plate.value = false, 4000 - gone))
+  if (freshGlyph.value) timers.push(setTimeout(() => freshGlyph.value = false, 4000 - gone))
 }, { immediate: true })
 onBeforeUnmount(clear)
-/** In the left column the plate comes at once and fades over the second after it (4 s + 1 s); other changes are instant */
-const fading = computed(() => lit.value && !plate.value)
+/** In the left column the glyph fades over the second after its fresh state (4 s + 1 s). */
+const fading = computed(() => lit.value && !freshGlyph.value)
 
-// A long press on a phone opens the page menu; the click that follows it must not open the page
 const menuOpen = ref(false)
+const holdOpen = ref(false)
+const moving = ref(false)
+const sectionSheetUsed = ref(false)
+const holdRect = ref<DOMRect | null>(null)
+function moveSection() {
+  holdOpen.value = false
+  sectionSheetUsed.value = true
+  moving.value = true
+}
 let timer: ReturnType<typeof setTimeout> | undefined
 let pressed = false
+let start: { x: number, y: number } | null = null
+const offset = ref<{ x: number, y: number } | null>(null)
 function down(e: PointerEvent) {
-  // A long press is followed by no click on most phones: any next press starts afresh
   pressed = false
   if (isDesktop.value || !props.page || e.pointerType === 'mouse') return
+  start = { x: e.clientX, y: e.clientY }
+  const row = (e.currentTarget as HTMLElement).parentElement
   timer = setTimeout(() => {
+    if (!row) return
     pressed = true
-    menuOpen.value = true
+    holdRect.value = row.getBoundingClientRect()
+    holdOpen.value = true
     navigator.vibrate?.(10)
-  }, 500)
+  }, 400)
+}
+function move(e: PointerEvent) {
+  if (!start) return
+  const dx = e.clientX - start.x
+  const dy = e.clientY - start.y
+  const distance = Math.hypot(dx, dy)
+  if (!pressed && distance > 8) clearTimeout(timer)
+  if (!pressed || props.page?.kind !== 'page' || (distance <= 6 && !offset.value)) return
+  if (!offset.value) emit('dragStart', props.page, e.clientX, e.clientY, holdRect.value?.height ?? 0)
+  offset.value = { x: dx, y: dy }
+  emit('dragMove', e.clientX, e.clientY)
 }
 function up() {
   clearTimeout(timer)
+  start = null
+  if (offset.value) {
+    emit('dragEnd')
+    offset.value = null
+    holdOpen.value = false
+  }
+}
+function cancel() {
+  clearTimeout(timer)
+  start = null
+  if (offset.value) {
+    emit('dragCancel')
+    offset.value = null
+    holdOpen.value = false
+  }
 }
 function click(e: MouseEvent) {
   e.preventDefault()
@@ -97,19 +142,24 @@ function click(e: MouseEvent) {
   }
   void router.push(to.value)
 }
+onBeforeUnmount(() => {
+  clearTimeout(timer)
+})
 </script>
 
 <template>
   <!-- Lit by hover and keyboard focus only: focus given back by a closed sheet leaves it plain (v23, F18) -->
   <div
     role="listitem"
-    class="group/row relative flex items-center rounded-card"
+    class="group/row relative flex items-center rounded-card motion-safe:transition-transform motion-safe:duration-180"
     :class="[
       compact ? '' : 'not-first:mt-0.5',
       !side ? 'hover:bg-muted has-focus-visible:bg-muted' : selected ? 'bg-side-sel' : 'hover:bg-side-hover has-focus-visible:bg-side-hover',
-      { 'fresh-tint': lit && !side }
+      { 'fresh-tint': lit && !side, 'opacity-0': dragging }
     ]"
     :data-fresh="lit || undefined"
+    :data-home-page="page?.id"
+    :style="dragShift ? { transform: `translateY(${dragShift}px)` } : undefined"
     :aria-current="selected ? 'page' : undefined"
   >
     <a
@@ -118,70 +168,22 @@ function click(e: MouseEvent) {
       :class="compact ? 'min-h-11' : 'min-h-15 py-2'"
       @click="click"
       @pointerdown="down"
+      @pointermove="move"
       @pointerup="up"
-      @pointercancel="up"
-      @pointerleave="up"
+      @pointercancel="cancel"
       @contextmenu="page && !isDesktop && $event.preventDefault()"
     >
-      <span
-        v-if="!compact"
-        class="flex size-9 shrink-0 items-center justify-center rounded-tile-lg"
-        :class="[side ? (plate ? 'bg-accent-soft' : 'bg-elev dark:bg-chip') : plate ? 'bg-elev dark:bg-card' : 'bg-card dark:bg-chip', { 'transition-colors duration-1000': !side || fading }]"
-        data-plate
-      >
-        <PageTile
-          :glyph="glyph"
-          :color="pageColor(page)"
-          :size="20"
-          tint
-          :accent="side && plate"
-          :class="{ 'transition-colors duration-1000': side && fading }"
-        />
-      </span>
-      <span
-        v-else
-        class="relative flex size-4.5 shrink-0 items-center justify-center"
-      >
-        <PageTile
-          :glyph="glyph"
-          :color="pageColor(page)"
-          tint
-          :accent="side && plate"
-          :class="{ 'transition-colors duration-1000': side && fading }"
-        />
-        <span
-          v-if="late"
-          class="absolute -top-0.5 -right-0.75 size-2 rounded-full bg-warn ring-2"
-          :class="side ? 'ring-side' : 'ring-canvas'"
-          role="img"
-          :aria-label="late.text"
-        />
-      </span>
-      <span class="flex min-w-0 flex-1 flex-col gap-px">
-        <span class="flex min-w-0 items-center gap-1.5">
-          <span
-            class="min-w-0 truncate text-base leading-5.5 font-medium text-highlighted"
-            :class="{ 'text-dimmed': page && !page.title }"
-            data-name
-          >{{ name }}</span>
-          <template v-if="!compact">
-            <CountBadge
-              v-if="late"
-              :badge="late"
-            />
-            <span
-              v-else-if="card.open"
-              class="shrink-0 text-15 leading-5 text-dimmed tabular-nums"
-              data-open
-            ><span class="sr-only">открытых: </span>{{ card.open }}</span>
-          </template>
-        </span>
-        <span
-          v-if="!compact && card.line"
-          class="min-w-0 truncate text-sm leading-4.75 text-toned"
-          data-line
-        >{{ card.line }}</span>
-      </span>
+      <HomeRowContent
+        :page="page"
+        :glyph="glyph"
+        :name="name"
+        :card="card"
+        :compact="compact"
+        :late="late"
+        :side="side"
+        :fresh-glyph="freshGlyph"
+        :fading="fading"
+      />
     </a>
     <PageMenu
       v-if="page && page.kind !== 'today'"
@@ -198,5 +200,32 @@ function click(e: MouseEvent) {
         :class="!side ? 'bg-muted' : selected ? 'bg-side-sel' : 'bg-side-hover'"
       />
     </PageMenu>
+    <HomeHoldMenu
+      v-if="page && holdOpen && holdRect"
+      :page="page"
+      :rect="holdRect"
+      :to="to"
+      :compact="compact"
+      :offset="offset"
+      @close="holdOpen = false"
+      @move="moveSection"
+    >
+      <HomeRowContent
+        :page="page"
+        :glyph="glyph"
+        :name="name"
+        :card="card"
+        :compact="compact"
+        :late="late"
+        :side="side"
+        :fresh-glyph="freshGlyph"
+        :fading="fading"
+      />
+    </HomeHoldMenu>
+    <SectionSheet
+      v-if="page && sectionSheetUsed"
+      v-model:open="moving"
+      :page="page"
+    />
   </div>
 </template>

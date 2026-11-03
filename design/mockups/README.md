@@ -30,7 +30,7 @@ Use HTTP rather than `file://`: both viewers fetch component sources.
 - 45 recorded post-v14 operations are applied to the five affected components.
 - The updated shared CSS is synchronized across all 18 components.
 - `recovery/handoff/main-flow-3-delta.md` is recovered at exactly 41,141 bytes, matching the exported metadata.
-- `handoff/` contains the updated proposed delta and client brief; implementation is waiting for approval of their open decisions.
+- `handoff/` contains the approved current delta, client brief and implementation plan. App implementation is in progress on the branch for PR #20; see the PR for the published revision. Final acceptance and merge are not confirmed. The reconstructed Canvas and prototype now demonstrate Josh's revised repeat-entry rule: a new record is created without changing the existing one or its stock.
 
 `manifest.json` describes the current files and hashes. `recovery/baseline-manifest.json` preserves the earlier v14 baseline manifest.
 

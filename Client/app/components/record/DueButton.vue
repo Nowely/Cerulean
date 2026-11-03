@@ -12,11 +12,12 @@ import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 
 const props = withDefaults(defineProps<{
   rec: Rec
-  /** row: the end of a phone receipt row (44px target) · line: line 2 of a desktop receipt row · prop: the record page */
-  variant?: 'row' | 'line' | 'prop'
+  /** row/line: receipt · prop: long record value · card: bare record value */
+  variant?: 'row' | 'line' | 'prop' | 'card'
   /** Read, not changed (the preview in Поиск): the date as plain words */
   readonly?: boolean
 }>(), { variant: 'row', readonly: false })
+const emit = defineEmits<{ closed: [] }>()
 
 const data = useDataStore()
 const now = useNow()
@@ -65,9 +66,12 @@ defineExpose({ show: () => open.value = true })
 <template>
   <span
     v-if="readonly"
-    class="truncate"
-    :class="late ? 'text-warn' : rec.due ? 'text-highlighted' : 'text-toned'"
-  >{{ rec.due ? text : 'Без срока' }}</span>
+    :class="[variant === 'card' ? 'flex items-center gap-1.5' : 'truncate', late ? 'text-warn' : rec.due ? (variant === 'card' ? 'text-accent-ink' : 'text-highlighted') : 'text-toned']"
+  ><UIcon
+    v-if="variant === 'card'"
+    name="i-lucide-calendar"
+    class="size-4 shrink-0"
+  />{{ rec.due ? text : 'Без срока' }}</span>
   <AdaptiveOverlay
     v-else
     v-model:open="open"
@@ -75,30 +79,31 @@ defineExpose({ show: () => open.value = true })
     :subtitle="rec.text"
     width="w-75"
     align="start"
+    @closed="emit('closed')"
   >
     <template #trigger>
-      <!-- The record page on a phone reads «25 октября · через 6 дней» in plain accent words, no glyph (MobileLinked) -->
       <button
         type="button"
-        class="group/due inline-flex min-w-0 cursor-pointer items-center gap-1 text-left"
+        class="group/due inline-flex min-w-0 cursor-pointer items-center text-left"
         :class="[
           late ? 'text-warn' : rec.due ? 'text-accent-ink' : 'text-toned',
+          variant === 'card' ? 'min-h-6 gap-1.5' : 'gap-1',
           variant === 'row' ? 'hit-44 relative -mr-1.5 h-7 shrink-0 rounded-badge px-1.5 text-13 active:bg-pressed' : '',
           variant === 'line' ? '-mx-1 h-5.5 shrink-0 rounded-badge px-1 text-13 hover:bg-hover' : '',
           variant === 'prop' ? '-mx-1.5 min-h-10 rounded-item px-1.5 text-base hover:bg-muted lg:text-15' : '',
-          !rec.due ? '' : variant === 'prop' ? 'lg:font-medium' : 'font-medium'
+          !rec.due || variant === 'card' ? '' : variant === 'prop' ? 'lg:font-medium' : 'font-medium'
         ]"
         :aria-label="rec.due ? `Срок: ${text}. Изменить` : 'Добавить срок'"
         :aria-expanded="open"
       >
         <UIcon
-          v-if="rec.due"
-          name="i-lucide-clock-3"
+          v-if="rec.due || variant === 'card'"
+          :name="variant === 'card' ? 'i-lucide-calendar' : 'i-lucide-clock-3'"
           class="shrink-0"
-          :class="variant === 'prop' ? 'hidden size-3.5 lg:block' : 'size-3'"
+          :class="variant === 'card' ? 'size-4' : variant === 'prop' ? 'hidden size-3.5 lg:block' : 'size-3'"
         />
         <!-- On a narrow phone the date stays whole and «через 6 дней» gives way -->
-        <span :class="after ? 'shrink-0' : 'truncate'">{{ text }}</span>
+        <span :class="variant === 'card' ? '' : after ? 'shrink-0' : 'truncate'">{{ text }}</span>
         <!-- The button's gap is the space before «·» -->
         <span
           v-if="after"

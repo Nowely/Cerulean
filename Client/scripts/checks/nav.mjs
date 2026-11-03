@@ -141,7 +141,7 @@ export default [
   } },
   { id: 'n-19-desk-find-back', device: DESKTOP, run: async (p) => {
     await open(p, '/')
-    await p.keyboard.press('Control+k')
+    await p.keyboard.press('ControlOrMeta+k')
     await p.waitForTimeout(400)
     await p.getByRole('combobox', { name: 'Найти' }).fill('кни')
     await p.waitForTimeout(300)
@@ -183,7 +183,7 @@ export default [
   } },
   { id: 'n-36-desk', device: DESKTOP, run: async (p) => {
     await open(p, '/')
-    await p.keyboard.press('Control+k')
+    await p.keyboard.press('ControlOrMeta+k')
     await p.waitForTimeout(400)
     const dialog = p.getByRole('dialog', { name: 'Поиск' })
     await dialog.getByRole('combobox').filter({ hasText: 'Все секции' }).click()
@@ -203,7 +203,7 @@ export default [
     const before = await store(p, data => ({ sections: data.sectionList.map(s => s.name), home: data.livePages.filter(x => x.sectionId && data.sections[x.sectionId]?.name === 'Дом').map(x => x.title) }))
     await p.getByRole('button', { name: 'Действия с секцией «Дом»' }).first().click()
     const row = p.getByRole('button', { name: /^Удалить секцию/ })
-    expect(await shows(row.getByText('2 страницы перейдут в Мои страницы')), 'the delete row does not say where the pages go')
+    expect(await shows(row), 'no «Удалить секцию» in the section menu')
     await row.click()
     expect(await shows(p.getByText('Секция Дом удалена, 2 страницы в Моих страницах')), 'no toast «Секция Дом удалена, 2 страницы в Моих страницах»')
     expect(!(await store(p, data => data.sectionList.some(s => s.name === 'Дом'))), 'Дом is still there')

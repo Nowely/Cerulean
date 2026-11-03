@@ -21,6 +21,7 @@ import { useScreen } from '~/composables/useScreen'
 import { useTemplates } from '~/composables/useTemplates'
 import { useCreatePage } from '~/composables/useCreatePage'
 import { usePlaces } from '~/composables/usePlaces'
+import { useBackLayer } from '~/composables/useBackLayer'
 import { askModel, ModelError, type ModelResult } from '~/domain/model'
 import { fieldDate, readLine, readModel, type LineContext, type LineDraft } from '~/domain/auto'
 import { cleanRecordText, isSearch, readDue } from '~/domain/parse'
@@ -105,6 +106,7 @@ function update() {
 const rows = ref<Record<string, Id>>({})
 /** The places popover: over the bar's chip, or over row `i`'s chip */
 const pop = ref<'main' | number | null>(null)
+useBackLayer(() => open.value, close, 0, () => isDesktop.value && props.mode === 'home')
 
 watch(open, v => emit('open', v))
 watch(title, (t) => {
@@ -178,7 +180,10 @@ const ctx = computed<LineContext>(() => ({
   noDate: noDate.value,
   today: props.mode === 'today',
   day: day.value,
-  sort: modelOn.value
+  sort: modelOn.value,
+  route: modelOn.value && data.settings.aiRoute !== false,
+  split: modelOn.value && data.settings.aiSplit !== false,
+  department: data.settings.aiDepartment !== false
 }))
 
 /** The rules' reading, at once on every key; the word being typed is not a detail word yet (item 8) */
@@ -201,6 +206,12 @@ watch(title, (t) => {
     return
   }
   timer = setTimeout(() => void read(t), 650)
+})
+watch([modelOn, () => data.settings.aiRoute, () => data.settings.aiSplit, () => data.settings.aiDepartment], () => {
+  clearTimeout(timer)
+  reader?.abort()
+  reading.value = null
+  if (modelOn.value && title.value.trim() && !isSearch(title.value)) timer = setTimeout(() => void read(title.value), 650)
 })
 async function read(t: string) {
   // One reading at a time: the one in flight is for words that are gone
@@ -489,7 +500,7 @@ function send(stay = true) {
   const typedNote = note.value.trim()
   const lineCtx = ctx.value
   const typed: Typed = { title: title.value, links: links.value, note: note.value, noteBy: noteBy.value, noDate: noDate.value, noModelDue: noModelDue.value, picked: picked.value, byTemplate: byTemplate.value }
-  const filed = journal.write(t, drafts, { here, links: links.value })
+  const filed = journal.write(t, drafts, { here, links: typed.links })
   if (tpl) for (const id of filed.ids) data.fillFromTemplate(id, tpl.id)
   // With a model, a place picked by hand teaches Авто that word, silently (item 5); without one nothing is learned
   if (modelOn.value) for (const d of drafts) if (d.by === 'user') data.teach(d.text, d.pageId)

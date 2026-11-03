@@ -37,6 +37,10 @@ const isBuiltin = (k: string): k is BuiltinProp => k === 'due' || k === 'note'
 /** A number's «Норма» goes with its number: it is not listed on its own and leaves with it */
 export const isNorm = (page: Page, p: PropDef) => page.props.some(x => x.normProp === p.id)
 
+/** Explicit stock properties are identified by their configured IDs, never by name. */
+export const isStockProperty = (page: Page, id: Id): boolean =>
+  !!page.stocks?.some(s => s.amountProp === id || s.normProp === id)
+
 /**
  * Every key in order: what `propOrder` knows, then a property it does not know yet right after the last own one,
  * Срок and Заметка last when missing. Old pages have no `propOrder` and read as own ones, Срок, Заметка.

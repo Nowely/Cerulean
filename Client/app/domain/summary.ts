@@ -6,6 +6,7 @@ import { count, lowerFirst, plural } from './text'
 import { asListed, filterRecords, sortRecords, type Leaving } from './views'
 import { collectLead, collected, firstCollects } from './collect'
 import { bodyOf, docText } from './body'
+import { stockLow } from './stock'
 
 export interface Summary {
   /** Counter or sentence: «6 купить», «3 из 6», «Всё сделано» */
@@ -79,14 +80,10 @@ export function byAction(records: Rec[], now: number, seenAt = Number.POSITIVE_I
   return records.map((r, i) => ({ r, i, k: rank(r) })).sort((a, b) => a.k - b.k || a.i - b.i).map(x => x.r)
 }
 
-/** Number properties below their «Норма» */
+/** Number properties at most one and below their «Норма» */
 export function lowStock(page: Page, records: Rec[]): Rec[] {
   const pairs = page.props.filter(p => p.type === 'number' && p.normProp)
-  return records.filter(r => pairs.some((p) => {
-    const v = r.values[p.id]
-    const n = r.values[p.normProp!]
-    return typeof v === 'number' && typeof n === 'number' && v < n
-  }))
+  return records.filter(r => pairs.some(p => stockLow(r, { amountProp: p.id, normProp: p.normProp! })))
 }
 
 /**

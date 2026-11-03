@@ -1,156 +1,177 @@
 <script setup lang="ts">
-// Таблица. Desktop: columns of the chosen properties. A phone has no room for columns,
-// so each record becomes a small card with its properties as lines; no horizontal scroll.
 import { computed } from 'vue'
-import type { Page, PageColor, Rec, ViewDef } from '~/domain/types'
+import type { Page, Rec, ViewDef } from '~/domain/types'
+import type { ListedProp } from '~/domain/props'
 import { useDataStore } from '~/stores/data'
 import { useNow } from '~/composables/useNow'
-import { useScreen } from '~/composables/useScreen'
+import { usePropSheets } from '~/composables/usePropSheets'
+import { useNotify } from '~/composables/useNotify'
 import { filterRecords, sortRecords } from '~/domain/views'
-import { formatDue, isOverdue } from '~/domain/dates'
-import { formatValue, optionOf, propList } from '~/domain/props'
+import { formatAdded } from '~/domain/dates'
+import { propList } from '~/domain/props'
 import RecordMark from '../../common/RecordMark.vue'
-import OptionPill from '../../common/OptionPill.vue'
+import TableCell from './TableCell.vue'
+import TableNoteCell from './TableNoteCell.vue'
 
-const props = defineProps<{ page: Page, view: ViewDef, records: Rec[] }>()
+const props = defineProps<{ page: Page, view: ViewDef, records: Rec[], readonly?: boolean }>()
 const emit = defineEmits<{ open: [rec: Rec] }>()
 const data = useDataStore()
 const now = useNow()
-const { isDesktop } = useScreen()
+const propSheets = usePropSheets()
+const notify = useNotify()
 
-const rows = computed(() => sortRecords(filterRecords(props.records, props.view), props.view.sort))
-/** The chosen properties in the order of «Свойства» (a view that chose none shows every own one) */
-const cols = computed(() => propList(props.page, { norms: true })
-  .filter(p => p.key === 'due' ? props.view.shown.includes('due') : !p.builtin && (props.view.shown.includes(p.key) || !props.view.shown.length))
-  .map(p => ({ key: p.key, name: p.name })))
+function toggle(rec: Rec) {
+  const context = !props.readonly && !rec.parentId && (!props.view.from || props.view.from === 'self')
+    ? { pageId: props.page.id, viewId: props.view.id }
+    : undefined
+  const result = data.toggleDone(rec.id, context)
+  if (result === 'invalid-norm') notify('Укажите неотрицательную норму запаса перед покупкой')
+  else if (result === 'conflict') notify('Запись изменилась. Обновите её и попробуйте снова')
+}
 
-/** A cell's text; a «Выбор» value is its pill (v23) */
-function cell(rec: Rec, key: string): { text: string, warn?: boolean, color?: PageColor } {
-  if (key === 'due') return rec.due ? { text: formatDue(rec.due, now.value), warn: !rec.done && isOverdue(rec.due, now.value) } : { text: '' }
-  const prop = props.page.props.find(p => p.id === key)
-  const pill = optionOf(prop, rec.values[key])
-  if (pill) return { text: pill.name, color: pill.color }
-  return { text: prop ? formatValue(prop, rec.values[key], now.value) : '' }
+const rows = computed(() => {
+  const records = sortRecords(filterRecords(props.records, props.view, data.leaving, now.value), props.view.sort)
+  if (props.view.from && props.view.from !== 'self') return records.map(rec => ({ rec, depth: 0 }))
+  const result: { rec: Rec, depth: number }[] = []
+  const seen = new Set<string>()
+  function visit(rec: Rec, depth: number) {
+    if (seen.has(rec.id)) return
+    seen.add(rec.id)
+    result.push({ rec, depth })
+    if (depth >= 2) return
+    for (const child of data.subitemsOf(rec.id)) {
+      if (child.pageId === props.page.id) visit(child, depth + 1)
+    }
+  }
+  for (const rec of records) visit(rec, 0)
+  return result
+})
+const cols = computed(() => propList(props.page).filter(p => p.key !== 'note' && (p.key !== 'due' || props.view.shown.includes('due'))))
+
+function width(col: ListedProp): number {
+  if (col.key === 'due' || col.type === 'date') return 116
+  if (col.prop?.normProp) return 80
+  if (col.type === 'select') return 156
+  if (col.type === 'number') return 108
+  if (col.type === 'relation') return 120
+  return 190
 }
 </script>
 
 <template>
-  <table
-    v-if="isDesktop"
-    class="mt-2 w-full border-collapse text-15 tabular-nums"
+  <div
+    class="mt-2 max-w-full overflow-x-auto"
+    data-phone-table
   >
-    <thead>
-      <tr class="border-b border-default text-left text-cap text-toned">
-        <th class="w-9" />
-        <th class="py-2 pr-3 font-medium">
-          Запись
-        </th>
-        <th
-          v-for="c in cols"
-          :key="c.key"
-          class="py-2 pr-3 font-medium"
-        >
-          {{ c.name }}
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr
-        v-for="r in rows"
-        :key="r.id"
-        class="border-b border-default hover:bg-hover"
-      >
-        <td class="align-middle">
-          <RecordMark
-            :rec="r"
-            :page="page"
-            area="tight"
-            @toggle="data.toggleDone(r.id)"
-          />
-        </td>
-        <td class="py-1.5 pr-3">
-          <button
-            type="button"
-            class="cursor-pointer text-left text-highlighted hover:underline"
-            :class="{ 'text-dimmed line-through': r.done }"
-            @click="emit('open', r)"
-          >
-            {{ r.text }}
-          </button>
-        </td>
-        <td
-          v-for="c in cols"
-          :key="c.key"
-          class="py-1.5 pr-3 text-meta"
-          :class="cell(r, c.key).warn ? 'text-warn' : 'text-toned'"
-        >
-          <OptionPill
-            v-if="cell(r, c.key).color"
-            :name="cell(r, c.key).text"
-            :color="cell(r, c.key).color!"
-          />
-          <template v-else>
-            {{ cell(r, c.key).text }}
-          </template>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <ul
-    v-else
-    class="flex flex-col gap-2 px-3 pt-3"
-  >
-    <li
-      v-for="r in rows"
-      :key="r.id"
-      class="rounded-card border border-default bg-default"
+    <table
+      class="table-fixed border-separate border-spacing-0 text-15 tabular-nums"
+      :style="{ width: `${176 + cols.reduce((sum, col) => sum + width(col), 0) + 190 + 108 + (readonly ? 0 : 44)}px` }"
     >
-      <div class="flex items-center">
-        <RecordMark
-          :rec="r"
-          :page="page"
-          @toggle="data.toggleDone(r.id)"
-        />
-        <button
-          type="button"
-          class="min-h-11 min-w-0 flex-1 cursor-pointer truncate pr-3 text-left text-record text-highlighted"
-          :class="{ 'text-dimmed line-through': r.done }"
-          @click="emit('open', r)"
-        >
-          {{ r.text }}
-        </button>
-      </div>
-      <dl
-        v-if="cols.some(c => cell(r, c.key).text)"
-        class="border-t border-default px-3 py-2 text-meta"
-      >
-        <template
+      <colgroup>
+        <col style="width: 176px">
+        <col
           v-for="c in cols"
           :key="c.key"
+          :style="{ width: `${width(c)}px` }"
         >
-          <div
-            v-if="cell(r, c.key).text"
-            class="flex min-h-7 items-center"
+        <col style="width: 190px">
+        <col style="width: 108px">
+        <col
+          v-if="!readonly"
+          style="width: 44px"
+        >
+      </colgroup>
+      <thead>
+        <tr class="text-left text-13 text-toned">
+          <th class="sticky left-0 z-10 h-9 min-w-44 border-r border-b border-default bg-default px-3 font-medium">
+            Название
+          </th>
+          <th
+            v-for="c in cols"
+            :key="c.key"
+            class="h-9 border-r border-b border-default px-3 font-medium"
+            :style="{ minWidth: `${width(c)}px` }"
           >
-            <dt class="w-28 shrink-0 text-toned">
-              {{ c.name }}
-            </dt>
-            <dd
-              class="min-w-0 truncate"
-              :class="cell(r, c.key).warn ? 'text-warn' : 'text-highlighted'"
+            {{ c.name }}
+          </th>
+          <th class="h-9 min-w-47.5 border-r border-b border-default px-3 font-medium">
+            Заметка
+          </th>
+          <th class="h-9 min-w-27 border-b border-default px-3 font-medium">
+            Добавлено
+          </th>
+          <th
+            v-if="!readonly"
+            class="h-9 border-b border-default p-0"
+          >
+            <button
+              type="button"
+              class="hit-44 relative flex size-8 cursor-pointer items-center justify-center text-dimmed hover:text-highlighted"
+              aria-label="Новое свойство"
+              @click="propSheets.create(page.id, { from: 'view' })"
             >
-              <OptionPill
-                v-if="cell(r, c.key).color"
-                :name="cell(r, c.key).text"
-                :color="cell(r, c.key).color!"
+              <UIcon
+                name="i-lucide-plus"
+                class="size-5"
               />
-              <template v-else>
-                {{ cell(r, c.key).text }}
-              </template>
-            </dd>
-          </div>
-        </template>
-      </dl>
-    </li>
-  </ul>
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="{ rec: r, depth } in rows"
+          :key="r.id"
+        >
+          <td class="sticky left-0 z-10 h-11 border-r border-b border-default bg-default p-0">
+            <div
+              class="flex w-44 items-center"
+              :style="{ paddingLeft: `${depth * 20}px` }"
+            >
+              <RecordMark
+                :rec="r"
+                :page="page"
+                area="tight"
+                @toggle="toggle(r)"
+              />
+              <button
+                type="button"
+                class="h-[43px] min-w-0 flex-1 cursor-pointer truncate pr-2 text-left text-highlighted hover:underline"
+                :class="{ 'text-dimmed line-through': r.done }"
+                @click="emit('open', r)"
+              >
+                {{ r.text }}
+              </button>
+            </div>
+          </td>
+          <td
+            v-for="c in cols"
+            :key="c.key"
+            class="h-11 border-r border-b border-default p-0 align-middle"
+          >
+            <TableCell
+              :page="page"
+              :rec="r"
+              :column="c"
+              :readonly="readonly"
+            />
+          </td>
+          <td class="h-11 border-r border-b border-default px-3 text-toned">
+            <TableNoteCell
+              :rec="r"
+              :readonly="readonly"
+              @open="emit('open', r)"
+            />
+          </td>
+          <td class="h-11 border-b border-default px-3 text-toned">
+            {{ formatAdded(r.addedAt, now) }}
+          </td>
+          <td
+            v-if="!readonly"
+            class="border-b border-default"
+          />
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </template>

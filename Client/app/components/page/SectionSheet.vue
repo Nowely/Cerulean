@@ -8,6 +8,7 @@ import { useDataStore } from '~/stores/data'
 import { useNotify } from '~/composables/useNotify'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
+import { useBackLayer } from '~/composables/useBackLayer'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 
 const props = defineProps<{ page: Page, menu?: boolean }>()
@@ -28,6 +29,9 @@ function move(to: Id | null) {
 }
 
 const asMenu = computed(() => props.menu && isDesktop.value)
+useBackLayer(() => !!asMenu.value && open.value, () => {
+  open.value = false
+})
 const items = computed(() => [null, ...data.sectionList].map(s => ({
   label: s?.name ?? 'Мои страницы',
   type: 'checkbox' as const,

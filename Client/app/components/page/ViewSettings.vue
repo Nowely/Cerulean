@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // «Настроить вид»: how this view shows the page. Filter and sort live here, not in the bar; so does «Новый вид».
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { GroupBy, Id, Layout, Page, ViewDef, ViewSource } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNotify } from '~/composables/useNotify'
@@ -10,7 +10,10 @@ import { nameForLayout } from '~/domain/templates'
 import { propList, TYPE_NAMES } from '~/domain/props'
 import { collects, filterWords, SOURCES } from '~/domain/collect'
 import { textW } from '~/domain/fit'
+import { uid } from '~/domain/ids'
+import { restoreStockView, stockView as findStockView, type StockMode } from '~/domain/stock'
 import SegmentedControl from '../common/SegmentedControl.vue'
+import StockSetup from './StockSetup.vue'
 
 const props = defineProps<{ page: Page, view: ViewDef }>()
 // `newProp`: «Новое свойство» opens the property editor; after «Создать» this sheet is back with it switched on.
@@ -19,6 +22,7 @@ const emit = defineEmits<{ remove: [], add: [], newProp: [], filter: [], pickPag
 const data = useDataStore()
 const notify = useNotify()
 const { isDesktop } = useScreen()
+const stockSetup = ref(false)
 
 /** By ids, from the store: «Отменить» may run after this sheet has gone */
 function patchView(pageId: Id, viewId: Id, p: Partial<ViewDef>) {
@@ -31,9 +35,7 @@ function patch(p: Partial<ViewDef>) {
 
 // ---------- «Откуда записи» (v24, И10; medium, «Отменить» 8 s) ----------
 
-/** Not on Входящие, and not on a view of stock (Запасы): it counts this page's own quantities */
-const stockView = computed(() => props.page.props.some(p => p.type === 'number' && p.normProp && props.view.shown.includes(p.id)))
-const canFrom = computed(() => props.page.kind === 'page' && !stockView.value)
+const canFrom = computed(() => props.page.kind === 'page')
 const from = computed({
   get: () => props.view.from ?? 'self',
   set: (v: ViewSource) => setFrom(v)
@@ -80,8 +82,16 @@ const groupBy = computed({
  * «Фильтр» names the filter in words («Просрочено · На неделе · не сделано»); wider than about 240pt at 15px it goes
  * under its label whole, never cut (v24, item 8). It is offered where «Сделано» is, and on a collecting view
  */
-const hasFilter = computed(() => props.page.hasDone || collecting.value)
-const filterText = computed(() => filterWords(props.page, props.view))
+const hasFilter = computed(() => props.page.kind !== 'today')
+const filterText = computed(() => {
+  const choices = Object.entries(props.view.selectFilters ?? {}).flatMap(([id, values]) => {
+    if (!values.length) return []
+    const property = props.page.props.find(p => p.id === id && p.type === 'select')
+    const names = values.map(value => property?.options?.find(o => o.id === value)?.name ?? `удалённый вариант ${value}`)
+    return [`${property?.name ?? `удалённое свойство ${id}`}: ${names.join(', ')}`]
+  })
+  return [filterWords(props.page, props.view), ...choices].join(' · ')
+})
 const filterStacked = computed(() => !isDesktop.value && textW(filterText.value, 15) > 240)
 
 const SORTS = [
@@ -105,10 +115,30 @@ function toggleShown(key: string, on: boolean) {
 function removeView() {
   if (props.page.views.length > 1) emit('remove')
 }
+const missingStockViews = computed(() => (props.page.stocks ?? []).flatMap(s => (['buy', 'stock'] as const)
+  .filter(mode => !findStockView(props.page, s, mode))
+  .map(mode => ({ config: s, mode, label: `Вернуть вид «${mode === 'buy' ? 'Купить' : 'Запасы'}»${(props.page.stocks?.length ?? 0) > 1 ? ` · ${props.page.props.find(p => p.id === s.amountProp)?.name ?? s.amountProp}` : ''}` }))))
+function restore(amountProp: Id, normProp: Id, mode: StockMode) {
+  const page = data.pages[props.page.id]
+  const config = page?.stocks?.find(s => s.amountProp === amountProp && s.normProp === normProp)
+  const next = page && config && restoreStockView(page, config, mode, uid('v'))
+  if (!page || !next) return
+  data.updatePage(page.id, { views: next.views, stocks: next.stocks })
+  notify(`Вид «${next.views.at(-1)!.name}» добавлен`)
+}
 </script>
 
 <template>
-  <div class="flex flex-col gap-1 px-2 pb-2">
+  <StockSetup
+    v-if="stockSetup"
+    :page-id="page.id"
+    :view-id="view.id"
+    @close="stockSetup = false"
+  />
+  <div
+    v-else
+    class="flex flex-col gap-1 px-2 pb-2"
+  >
     <label class="block px-2 pt-1">
       <span class="block pb-1.5 text-cap text-toned">Название вида</span>
       <UInput
@@ -239,6 +269,29 @@ function removeView() {
       </label>
     </div>
 
+    <button
+      v-for="item in missingStockViews"
+      :key="`${item.config.amountProp}:${item.config.normProp}:${item.mode}`"
+      type="button"
+      class="flex min-h-12.5 cursor-pointer items-center gap-3 rounded-chip px-2 text-left text-base text-default hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
+      @click="restore(item.config.amountProp, item.config.normProp, item.mode)"
+    >
+      <UIcon
+        name="i-lucide-list-plus"
+        class="size-5 text-toned"
+      />{{ item.label }}
+    </button>
+    <button
+      v-if="page.kind === 'page' && !page.stocks?.length"
+      type="button"
+      class="flex min-h-12.5 cursor-pointer items-center gap-3 rounded-chip px-2 text-left text-base text-default hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"
+      @click="stockSetup = true"
+    >
+      <UIcon
+        name="i-lucide-package"
+        class="size-5 text-toned"
+      />Включить запасы
+    </button>
     <button
       type="button"
       class="flex min-h-12.5 cursor-pointer items-center gap-3 rounded-chip px-2 text-left text-base text-default hover:bg-muted active:bg-pressed lg:min-h-10 lg:text-15"

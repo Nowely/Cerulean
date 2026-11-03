@@ -10,7 +10,7 @@ import { COLOR_NAMES, PAGE_COLORS } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useNotify } from '~/composables/useNotify'
 import { LIFTED, useDragSort } from '~/composables/useDragSort'
-import { canCreate, nextColor, optionColor } from '~/domain/props'
+import { canCreate, isStockProperty, nextColor, optionColor } from '~/domain/props'
 import { ofProp, plural, RECORD_FORMS } from '~/domain/text'
 import { uid } from '~/domain/ids'
 import SegmentedControl from '../common/SegmentedControl.vue'
@@ -33,6 +33,8 @@ const UNDO_MS = 8000
 
 const isNew = computed(() => !props.propId)
 const saved = computed(() => props.propId ? props.page.props.find(p => p.id === props.propId) : undefined)
+const stockProperty = computed(() => !!props.propId && isStockProperty(props.page, props.propId))
+const stockExplanation = 'Свойство используется для запасов: его нельзя удалить или изменить его тип. Название и значения можно менять.'
 const draft = reactive<{ name: string, type: PropType, options: PropOption[] }>({ name: '', type: props.type ?? 'text', options: [] })
 const kind = computed({
   get: () => saved.value?.type ?? draft.type,
@@ -116,18 +118,32 @@ function retype(t: PropType) {
     if (t === 'select' && !draft.options.length) void addOption()
     return
   }
+  const page = data.pages[props.page.id]
+  const prop = page?.props.find(p => p.id === props.propId)
+  if (page && prop && prop.type !== t && isStockProperty(page, prop.id)) {
+    notify(stockExplanation)
+    return
+  }
   const done = data.retypeProp(props.page.id, props.propId!, t)
-  if (done?.dropped) {
+  if (done && (done.dropped || done.filtersRemoved)) {
     const n = done.dropped
-    notify(`Тип изменён: ${n} ${plural(n, ['значение не подошло и удалено', 'значения не подошли и удалены', 'значений не подошли и удалены'])}`, { label: 'Отменить', run: done.undo }, UNDO_MS)
+    const dropped = n ? `${n} ${plural(n, ['значение не подошло и удалено', 'значения не подошли и удалены', 'значений не подошли и удалены'])}` : ''
+    const filter = done.filtersRemoved ? 'фильтр свойства снят' : ''
+    notify(`Тип изменён: ${[dropped, filter].filter(Boolean).join('; ')}`, { label: 'Отменить', run: done.undo }, UNDO_MS)
   }
 }
 
 // Deleting: at once without values, after the question with them; either way «Отменить» brings it all back
 const usage = ref(0)
 function removeProp() {
-  const prop = saved.value
-  if (!prop) return
+  const page = data.pages[props.page.id]
+  const prop = page?.props.find(p => p.id === props.propId)
+  if (!page || !prop) return
+  if (isStockProperty(page, prop.id) || (prop.normProp && isStockProperty(page, prop.normProp))) {
+    confirming.value = false
+    notify(stockExplanation)
+    return
+  }
   const n = data.propUsage(props.page.id, [prop.id, ...(prop.normProp ? [prop.normProp] : [])])
   if (n && !confirming.value) {
     usage.value = n
@@ -219,6 +235,12 @@ defineExpose({ tidy, removeProp })
       :options="TYPES"
       label="Тип"
     />
+    <p
+      v-if="stockProperty"
+      class="px-1 pt-2 text-sm text-toned"
+    >
+      {{ stockExplanation }}
+    </p>
 
     <template v-if="kind === 'select'">
       <p class="px-1 pt-4 pb-0.5 text-cap text-toned">

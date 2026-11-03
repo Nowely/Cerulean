@@ -87,12 +87,13 @@ export function demo(now = Date.now()): Dataset {
 
   // Покупки: «Купить» grouped by Отдел, «Запасы» with numbers against a norm, «Куплено»
   const shop = shoppingProps()
-  const qty = shop[0]!
-  const dept = shop[1]!
-  const left: PropDef = { id: uid('f'), name: 'Осталось', type: 'number', unit: 'шт' }
-  const norm: PropDef = { id: uid('f'), name: 'Норма', type: 'number', unit: 'шт' }
-  left.normProp = norm.id
+  const qty = shop.find(p => p.name === 'Количество')!
+  const dept = shop.find(p => p.name === 'Отдел')!
+  const left = shop.find(p => p.name === 'Осталось')!
+  const norm = shop.find(p => p.id === left.normProp)!
   const opt = (name: string) => dept.options!.find(o => o.name === name)!.id
+  const buyView = listView('Купить', { filter: [{ field: 'done', op: 'is', value: false }], groupBy: dept.id, shown: [qty.id, left.id], stock: { mode: 'buy', amountProp: left.id, normProp: norm.id } })
+  const stockView = listView('Запасы', { filter: [{ field: left.id, op: 'notEmpty' }], shown: [left.id], stock: { mode: 'stock', amountProp: left.id, normProp: norm.id } })
   const products = newPage({
     title: 'Покупки',
     glyph: 'basket',
@@ -102,12 +103,13 @@ export function demo(now = Date.now()): Dataset {
     template: 'shop',
     description: 'еда, напитки, бытовая химия',
     noun: ['купить', 'купить', 'купить'],
-    props: [qty, dept, left, norm],
+    props: shop,
     views: [
-      listView('Купить', { filter: [{ field: 'done', op: 'is', value: false }, { field: left.id, op: 'empty' }], groupBy: dept.id, shown: [qty.id] }),
-      listView('Запасы', { filter: [{ field: left.id, op: 'notEmpty' }], shown: [left.id] }),
+      buyView,
+      stockView,
       listView('Куплено', { filter: [{ field: 'done', op: 'is', value: true }, { field: left.id, op: 'empty' }], shown: [] })
     ],
+    stocks: [{ amountProp: left.id, normProp: norm.id, buyViewId: buyView.id, stockViewId: stockView.id }],
     openedAt: at(9, 0),
     seenAt: at(9, 0)
   }, now)
