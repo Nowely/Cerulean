@@ -1,0 +1,113 @@
+{
+  "mode": "apply",
+  "documents": [
+    {
+      "document": "Flow.dc.html",
+      "changed": false,
+      "before_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "StatusBar.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "LeftCol.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "HomePane.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "PageRow.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "Menu.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "Toast.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "Composer.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "PlaceList.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "PagePane.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "TableView.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "Check.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "RecordRow.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "RecPane.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "Sheet.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "Field.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "ListSheet.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    },
+    {
+      "document": "Keyboard.dc.html",
+      "changed": true,
+      "before_sha256": "2f8eb1efdaafa5907f88a8c942add92fae5219b1764b0922551a2b06d1ed290a",
+      "after_sha256": "811da0ca46c5eb47e32b4bf484de55d7f782cb682e1805ccdb0066eee9418faf"
+    }
+  ]
+}

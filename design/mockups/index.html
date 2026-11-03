@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cerulean — recovered mockups</title>
+<link rel="stylesheet" href="player/canvas.css">
+</head>
+<body>
+<header class="bar">
+  <strong>Cerulean — recovered mockups</strong>
+  <label>Раздел <select id="page" aria-label="Раздел"></select></label>
+  <label>Макет <select id="board" aria-label="Макет"></select></label>
+  <label>Тема <select id="theme" aria-label="Тема"><option value="light">Светлая</option><option value="dark">Тёмная</option><option value="system">Системная</option></select></label>
+  <a href="prototype.html">Прототип</a>
+</header>
+<div class="caption"><span id="title"></span><span id="size"></span></div>
+<main class="stage" id="stage"><div class="scaler" id="scaler"><iframe id="board-frame" title="Макет Cerulean"></iframe></div></main>
+<pre id="load-error" hidden></pre>
+<script src="player/canvas.js"></script>
+</body>
+</html>

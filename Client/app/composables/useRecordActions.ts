@@ -27,13 +27,21 @@ export function useRecordActions() {
       subtitle: ids.length === 1 ? first.text : count(ids.length, RECORD_FORMS),
       current: first.pageId,
       run: (choice) => {
-        const { result: target, undo } = journal.undoable(ids, () => {
-          const target = 'pageId' in choice ? data.pages[choice.pageId] : data.createNamed(choice.newPage)
-          if (!target) return
+        const plan = journal.planMove(ids, choice, true)
+        if (!plan.ok) {
+          journal.moveRefused(plan.reason)
+          return
+        }
+        const { result: target, undo } = journal.undoable(journal.clarificationIds(ids, true), () => {
+          const target = journal.commitTarget(plan.target)
           for (const id of ids) {
             if (data.records[id]?.tags.includes('clarify')) journal.chooseForRecord(id, { pageId: target.id })
           }
-          data.moveRecords(ids.filter(id => data.records[id]?.pageId !== target.id), target.id)
+          const moved = data.moveRecords(ids.filter(id => data.records[id]?.pageId !== target.id), target.id)
+          if (!moved.ok) {
+            journal.moveRefused(moved.reason)
+            return
+          }
           return target
         })
         // «Молоко → Задачи», «3 записи → Задачи»: the bare place name, no «в» (v22, N12)
@@ -45,7 +53,7 @@ export function useRecordActions() {
   /** A choice on a row of Входящие: the record moves and its Уточнение in Журнал settles; «Отменить» puts both back */
   function place(rec: Rec, choice: Choice) {
     const from = rec.pageId
-    const { result: page, undo } = journal.undoable([rec.id], () => journal.chooseForRecord(rec.id, choice))
+    const { result: page, undo } = journal.undoable(journal.clarificationIds([rec.id]), () => journal.chooseForRecord(rec.id, choice))
     if (page && page.id !== from) notify(`${rec.text} → ${page.title || 'Без названия'}`, { label: 'Отменить', run: undo })
   }
 

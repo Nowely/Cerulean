@@ -61,7 +61,7 @@ describe('data store', () => {
     expect(data.favorites).toEqual([])
     const shop = data.recentlyMade[1]!
     expect(shop.props.find(p => p.type === 'select')?.options?.map(o => o.name)).toContain('Молочное')
-    expect(shop.views.map(v => v.name)).toEqual(['Купить', 'Куплено'])
+    expect(shop.views.map(v => v.name)).toEqual(['Купить', 'Запасы', 'Куплено'])
   })
 
   it('takes a ticked row out of its list after a moment; a second tap before that keeps it (Josh 28 Oct, 12)', async () => {
@@ -435,7 +435,8 @@ describe('properties (v22 item 30)', () => {
   async function shop() {
     const { data, dbName } = await fresh({ demo: true })
     const id = data.livePages.find(p => p.title === 'Покупки')!.id
-    const [qty, dept, left, norm] = data.pages[id]!.props.map(p => JSON.parse(JSON.stringify(p)) as PropDef)
+    const props = data.pages[id]!.props.map(p => JSON.parse(JSON.stringify(p)) as PropDef)
+    const [qty, dept, left, norm] = ['Количество', 'Отдел', 'Осталось', 'Норма'].map(name => props.find(p => p.name === name)!)
     const rec = (text: string) => Object.values(data.records).find(r => r.text === text && !r.deletedAt)!
     return { data, dbName, id, page: () => data.pages[id]!, rec, qty: qty!, dept: dept!, left: left!, norm: norm! }
   }
@@ -443,13 +444,13 @@ describe('properties (v22 item 30)', () => {
   it('adds a property after the own ones and reorders Срок and Заметка with the rest', async () => {
     const { data, dbName, id, page, qty, dept, left, norm } = await shop()
     data.moveProp(id, 'due', 0)
-    expect(page().propOrder).toEqual(['due', qty.id, dept.id, left.id, norm.id, 'note'])
+    expect(page().propOrder).toEqual(['due', dept.id, qty.id, left.id, norm.id, 'note'])
     const shopName = data.addProp(id, { name: 'Магазин', type: 'select', options: [{ id: 'o1', name: 'Лента', color: 'teal' }] })!
-    expect(page().propOrder).toEqual(['due', qty.id, dept.id, left.id, norm.id, shopName.id, 'note'])
+    expect(page().propOrder).toEqual(['due', dept.id, qty.id, left.id, norm.id, shopName.id, 'note'])
     // The place counts the rows as listed: Осталось second, its «Норма» right after it
     data.moveProp(id, left.id, 1)
-    expect(page().propOrder).toEqual(['due', left.id, norm.id, qty.id, dept.id, shopName.id, 'note'])
-    expect(page().props.map(p => p.name)).toEqual(['Осталось', 'Норма', 'Количество', 'Отдел', 'Магазин'])
+    expect(page().propOrder).toEqual(['due', left.id, norm.id, dept.id, qty.id, shopName.id, 'note'])
+    expect(page().props.map(p => p.name)).toEqual(['Осталось', 'Норма', 'Отдел', 'Количество', 'Магазин'])
     await data.flush()
     const again = await reload(dbName)
     expect(again.pages[id]!.propOrder).toEqual(page().propOrder)
@@ -462,10 +463,10 @@ describe('properties (v22 item 30)', () => {
     expect(data.propUsage(id, [dept.id], chem.id)).toBe(1)
     const done = data.removeOption(id, dept.id, chem.id)!
     expect(done.count).toBe(1)
-    expect(page().props[1]!.options!.map(o => o.name)).not.toContain('Бытовая химия')
+    expect(page().props.find(p => p.id === dept.id)!.options!.map(o => o.name)).not.toContain('Бытовая химия')
     expect(dept.id in rec('Порошок').values).toBe(false)
     done.undo()
-    expect(page().props[1]!.options).toEqual(dept.options)
+    expect(page().props.find(p => p.id === dept.id)!.options).toEqual(dept.options)
     expect(rec('Порошок').values[dept.id]).toBe(chem.id)
   })
 
@@ -475,7 +476,7 @@ describe('properties (v22 item 30)', () => {
     expect(done.dropped).toBe(4)
     expect(qty.id in rec('Молоко').values).toBe(false)
     done.undo()
-    expect(page().props[0]!.type).toBe('text')
+    expect(page().props.find(p => p.id === qty.id)!.type).toBe('text')
     expect(rec('Молоко').values[qty.id]).toBe('2 л')
     // «Купить» is grouped by Отдел: as text it loses the groups, as «Выбор» again it finds the same options
     const t = data.retypeProp(id, dept.id, 'text')!
@@ -483,7 +484,7 @@ describe('properties (v22 item 30)', () => {
     expect(page().views[0]!.groupBy).toBeNull()
     expect(rec('Молоко').values[dept.id]).toBe('Молочное')
     data.retypeProp(id, dept.id, 'select')
-    expect(page().props[1]!.options).toEqual(dept.options)
+    expect(page().props.find(p => p.id === dept.id)!.options).toEqual(dept.options)
     expect(rec('Молоко').values[dept.id]).toBe(dept.options!.find(o => o.name === 'Молочное')!.id)
     t.undo()
     expect(page().views[0]!.groupBy).toBe(dept.id)
@@ -491,18 +492,27 @@ describe('properties (v22 item 30)', () => {
 
   it('deletes a property with its «Норма», values and place in the views; «Отменить» restores them', async () => {
     const { data, id, page, left, norm } = await shop()
+    data.updatePage(id, {
+      stocks: undefined,
+      views: page().views.map(({ stock: _stock, ...view }) => view)
+    })
+    expect(page().stocks).toBeUndefined()
+    expect(page().views.every(v => !v.stock)).toBe(true)
     // An undo is a change of its own to sync: its stamp is new, the rest is as before
     const content = () => JSON.parse(JSON.stringify(page(), (k, v) => k === 'updatedAt' ? undefined : v))
     const before = content()
+    const values = () => Object.fromEntries(Object.values(data.records).filter(r => r.pageId === id).map(r => [r.id, { ...r.values }]))
+    const beforeValues = values()
     const n = data.propUsage(id, [left.id, norm.id])
     expect(n).toBeGreaterThan(0)
     const done = data.removeProp(id, left.id)!
     expect(done.count).toBe(n)
-    expect(page().props.map(p => p.name)).toEqual(['Количество', 'Отдел'])
+    expect(page().props.map(p => p.name)).toEqual(['Отдел', 'Количество'])
     expect(page().views.some(v => v.shown.includes(left.id) || v.filter.some(f => f.field === left.id))).toBe(false)
     expect(Object.values(data.records).some(r => left.id in r.values || norm.id in r.values)).toBe(false)
     done.undo()
     expect(content()).toEqual(before)
+    expect(values()).toEqual(beforeValues)
     expect(data.propUsage(id, [left.id, norm.id])).toBe(n)
   })
 })

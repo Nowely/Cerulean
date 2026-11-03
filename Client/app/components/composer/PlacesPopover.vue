@@ -6,6 +6,7 @@
 // take the focus, so a pick closes the list and the caret is back where it was; only the name field takes it.
 // Входящие's move list (Josh 28 Oct, 10) is the same list under a row's move button: the model's place first, tinted.
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { useBackLayer } from '~/composables/useBackLayer'
 import type { Id, Page } from '~/domain/types'
 import { pageColor } from '~/domain/look'
 import PageTile from '../common/PageTile.vue'
@@ -25,6 +26,7 @@ const props = withDefaults(defineProps<{
   label?: string
 }>(), { current: null, end: false, auto: null, below: false, suggested: null, label: 'Куда записать' })
 const emit = defineEmits<{ pick: [Id], auto: [], create: [name: string], back: [], close: [] }>()
+useBackLayer(() => true, () => emit('close'))
 
 const box = useTemplateRef<HTMLElement>('box')
 /** Room above the field, so the list scrolls instead of running under the status bar (item 26) */
@@ -81,6 +83,7 @@ const rows = computed(() => {
 const nameEl = useTemplateRef<HTMLInputElement>('nameEl')
 /** The row is a name field: it got the focus from a tap, so a phone's keyboard stays up */
 const naming = ref(false)
+useBackLayer(() => naming.value, back, 2)
 const name = ref('')
 function back() {
   naming.value = false

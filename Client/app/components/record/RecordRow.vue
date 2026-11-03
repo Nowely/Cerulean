@@ -19,15 +19,17 @@ import { useTemplates } from '~/composables/useTemplates'
 import { useLater } from '~/composables/useLater'
 import { useNotify } from '~/composables/useNotify'
 import { usePlaces } from '~/composables/usePlaces'
-import { useCreatePage } from '~/composables/useCreatePage'
 import { formatDue, isOverdue } from '~/domain/dates'
 import { into, nb } from '~/domain/text'
 import { formatValue, optionOf } from '~/domain/props'
 import { bodyOf, docText } from '~/domain/body'
+import { stockLow } from '~/domain/stock'
 import RecordMark from '../common/RecordMark.vue'
 import OptionPill from '../common/OptionPill.vue'
 import ActionMenu, { type MenuItem } from '../overlay/ActionMenu.vue'
 import PlacesPopover from '../composer/PlacesPopover.vue'
+import StockStepper from './StockStepper.vue'
+import { stepperText } from './stock-stepper'
 
 const props = withDefaults(defineProps<{
   rec: Rec
@@ -50,9 +52,16 @@ const props = withDefaults(defineProps<{
   tint?: boolean
   /** A tick is taking the row out of its list: it fades in the moment's last 0.2 s */
   leaving?: boolean
+  /** The list shows this record's children and can fold them. */
+  treeFold?: boolean
+  treeActions?: boolean
+  nestUnder?: Rec
+  stockStepper?: boolean
+  purchase?: boolean
+  dropTarget?: boolean
 }>(), { readonly: false, selected: false, wrap: false, reveal: false, day: false, lifted: false, grip: undefined, tint: false, leaving: false })
 
-const emit = defineEmits<{ open: [], shift: [by: -1 | 1] }>()
+const emit = defineEmits<{ 'open': [], 'shift': [by: -1 | 1], 'nest': [parent: Rec], 'outdent': [], 'stock-open': [id: Id, open: boolean] }>()
 
 const data = useDataStore()
 const journal = useJournalStore()
@@ -77,6 +86,7 @@ function openMenu() {
 
 const subs = computed(() => data.subitemsOf(props.rec.id))
 const subsDone = computed(() => subs.value.filter(s => s.done).length)
+const subsFolded = computed(() => data.settings.folded.includes(`record:${props.rec.id}`))
 // The rows of the latest send carry the fresh tint, which fades by itself (fresh-tint); nothing says «только что».
 // «Быстрый старт» was made by the first run, not written, so it never lights up
 const fresh = computed(() => (props.tint || (!props.rec.seed && Date.now() - props.rec.addedAt < 5000)) && !props.rec.done)
@@ -129,13 +139,20 @@ const right = computed(() => {
 })
 
 const stock = computed(() => {
-  const prop = props.page.props.find(p => p.type === 'number' && p.normProp && (props.view?.shown ?? []).includes(p.id))
+  const prop = props.page.props.find(p => p.type === 'number' && p.normProp && (props.view?.shown ?? []).includes(p.id)
+    && (!props.stockStepper || !(props.page.stocks ?? []).some(s => s.amountProp === p.id)))
   if (!prop) return null
   const value = props.rec.values[prop.id]
   if (typeof value !== 'number') return null
   const norm = props.rec.values[prop.normProp!]
   return { prop, value, norm: typeof norm === 'number' ? norm : null, low: typeof norm === 'number' && value < norm }
 })
+const configuredStocks = computed(() => (props.stockStepper ? props.page.stocks ?? [] : []).filter((s) => {
+  const prop = props.page.props.find(p => p.id === s.amountProp)
+  return (props.view?.shown ?? []).includes(s.amountProp) && prop?.type === 'number' && prop.normProp === s.normProp
+    && typeof props.rec.values[s.amountProp] === 'number' && Number.isFinite(props.rec.values[s.amountProp])
+}))
+const hasStock = computed(() => !!stock.value || configuredStocks.value.length > 0)
 
 /**
  * The record's text shows under the name, up to two lines and then «…» (main flow, item 12; Josh 28 Oct, 13, as in iOS
@@ -151,6 +168,8 @@ function step(by: number) {
 
 const menu = computed(() => [
   [
+    ...(props.treeActions && props.nestUnder ? [{ label: `Вложить в «${props.nestUnder.text}»`, icon: 'i-lucide-indent-increase', onSelect: () => emit('nest', props.nestUnder!) }] : []),
+    ...(props.treeActions && props.rec.parentId ? [{ label: 'Вынести из подпунктов', icon: 'i-lucide-indent-decrease', onSelect: () => emit('outdent') }] : []),
     { label: 'Открыть', icon: 'i-lucide-arrow-up-right', onSelect: () => emit('open') },
     // v24 fixes (20): «на другую страницу»; a record of a page can be made a template right after it (v24, И9)
     { label: 'Переместить на другую страницу', icon: 'i-lucide-folder-input', onSelect: () => actions.move([props.rec.id]) },
@@ -181,7 +200,7 @@ function backToRow(e: Event) {
 
 /** The same actions as the phone's «⋯» sheet, opened by a long press that lets go without moving */
 const sheet = computed<MenuItem[][]>(() => menu.value.map(g => g.map(i => ({ label: i.label, icon: i.icon, danger: 'color' in i, onSelect: i.onSelect }))))
-defineExpose({ openMenu })
+defineExpose({ openMenu, holdItems: sheet })
 
 /** ⋮⋮: two columns of three dots */
 const GRIP = [[9, 6], [15, 6], [9, 12], [15, 12], [9, 18], [15, 18]] as const
@@ -198,7 +217,7 @@ function onKey(e: KeyboardEvent) {
     rows[rows.indexOf(e.currentTarget as HTMLElement) + (e.key === 'ArrowUp' ? -1 : 1)]?.focus()
   } else if (e.key === ' ') {
     e.preventDefault()
-    data.toggleDone(props.rec.id)
+    toggle()
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     e.preventDefault()
     remove()
@@ -211,7 +230,14 @@ function onKey(e: KeyboardEvent) {
 // ---------- Входящие: the move button (Josh 28 Oct, 10; Todoist «Move to…», Things «Move») ----------
 
 const notify = useNotify()
-const { list: listPage } = useCreatePage()
+function toggle() {
+  const context = props.purchase && !props.readonly && !props.rec.parentId && props.view
+    ? { pageId: props.page.id, viewId: props.view.id }
+    : undefined
+  const result = data.toggleDone(props.rec.id, context)
+  if (result === 'invalid-norm') notify('Укажите неотрицательную норму запаса перед покупкой')
+  else if (result === 'conflict') notify('Запись изменилась. Обновите её и попробуйте снова')
+}
 const allPlaces = usePlaces()
 /** Every open record in Входящие ends with it; a ticked one has none, and a preview only reads */
 const moving = computed(() => inbox.value && !props.rec.done && !props.readonly)
@@ -223,8 +249,8 @@ const suggested = computed(() => movePop.value && journal.hasModel() ? journal.g
 /** The record moves at once and leaves Входящие; «Отменить» puts it back, and a page made for it goes while empty */
 function moveTo(to: Id | { name: string }) {
   movePop.value = false
-  const { result: page, undo } = journal.undoable([props.rec.id], () =>
-    journal.chooseForRecord(props.rec.id, { pageId: typeof to === 'string' ? to : listPage(to.name).id }))
+  const { result: page, undo } = journal.undoable(journal.clarificationIds([props.rec.id]), () =>
+    journal.chooseForRecord(props.rec.id, typeof to === 'string' ? { pageId: to } : { newList: to.name }))
   if (page && page.id !== data.inbox.id) notify(`Перемещено ${into(page.title || 'Без названия')}`, { label: 'Отменить', run: undo })
 }
 </script>
@@ -234,7 +260,7 @@ function moveTo(to: Id | { name: string }) {
   <div
     ref="box"
     class="relative"
-    :class="{ 'z-5': movePop }"
+    :class="{ 'z-5': movePop, 'mf3-row-enter': reveal && fresh }"
   >
     <!-- Swipe actions grow from the right edge over the row's values; the mark and the text stay in place (B1) -->
     <div
@@ -277,7 +303,7 @@ function moveTo(to: Id | { name: string }) {
         ref="el"
         class="group/row relative mx-1 flex min-h-11 items-center rounded-chip pr-3 lg:mx-0 lg:min-h-10 lg:pr-1.5"
         :class="[
-          selected ? 'bg-sel' : lifted ? '' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
+          dropTarget ? 'bg-accent-soft ring-2 ring-inset ring-accent' : selected ? 'bg-sel' : lifted ? '' : 'bg-[var(--row-bg,var(--bg))] lg:hover:bg-hover',
           // A computer marks «new» with a bar at the left edge, as a filled row means «open» there (computer delta, item 13)
           { 'fresh-tint': fresh && !isDesktop, 'fresh-bar': fresh && isDesktop, 'animate-leave': leaving },
           swipe.dragging.value ? '' : 'transition-[padding] duration-200 ease-out-soft',
@@ -320,12 +346,12 @@ function moveTo(to: Id | { name: string }) {
         </component>
         <!-- Запасы (MobileStock): no tick, the text on the gutter and the norm under it -->
         <RecordMark
-          v-if="!stock"
+          v-if="!hasStock || (purchase && view?.stock?.mode === 'buy')"
           :rec="rec"
           :page="page"
           :tabbable="readonly"
           class="lg:size-9"
-          @toggle="data.toggleDone(rec.id)"
+          @toggle="toggle"
         />
         <span
           v-else
@@ -365,7 +391,7 @@ function moveTo(to: Id | { name: string }) {
               data-row-qty
             >{{ qty }}</span></span>
             <span
-              v-if="noteLine && !stock"
+              v-if="noteLine && !hasStock"
               class="line-clamp-2 text-sm leading-4.75 break-words text-toned"
               data-row-note
             >{{ noteLine }}</span>
@@ -386,8 +412,24 @@ function moveTo(to: Id | { name: string }) {
             class="flex shrink-0 items-center gap-2.5 pl-0.5 text-meta text-toned tabular-nums max-lg:min-h-7"
           >
             <span v-if="waiting">ждёт сети</span>
+            <button
+              v-if="subs.length && treeFold"
+              type="button"
+              class="flex h-11 cursor-pointer items-center gap-1 rounded-item text-toned"
+              :aria-label="`Подпункты ${rec.text}: ${subsDone} из ${subs.length}`"
+              :aria-expanded="!subsFolded"
+              @pointerdown.stop
+              @click.stop="data.toggleFolded(`record:${rec.id}`)"
+            >
+              {{ subsDone }}/{{ subs.length }}
+              <UIcon
+                name="i-lucide-chevron-down"
+                class="size-3.5 transition-transform duration-150"
+                :class="{ '-rotate-90': subsFolded }"
+              />
+            </button>
             <span
-              v-if="subs.length"
+              v-else-if="subs.length"
               :aria-label="`подпункты: ${subsDone} из ${subs.length}`"
             >{{ subsDone }}/{{ subs.length }}</span>
             <template
@@ -408,7 +450,26 @@ function moveTo(to: Id | { name: string }) {
           </span>
         </div>
 
-        <!-- Запасы: the number against its norm, with a stepper -->
+        <template
+          v-for="config in configuredStocks"
+          :key="config.amountProp"
+        >
+          <span
+            v-if="readonly || (leaving && purchase && view?.stock?.mode === 'buy')"
+            class="ml-1 shrink-0 text-15 tabular-nums"
+            :class="stockLow(rec, config) ? 'text-warn-ink' : 'text-toned'"
+          >{{ stepperText(rec, page, config, false) }}</span>
+          <StockStepper
+            v-else
+            class="ml-1"
+            :page="page"
+            :rec="rec"
+            :stock="config"
+            @open-change="(id, open) => emit('stock-open', id, open)"
+          />
+        </template>
+
+        <!-- Older pages without an explicit stock configuration keep their existing stepper. -->
         <span
           v-if="stock"
           class="ml-1 flex shrink-0 items-center gap-1.5"

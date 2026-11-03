@@ -5,6 +5,7 @@ import { ref, watch } from 'vue'
 import type { PageColor } from '~/domain/types'
 import { useScreen } from '~/composables/useScreen'
 import { useLater } from '~/composables/useLater'
+import { useBackLayer } from '~/composables/useBackLayer'
 import DotsButton from '../common/DotsButton.vue'
 import OptionPill from '../common/OptionPill.vue'
 
@@ -52,6 +53,9 @@ defineProps<{
 const { isDesktop } = useScreen()
 const later = useLater()
 const open = defineModel<boolean>('open', { default: false })
+useBackLayer(() => open.value, () => {
+  open.value = false
+})
 // A phone sheet is mounted on first open and kept for its closing animation: a long page has a «⋯» on
 // every row, and a sheet each would cost seconds to open the page
 const used = ref(false)

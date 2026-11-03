@@ -117,28 +117,27 @@ export default [
     expect(!rows.some(r => r.startsWith('Настроить вид')), `Сегодня's «⋯»: ${rows}`)
     expect(!(await p.getByRole('radio', { name: 'Все страницы' }).count()), 'Сегодня offers «Откуда записи»')
   } },
-  // 8: «На неделе → «Настроить вид» → «Фильтр» opens «Фильтр» / «вид «Список»». «Просрочено» and «На неделе» are
-  // ticked, «Не сделано» is selected, and «Ждут уточнения» is off. There is no «‹». Tap outside: «Настроить вид» is
-  // back with «Фильтр · Просрочено · На неделе · не сделано»»
+  // Item 17 replaces the chip sheet with «Фильтр и сортировка», with a values level and ‹ back to settings.
   { id: 'c24-08-filter', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
     await pageMenu(p, 'Настроить вид')
     expect(await filterRow(p) === 'Просрочено · На неделе · не сделано', `the select reads «${await filterRow(p)}»`)
     await p.getByRole('button', { name: /^Фильтр: / }).click()
     await p.waitForTimeout(1200)
-    const sheet = p.getByRole('dialog').filter({ has: p.locator('h2', { hasText: 'Фильтр' }) })
+    const sheet = p.getByRole('dialog')
     const head = plain(await sheet.locator('h2[class]').first().innerText())
-    const sub = plain(await sheet.locator('h2[class] + p').first().innerText())
-    expect(head === 'Фильтр' && sub === 'вид «Список»', `the sheet reads «${head}» / «${sub}»`)
-    const pressed = async name => (await sheet.getByRole('button', { name, exact: true }).getAttribute('aria-pressed')) === 'true'
-    expect(await pressed('Просрочено') && await pressed('На неделе') && !(await pressed('Сегодня')), 'Срок chips are not «Просрочено», «На неделе»')
-    expect(await sheet.getByRole('radio', { name: 'Не сделано' }).getAttribute('aria-checked') === 'true', '«Не сделано» is not selected')
-    expect(!(await pressed('Ждут уточнения')), '«Ждут уточнения» is on')
-    expect(!(await sheet.getByRole('button', { name: 'Назад' }).count()), 'the phone sheet has a «‹»')
-    // A tap outside, above the sheet
-    await p.mouse.click(200, 60)
-    await p.waitForTimeout(1500)
-    expect(await shows(p.getByRole('dialog').getByText('Настроить вид')), '«Настроить вид» is not back')
+    expect(head === 'Фильтр и сортировка', `the sheet reads «${head}»`)
+    await sheet.getByRole('button', { name: /^Срок / }).click()
+    const due = sheet.getByRole('group', { name: 'Срок' })
+    const selected = name => due.getByRole('checkbox', { name: new RegExp(`^${name}`) }).isChecked()
+    expect(await selected('Просрочено') && await selected('На неделе') && !(await selected('Сегодня')), 'Срок choices are not «Просрочено», «На неделе»')
+    await sheet.getByRole('button', { name: 'Назад' }).click()
+    await sheet.getByRole('button', { name: /^Сделано / }).click()
+    expect(await sheet.getByRole('radio', { name: 'Не сделано' }).isChecked(), '«Не сделано» is not selected')
+    expect(!(await weekView(p)).asking, '«Ждут уточнения» is on')
+    await sheet.getByRole('button', { name: 'Назад' }).click()
+    await sheet.getByRole('button', { name: 'Назад' }).click()
+    expect(await shows(p.getByRole('dialog').getByText('Настроить вид')), '‹ does not return to «Настроить вид»')
     expect(await filterRow(p) === 'Просрочено · На неделе · не сделано', `the select reads «${await filterRow(p)}»`)
   } },
   // 8: «On Задачи, set «Срок · Сегодня»: only «Позвонить стоматологу» stays»
@@ -147,10 +146,10 @@ export default [
     await pageMenu(p, 'Настроить вид')
     await p.getByRole('button', { name: /^Фильтр: / }).click()
     await p.waitForTimeout(1200)
-    await p.getByRole('dialog').getByRole('button', { name: 'Сегодня', exact: true }).click()
+    await p.getByRole('dialog').getByRole('button', { name: /^Срок / }).click()
+    await p.getByRole('dialog').getByRole('checkbox', { name: /^Сегодня/ }).check()
     await p.waitForTimeout(400)
-    await closeTop(p)
-    await closeTop(p)
+    await p.getByRole('dialog').getByRole('button', { name: 'Готово', exact: true }).click()
     const rows = (await p.locator('[data-row-text]').allInnerTexts()).map(plain)
     expect(rows.length === 1 && rows[0].startsWith('Позвонить стоматологу'), `Задачи shows ${rows}`)
     const stored = await store(p, d => d.livePages.find(x => x.title === 'Задачи').views[0].dues)
@@ -277,46 +276,49 @@ export default [
     await p.getByRole('button', { name: /^Фильтр: / }).click()
     await p.waitForTimeout(1200)
     const sheet = p.getByRole('dialog')
-    await sheet.getByRole('button', { name: 'Просрочено', exact: true }).click()
+    await sheet.getByRole('button', { name: /^Срок / }).click()
+    await sheet.getByRole('checkbox', { name: /^Просрочено/ }).uncheck()
     await p.waitForTimeout(400)
     let rows = (await collectRows(p)).map(r => r.text)
     expect(rows.length === 6 && !rows.includes('Оплатить интернет'), `without «Просрочено»: ${rows}`)
-    await sheet.getByRole('button', { name: 'Просрочено', exact: true }).click()
-    await sheet.getByRole('button', { name: 'На неделе', exact: true }).click()
+    await sheet.getByRole('checkbox', { name: /^Просрочено/ }).check()
+    await sheet.getByRole('checkbox', { name: /^На неделе/ }).uncheck()
     await p.waitForTimeout(400)
     rows = (await collectRows(p)).map(r => r.text)
     expect(rows.join() === 'Оплатить интернет', `without «На неделе»: ${rows}`)
-    await sheet.getByRole('button', { name: 'На неделе', exact: true }).click()
+    await sheet.getByRole('checkbox', { name: /^На неделе/ }).check()
     await p.waitForTimeout(400)
     expect((await collectRows(p)).length === 7, 'ticked again, not seven')
   } },
-  // 20: «Tap «Сегодня»: three ticked. Close the sheet: the select reads «Просрочено · Сегодня · На неделе · не
-  // сделано». Tap «Любой»: only «Любой» is selected, and the list holds every open record, dated or not. Tick
-  // «Просрочено», then untick it: «Любой» again»
+  // 20: select three due values, check the settings summary, then «Очистить» (item 17's replacement for «Любой»).
+  // Every open record returns; checking and unchecking the last value returns the summary «Любой».
   { id: 'c24-20-multi', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
     await pageMenu(p, 'Настроить вид')
     await p.getByRole('button', { name: /^Фильтр: / }).click()
     await p.waitForTimeout(1200)
-    const chip = name => p.getByRole('dialog').getByRole('button', { name, exact: true })
-    await chip('Сегодня').click()
+    const sheet = p.getByRole('dialog')
+    const chip = name => sheet.getByRole('checkbox', { name: new RegExp(`^${name}`) })
+    await sheet.getByRole('button', { name: /^Срок / }).click()
+    await chip('Сегодня').check()
     await p.waitForTimeout(300)
-    const ticked = await p.getByRole('dialog').locator('button[aria-pressed="true"]').allInnerTexts()
-    expect(ticked.map(plain).join() === 'Просрочено,Сегодня,На неделе', `ticked: ${ticked}`)
-    await closeTop(p)
+    expect(await chip('Просрочено').isChecked() && await chip('Сегодня').isChecked() && await chip('На неделе').isChecked() && !(await chip('Без срока').isChecked()), 'not all three due choices are selected')
+    await sheet.getByRole('button', { name: 'Назад' }).click()
+    await sheet.getByRole('button', { name: 'Назад' }).click()
     expect(await filterRow(p) === 'Просрочено · Сегодня · На неделе · не сделано', `the select reads «${await filterRow(p)}»`)
     await p.getByRole('button', { name: /^Фильтр: / }).click()
     await p.waitForTimeout(1200)
-    await chip('Любой').click()
+    await sheet.getByRole('button', { name: /^Срок / }).click()
+    await sheet.getByRole('button', { name: 'Очистить', exact: true }).click()
     await p.waitForTimeout(400)
-    const on = await p.getByRole('dialog').locator('button[aria-pressed="true"]').allInnerTexts()
-    expect(on.map(plain).join() === 'Любой', `after «Любой»: ${on}`)
+    expect(!(await chip('Просрочено').isChecked()) && !(await chip('Сегодня').isChecked()) && !(await chip('На неделе').isChecked()) && !(await chip('Без срока').isChecked()), '«Очистить» left due choices selected')
     const rows = (await collectRows(p)).map(r => r.text)
     expect(rows.includes('Записаться на забег') && rows.includes('Хлеб'), `«Любой» holds ${rows.length} rows: ${rows}`)
-    await chip('Просрочено').click()
-    await chip('Просрочено').click()
+    await chip('Просрочено').check()
+    await chip('Просрочено').uncheck()
     await p.waitForTimeout(300)
-    expect((await chip('Любой').getAttribute('aria-pressed')) === 'true', '«Любой» does not come back')
+    await sheet.getByRole('button', { name: 'Назад' }).click()
+    expect(plain(await sheet.getByRole('button', { name: /^Срок / }).innerText()) === 'Срок Любой', '«Любой» does not come back')
   } },
   // 21: «На неделе: «Оплатить интернет» has «Задачи» and «было вчера» in muted, and «1 просрочено» in the header is
   // the only warn-coloured text. Задачи: «было вчера» is warn»
@@ -453,9 +455,7 @@ export default [
     await p.waitForTimeout(500)
     expect((await menuRows(p)).some(r => r.startsWith('Что сюда класть')), 'Задачи has no «Что сюда класть»')
   } },
-  // 27: «The «Фильтр» sheet reads «Фильтр» / «вид «Список»», and the Метка row is «Ждут уточнения»; no chip reads
-  // «уточнить». On a view with «Все страницы» and Срок «Любой», tap «Ждут уточнения»: only Подарок маме на др and
-  // Посмотреть тот сериал remain»
+  // 27: On «Все страницы» and Срок «Любой», «Ждут уточнения» leaves the two clarification records; never «уточнить».
   { id: 'c24-27-asking', device: MOBILE, run: async (p) => {
     await openPage(p, 'На неделе')
     await pageMenu(p, 'Настроить вид')
@@ -463,8 +463,10 @@ export default [
     await p.waitForTimeout(1200)
     const sheet = p.getByRole('dialog')
     expect(!(await sheet.getByRole('button', { name: 'уточнить' }).count()), 'a chip reads «уточнить»')
-    await sheet.getByRole('button', { name: 'Любой', exact: true }).click()
-    await sheet.getByRole('button', { name: 'Ждут уточнения', exact: true }).click()
+    await sheet.getByRole('button', { name: /^Срок / }).click()
+    await sheet.getByRole('button', { name: 'Очистить', exact: true }).click()
+    await sheet.getByRole('button', { name: 'Назад' }).click()
+    await sheet.getByRole('checkbox', { name: 'Ждут уточнения', exact: true }).check()
     await p.waitForTimeout(500)
     const rows = (await collectRows(p)).map(r => r.text).sort()
     expect(rows.join() === 'Подарок маме на др,Посмотреть тот сериал', `rows: ${rows}`)
@@ -499,9 +501,7 @@ export default [
     await p.waitForTimeout(1200)
     expect(await shows(p.getByRole('dialog').filter({ hasText: 'Настроить вид' })), 'Esc does not return to «Настроить вид»')
   } },
-  // D5: «На неделе → «Настроить вид» → «Фильтр»: the same popover shows ‹, «Фильтр», «вид «Список»». ‹ goes back to
-  // «Настроить вид». «Фильтр» again, then Esc goes back, and Esc again closes it. Click outside from the filter level:
-  // everything closes»
+  // D5: the same popover opens the filter and its due values; ‹ and Esc go back, while a click outside closes both.
   { id: 'c24-d5-levels', device: DESKTOP, run: async (p) => {
     await openPage(p, 'На неделе')
     await pageMenu(p, 'Настроить вид')
@@ -509,9 +509,10 @@ export default [
     await p.getByRole('button', { name: /^Фильтр: / }).click()
     await p.waitForTimeout(500)
     expect(await pop.count() === 1, `${await pop.count()} popovers`)
-    expect(plain(await pop.locator('h2').innerText()) === 'Фильтр' && plain(await pop.locator('h2 + p').innerText()) === 'вид «Список»', 'not «Фильтр» / «вид «Список»»')
-    const chip = await pop.getByRole('button', { name: 'Просрочено', exact: true }).evaluate(el => el.className)
-    expect(chip.includes('bg-accent-soft'), 'a picked chip is not chip-on')
+    expect(plain(await pop.locator('h2').innerText()) === 'Фильтр и сортировка', 'not «Фильтр и сортировка»')
+    await pop.getByRole('button', { name: /^Срок / }).click()
+    expect(await pop.getByRole('checkbox', { name: /^Просрочено/ }).isChecked(), '«Просрочено» is not selected')
+    await pop.getByRole('button', { name: 'Назад' }).click()
     await pop.getByRole('button', { name: 'Назад' }).click()
     await p.waitForTimeout(400)
     expect(plain(await pop.locator('h2').innerText()) === 'Настроить вид', '‹ does not go back')
@@ -532,12 +533,12 @@ export default [
   } },
   // D8: «На неделе → «Настроить вид» → «Эта страница», then «Все страницы»: the notice shows above the composer, not
   // inside the popover. Close the popover: the notice stays, and «Отменить» works». Opened from the page «⋯» and from the
-  // view bar's own button, which stands lower: the popover never covers the notice
+  // current view tab, which stands lower: the popover never covers the notice
   ...[['menu', 'the page «⋯»'], ['bar', 'the view bar']].map(([key, from]) => ({ id: key === 'menu' ? 'c24-d8-notice' : 'c24-d8-notice-bar', device: DESKTOP, run: async (p) => {
     await openPage(p, 'На неделе')
     if (key === 'menu') await pageMenu(p, 'Настроить вид')
     else {
-      await p.getByRole('button', { name: 'Настроить вид', exact: true }).filter({ visible: true }).first().click()
+      await p.getByRole('tab', { name: 'Список', selected: true }).click()
       await p.waitForTimeout(900)
     }
     await p.getByRole('radio', { name: 'Эта страница' }).click()

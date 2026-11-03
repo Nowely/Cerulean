@@ -15,7 +15,7 @@ import { useScreen } from '~/composables/useScreen'
 import { useSide } from '~/composables/useSide'
 
 /** The dock's column: Главная 720, Журнал 640, pages 680 */
-const props = withDefaults(defineProps<{ wide?: boolean, chat?: boolean }>(), { wide: false, chat: false })
+const props = withDefaults(defineProps<{ wide?: boolean, chat?: boolean, home?: boolean }>(), { wide: false, chat: false, home: false })
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const { arrivedState, measure: measureEnds } = useScroll(scroller)
 // The ends move without a scroll too: the dock grows (a receipt docks, the keys come up) or rows come and go. useScroll
@@ -92,7 +92,10 @@ defineExpose({ scroller })
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+  <div
+    class="flex h-full min-h-0 min-w-0 flex-1 flex-col"
+    :class="{ 'bg-side': home }"
+  >
     <slot name="header" />
     <div
       ref="scroller"
@@ -119,7 +122,7 @@ defineExpose({ scroller })
       <div
         v-if="covering && cover"
         class="pointer-events-none absolute inset-x-0"
-        :class="[side ? 'bg-side' : 'bg-canvas', dockLine ? 'bottom-[calc(100%-6px)]' : 'bottom-full']"
+        :class="[side || home ? 'bg-side' : 'bg-canvas', dockLine ? 'bottom-[calc(100%-6px)]' : 'bottom-full']"
         :style="{ height: `${cover}px` }"
         aria-hidden="true"
         data-dock-cover

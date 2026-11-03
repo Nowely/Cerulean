@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Cerulean — «⋯» у «Мои страницы»</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="width: 280px; height: 340px">
+<dc-import name="Menu" variant="Мои страницы" theme="{{theme}}" hint-size="280px,340px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}, "$preview": {"width": 280, "height": 340}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

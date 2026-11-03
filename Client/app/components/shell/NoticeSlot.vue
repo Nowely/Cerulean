@@ -7,6 +7,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useUiStore } from '~/stores/ui'
 import { useNoticeSlot } from '~/composables/useNotify'
+import { useNoticeSwipe } from '~/composables/useNoticeSwipe'
 
 const props = withDefaults(defineProps<{
   /** dock: above the composer; bare: the foot of a screen without one; sheet: the foot of an open sheet */
@@ -17,6 +18,10 @@ const props = withDefaults(defineProps<{
 const ui = useUiStore()
 const slot = useNoticeSlot(props.place === 'sheet' ? 1 : 0, () => props.active)
 const notice = computed(() => slot.shows.value ? ui.notice : null)
+const noticeBox = ref<HTMLElement>()
+const swipe = useNoticeSwipe(noticeBox, () => notice.value?.id, (id) => {
+  if (ui.notice?.id === id) ui.notice = null
+})
 // The notice left this slot or was replaced: what held it here lets go
 watch(() => notice.value?.id, (now, before) => {
   if (before) slot.release()
@@ -54,6 +59,14 @@ const pad = {
   // A sheet's notice sits on its 22pt bottom, never over a row (v24 fixes, 17)
   sheet: 'px-3 pt-2 pb-[max(env(safe-area-inset-bottom),1.375rem)]'
 }
+function disableLeaving(el: Element) {
+  if (el instanceof HTMLElement) el.inert = true
+  el.querySelector('[data-notice]')?.removeAttribute('data-notice')
+}
+function enableEntering(el: Element) {
+  if (el instanceof HTMLElement) el.inert = false
+  el.querySelector('[data-body-keep]')?.setAttribute('data-notice', '')
+}
 /** The sheet fades its scroll area above the notice while it shows */
 defineExpose({ showing: computed(() => !!notice.value) })
 </script>
@@ -68,53 +81,67 @@ defineExpose({ showing: computed(() => !!notice.value) })
       to="body"
       :disabled="!over"
     >
-      <div
-        v-if="notice"
-        :key="notice.id"
-        class="flex"
-        :class="[pad[place], { 'fixed z-10': over }]"
-        :style="over ? at : undefined"
+      <Transition
+        name="mf3-notice"
+        @before-enter="enableEntering"
+        @before-leave="disableLeaving"
       >
-        <!-- A press on it keeps the caret and the text's session: the editing bar stays, so the notice does not move
-             from under the finger and the keys stay up (a record has no composer to hold the dock's height) -->
         <div
-          data-notice
-          data-body-keep
-          class="pointer-events-auto relative flex min-h-12 min-w-0 flex-1 items-center gap-0.5 overflow-hidden rounded-card bg-inverted py-0.5 text-sm text-canvas shadow-float motion-safe:animate-rise"
-          :class="notice.action ? 'pr-1 pl-3.5' : 'px-3.5'"
-          @mouseenter="slot.hold('hover', true)"
-          @mouseleave="slot.hold('hover', false)"
-          @focusin="slot.hold('focus', true)"
-          @focusout="slot.hold('focus', false)"
-          @touchstart.passive="slot.hold('touch', true)"
-          @touchend.passive="slot.hold('touch', false)"
-          @touchcancel.passive="slot.hold('touch', false)"
+          v-if="notice"
+          class="flex"
+          :class="[pad[place], { 'fixed z-10': over }]"
+          :style="over ? at : undefined"
         >
-          <!-- The padding sits outside the clamp, or the clipped third line peeks through it -->
-          <span class="min-w-0 flex-1 py-1.5 leading-snug">
-            <span
-              v-if="moved"
-              class="flex min-w-0 items-baseline gap-1"
-            >
-              <!-- The space keeps «Яйца → Овощи» one phrase for screen readers and search; the gap draws it -->
-              <span class="truncate">{{ moved.what }}</span>{{ ' ' }}<span class="shrink-0 whitespace-nowrap">→ {{ moved.where }}</span>
-            </span>
-            <span
-              v-else
-              class="line-clamp-2"
-            >{{ notice.title }}</span>
-          </span>
-          <button
-            v-if="notice.action"
-            type="button"
-            class="h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-item px-2.5 font-medium lg:hover:bg-canvas/10"
-            @mousedown.prevent
-            @click="notice.action.run()"
+          <!-- A press on it keeps the caret and the text's session: the editing bar stays, so the notice does not move
+             from under the finger and the keys stay up (a record has no composer to hold the dock's height) -->
+          <div
+            ref="noticeBox"
+            data-notice
+            data-body-keep
+            data-vaul-no-drag
+            class="pointer-events-auto relative flex min-h-12 min-w-0 flex-1 touch-pan-y items-center gap-0.5 overflow-hidden rounded-card bg-inverted py-0.5 text-sm text-canvas shadow-float"
+            :class="[notice.action ? 'pr-1 pl-3.5' : 'px-3.5', { 'motion-safe:transition-[transform,opacity] motion-safe:duration-150': !swipe.dragging.value }]"
+            :style="swipe.style.value"
+            @pointerdown="swipe.down"
+            @pointermove="swipe.move"
+            @pointerup="swipe.up"
+            @pointercancel="swipe.cancel"
+            @click.capture="swipe.click"
+            @touchmove.passive="swipe.touchMove"
+            @mouseenter="slot.hold('hover', true)"
+            @mouseleave="slot.hold('hover', false)"
+            @focusin="slot.hold('focus', true)"
+            @focusout="slot.hold('focus', false)"
+            @touchstart.passive="slot.hold('touch', true); swipe.touchStart($event)"
+            @touchend.passive="slot.hold('touch', false); swipe.touchEnd()"
+            @touchcancel.passive="slot.hold('touch', false); swipe.touchEnd()"
           >
-            {{ notice.action.label }}
-          </button>
+            <!-- The padding sits outside the clamp, or the clipped third line peeks through it -->
+            <span class="min-w-0 flex-1 py-1.5 leading-snug">
+              <span
+                v-if="moved"
+                class="flex min-w-0 items-baseline gap-1"
+              >
+                <!-- The space keeps «Яйца → Овощи» one phrase for screen readers and search; the gap draws it -->
+                <span class="truncate">{{ moved.what }}</span>{{ ' ' }}<span class="shrink-0 whitespace-nowrap">→ {{ moved.where }}</span>
+              </span>
+              <span
+                v-else
+                class="line-clamp-2"
+              >{{ notice.title }}</span>
+            </span>
+            <button
+              v-if="notice.action"
+              type="button"
+              class="h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-item px-2.5 font-medium lg:hover:bg-canvas/10"
+              @mousedown.prevent
+              @click="notice.action.run()"
+            >
+              {{ notice.action.label }}
+            </button>
+          </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
   </div>
 </template>

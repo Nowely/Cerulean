@@ -194,7 +194,7 @@ export default [
     await p.waitForTimeout(250)
     expect(await text(notice(p)) === 'Добавлено в Подарки Отменить', `notice: ${await text(notice(p))}`)
     const gifts = await store(p, data => data.livePages.filter(x => x.title === 'Подарки').map(x => ({ glyph: x.glyph, recs: data.recordsOf(x.id).length })))
-    expect(JSON.stringify(gifts) === '[{"glyph":"list","recs":1}]', `Подарки: ${JSON.stringify(gifts)}`)
+    expect(JSON.stringify(gifts) === '[{"glyph":"gift","recs":1}]', `Подарки: ${JSON.stringify(gifts)}`)
     await tapFree(p)
     expect((await myPages(p)).includes('Подарки') && (await text(card(p, 'Подарки').locator('[data-open]'))).endsWith('1'), `no «Подарки 1»: ${await myPages(p)}`)
     // A name that exists picks that page; Esc and an empty Enter give the row back

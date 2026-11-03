@@ -132,17 +132,17 @@ const READINGS = (line, id) => ({
 })[line] ?? [{ text: line, pageId: null }]
 
 /** Within 22px of its centre, in each direction, a tap still lands on the control (item 26); a pixel is left for rows that round */
-async function hit44(l, what) {
+async function hit44(l, what, strict = false) {
   await l.scrollIntoViewIfNeeded()
-  const misses = await l.evaluate((e) => {
+  const misses = await l.evaluate((e, strict) => {
     const r = e.getBoundingClientRect()
     const cx = r.left + r.width / 2
     const cy = r.top + r.height / 2
     return [[-21, 0], [21, 0], [0, -21], [0, 21]].filter(([dx, dy]) => {
       const at = document.elementFromPoint(cx + dx, cy + dy)
-      return !at || !(at === e || e.contains(at) || at.contains(e))
+      return !at || !(at === e || e.contains(at) || (!strict && at.contains(e)))
     }).map(d => d.join(','))
-  })
+  }, strict)
   expect(!misses.length, `${what}: a tap ${misses.join(' / ')} px from its centre misses it`)
 }
 
@@ -170,7 +170,7 @@ export default [
       const s = data.livePages.find(x => x.title === 'Покупки')
       return { opts: s.props.find(x => x.type === 'select')?.options?.length ?? 0, views: s.views.map(v => v.name), recs: data.recordsOf(s.id).length }
     })
-    expect(shop.opts >= 5 && shop.views.join() === 'Купить,Куплено' && shop.recs === 0, `Покупки: ${JSON.stringify(shop)}`)
+    expect(shop.opts >= 5 && shop.views.join() === 'Купить,Запасы,Куплено' && shop.recs === 0, `Покупки: ${JSON.stringify(shop)}`)
   } },
 
   // 2. Every empty page is its title and «+ Новая запись»
@@ -444,7 +444,8 @@ export default [
     await p.waitForURL(/\/r\//)
     await p.waitForTimeout(400)
     const t = await mainText(p)
-    for (const w of ['Добавлено', 'сегодня, 9:', 'Свойство', '2,5%, большую пачку', 'Подпункт']) expect(t.includes(w), `no «${w}» on the record`)
+    for (const w of ['Добавлено', 'сегодня, 9:', '2,5%, большую пачку', 'Подпункт']) expect(t.includes(w), `no «${w}» on the record`)
+    expect(await shows(p.getByRole('button', { name: 'Добавить свойство' })), 'no add-property button on the record')
     expect(!t.includes('с Главной') && !t.includes('вручную') && !t.includes('Связать'), 'a source or «Связать» on the record')
     expect(!(await p.locator('[data-field]').count()), 'a field is docked on a record')
     await p.getByRole('button', { name: 'Действия с записью' }).first().click()
@@ -463,10 +464,16 @@ export default [
     await p.waitForSelector('[data-home]')
     await write(p, 'Купить сыр 300 г завтра', '', 'Покупки')
     const id = await store(p, data => data.liveRecords.find(r => r.text === 'Сыр').id)
+    await store(p, (data, id) => {
+      const r = data.records[id]
+      const page = data.pages[r.pageId]
+      const stock = page.stocks[0]
+      data.updateRecord(id, { values: { ...r.values, [stock.amountProp]: 1, [stock.normProp]: 2 } })
+    }, id)
     await p.goto(`${BASE}/r/${id}`)
     await p.waitForSelector('main')
     await p.waitForTimeout(400)
-    await p.locator('main [data-add-row]').filter({ hasText: 'Свойство' }).click()
+    await p.getByRole('button', { name: 'Добавить свойство' }).click()
     await p.waitForTimeout(500)
     const sheet = p.getByRole('dialog')
     expect(await shows(sheet.getByRole('textbox', { name: 'Название', exact: true })), 'no «Новое свойство» at once')
@@ -755,7 +762,7 @@ export default [
     await p.locator('[data-rows] [data-row-text]').filter({ hasText: 'Молоко' }).click()
     await p.waitForURL(/\/r\//)
     await p.waitForTimeout(400)
-    await hit44(p.locator('[data-add-row]', { hasText: 'Свойство' }), '«+ Свойство»')
+    await hit44(p.getByRole('button', { name: 'Добавить свойство' }), '«+ Свойство»', true)
     await hit44(p.locator('[data-add-row]', { hasText: 'Подпункт' }), '«+ Подпункт»')
     await p.locator('main .body-text').first().click()
     await p.waitForTimeout(300)

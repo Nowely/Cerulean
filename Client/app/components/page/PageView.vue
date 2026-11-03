@@ -3,8 +3,9 @@
 // and glance (beside search results). Preview reads and ticks only: no composer, no swipe, no editing
 // of the title. Glance is a look before opening: the first view as a plain list, no tabs.
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useOnline } from '@vueuse/core'
 import { useRouter } from '#imports'
-import type { Id, Page, Rec, ViewDef } from '~/domain/types'
+import type { Id, Layout, Page, Rec, ViewDef } from '~/domain/types'
 import { useDataStore } from '~/stores/data'
 import { useJournalStore } from '~/stores/journal'
 import { useUiStore } from '~/stores/ui'
@@ -14,16 +15,20 @@ import { usePeek } from '~/composables/usePeek'
 import { usePropSheets } from '~/composables/usePropSheets'
 import { useNotify } from '~/composables/useNotify'
 import { dueToday, dueThisWeek, overdue } from '~/domain/summary'
-import { collected, collects, onlyCollects, togglePicked } from '~/domain/collect'
+import { collected, collects, DUE_CHIPS, onlyCollects, togglePicked } from '~/domain/collect'
 import { useCollecting } from '~/composables/useCollecting'
 import { weekday } from '~/domain/dates'
 import { bodyOf, docText } from '~/domain/body'
 import { groupByDue, matchesQuery } from '~/domain/views'
-import { listView, nameForLayout } from '~/domain/templates'
+import { listView } from '~/domain/templates'
+import { removePageView, undoPageView } from '~/domain/stock'
 import { readLine } from '~/domain/auto'
 import { pageNamed } from '~/domain/rules'
-import { pageColor } from '~/domain/look'
+import { pageColor, suggestedGlyphs } from '~/domain/look'
+import { askIcon } from '~/domain/iconModel'
 import { nb } from '~/domain/text'
+import { useLater } from '~/composables/useLater'
+import { useBackLayer } from '~/composables/useBackLayer'
 import PageTile from '../common/PageTile.vue'
 import TitleField from '../common/TitleField.vue'
 import GlyphPicker from './GlyphPicker.vue'
@@ -31,6 +36,8 @@ import AddRow from '../common/AddRow.vue'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 import ListLayout from './layouts/ListLayout.vue'
 import ViewTabs from './ViewTabs.vue'
+import NewViewTiles from './NewViewTiles.vue'
+import { insertView } from './viewTabsModel'
 import RecordLine from '../record/RecordLine.vue'
 import CollectRow from '../record/CollectRow.vue'
 import PageNote from '../body/PageNote.vue'
@@ -51,8 +58,10 @@ const journal = useJournalStore()
 const notify = useNotify()
 const ui = useUiStore()
 const now = useNow()
+const online = useOnline()
 const router = useRouter()
 const peek = usePeek()
+const later = useLater()
 const { isDesktop } = useScreen()
 
 const full = computed(() => props.container === 'full')
@@ -65,7 +74,8 @@ const gathers = computed(() => props.page.views.some(collects))
  * A page with no records and no kind yet (no template, no glyph) is its title and its text (main flow, item 16, as a
  * new page in Notion): the text fills the screen, and with nothing written «Начать с» offers a kind over the keyboard
  */
-const textual = computed(() => full.value && props.page.kind === 'page' && !hasOwn.value && !props.page.template && !props.page.glyph && !gathers.value)
+const autoApplied = ref(props.page.autoGlyph ? props.page.glyph : null)
+const textual = computed(() => full.value && props.page.kind === 'page' && !hasOwn.value && !props.page.template && (!props.page.glyph || (props.page.autoGlyph && props.page.glyph === autoApplied.value)) && !gathers.value)
 const bodyText = computed(() => docText(bodyOf(props.page)).trim())
 const undecided = computed(() => textual.value && !bodyText.value)
 /**
@@ -84,6 +94,54 @@ const titleDraft = ref(props.page.title)
 watch(() => props.page.title, (t) => {
   titleDraft.value = t
 })
+let iconTimer: ReturnType<typeof setTimeout> | undefined
+let iconRequest: AbortController | undefined
+let iconGeneration = 0
+function cancelIcon() {
+  iconGeneration++
+  clearTimeout(iconTimer)
+  iconRequest?.abort()
+}
+watch(() => props.page.id, (_id, oldId) => {
+  cancelIcon()
+  if (full.value && data.pages[oldId]?.autoGlyph) data.updatePage(oldId, { autoGlyph: false })
+  autoApplied.value = props.page.autoGlyph ? props.page.glyph : null
+  titleDraft.value = props.page.title
+}, { flush: 'sync' })
+watch([titleDraft, () => props.page.id, () => data.settings.aiIcon, () => data.settings.apiKey, () => data.settings.keyState, () => data.settings.provider, () => data.settings.baseUrl, () => data.settings.modelId, () => data.settings.model], () => {
+  cancelIcon()
+  const page = data.pages[props.page.id]
+  if (!full.value || !page?.autoGlyph || page.deletedAt) return
+  if (page.template || page.glyph !== autoApplied.value) {
+    data.updatePage(page.id, { autoGlyph: false })
+    return
+  }
+  if (data.settings.aiIcon === false) return
+  const title = titleDraft.value
+  const glyph = title.trim() ? suggestedGlyphs(title)[0] : null
+  autoApplied.value = glyph
+  if (page.glyph !== glyph) data.updatePage(page.id, { glyph })
+  if (!title.trim() || !journal.hasModel() || !online.value) return
+  const id = page.id
+  const generation = iconGeneration
+  const connection = { ...data.settings }
+  iconTimer = setTimeout(() => {
+    iconRequest = new AbortController()
+    void askIcon(connection, title, iconRequest.signal).then((chosen) => {
+      const current = data.pages[id]
+      if (!chosen || generation !== iconGeneration || !current?.autoGlyph || current.deletedAt || current.template
+        || current.glyph !== glyph || titleDraft.value !== title || data.settings.aiIcon === false || !journal.hasModel()) return
+      autoApplied.value = chosen
+      data.updatePage(id, { glyph: chosen })
+    })
+  }, 500)
+}, { flush: 'sync' })
+function changeGlyph(patch: { glyph?: Page['glyph'], color?: Page['color'] }) {
+  if ('glyph' in patch) {
+    cancelIcon()
+    data.updatePage(props.page.id, { ...patch, autoGlyph: false })
+  } else data.updatePage(props.page.id, patch)
+}
 const taken = computed(() => textual.value ? pageNamed(titleDraft.value, data.livePages.filter(p => p.id !== props.page.id)) : undefined)
 const takenText = computed(() => {
   const p = taken.value
@@ -140,32 +198,85 @@ onBeforeUnmount(() => {
   if (full.value && collectingNow.value?.pageId === props.page.id) collectingNow.value = null
 })
 
-/**
- * «Новый вид» (view menu or «Настроить вид»): right after the current tab, with its filter, named after its type;
- * it is selected and «Настроить вид» opens on it, the name first
- */
 const tabs = useTemplateRef<InstanceType<typeof ViewTabs>>('tabs')
-function addView() {
-  const at = props.page.views.findIndex(v => v.id === view.value.id) + 1
-  const v = listView(nameForLayout(props.page.views, 'list'), { filter: view.value.filter.filter(r => r.field === 'done') })
-  data.updatePage(props.page.id, { views: [...props.page.views.slice(0, at), v, ...props.page.views.slice(at)] })
-  viewId.value = v.id
-  settingsOpen.value = true
+const newViewOpen = ref(false)
+const newViewAnchor = ref<HTMLElement | null>(null)
+function openNewView(anchor?: HTMLElement) {
+  newViewAnchor.value = anchor ?? tabs.value?.currentTab() ?? settingsButton.value?.$el ?? null
+  if (settingsOpen.value) {
+    afterSettings = () => {
+      newViewOpen.value = true
+    }
+    settingsOpen.value = false
+  } else newViewOpen.value = true
+}
+function addView(layout: Layout) {
+  const result = insertView(props.page.views, view.value, layout)
+  data.updatePage(props.page.id, { views: result.views })
+  viewId.value = result.view.id
+  newViewOpen.value = false
 }
 
 const settingsOpen = ref(false)
 const barSettings = settingsOpen
-/** Desktop: «Фильтр» is the second level of the same popover, with ‹ (v24, D5); Esc goes back, a click outside closes */
 const settingsLevel = ref<'main' | 'filter'>('main')
-/** Phone: «Фильтр» is a sheet of its own with no ‹; closing it brings «Настроить вид» back (v24 fixes, 21) */
-const filterOpen = ref(false)
+type FilterField = { kind: 'select', id: Id } | { kind: 'due' | 'done' }
+const filterField = ref<FilterField | null>(null)
+const filterFromSettings = ref(false)
+useBackLayer(() => settingsOpen.value && settingsLevel.value === 'filter' && filterFromSettings.value, () => {
+  settingsLevel.value = 'main'
+}, 2)
+useBackLayer(() => settingsOpen.value && !!filterField.value, () => {
+  filterField.value = null
+}, 3)
+const filterTitle = computed(() => {
+  const field = filterField.value
+  if (!field) return 'Фильтр и сортировка'
+  if (field.kind === 'due') return 'Срок'
+  if (field.kind === 'done') return props.page.template === 'shop' ? 'Куплено' : 'Сделано'
+  if (field.kind === 'select') return props.page.props.find(p => p.id === field.id)?.name ?? `Удалённое свойство: ${field.id}`
+  return 'Фильтр и сортировка'
+})
+const filterBackAvailable = computed(() => settingsLevel.value === 'filter' && (!!filterField.value || filterFromSettings.value))
+function filterBack() {
+  if (filterField.value) filterField.value = null
+  else if (filterFromSettings.value) settingsLevel.value = 'main'
+}
+const filterChips = computed(() => {
+  const chips: { key: string, label: string, field: FilterField }[] = []
+  for (const [id, values] of Object.entries(view.value.selectFilters ?? {})) {
+    if (!values.length) continue
+    const p = props.page.props.find(p => p.id === id && p.type === 'select')
+    const names = values.map(value => p?.options?.find(o => o.id === value)?.name ?? `Удалённый вариант: ${value}`)
+    chips.push({ key: `select:${id}`, label: `${p?.name ?? `Удалённое свойство: ${id}`}: ${names.join(', ')}`, field: { kind: 'select', id } })
+  }
+  if (view.value.dues?.length) chips.push({ key: 'due', label: `Срок: ${DUE_CHIPS.filter(c => view.value.dues?.includes(c.key)).map(c => c.label).join(', ')}`, field: { kind: 'due' } })
+  return chips
+})
+const hasUserFilters = computed(() => filterChips.value.length > 0 || !!view.value.asking)
+function removeFilter(field: FilterField) {
+  const page = data.pages[props.page.id]
+  const current = page?.views.find(v => v.id === view.value.id)
+  if (!page || !current) return
+  const selectFilters = { ...current.selectFilters }
+  if (field.kind === 'select') delete selectFilters[field.id]
+  const change = field.kind === 'select' ? { selectFilters } : field.kind === 'due' ? { dues: [] } : {}
+  data.updatePage(page.id, { views: page.views.map(v => v.id === current.id ? { ...v, ...change } : v) })
+}
 /** Desktop: the page «⋯» it was opened from, where the 420px popover stands (D1); else the view bar's button */
 const settingsAnchor = ref<HTMLElement | null>(null)
 const menuSlot = useTemplateRef<HTMLElement>('menuSlot')
 const settingsButton = useTemplateRef<{ $el?: HTMLElement }>('settingsButton')
 
+function openTabSettings() {
+  settingsLevel.value = 'main'
+  settingsAnchor.value = tabs.value?.currentTab() ?? null
+  settingsOpen.value = true
+}
+
 /** «Настроить вид» from the page «⋯»: on desktop at that «⋯», which has focus back once its menu is gone */
 async function openSettingsFromMenu() {
+  settingsLevel.value = 'main'
   if (isDesktop.value) {
     await nextTick()
     const el = document.activeElement
@@ -176,14 +287,18 @@ async function openSettingsFromMenu() {
 }
 
 function openFilter() {
-  if (isDesktop.value) {
-    settingsLevel.value = 'filter'
-    return
-  }
-  afterSettings = () => {
-    filterOpen.value = true
-  }
-  settingsOpen.value = false
+  filterFromSettings.value = true
+  filterField.value = null
+  settingsLevel.value = 'filter'
+}
+
+async function openFilterDirect(event: Event, field: FilterField | null = null) {
+  settingsAnchor.value = event.currentTarget instanceof HTMLElement ? event.currentTarget : null
+  filterFromSettings.value = false
+  filterField.value = field
+  settingsLevel.value = 'filter'
+  await later.load()
+  settingsOpen.value = true
 }
 
 /**
@@ -247,12 +362,20 @@ function settingsClosed() {
 function removeView() {
   settingsOpen.value = false
   if (tabs.value) return tabs.value.remove(view.value)
-  const before = props.page.views
+  const pageId = props.page.id
+  const page = data.pages[pageId]
   const gone = view.value
-  if (before.length < 2) return
-  data.updatePage(props.page.id, { views: before.filter(v => v.id !== gone.id) })
+  const result = page && removePageView(page, gone.id)
+  if (!result) return
+  data.updatePage(pageId, { views: result.page.views, stocks: result.page.stocks })
   viewId.value = null
-  notify(`Вид «${gone.name}» удалён`, { label: 'Отменить', run: () => data.updatePage(props.page.id, { views: before }) })
+  notify(`Вид «${gone.name}» удалён`, { label: 'Отменить', run: () => {
+    const current = data.pages[pageId]
+    const restored = current && undoPageView(current, result.removed)
+    if (!restored) return
+    data.updatePage(pageId, { views: restored.views, stocks: restored.stocks })
+    if (props.page.id === pageId) viewId.value = gone.id
+  } })
 }
 /** Board and table want the whole width of the main column on desktop */
 const wide = computed(() => view.value.layout === 'board' || view.value.layout === 'table')
@@ -265,7 +388,7 @@ const searching = ref(false)
  * The view bar (tabs, search, «Настроить вид»); Сегодня shows it only while searching; a collecting page always. It
  * stays while «Настроить вид» is open, so a page that stops collecting there («Эта страница») keeps its sheet
  */
-const bar = computed(() => !glance.value && (hasOwn.value || gathers.value || barSettings.value || filterOpen.value || searching.value) && (!today.value || searching.value))
+const bar = computed(() => !glance.value && (hasOwn.value || gathers.value || barSettings.value || searching.value) && (!today.value || searching.value))
 const query = ref('')
 const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
 async function toggleSearch() {
@@ -341,9 +464,12 @@ function openRecord(rec: Rec) {
 // A page with no title, no text and no records goes away on leaving it, silently, as in Notion (main flow, item 16). A
 // title still being typed is kept: this runs before the field's own blur would save it
 onBeforeUnmount(() => {
+  cancelIcon()
   const typed = titleDraft.value.replace(/\s+/g, ' ').trim()
   if (full.value && data.pages[props.page.id] && typed && typed !== props.page.title) data.updatePage(props.page.id, { title: typed })
   const p = data.pages[props.page.id]
+  if (full.value && p?.autoGlyph) data.updatePage(p.id, { autoGlyph: false })
+  cancelIcon()
   if (full.value && p && p.kind === 'page' && !p.title.trim() && !p.description.trim() && !docText(bodyOf(p)).trim() && !data.liveRecords.some(r => r.pageId === p.id)) {
     data.purgePages([p.id])
   }
@@ -374,6 +500,7 @@ const canAdd = computed(() => full.value && !glance.value && !query.value.trim()
 function addHere(text: string) {
   const to = today.value ? data.livePages.find(p => p.kind === 'page' && p.template === 'todo' && !onlyCollects(p)) ?? data.inbox : props.page
   const now = Date.now()
+  const modelOn = journal.hasModel() && online.value
   const { drafts } = readLine(text, '', {
     pages: [to, ...journal.targets().filter(p => p.id !== to.id)],
     inboxId: data.inbox.id,
@@ -382,10 +509,9 @@ function addHere(text: string) {
     now,
     place: { pageId: to.id, by: 'page' },
     today: today.value,
-    // Without a model one line is one record (Josh 28 Oct, 9)
-    sort: journal.hasModel()
+    split: modelOn && data.settings.aiSplit !== false,
+    department: data.settings.aiDepartment !== false
   })
-  // At the end of the list, in the order typed
   let order = data.recordsOf(to.id).reduce((m, r) => Math.max(m, r.order), -1) + 1
   for (const d of drafts) data.addRecord({ pageId: to.id, text: d.text, due: d.due, values: d.values, order: order++, addedAt: now })
 }
@@ -415,28 +541,27 @@ defineExpose({
       class="px-4 pt-1 lg:px-0"
       :class="!full ? 'lg:px-4' : 'lg:pt-px'"
     >
-      <!-- The glyph on its tile, the doc glyph until a kind or a glyph is chosen; no «Добавить значок» (main flow, item 16) -->
-      <!-- Computer: a 28 px tile over the check circles, the title where the record names start (computer delta, item 5) -->
+      <!-- The page glyph keeps its slot over the check circles without a permanent plate. -->
       <div class="flex items-center gap-2.5 lg:gap-1.5 lg:pl-1">
         <GlyphPicker
           v-if="full && page.kind === 'page'"
           v-model:open="glyphOpen"
           :glyph="page.glyph"
           :color="pageColor(page)"
-          :title="page.title || 'Без названия'"
+          :title="titleDraft || 'Без названия'"
           :anchor="glyphAnchor"
-          @change="p => data.updatePage(page.id, p)"
+          @change="changeGlyph"
         >
           <button
             type="button"
-            class="flex shrink-0 cursor-pointer rounded-tile-md"
+            class="relative flex size-7.5 shrink-0 cursor-pointer items-center justify-center rounded-tile-md active:bg-pressed lg:size-7 lg:hover:bg-hover after:absolute after:-inset-y-2 after:-left-4 after:right-0 after:content-['']"
             aria-label="Значок страницы"
           >
             <PageTile
               :glyph="page.glyph"
               :color="pageColor(page)"
-              size="page"
-              tile
+              :size="22"
+              tint
             />
           </button>
         </GlyphPicker>
@@ -531,8 +656,8 @@ defineExpose({
         :current="view"
         :readonly="!full || today"
         @select="id => viewId = id"
-        @settings="barSettings = true"
-        @add="addView"
+        @settings="openTabSettings"
+        @add="openNewView"
       />
       <div
         v-else
@@ -559,57 +684,96 @@ defineExpose({
         class="self-center"
         @click="toggleSearch"
       />
-      <!-- A preview is for reading and ticking (MobileSheet): views are set on the page itself -->
+      <UButton
+        v-if="!today && full"
+        ref="settingsButton"
+        icon="i-lucide-sliders-horizontal"
+        variant="ghost"
+        square
+        aria-label="Фильтр и сортировка"
+        :aria-expanded="barSettings && settingsLevel === 'filter'"
+        :class="['self-center', hasUserFilters ? 'text-accent-ink hover:text-accent-ink focus-visible:text-accent-ink' : '']"
+        @click="openFilterDirect($event)"
+      />
       <AdaptiveOverlay
         v-if="!today && full"
         v-model:open="barSettings"
-        :title="settingsLevel === 'filter' ? 'Фильтр' : 'Настроить вид'"
-        :subtitle="settingsLevel === 'filter' ? `вид «${view.name}»` : undefined"
+        :title="settingsLevel === 'filter' ? filterTitle : 'Настроить вид'"
         width="w-105"
         :anchor="settingsAnchor"
-        :back="settingsLevel === 'filter' ? () => settingsLevel = 'main' : undefined"
+        :back="filterBackAvailable ? filterBack : undefined"
         @closed="settingsClosed"
       >
-        <template #trigger>
+        <template
+          v-if="!isDesktop && filterBackAvailable"
+          #close
+        >
           <UButton
-            ref="settingsButton"
-            icon="i-lucide-sliders-horizontal"
+            icon="i-lucide-chevron-left"
             variant="ghost"
             square
-            aria-label="Настроить вид"
-            :aria-expanded="barSettings"
-            class="self-center"
+            aria-label="Назад"
+            class="order-first -ml-4"
+            @click="filterBack"
           />
         </template>
         <ViewFilter
           v-if="settingsLevel === 'filter'"
           :page="page"
           :view="view"
+          :field="filterField"
+          @open="field => filterField = field"
+          @close="settingsOpen = false"
         />
         <ViewSettings
           v-else
           :page="page"
           :view="view"
           @remove="removeView"
-          @add="addView"
+          @add="openNewView()"
           @new-prop="newProp"
           @filter="openFilter"
           @pick-pages="pickPages"
         />
       </AdaptiveOverlay>
       <AdaptiveOverlay
-        v-if="!today && full && !isDesktop"
-        v-model:open="filterOpen"
-        title="Фильтр"
-        :subtitle="`вид «${view.name}»`"
-        stacked
-        @closed="settingsOpen = true"
+        v-if="!today && full"
+        v-model:open="newViewOpen"
+        title="Новый вид"
+        :anchor="newViewAnchor"
       >
-        <ViewFilter
-          :page="page"
-          :view="view"
-        />
+        <NewViewTiles @select="addView" />
       </AdaptiveOverlay>
+    </div>
+
+    <div
+      v-if="bar && !today && full && filterChips.length"
+      class="flex flex-wrap gap-2 px-4 pt-2 lg:px-0"
+    >
+      <div
+        v-for="chip in filterChips"
+        :key="chip.key"
+        class="inline-flex h-8 max-w-full items-center rounded-item bg-accent-soft text-sm text-accent-ink"
+      >
+        <button
+          type="button"
+          class="min-w-0 cursor-pointer truncate pl-3"
+          @click="openFilterDirect($event, chip.field)"
+        >
+          {{ chip.label }}
+        </button>
+        <button
+          type="button"
+          class="flex size-8 shrink-0 cursor-pointer items-center justify-center"
+          :aria-label="`Убрать фильтр ${chip.label}`"
+          @click="removeFilter(chip.field)"
+        >
+          <UIcon
+            name="i-lucide-x"
+            class="size-4"
+          />
+        </button>
+      </div>
     </div>
 
     <!-- Records: the title block ends where they start (data-rows, the large-title collapse) -->
@@ -729,6 +893,7 @@ defineExpose({
         :page="page"
         :view="view"
         :records="collecting ? collectedRows : shown"
+        :readonly="!full"
         @open="openRecord"
       />
       <CalendarLayout

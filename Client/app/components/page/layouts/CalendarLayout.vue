@@ -8,6 +8,7 @@ import type { Page, Rec, ViewDef } from '~/domain/types'
 import { useNow } from '~/composables/useNow'
 import { useScreen } from '~/composables/useScreen'
 import { useCalendarDay } from '~/composables/useCalendarDay'
+import { useDataStore } from '~/stores/data'
 import { filterRecords, sortRecords } from '~/domain/views'
 import { addDays, dayKey, isOverdue, keyToDate } from '~/domain/dates'
 import RecordRow from '../../record/RecordRow.vue'
@@ -15,6 +16,7 @@ import RecordRow from '../../record/RecordRow.vue'
 const props = defineProps<{ page: Page, view: ViewDef, records: Rec[], readonly?: boolean }>()
 const emit = defineEmits<{ open: [rec: Rec] }>()
 const now = useNow()
+const data = useDataStore()
 const { isDesktop } = useScreen()
 
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
@@ -34,7 +36,7 @@ onBeforeUnmount(() => {
   if (aim.value?.pageId === props.page.id) aim.value = null
 })
 
-const list = computed(() => sortRecords(filterRecords(props.records, props.view), 'due'))
+const list = computed(() => sortRecords(filterRecords(props.records, props.view, data.leaving, now.value), 'due'))
 const byDay = computed(() => {
   const m = new Map<string, Rec[]>()
   for (const r of list.value) {
@@ -165,6 +167,7 @@ const dayLabel = (d: string) => {
         :page="page"
         :view="view"
         :readonly="readonly"
+        :purchase="!readonly && (!view.from || view.from === 'self')"
         day
         @open="emit('open', r)"
       />
@@ -227,6 +230,7 @@ const dayLabel = (d: string) => {
         :page="page"
         :view="view"
         :readonly="readonly"
+        :purchase="!readonly && (!view.from || view.from === 'self')"
         @open="emit('open', r)"
       />
     </template>

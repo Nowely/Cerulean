@@ -83,7 +83,7 @@ export default [
   // Create a page, light: «from «⋯» of Главная: one tap to typing» (the «+» at «Мои страницы» since the main flow, item 16)
   { id: 'wt-create-page', device: MOBILE, run: async (p) => {
     await open(p, '/')
-    await p.getByRole('button', { name: 'Новая страница' }).click()
+    await p.locator('section[aria-labelledby="cap-recent"]').getByRole('button', { name: 'Новая страница' }).click()
     await p.waitForURL(/\/p\//)
     await p.waitForTimeout(300)
     const title = p.getByRole('textbox', { name: 'Название страницы' })

@@ -4,6 +4,7 @@ Read this first. The product is the client in `Client/`, a Notion-like browser a
 
 ## Where the design lives
 
+- **Recovered local workspace:** `design/mockups/` is a runnable reconstruction of the unpublished iteration-3 Canvas and prototype, not a byte-exact recovery of `99ac6ff`. Its README and `recovery/` record the evidence and limitations. Serve it with `cd design/mockups && python3 -m http.server 8765 --bind 127.0.0.1` and validate it with `python3 tools/validate.py`. Both viewers share the 18 `project/*.dc.html` components; the current proposed delta and brief are in `handoff/`, and the unchanged recovered draft is in `recovery/handoff/`. Implementation awaits approval of the brief's open decisions.
 - **Mockups:** the canvas at https://claude.ai/artifact/HJnpYt6yHSTfmdGMcQM41F. Its sources are in the project folder `/mnt/project-files/design/mockups/`. Never run git on that mount: clone `history/mockups.bundle` into scratch.
 - **Spec:** `spec/spec.md` in the mockups. It wins over a picture. Lines are marked with the version that set them (**v21**).
 - **Handoff:** each mockup iteration sends the client a brief (`handoff/client-brief-*.md`) and a delta (`handoff/v21-delta.md`, …). Every item in them ends with a **Check:** line saying what to tap and what must happen.
@@ -12,6 +13,8 @@ Read this first. The product is the client in `Client/`, a Notion-like browser a
 - **Flow rounds:** since 22 Oct a round can polish one user flow instead of the whole app (the main flow: first open → first record → its note, `handoff/main-flow-delta.md`). It changes only the screens on that flow; other screens keep their behaviour even where the old rule now differs (Журнал keeps `AppComposer` and its receipt). Since 28 Oct every iteration touches a minimum: build only what its delta lists (`handoff/main-flow-2-delta.md` is the second round), and anything next to it waits for Josh's separate command. The computer round (`handoff/computer-delta.md`, canvas 84, 28 Oct) puts the main flow and sync in the «Как Telegram» layout: Главная is the left column and the page, record or settings open on the right. In the mockups `python3 tools/make.py play` walks five modes, and its `computer` mode asserts what the prototype can show with a mouse; in the app `scripts/checks/computer.mjs` (`pc-…`) walks the delta's checks next to the phone's `main-flow.mjs` and `main-flow-2.mjs`.
 
 ## The loop
+
+See [docs/design-workflow.md](docs/design-workflow.md) for the workflow for future features, from request and prototype approval through acceptance.
 
 Each mockup iteration goes through the same steps:
 

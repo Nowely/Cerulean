@@ -5,6 +5,7 @@ import { classify, guessOption, pageTopic, textTopics, type Learned, type RuleRe
 import { cleanRecordText, dropListVerb, dropPrefix, dueWords, isSearch, parseDue, parseQty, readDue, splitItems, splitParts, type Span } from './parse'
 import { dayKey } from './dates'
 import { capitalize, fold } from './text'
+import { applyDepartment, departmentProp } from './departmentMemory'
 
 /** What Журнал's guess line says while typing: where the send goes and how many records it makes there */
 export type Preview
@@ -20,6 +21,8 @@ export interface AutoContext {
   recent: Id[]
   /** A model can still decide on send (key set, online, not «Сначала простые правила» with a clear rule) */
   model: boolean
+  route?: boolean
+  split?: boolean
 }
 
 /** Журнал's composer (unchanged in the main flow round): Авто never makes a page, an unclear line goes to Входящие */
@@ -28,13 +31,17 @@ export function preview(text: string, ctx: AutoContext): Preview {
   if (t.length < 2) return { kind: 'idle' }
   if (isSearch(t)) return { kind: 'search' }
   const now = Date.now()
-  const split = splitRoute(t, ctx.pages, ctx.learned, ctx.recent)
+  if (ctx.route === false) {
+    const inbox = ctx.pages.find(p => p.kind === 'inbox')
+    return { kind: 'inbox', count: inbox ? draftsFor(t, inbox, now, { split: ctx.split }).length : 1 }
+  }
+  const split = ctx.split === false ? null : splitRoute(t, ctx.pages, ctx.learned, ctx.recent)
   if (split) {
     const parts: { to: Id | 'inbox', count: number }[] = []
     for (const part of split) {
       const to = part.pageId ?? 'inbox'
       const page = ctx.pages.find(p => p.id === part.pageId)
-      const n = page ? draftsFor(part.text, page, now).length : 1
+      const n = page ? draftsFor(part.text, page, now, { split: ctx.split }).length : 1
       const had = parts.find(x => x.to === to)
       if (had) had.count += n
       else parts.push({ to, count: n })
@@ -43,7 +50,7 @@ export function preview(text: string, ctx: AutoContext): Preview {
   }
   const r = classify(t, ctx.pages, ctx.learned, ctx.recent)
   const page = ctx.pages.find(p => p.id === r.pageId)
-  if (page) return { kind: 'page', pageId: page.id, count: draftsFor(t, page, now).length }
+  if (page) return { kind: 'page', pageId: page.id, count: draftsFor(t, page, now, { split: ctx.split }).length }
   // With a model the decision waits for send; the chip stays «Авто» instead of promising Входящие
   if (ctx.model) return { kind: 'idle' }
   return { kind: 'inbox', count: 1 }
@@ -93,9 +100,9 @@ function linesFor(text: string, page: Page, live = false): string[] {
 }
 
 /** One line as a record on a page: its date (unless `dates` is off), the quantity and the department */
-function draftOf(line: string, page: Page, now: number, dates = true): Draft | null {
+function draftOf(line: string, page: Page, now: number, dates = true, department = true): Draft | null {
   const qtyProp = page.props.find(p => p.name === 'Количество')
-  const select = page.props.find(p => p.type === 'select' && isListPage(page))
+  const select = departmentProp(page)
   const { due, rest } = dates ? parseDue(line, now) : { due: null, rest: line }
   const values: Rec['values'] = {}
   let body = rest
@@ -106,17 +113,18 @@ function draftOf(line: string, page: Page, now: number, dates = true): Draft | n
       body = q.rest
     }
   }
-  if (select) {
+  if (select && department) {
     const option = guessOption(body, select)
     if (option) values[select.id] = option
   }
   const text = cleanRecordText(body || line)
-  return text ? { text, due, values } : null
+  return text ? { text, due, values: applyDepartment(page, text, values, department) } : null
 }
 
 /** Records a line becomes on a page, by simple rules: dates, quantities, the department */
-export function draftsFor(text: string, page: Page, now: number, opts: { dates?: boolean } = {}): Draft[] {
-  return linesFor(text, page).map(line => draftOf(line, page, now, opts.dates)).filter((d): d is Draft => !!d)
+export function draftsFor(text: string, page: Page, now: number, opts: { dates?: boolean, split?: boolean, department?: boolean } = {}): Draft[] {
+  const lines = opts.split === false ? [isListPage(page) ? dropListVerb(dropPrefix(text)) : text] : linesFor(text, page)
+  return lines.map(line => draftOf(line, page, now, opts.dates, opts.department)).filter((d): d is Draft => !!d)
 }
 
 // ---------- the field: one reading for the preview and the send (main flow, items 5–8, 23) ----------
@@ -159,6 +167,10 @@ export interface LineContext {
    * one record and goes where the chip says
    */
   sort?: boolean
+  /** Independent field capabilities; omitted by older callers to preserve their behaviour. */
+  route?: boolean
+  split?: boolean
+  department?: boolean
 }
 
 /** A date read in the field: where its words were typed (to tint them), the words, and the date */
@@ -206,26 +218,30 @@ export function readLine(title: string, note: string, ctx: LineContext): LineRea
   const inbox = page(ctx.inboxId)!
   const out: LineDraft[] = []
   const put = (line: string, to: Page, by: PlaceBy) => {
-    const d = draftOf(line, to, ctx.now, dates)
+    const d = draftOf(line, to, ctx.now, dates, ctx.department !== false)
     if (d) out.push({ ...d, pageId: to.id, by, note: '' })
   }
 
   const chosen = page(ctx.place?.pageId)
-  if (!ctx.sort) {
+  const route = ctx.route ?? !!ctx.sort
+  const split = ctx.split ?? !!ctx.sort
+  if (!route && !split) {
     // One line, one record, as typed: a list of things still drops «купить», the page says it (and the department is read)
     const to = chosen ?? inbox
     put(isListPage(to) ? dropListVerb(dropPrefix(text)) : text, to, chosen ? ctx.place!.by : 'auto')
-  } else if (chosen) {
-    for (const line of linesFor(text, chosen, live)) put(line, chosen, ctx.place!.by)
+  } else if (chosen || !route) {
+    const to = chosen ?? inbox
+    const lines = split ? linesFor(text, to, live) : [isListPage(to) ? dropListVerb(dropPrefix(text)) : text]
+    for (const line of lines) put(line, to, chosen ? ctx.place!.by : 'auto')
   } else {
-    const parts = splitRoute(text, ctx.pages, ctx.learned, ctx.recent, live) ?? [{ text, ...classify(text, ctx.pages, ctx.learned, ctx.recent) }]
+    const parts = (split && splitRoute(text, ctx.pages, ctx.learned, ctx.recent, live)) || [{ text, ...classify(text, ctx.pages, ctx.learned, ctx.recent) }]
     for (const part of parts) {
       let to = page(part.pageId)
       // Unsure, but dated: a to-do (Задачи); anything else unsure waits in Входящие, and nothing asks
       if (!to && dates && parseDue(part.text, ctx.now).due) to = todoPage(ctx.pages)
       to ??= inbox
       // The last part ends the text: only it can hold the word being typed
-      const lines = linesFor(part.text, to, live && part === parts[parts.length - 1])
+      const lines = split ? linesFor(part.text, to, live && part === parts[parts.length - 1]) : [isListPage(to) ? dropListVerb(dropPrefix(part.text)) : part.text]
       for (const line of lines) {
         // A line of a list that clearly belongs elsewhere goes there: «молоко и позвонить маме» is Покупки and Задачи
         const own = lines.length > 1 ? page(classify(line, ctx.pages, ctx.learned, ctx.recent).pageId) : undefined
@@ -255,7 +271,7 @@ function finish(drafts: LineDraft[], note: string, ctx: LineContext): LineDraft[
 function retarget(d: LineDraft, pageId: Id, ctx: LineContext): Pick<Draft, 'values'> {
   const to = ctx.pages.find(p => p.id === pageId)
   if (!to) return { values: {} }
-  const again = draftOf(d.text, to, ctx.now, false)
+  const again = draftOf(d.text, to, ctx.now, false, ctx.department !== false)
   return { values: again?.values ?? {} }
 }
 
@@ -269,36 +285,48 @@ export function readModel(result: ModelResult, title: string, note: string, ctx:
   const page = (id: Id | null) => id ? ctx.pages.find(p => p.id === id) : undefined
   const inbox = page(ctx.inboxId)!
   const chosen = page(ctx.place?.pageId ?? null)
+  if (ctx.split === false) {
+    const target = ctx.route !== false && !chosen ? page(result.items[0]?.pageId ?? null) : undefined
+    const drafts = readLine(title, note, { ...ctx, place: chosen ? ctx.place : target ? { pageId: target.id, by: 'page' } : null, split: false, route: false }).drafts
+    const draft = drafts[0]
+    if (!draft) return drafts
+    const to = page(draft.pageId)
+    const model = to && result.items.length === 1 ? fromModel(result.items[0]!, to, ctx.department !== false) : null
+    const values = model ? { ...draft.values, ...model.values } : draft.values
+    return [{ ...draft, by: target ? 'auto' : draft.by, values: to ? applyDepartment(to, draft.text, values, ctx.department !== false) : values }]
+  }
   const one = result.items.length === 1
   const drafts = result.items.map((item): LineDraft | null => {
     // A page or a hand pick holds one record; several records each go where the model put them
-    const to = (one && chosen) || page(item.pageId) || inbox
-    const by: PlaceBy = one && chosen ? ctx.place!.by : 'auto'
-    const d = fromModel(item, to)
+    const fixed = ctx.route === false ? chosen ?? inbox : one && chosen ? chosen : null
+    const to = fixed || page(item.pageId) || inbox
+    const by: PlaceBy = fixed && chosen ? ctx.place!.by : 'auto'
+    const d = fromModel(item, to, ctx.department !== false)
     return d ? { ...d, due: undated ? null : d.due, pageId: to.id, by, note: item.note?.trim() ?? '' } : null
   }).filter((d): d is LineDraft => !!d)
   return finish(drafts, note, ctx)
 }
 
 /** A record the model asked for, mapped onto the page's properties */
-function fromModel(item: ModelItem, page: Page): Draft | null {
+function fromModel(item: ModelItem, page: Page, department = true): Draft | null {
   const values: Rec['values'] = {}
   const qtyProp = page.props.find(p => p.name === 'Количество')
   if (item.qty && qtyProp) values[qtyProp.id] = item.qty
   if (item.option) {
-    for (const prop of page.props.filter(p => p.type === 'select')) {
+    const departmentProp = isListPage(page) ? page.props.find(p => p.type === 'select') : undefined
+    for (const prop of page.props.filter(p => p.type === 'select' && (department || p !== departmentProp))) {
       const o = prop.options?.find(x => fold(x.name) === fold(item.option!))
       if (o) values[prop.id] = o.id
     }
   }
   // No department from the model: the rules guess it, so a model never files worse than the rules
-  const select = page.props.find(p => p.type === 'select' && isListPage(page))
-  if (select && !values[select.id]) {
+  const select = departmentProp(page)
+  if (department && select && !values[select.id]) {
     const option = guessOption(item.text, select)
     if (option) values[select.id] = option
   }
   const date = item.date && /^\d{4}-\d{2}-\d{2}$/.test(item.date) ? item.date : null
   const time = item.time && /^\d{1,2}:\d{2}$/.test(item.time) ? item.time.replace(/^0(\d)/, '$1') : undefined
   const text = capitalize(item.text)
-  return text ? { text, due: date ? (time ? { date, time } : { date }) : null, values } : null
+  return text ? { text, due: date ? (time ? { date, time } : { date }) : null, values: applyDepartment(page, text, values, department) } : null
 }

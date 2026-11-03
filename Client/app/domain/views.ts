@@ -3,6 +3,7 @@ import type { Due, DueChip, FilterRule, GroupBy, Id, Page, PropDef, Rec, ViewDef
 import { addDays, dayKey } from './dates'
 import { fold, ofProp } from './text'
 import { searchText } from './body'
+import { matchesStock } from './stock'
 
 export interface Group {
   key: string
@@ -46,6 +47,7 @@ function matchesDue(rec: Rec, chip: DueChip, now: number): boolean {
 export function matchesChips(rec: Rec, view: ViewDef, now: number): boolean {
   const dues = view.dues ?? []
   if (dues.length && !dues.some(c => matchesDue(rec, c, now))) return false
+  if (Object.entries(view.selectFilters ?? {}).some(([field, options]) => options.length > 0 && !options.some(id => rec.values[field] === id))) return false
   return !view.asking || rec.tags.includes('clarify')
 }
 
@@ -56,15 +58,52 @@ export function matchesChips(rec: Rec, view: ViewDef, now: number): boolean {
  */
 export type Leaving = Readonly<Record<Id, boolean>>
 
+type StockListed = { amountProp: Id, amount: Rec['values'][string], amountPresent: boolean, buy: boolean | undefined, buyPresent: boolean }
+const STOCK_LISTED = Symbol('stock-listed')
+type LeavingWithStock = Leaving & { [STOCK_LISTED]?: Readonly<Record<Id, StockListed>> }
+
+/** Keep the public id → done map unchanged; stock fields are needed only when filtering. */
+export function leavingWithStock(leaving: Leaving, id: Id, rec: Rec, amountProp: Id): Leaving {
+  const stocks = { ...(leaving as LeavingWithStock)[STOCK_LISTED], [id]: {
+    amountProp, amount: rec.values[amountProp]!, amountPresent: amountProp in rec.values,
+    buy: rec.stockBuy?.[amountProp], buyPresent: !!rec.stockBuy && amountProp in rec.stockBuy
+  } }
+  return Object.defineProperty({ ...leaving }, STOCK_LISTED, { value: stocks, configurable: true })
+}
+
+export function addLeaving(leaving: Leaving, id: Id, done: boolean): Leaving {
+  const next = { ...leaving, [id]: done }
+  const stocks = (leaving as LeavingWithStock)[STOCK_LISTED]
+  return stocks ? Object.defineProperty(next, STOCK_LISTED, { value: stocks, configurable: true }) : next
+}
+
+export function withoutLeaving(leaving: Leaving, id: Id): Leaving {
+  const { [id]: _, ...rest } = leaving
+  const stocks = { ...(leaving as LeavingWithStock)[STOCK_LISTED] }
+  delete stocks[id]
+  return Object.keys(stocks).length ? Object.defineProperty(rest, STOCK_LISTED, { value: stocks, configurable: true }) : rest
+}
+
 /** The record as its lists see it: as it was before the tick while the tick is taking it out */
-export const asListed = (r: Rec, leaving?: Leaving): Rec => leaving && r.id in leaving ? { ...r, done: leaving[r.id]! } : r
+export function asListed(r: Rec, leaving?: Leaving): Rec {
+  if (!leaving || !(r.id in leaving)) return r
+  const stock = (leaving as LeavingWithStock)[STOCK_LISTED]?.[r.id]
+  if (!stock) return { ...r, done: leaving[r.id]! }
+  const values = { ...r.values }
+  const stockBuy = { ...r.stockBuy }
+  if (stock.amountPresent) values[stock.amountProp] = stock.amount
+  else delete values[stock.amountProp]
+  if (stock.buyPresent) stockBuy[stock.amountProp] = stock.buy!
+  else delete stockBuy[stock.amountProp]
+  return { ...r, done: leaving[r.id]!, values, stockBuy }
+}
 
 /**
  * `leaving`: rows a tick is taking out stay in the views they belonged to before the tick, struck through, until they
  * leave: a row ticked on «Купить» never shows up on «Запасы» or, yet, on «Куплено»
  */
 export function filterRecords(records: Rec[], view: ViewDef, leaving?: Leaving, now = Date.now()): Rec[] {
-  const fits = (r: Rec) => view.filter.every(rule => matches(r, rule)) && matchesChips(r, view, now)
+  const fits = (r: Rec) => view.filter.every(rule => matches(r, rule)) && (!view.stock || matchesStock(r, view.stock)) && matchesChips(r, view, now)
   return records.filter(r => fits(asListed(r, leaving)))
 }
 

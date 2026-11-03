@@ -1,0 +1,22 @@
+{
+  "components": [
+    "Flow",
+    "StatusBar",
+    "LeftCol",
+    "HomePane",
+    "PageRow",
+    "Menu",
+    "Toast",
+    "Composer",
+    "PlaceList",
+    "PagePane",
+    "TableView",
+    "Check",
+    "RecordRow",
+    "RecPane",
+    "Sheet",
+    "Field",
+    "ListSheet",
+    "Keyboard"
+  ]
+}

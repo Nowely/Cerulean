@@ -6,6 +6,9 @@ import { useDataStore } from '~/stores/data'
 import { useUiStore } from '~/stores/ui'
 import { applyTemplate, TEMPLATES } from '~/domain/templates'
 import { capitalize } from '~/domain/text'
+import { suggestedGlyphs } from '~/domain/look'
+import { isConnected } from '~/domain/model'
+import { askIcon } from '~/domain/iconModel'
 import { useNotify } from './useNotify'
 
 export const FOCUS_PROXY_ID = 'focus-proxy'
@@ -21,7 +24,7 @@ export function useCreatePage() {
    * and stays on Главная, a toast says where it is and opens it.
    */
   function create(opts: { sectionId?: Id | null, template?: TemplateKey, stay?: boolean } = {}) {
-    const page = data.createPage({ title: '', sectionId: opts.sectionId ?? null })
+    const page = data.createPage({ title: '', sectionId: opts.sectionId ?? null, ...(!opts.template ? { autoGlyph: true } : {}) })
     if (opts.template) {
       data.updatePage(page.id, applyTemplate(page, opts.template))
       if (opts.stay) {
@@ -45,7 +48,24 @@ export function useCreatePage() {
     const title = capitalize(name)
     const low = title.toLowerCase()
     const same = data.livePages.find(p => (p.kind === 'page' || p.kind === 'inbox') && p.title.trim().toLowerCase() === low)
-    return same ?? data.createPage({ title, glyph: 'list' })
+    if (same) return same
+    const enabled = data.settings.aiIcon !== false
+    const page = data.createPage({ title, glyph: enabled ? suggestedGlyphs(title)[0] : 'list' })
+    const connection = { ...data.settings }
+    const stamp = page.updatedAt
+    const glyph = page.glyph
+    if (enabled && isConnected(connection) && connection.keyState !== 'bad') {
+      void askIcon(connection, title).then((chosen) => {
+        const current = data.pages[page.id]
+        const settings = data.settings
+        if (chosen && current && !current.deletedAt && current.title === title && current.glyph === glyph && current.updatedAt === stamp
+          && settings.aiIcon !== false && settings.keyState !== 'bad' && settings.provider === connection.provider && settings.apiKey === connection.apiKey
+          && settings.baseUrl === connection.baseUrl && settings.modelId === connection.modelId && settings.model === connection.model) {
+          data.updatePage(page.id, { glyph: chosen })
+        }
+      })
+    }
+    return page
   }
 
   return { create, list }

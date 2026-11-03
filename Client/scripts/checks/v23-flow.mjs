@@ -300,7 +300,8 @@ export default [
       expect(!(await p.getByRole('dialog').count()), `a tap on the scrim left «${what}» open`)
     }
     await openPage(p, 'Покупки')
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
+    await p.getByRole('textbox', { name: 'Название страницы' }).waitFor()
+    await p.getByRole('tab', { name: 'Купить', selected: true }).click()
     await sheetChecked('Настроить вид')
     await p.getByRole('button', { name: 'Значок страницы' }).click()
     await sheetChecked('Значок')
@@ -332,19 +333,35 @@ export default [
     await p.clock.install({ time: NOW })
     await open(p, '/')
     await openPage(p, 'Покупки')
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
+    await p.getByRole('textbox', { name: 'Название страницы' }).waitFor()
+    await p.getByRole('tab', { name: 'Купить', selected: true }).click()
     const pop = p.getByRole('dialog')
     expect(await shows(pop), '«Настроить вид» did not open')
     expect(!(await pop.getByRole('button', { name: /^Закрыть/ }).count()), '«Настроить вид» has ×')
     await p.keyboard.press('Escape')
     await p.waitForTimeout(400)
     expect(!(await p.getByRole('dialog').count()), 'Esc left «Настроить вид» open')
-    await p.getByRole('button', { name: 'Значок страницы' }).click()
+    const icon = p.getByRole('button', { name: 'Значок страницы' })
+    await p.mouse.move(p.viewportSize().width - 8, p.viewportSize().height - 8)
+    const background = await icon.evaluate(e => [getComputedStyle(e).backgroundColor, getComputedStyle(e.firstElementChild).backgroundColor])
+    await icon.click()
     expect(await shows(p.getByRole('dialog')), '«Значок» did not open')
     expect(!(await p.getByRole('dialog').getByRole('button', { name: /^Закрыть/ }).count()), '«Значок» has ×')
-    await p.mouse.click(700, 700)
+    const bounds = await p.getByRole('dialog').boundingBox()
+    const { width, height } = p.viewportSize()
+    const outside = await p.evaluate(({ bounds, width, height }) => {
+      const points = [[width - 8, height - 8], [width - 8, 8], [8, height - 8], [8, 8]]
+      return points.find(([x, y]) => {
+        const outside = x < bounds.x || x > bounds.x + bounds.width || y < bounds.y || y > bounds.y + bounds.height
+        const target = document.elementFromPoint(x, y)
+        return outside && target && !target.closest('a, button, input, textarea, [role="button"], [contenteditable="true"]')
+      })
+    }, { bounds, width, height })
+    expect(outside, 'no non-interactive point outside the popover')
+    await p.mouse.click(...outside)
     await p.waitForTimeout(400)
     expect(!(await p.getByRole('dialog').count()), 'a click outside left «Значок» open')
+    expect(JSON.stringify(await icon.evaluate(e => [getComputedStyle(e).backgroundColor, getComputedStyle(e.firstElementChild).backgroundColor])) === JSON.stringify(background), 'the icon stayed highlighted after closing')
   } },
   // 20: «No row stays highlighted under an open sheet»: a row of Главная after its menu closes is plain again
   { id: 'f-20-no-lit-row', device: MOBILE, run: async (p) => {
@@ -352,7 +369,7 @@ export default [
     await open(p, '/')
     const row = p.locator('main [role="listitem"]').filter({ hasText: 'Покупки' }).first()
     const plainBg = await row.evaluate(e => getComputedStyle(e).backgroundColor)
-    // A long press opens the page menu, a tap on the scrim closes it and the sheet gives focus back to the row
+    // A long press lifts the card with its compact menu; a tap on the veil closes it
     const box = await row.locator('a').first().boundingBox()
     const cdp = await p.context().newCDPSession(p)
     const at = [{ x: box.x + 40, y: box.y + box.height / 2 }]
@@ -360,12 +377,13 @@ export default [
     await p.waitForTimeout(700)
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
     await p.waitForTimeout(600)
-    expect(await shows(p.getByRole('dialog')), 'a long press did not open the page menu')
+    expect(await shows(p.locator('[data-home-hold-menu]')), 'a long press did not open the page menu')
+    expect(await shows(p.locator('[data-home-hold-card]')) && await shows(p.locator('[data-home-hold-veil]')), 'the card was not lifted over a veil')
     const under = await row.evaluate(e => getComputedStyle(e).backgroundColor)
     expect(under === plainBg, `the row is lit (${under}) under its open menu`)
     await p.touchscreen.tap(195, 24)
     await p.waitForTimeout(700)
-    expect(!(await p.getByRole('dialog').count()), 'a tap on the scrim left the menu open')
+    expect(!(await p.locator('[data-home-hold-menu]').count()), 'a tap on the veil left the menu open')
     expect(new URL(p.url()).pathname === '/', `the long press opened the page (${p.url()})`)
     const after = await row.evaluate(e => getComputedStyle(e).backgroundColor)
     expect(after === plainBg, `the row is lit (${after}) after its menu closed`)

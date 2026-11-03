@@ -82,8 +82,19 @@ export interface ViewDef {
   dues?: DueChip[]
   /** «Ждут уточнения» in «Фильтр» (v24): only records tagged «уточнить» */
   asking?: boolean
+  /** Choice option IDs per property: OR within a property, AND between properties and legacy filters. */
+  selectFilters?: Record<Id, Id[]>
   /** «Заметка» switched off in «Справа в строке» (v24): rows draw no note glyph; absent is on */
   noteOff?: boolean
+  /** Stock semantics are independent of the view's name and ordinary user filters. */
+  stock?: { mode: 'buy' | 'stock', amountProp: Id, normProp: Id }
+}
+
+export interface StockConfig {
+  amountProp: Id
+  normProp: Id
+  buyViewId?: Id
+  stockViewId?: Id
 }
 
 /** A mark in a body: bold, italic (drawn oblique) or a link */
@@ -130,10 +141,14 @@ export interface Page {
   kind: PageKind
   title: string
   glyph: Glyph | null
+  /** The initial title of a newly created blank page is still being chosen. */
+  autoGlyph?: boolean
   /** Chosen in «Значок и цвет»; null is «Без цвета» (read through `pageColor`: older data has a grey that means none) */
   color: PageColor | null
   sectionId: Id | null
   order: number
+  /** Manual order on Главная, valid only in the section where it was set. */
+  homeOrder?: { sectionId: Id | null, position: number, importGroup?: string }
   /** Pages with the checkbox (a «Сделано» view) show checkboxes, the rest show a dot */
   hasDone: boolean
   /** «Что сюда класть»: the words that tell Авто what goes here (v23: never called «описание» on screen) */
@@ -143,9 +158,13 @@ export interface Page {
   /** Records and pages the body mentions, read out of it on every change (they show in «Связано» of each) */
   mentions?: Id[]
   props: PropDef[]
+  /** Hand-corrected shopping departments, by property ID and first-word stem. */
+  departmentMemory?: Record<Id, Record<string, Id>>
   /** The order of «Свойства»: property ids with 'due' and 'note' among them. Without it the page's own come first */
   propOrder?: (Id | BuiltinProp)[]
   views: ViewDef[]
+  /** Explicitly enabled stock pairs; absent on older pages. */
+  stocks?: StockConfig[]
   /** Position in Избранное, or null */
   favorite: number | null
   /** How the summary counts: [one, few, many], e.g. ['дело', 'дела', 'дел'] or ['купить', 'купить', 'купить'] */
@@ -184,6 +203,9 @@ export interface Rec {
   /** Records and pages the body mentions, read out of it on every change: «Связано» on both sides, apart from `links` */
   mentions?: Id[]
   values: Record<Id, string | number | null>
+  /** Per-record unit overrides and explicit requests to buy, keyed by amount property ID. */
+  stockUnits?: Record<Id, string>
+  stockBuy?: Record<Id, boolean>
   due: Due | null
   /** A record with its own icon shows its tile instead of the checkbox or dot */
   glyph?: Glyph | null
@@ -274,6 +296,10 @@ export interface Settings {
   keyState: 'unknown' | 'ok' | 'bad'
   model: ModelChoice
   rulesFirst: boolean
+  aiRoute: boolean
+  aiSplit: boolean
+  aiDepartment: boolean
+  aiIcon: boolean
   homeRows: HomeRows
   /** One-time tips and cards that were closed */
   dismissed: string[]
@@ -318,6 +344,8 @@ export const GLYPHS = {
   pill: 'i-lucide-pill',
   paw: 'i-lucide-paw-print',
   plant: 'i-lucide-sprout',
+  tree: 'i-lucide-tree-deciduous',
+  roller: 'i-lucide-paint-roller',
   tool: 'i-lucide-wrench',
   key: 'i-lucide-key-round',
   cup: 'i-lucide-coffee',
@@ -374,6 +402,8 @@ export const GLYPH_WORDS: [Glyph, string][] = [
   ['pill', 'Таблетка лекарство здоровье врач аптека'],
   ['paw', 'Лапа питомец кошка собака'],
   ['plant', 'Растение цветы сад дача'],
+  ['tree', 'Дерево дача сад'],
+  ['roller', 'Валик ремонт покраска'],
   ['tool', 'Инструмент ремонт мастер'],
   ['key', 'Ключ квартира замок'],
   ['cup', 'Чашка кофе чай кафе'],

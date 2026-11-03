@@ -40,18 +40,17 @@ export default [
     const row = await p.locator('main li').filter({ has: p.getByRole('checkbox') }).first().boundingBox()
     expect(Math.round(row.height) === 44, `a row is ${row.height} px`)
   } },
-  // 2: «Покупки: tap «Купить» twice → «Удалить вид» → the tab goes with «Отменить»; «Отменить» → three tabs, «Купить» selected»
+  // 2: «Купить» → «Настроить вид» → «Удалить вид»; «Отменить» restores all three tabs and selects «Купить»
   { id: 'v22-2-delete-view', device: MOBILE, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
     await openPage(p, 'Покупки')
-    // «Купить» is already the current tab, so one tap opens its menu
+    // «Купить» is already current, so one tap opens its settings
     const buy = p.getByRole('tab', { name: 'Купить' })
     await buy.click()
-    await p.waitForTimeout(500)
-    // The dev tools pill can sit over the sheet's last item, so the click is dispatched
-    await p.getByRole('menuitem', { name: /Удалить вид/ }).or(p.getByRole('button', { name: /Удалить вид/ })).first().dispatchEvent('click')
-    await p.waitForTimeout(500)
+    const settings = p.getByRole('dialog').filter({ has: p.getByRole('heading', { name: 'Настроить вид', exact: true }) })
+    await settings.getByRole('button', { name: 'Удалить вид', exact: true }).click()
+    await settings.waitFor({ state: 'hidden' })
     // The tab leaves with a short fade
     const tabs = p.locator('main [role="tab"]:visible')
     for (let i = 0; i < 10 && await tabs.count() !== 2; i++) await p.waitForTimeout(200)
@@ -148,10 +147,12 @@ export default [
   { id: 'v22-15-view-name', device: MOBILE, run: async (p) => {
     await open(p, '/')
     await openPage(p, 'Идеи')
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
-    await p.getByRole('button', { name: 'Новый вид' }).click()
-    await p.waitForTimeout(500)
-    // The tab is under the sheet's scrim; the view itself is what counts
+    await p.getByRole('tab').first().click()
+    const settings = p.getByRole('dialog').filter({ has: p.getByRole('heading', { name: 'Настроить вид', exact: true }) })
+    await settings.getByRole('button', { name: 'Новый вид', exact: true }).click()
+    const picker = p.getByRole('dialog').filter({ has: p.getByRole('heading', { name: 'Новый вид', exact: true }) })
+    await picker.getByRole('button', { name: 'Список', exact: true }).click()
+    await picker.waitFor({ state: 'hidden' })
     expect(await store(p, data => data.livePages.find(x => x.title === 'Идеи').views.some(v => v.name === 'Список 2' && !v.named)), 'the new view is not «Список 2»')
   } },
   // 22: «send «когда менять фильтр?»: a receipt to Дела по дому, the record reads «Когда менять фильтр?», and

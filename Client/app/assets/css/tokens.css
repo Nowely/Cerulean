@@ -13,6 +13,7 @@
   --elev: #FFFFFF;
   --panel: #FFFFFF;
   --side: #F1F1EF;
+  --home-hold-veil: color-mix(in srgb, var(--side) 55%, transparent);
   --side-hover: #E9E9E7;
   --side-sel: #E2E2E0;
   --rail: #EAEAE8;

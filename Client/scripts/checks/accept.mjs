@@ -72,15 +72,36 @@ export default [
     expect(await row.getByRole('checkbox').first().isVisible(), 'the mark left the screen')
   } },
   // 7–8 retired in main flow 2 (item 10): Входящие has no guess chips; each open record ends with a move button
-  // 9. The Прогресс bar is neutral
+  // 9. The neutral Прогресс bar was superseded delta 3 item 14: the subitems caption counts and folds them
   { id: 'acc-9-progress', device: MOBILE, run: async (p) => {
     await open(p, '/')
-    const id = await store(p, data => Object.values(data.records).find(r => !r.deletedAt && Object.values(data.records).filter(s => s.parentId === r.id).length > 1)?.id)
-    expect(id, 'no record with subitems in the demo')
-    await open(p, `/r/${id}`)
-    const bar = p.locator('[role="img"][aria-label*=" из "] > span')
-    expect(await shows(bar), 'no progress bar')
-    expect(!(await bar.first().evaluate(e => e.className.includes('bg-accent'))), 'the bar is accent')
+    const record = await store(p, (data) => {
+      const rec = Object.values(data.records).find(r => !r.deletedAt && r.note && r.due && data.subitemsOf(r.id).length > 1)
+      if (!rec) return null
+      return { id: rec.id, note: rec.note, subs: data.subitemsOf(rec.id).map(s => ({ text: s.text, done: s.done })) }
+    })
+    expect(record, 'no record with values, note and subitems in the demo')
+    await open(p, `/r/${record.id}`)
+    const done = record.subs.filter(s => s.done).length
+    const fold = p.getByRole('button', { name: `Подпункты ${done}/${record.subs.length}`, exact: true })
+    expect(await shows(fold), 'no subitem counter')
+    const heading = p.locator('#subs-title')
+    expect(await heading.evaluate(e => e.classList.contains('text-toned') && [e, ...e.querySelectorAll('*')].every(el => !/\b(?:bg|text)-accent(?:\b|-)/.test(el.getAttribute('class') || ''))), 'the counter is accent, not neutral')
+    expect(!(await p.locator('[role="img"][aria-label*=" из "] > span').count()), 'the old progress bar is still shown')
+    const rows = p.locator('#subs-title + ul > li')
+    const ordered = await p.evaluate((note) => {
+      const elements = [document.querySelector('[data-title-block]'), document.querySelector('[data-record-values]'), document.querySelector('main .body-text'), document.querySelector('#subs-title'), document.querySelector('#subs-title + ul'), document.querySelector('#subs-title ~ div [data-add-row]'), document.querySelector('[data-record-added]')]
+      return elements.every((el, i) => el && (!i || (elements[i - 1].compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)))
+        && elements[2].textContent.includes(note) && !elements[6].nextElementSibling
+    }, record.note)
+    expect(ordered, 'title, values, note, subitems, add row and added are out of order')
+    expect(await fold.getAttribute('aria-expanded') === 'true' && await rows.count() === record.subs.length, 'subitems are not expanded')
+    for (const sub of record.subs) expect(await rows.getByText(sub.text, { exact: true }).isVisible(), `missing subitem ${sub.text}`)
+    await fold.click()
+    expect(await fold.getAttribute('aria-expanded') === 'false' && await rows.count() === 0, 'subitems did not collapse')
+    await fold.click()
+    expect(await fold.getAttribute('aria-expanded') === 'true' && await rows.count() === record.subs.length, 'subitems did not expand again')
+    for (const sub of record.subs) expect(await rows.getByText(sub.text, { exact: true }).isVisible(), `subitem ${sub.text} did not return`)
   } },
   // 10. Desktop: rows and tabs share one column. Computer delta (items 1, 6, 24): the column is 752 and the field is
   // Главная's, in the left column, so it is no longer measured here

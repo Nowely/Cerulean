@@ -1,0 +1,504 @@
+{
+  "mode": "dry-run",
+  "status": "validated",
+  "manifest": "/Users/ruliny/Git/Cerulean/tmp/recovery-analysis/post-v14/manifest.json",
+  "project": "/Users/ruliny/Git/Cerulean/tmp/mockups-local/project",
+  "operations": [
+    {
+      "ordinal": 1,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".mp{position:relative;flex:none;align-self:center;height:30px;min-width:40px;margin:0 -4px 0 8px;padding:0 10px;border:0;border-radius:8px;background:var(--surf"
+    },
+    {
+      "ordinal": 2,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".mp::after{content:'';position:absolute;inset:-7px -4px}"
+    },
+    {
+      "ordinal": 3,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".mp.low{background:var(--warn-soft);color:var(--warn-ink)}"
+    },
+    {
+      "ordinal": 4,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".mps{flex:none;align-self:center;display:inline-flex;align-items:center;height:36px;margin:0 -8px 0 8px;border-radius:10px;background:var(--surface)}"
+    },
+    {
+      "ordinal": 5,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".mps.low{background:var(--warn-soft)}\n"
+    },
+    {
+      "ordinal": 6,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".rchips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 16px 0}"
+    },
+    {
+      "ordinal": 7,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".rpl{padding:0 10px;background:var(--surface)}"
+    },
+    {
+      "ordinal": 8,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".rst{padding:0;gap:0;background:var(--surface);cursor:default}"
+    },
+    {
+      "ordinal": 9,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".rst.low{background:var(--warn-soft)}\n"
+    },
+    {
+      "ordinal": 10,
+      "event": 10671,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".radd{width:32px;justify-content:center;color:var(--faint);box-shadow:inset 0 0 0 1px var(--line2)}"
+    },
+    {
+      "ordinal": 11,
+      "event": 10688,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "R3('shop', 'Туалетная бумага', 9 * D - 9, { stock: { have: 4, need: 12 } })"
+    },
+    {
+      "ordinal": 12,
+      "event": 10688,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "  low(r) { return !!r.stock && (r.stock.have <= 1 || r.best === 'вчера'); }\n"
+    },
+    {
+      "ordinal": 13,
+      "event": 10688,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "mainText: stock ? r.stock.have + '/' + r.stock.need : '', mainCls: low ? 'low' : '',\n            mainAria: stock ? 'Запас «' + r.title + '»: ' + r.stock.have + "
+    },
+    {
+      "ordinal": 14,
+      "event": 10688,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "['stock', 'Запас'], ['note', 'Заметка'], ['at', 'Добавлено']]\n"
+    },
+    {
+      "ordinal": 15,
+      "event": 10688,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "x.text = r.stock ? r.stock.have + '/' + r.stock.need : '';"
+    },
+    {
+      "ordinal": 16,
+      "event": 10688,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "        if (r.stock) chips.push(C({ isStep: true, text: r.stock.have + '/' + r.stock.need, cls: this.low(r) ? 'low' : '', aria: 'Запас: ' + r.stock.have + ' из "
+    },
+    {
+      "ordinal": 17,
+      "event": 10688,
+      "source": "flow/parts/RecordRow.html",
+      "document": "RecordRow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "hasMain: v === 'Запас', stepping: v !== 'Запас', mainText: '3/5', mainAria: 'Запас «Кола»: 3 из 5. Изменить' });"
+    },
+    {
+      "ordinal": 18,
+      "event": 10688,
+      "source": "flow/parts/TableView.html",
+      "document": "TableView.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "['stock', 'Запас']"
+    },
+    {
+      "ordinal": 19,
+      "event": 10699,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "return p.buy ? [a, { id: 'stock', name: 'Запасы', layout: 'list', show: 'stock', sort: 'stock' }, b] : [a, b];"
+    },
+    {
+      "ordinal": 20,
+      "event": 10699,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "      // put it; «Запасы» puts first what runs out (the smallest share left)\n      if (s.i3) shown.sort(view.sort === 'stock' ? function (a, b) { return (self.l"
+    },
+    {
+      "ordinal": 21,
+      "event": 10699,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "    if (p.buy) return [{ key: 'dept', name: 'Отдел', opts: this.depts().map(function (d) { return [d.key, d.name, d.color]; }) },\n      { key: 'stock', name: 'З"
+    },
+    {
+      "ordinal": 22,
+      "event": 10699,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "    if (k === 'stock') return r.stock ? (this.low(r) ? 'low' : 'ok') : 'none';\n"
+    },
+    {
+      "ordinal": 23,
+      "event": 10699,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "if (k === 'due') return !r.due ? 'none' : (/^сегодня/.test(r.due) ? 'today' : 'week');"
+    },
+    {
+      "ordinal": 24,
+      "event": 10699,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "if (start === 'i3table') { at('shop', { tab: { shop: 'v1' } }); s.views.shop = this.defViews(this.pageIn(s, 'shop')).concat([{ id: 'v1', name: 'Таблица', layout"
+    },
+    {
+      "ordinal": 25,
+      "event": 10707,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "slice",
+      "status": "validated",
+      "start_matches": 1,
+      "end_matches": 1,
+      "removed_chars": 5195
+    },
+    {
+      "ordinal": 26,
+      "event": 10707,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "    var LR = function (x) { return Object.assign({ label: '', tap: noop, cls: '', role: 'button', checked: 'false', hasBox: false, boxCls: '', hasOpt: false, op"
+    },
+    {
+      "ordinal": 27,
+      "event": 10727,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "      split: 'M5 6.5h14M5 12h6M5 17.5h6M15 12l4 2.75-4 2.75'\n"
+    },
+    {
+      "ordinal": 28,
+      "event": 10727,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "  viewsOf(p) {"
+    },
+    {
+      "ordinal": 29,
+      "event": 10738,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "          var stock = !!s.i3 && !!r.stock, stepOn = stock && s.step === r.id, low = self.low(r);"
+    },
+    {
+      "ordinal": 30,
+      "event": 10738,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "            hasQty: !!r.qty, qty: r.qty || '',"
+    },
+    {
+      "ordinal": 31,
+      "event": 10743,
+      "source": "flow/parts/ListSheet.html",
+      "document": "ListSheet.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "<sc-if value=\"{{r.plain}}\" hint-placeholder-val=\"{{true}}\">{{r.label}}</sc-if></span>"
+    },
+    {
+      "ordinal": 32,
+      "event": 10743,
+      "source": "flow/parts/ListSheet.html",
+      "document": "ListSheet.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "<sc-if value=\"{{r.chev}}\" hint-placeholder-val=\"{{false}}\"><svg class=\"chev\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke"
+    },
+    {
+      "ordinal": 33,
+      "event": 10743,
+      "source": "flow/parts/ListSheet.html",
+      "document": "ListSheet.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "        <sc-if value=\"{{g.isTiles}}\""
+    },
+    {
+      "ordinal": 34,
+      "event": 10743,
+      "source": "flow/parts/ListSheet.html",
+      "document": "ListSheet.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "\"options\": [\"Новый вид\", \"Настройки вида\", \"Фильтр\", \"Значения\", \"Значок и цвет\"]"
+    },
+    {
+      "ordinal": 35,
+      "event": 10743,
+      "source": "flow/parts/ListSheet.html",
+      "document": "ListSheet.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "trash: 'M4 6.5h16M18 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19V6.5M9 6.5V4.5h6v2M10 11v5.5M14 11v5.5' };"
+    },
+    {
+      "ordinal": 36,
+      "event": 10743,
+      "source": "flow/parts/ListSheet.html",
+      "document": "ListSheet.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "hasTick: false, chev: false }, x); };"
+    },
+    {
+      "ordinal": 37,
+      "event": 10743,
+      "source": "flow/parts/ListSheet.html",
+      "document": "ListSheet.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "isIcons: false, icons: [], isColors: false, colors: [] }, x); };"
+    },
+    {
+      "ordinal": 38,
+      "event": 10743,
+      "source": "flow/parts/ListSheet.html",
+      "document": "ListSheet.dc.html",
+      "kind": "slice",
+      "status": "validated",
+      "start_matches": 1,
+      "end_matches": 1,
+      "removed_chars": 1013
+    },
+    {
+      "ordinal": 39,
+      "event": 10750,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "css_append",
+      "status": "validated",
+      "anchor": "end of embedded flow stylesheet",
+      "matches": 1
+    },
+    {
+      "ordinal": 40,
+      "event": 10753,
+      "source": "flow/parts/PagePane.html",
+      "document": "PagePane.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "<sc-if value=\"{{pg.hasTools}}\" hint-placeholder-val=\"{{false}}\"><button class=\"ib vfi {{pg.fiCls}}\""
+    },
+    {
+      "ordinal": 41,
+      "event": 10757,
+      "source": "flow/parts/PagePane.html",
+      "document": "PagePane.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "class=\"ib vse\" type=\"button\" aria-label=\"Найти на странице\" title=\"Найти на странице\" onClick=\"{{pg.noop}}\""
+    },
+    {
+      "ordinal": 42,
+      "event": 10757,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "line_replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": ".vfi{flex:none;margin-right:-10px}"
+    },
+    {
+      "ordinal": 43,
+      "event": 10854,
+      "source": "flow/flow.css",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "/* The stock on the right of a row (Josh 29 Oct): have of need on a quiet plate; a tap opens − and + in its place; 1 or 0"
+    },
+    {
+      "ordinal": 44,
+      "event": 10886,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "        items.push(M('Переместить на страницу', I.move, function () { self.setState({ lift: null, rowPop: r.id, np: null }); }));\n        items.push(M('Скопиров"
+    },
+    {
+      "ordinal": 45,
+      "event": 10886,
+      "source": "flow/Flow.html",
+      "document": "Flow.dc.html",
+      "kind": "replace",
+      "status": "validated",
+      "matches": 1,
+      "anchor_preview": "      listPlus: 'M4 6.5h12M4 12h12M4 17.5h7M17.5 14.5v6M14.5 17.5h6',\n"
+    }
+  ],
+  "documents": {
+    "Flow.dc.html": {
+      "before_sha256": "1341ab49498e04f06cd877cee874a6c7c84078a1f73c67936f0b5e4c2ff09a08",
+      "before_bytes": 218437,
+      "after_sha256": "a86700e07cd08e7f20e735d52954f640646dd5529e22453165f34accb8541ff8",
+      "after_bytes": 224049,
+      "changed": true
+    },
+    "RecordRow.dc.html": {
+      "before_sha256": "bbe2022c63bcb74f3e42ec781fbf2e663d4417519a13626a7878a385beaeac66",
+      "before_bytes": 57487,
+      "after_sha256": "9b28182e1e0a7405a3ec8886628b39c47b61a52c049d826a71bff08712e418a0",
+      "after_bytes": 57532,
+      "changed": true
+    },
+    "TableView.dc.html": {
+      "before_sha256": "63cb20dad37b1102eaccb1828fdc1df260c6eb87acf8483daa885f0bb25abefa",
+      "before_bytes": 54488,
+      "after_sha256": "5255e765ebc7ae7ba81b80c333422c975d4ff75c5c5c8bfb912462f5080ee4a1",
+      "after_bytes": 54494,
+      "changed": true
+    },
+    "ListSheet.dc.html": {
+      "before_sha256": "b06ba0b1e485f8b1238f81337d6ec70c4df1f6353ec6aa3e302b53583ccb0f4b",
+      "before_bytes": 60514,
+      "after_sha256": "eaf24b9bd0a14cd2d1a1af3bd8200238cbbfa8079656ab22dfdbcf275a512ed6",
+      "after_bytes": 62789,
+      "changed": true
+    },
+    "PagePane.dc.html": {
+      "before_sha256": "fb9c1b8342cee4c91d442d33fdf0300c344041d55a2cfbe5bb286fb3bdd92eb6",
+      "before_bytes": 61280,
+      "after_sha256": "5cef8bb52c5f20f1b84f586c4858bbe853423d3337c67d0292158a6ad5d25a24",
+      "after_bytes": 61671,
+      "changed": true
+    }
+  },
+  "applied": [],
+  "skipped": [
+    "screens.json",
+    "tools/flowplay.mjs",
+    "uncertain event 10843"
+  ],
+  "claim": "Generated result is not proven equal to commit 99ac6ff."
+}

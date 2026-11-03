@@ -71,14 +71,15 @@ export default [
     expect(at.every((i, k) => i >= 0 && (k === 0 || i > at[k - 1])), `the order is ${labels.join(', ')}`)
     expect(!(await sheet.getByText(/секция «/).count()), 'the header names the section')
   } },
-  // 11: Задачи and Дела по дому keep manual order, the newest on top
+  // 11: Задачи keeps manual order; iteration 3, item 6 puts new field records last
   { id: 'r3-11-manual', device: MOBILE, run: async (p) => {
     await open(p, '/')
     await page(p, 'Задачи')
     const first = () => p.locator('main [data-row-text]').first().innerText()
+    const last = () => p.locator('main [data-row-text]').last().innerText()
     expect((await first()).startsWith('Позвонить стоматологу'), `«${await first()}» is first on Задачи`)
     await send(p, 'оплатить штраф')
-    expect((await first()).startsWith('Оплатить штраф'), 'a new record did not go on top')
+    expect((await last()).startsWith('Оплатить штраф'), 'a new record did not go last')
   } },
   // 12: the Корзина subtitle: 14 px on the 16 px gutter
   { id: 'r3-12-trash', device: MOBILE, run: async (p) => {

@@ -25,8 +25,8 @@ const dept = (p, text) => store(p, (data, t) => {
 
 const row = (p, text) => p.locator('li', { hasText: text }).first()
 
-/** A finger: long press on `from`, then (if given) carry it to the middle of `to` and let go */
-async function touch(p, from, to) {
+/** A finger: long press on `from`, then (if given) carry it to `to` and let go */
+async function touch(p, from, to, zone = 'middle') {
   const a = await from.boundingBox()
   const b = to ? await to.boundingBox() : null
   const x = a.x + 120
@@ -35,7 +35,7 @@ async function touch(p, from, to) {
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] })
   await p.waitForTimeout(600)
   if (b) {
-    const ty = b.y + b.height / 2
+    const ty = zone === 'before' ? b.y + Math.min(4, b.height / 8) : b.y + b.height / 2
     for (let i = 1; i <= 12; i++) {
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y + (ty - y) * i / 12 }] })
       await p.waitForTimeout(30)
@@ -58,18 +58,42 @@ export default [
     await openPage(p, 'Покупки')
     const before = await dept(p, 'Яйца')
     expect(before && before !== 'Овощи и фрукты', `Яйца start in ${before}`)
-    const target = p.getByRole('region', { name: 'Овощи и фрукты' }).locator('li').first()
-    await touch(p, row(p, 'Яйца'), target)
+    const source = p.getByRole('region', { name: before })
+    const destination = p.getByRole('region', { name: 'Овощи и фрукты' })
+    const roots = region => region.locator('li[data-drag-id]').evaluateAll(els => els.map(e => e.dataset.dragId))
+    const sourceBefore = await roots(source)
+    const targetBefore = await roots(destination)
+    const snapshot = () => store(p, (data) => {
+      const page = data.livePages.find(x => x.title === 'Покупки')
+      return JSON.stringify({
+        records: [...data.recordsOf(page.id)].sort((a, b) => a.id.localeCompare(b.id)),
+        sort: page.views[0].sort
+      }, (key, value) => key === 'updatedAt' ? undefined : value)
+    })
+    const original = await snapshot()
+    const eggsId = await row(p, 'Яйца').getAttribute('data-drag-id')
+    expect(!!eggsId && sourceBefore.includes(eggsId) && targetBefore.length > 0, 'missing source or destination rows')
+    const target = destination.locator('li[data-drag-id]').first()
+    await touch(p, row(p, 'Яйца'), target, 'before')
     expect(await dept(p, 'Яйца') === 'Овощи и фрукты', `the drop left Отдел at ${await dept(p, 'Яйца')}`)
+    expect(JSON.stringify(await roots(destination)) === JSON.stringify([eggsId, ...targetBefore]), 'Яйца did not land before the target row')
+    expect(JSON.stringify(await roots(source)) === JSON.stringify(sourceBefore.filter(id => id !== eggsId)), 'source group order changed')
+    expect(await store(p, (data, id) => data.records[id]?.parentId === null, eggsId), 'the edge drop nested the record')
     expect(await shows(toast(p, 'Яйца → Овощи и фрукты')), 'no «Яйца → Овощи и фрукты» toast')
     await toast(p, 'Яйца → Овощи и фрукты').getByRole('button', { name: 'Отменить' }).click()
     await p.waitForTimeout(400)
     expect(await dept(p, 'Яйца') === before, '«Отменить» did not put Отдел back')
+    expect(JSON.stringify(await roots(source)) === JSON.stringify(sourceBefore), '«Отменить» did not restore source order')
+    expect(JSON.stringify(await roots(destination)) === JSON.stringify(targetBefore), '«Отменить» did not restore destination order')
+    expect(await snapshot() === original, '«Отменить» did not restore record values, parents, order and view sort')
   } },
   { id: 'v-3-press', device: MOBILE, run: async (p) => {
     await openPage(p, 'Покупки')
     await touch(p, row(p, 'Яйца'))
-    expect(await shows(p.getByRole('dialog').getByText('Яйца')), 'a long press without moving did not open the row menu')
+    const menu = p.locator('[data-record-hold-menu]')
+    expect(await shows(menu) && await menu.getAttribute('aria-label') === 'Действия: Яйца', 'a long press without moving did not open the Яйца row menu')
+    expect(await shows(menu.getByRole('menuitem', { name: 'Открыть', exact: true })), 'the row menu has no «Открыть»')
+    expect(/\/p\//.test(new URL(p.url()).pathname), 'the press opened the record')
     expect(await dept(p, 'Яйца') !== null, 'the press changed the record')
   } },
   { id: 'v-3-desktop', device: DESKTOP, run: async (p) => {

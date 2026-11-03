@@ -71,7 +71,39 @@ async function onlyButtons(p, word, where) {
   expect(!outside, `«${word}» outside a button on ${where}`)
 }
 
+/** Main flow 3 item 14 replaces «3 сделано» with a foldable «Подпункты 3/6». */
+async function completedSubitems(p) {
+  const button = p.getByRole('button', { name: /^Подпункты 3\/6/ })
+  expect(await shows(button), 'no «Подпункты 3/6»')
+  for (const title of ['Пробежать 5 км', 'Пробежать 8 км', '10 км без остановки']) {
+    const text = p.getByText(title, { exact: true }).first()
+    expect(await shows(text), `done subitem «${title}» is hidden`)
+    expect((await text.evaluate(el => getComputedStyle(el).textDecorationLine)).includes('line-through'), `«${title}» is not struck through`)
+  }
+  await button.click()
+  expect(await button.getAttribute('aria-expanded') === 'false', 'subitems did not fold')
+  expect(!(await p.getByText('Пробежать 5 км', { exact: true }).isVisible()), 'a folded done subitem stays visible')
+  await button.click()
+  expect(await button.getAttribute('aria-expanded') === 'true' && await shows(p.getByText('Пробежать 5 км', { exact: true })), 'done subitems did not reopen')
+}
+
 const PAGES = ['Сегодня', 'Полумарафон к маю', 'Покупки', 'Дела по дому', 'Задачи', 'Цели', 'Идеи', 'Книги']
+export const PICKER_NAMES = [
+  'Корзинка', 'Дела', 'Дом', 'Идея', 'Флаг', 'Мишень', 'Книга', 'Подарок', 'Календарь', 'Неделя', 'Документ', 'Сумка',
+  'Машина', 'Самолёт', 'Телефон', 'Таблетка', 'Лапа', 'Растение', 'Дерево', 'Валик', 'Инструмент', 'Ключ', 'Чашка', 'Деньги',
+  'Коляска', 'Музыка', 'Камера', 'Сердце', 'Гантели', 'Портфель', 'Место', 'Плёнка', 'Солнце', 'Учёба', 'Глобус', 'Еда', 'Луна', 'Горы'
+]
+
+async function checkIcons(icons) {
+  const buttons = await icons.evaluateAll(els => els.map(e => ({
+    name: e.getAttribute('aria-label'), pressed: e.getAttribute('aria-pressed'),
+    top: Math.round(e.getBoundingClientRect().top), height: e.getBoundingClientRect().height
+  })))
+  expect(JSON.stringify(buttons.map(b => b.name)) === JSON.stringify(PICKER_NAMES), 'the icon list or accessible names changed')
+  expect(buttons.every(b => b.pressed === 'true' || b.pressed === 'false') && buttons.filter(b => b.pressed === 'true').length === 1, 'icons lack accessible selection state')
+  expect(buttons.every(b => b.height >= 48), 'an icon button is less than 48px tall')
+  expect(buttons.slice(0, 6).every(b => b.top === buttons[0].top) && buttons[6].top > buttons[0].top, 'not six icons to a row')
+}
 
 export default [
   // 12: «page «⋯» → «Значок и цвет» → type «маш» → the car; tap it → the page tile changes at once»
@@ -83,12 +115,7 @@ export default [
     expect(await shows(sheet), 'no sheet «Значок и цвет»')
     expect(await sheet.getByText('Идеи', { exact: true }).count(), 'the sheet does not name the page')
     const icons = sheet.getByRole('group', { name: 'Значок' }).getByRole('button')
-    // v24 fixes (13) added the week to the calendar: 36
-    expect(await icons.count() === 36, `${await icons.count()} icons, not 36`)
-    const sizes = await icons.first().boundingBox()
-    expect(sizes.height >= 48, `icon buttons are ${sizes.height} high`)
-    const row = await icons.evaluateAll(els => els.slice(0, 7).map(e => Math.round(e.getBoundingClientRect().top)))
-    expect(row.slice(0, 6).every(t => t === row[0]) && row[6] > row[0], 'not six icons to a row')
+    await checkIcons(icons)
     const colours = sheet.getByRole('group', { name: 'Цвет' }).getByRole('button')
     expect((await colours.allInnerTexts()).length === 8, 'not eight colours')
     expect(await colours.first().getAttribute('aria-label') === 'Без цвета', '«Без цвета» is not first')
@@ -100,6 +127,10 @@ export default [
     expect(await store(p, data => data.livePages.find(x => x.title === 'Идеи').glyph) === 'car', 'the icon did not change')
     expect(await sheet.isVisible(), 'the sheet closed after a tap')
     expect(await tile(p).locator('.iconify').first().evaluate(el => el.className.includes('car')), 'the tile did not change at once')
+    for (const [query, name] of [['дерев', 'Дерево'], ['валик', 'Валик']]) {
+      await sheet.getByRole('textbox', { name: 'Найти значок' }).fill(query)
+      expect(JSON.stringify(await icons.evaluateAll(els => els.map(e => e.getAttribute('aria-label')))) === JSON.stringify([name]), `«${query}» does not find ${name}`)
+    }
     await sheet.getByRole('textbox', { name: 'Найти значок' }).fill('ёлка')
     expect(await shows(sheet.getByText('Такого значка нет. Попробуй другое слово.')), 'no line when nothing is found')
   } },
@@ -114,8 +145,9 @@ export default [
     const [a, b] = [await pop.boundingBox(), await more.boundingBox()]
     expect(a.y >= b.y + b.height - 2 && Math.abs(a.x + a.width - (b.x + b.width)) < 24, 'the popover is not at the page «⋯»')
     expect(await p.evaluate(() => document.activeElement?.getAttribute('aria-label')) === 'Найти значок', 'the search field is not focused')
-    await p.keyboard.type('маш')
     const icons = pop.getByRole('group', { name: 'Значок' }).getByRole('button')
+    await checkIcons(icons)
+    await p.keyboard.type('маш')
     expect(await icons.count() === 1 && await icons.first().getAttribute('aria-label') === 'Машина', '«маш» does not find only the car')
     await icons.first().click()
     expect(await store(p, data => data.livePages.find(x => x.title === 'Идеи').glyph) === 'car', 'the icon did not change')
@@ -313,10 +345,10 @@ export default [
     await line.locator('..').getByRole('button', { name: 'Запомнить' }).click()
     expect(await shows(p.getByText('Запомнено: такое класть в «Задачи».')), 'no «Запомнено: такое класть в «Задачи».»')
     await noDescription(p, 'Журнал')
-    // Настройки: «Раскладка» first, ending with «Что класть на страницы · 6 из 6»
+    // Настройки: «ИИ» first, ending with «Что класть на страницы · 6 из 6»
     await open(p, '/settings')
     const first = await p.locator('main h2').first().innerText()
-    expect(first.trim() === 'Раскладка', `the first group is «${first}»`)
+    expect(first.trim() === 'ИИ', `the first group is «${first}»`)
     const rows = p.locator('section[aria-labelledby="s-auto"]')
     expect((await rows.innerText()).includes('Что класть на страницы'), 'no «Что класть на страницы»')
     expect((await rows.innerText()).includes('По этим словам решается, куда положить запись'), 'no line 2 of «Что класть на страницы»')
@@ -338,7 +370,7 @@ export default [
     await p.keyboard.press('Escape')
     await noDescription(p, 'Покупки')
     await open(p, '/settings')
-    expect((await p.locator('main h2').first().innerText()).trim() === 'Раскладка', 'the first group is not «Раскладка»')
+    expect((await p.locator('main h2').first().innerText()).trim() === 'ИИ', 'the first group is not «ИИ»')
     await p.getByRole('button', { name: /6 из 6/ }).click()
     await p.waitForTimeout(400)
     expect(await p.getByRole('columnheader', { name: 'Что сюда класть' }).count(), 'no column «Что сюда класть»')
@@ -362,17 +394,17 @@ export default [
     expect(struck.includes('line-through'), '«Отправить документы» is not struck through')
     expect(await main.getByRole('button', { name: 'Очистить сделанное' }).count(), 'no «Очистить сделанное»')
     await onlyButtons(p, 'Готово', 'Задачи')
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
+    await p.getByRole('tab', { name: 'Сделано', selected: true }).click()
     await p.waitForTimeout(500)
     // v24 item 8: «Фильтр» is a row that names the filter and opens it
     const filter = p.getByRole('dialog').getByRole('button', { name: /^Фильтр/ })
     expect((await filter.innerText()).includes('Сделано'), '«Настроить вид» does not say «Фильтр · Сделано»')
     await onlyButtons(p, 'Готово', '«Настроить вид» on «Сделано»')
     await p.keyboard.press('Escape')
-    // Полумарафон к маю: «3 сделано ›»
+    // The record card now shows done/all in its foldable subitems caption (main flow 3, item 14).
     await open(p, '/')
     await openPage(p, 'Полумарафон к маю')
-    expect(await shows(p.getByRole('button', { name: /^3 сделано/ })), 'no «3 сделано ›»')
+    await completedSubitems(p)
     // Покупки keeps its words
     await open(p, '/')
     await openPage(p, 'Покупки')
@@ -391,7 +423,7 @@ export default [
     // The Доска hint names «Сделано»
     await open(p, '/')
     await openPage(p, 'Идеи')
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
+    await p.getByRole('tab', { selected: true }).click()
     await p.getByRole('radio', { name: 'Доска' }).or(p.getByRole('button', { name: 'Доска' })).first().click()
     await p.keyboard.press('Escape')
     await p.waitForTimeout(400)
@@ -412,7 +444,7 @@ export default [
     expect(await p.getByRole('tab', { name: 'Сделано' }).count(), 'a stored «Готово» does not read as «Сделано»')
     expect(!(await p.getByRole('tab', { name: 'Готово' }).count()), 'the tab still reads «Готово»')
   } },
-  // D5: «Полумарафон к маю → «3 сделано ›»; Дела по дому → «Список · Сделано»»
+  // D5: «Полумарафон к маю → done subitems»; Дела по дому → «Список · Сделано»»
   { id: 'l-24-done-desk', device: DESKTOP, run: async (p) => {
     await p.clock.install({ time: NOW })
     await open(p, '/')
@@ -420,6 +452,6 @@ export default [
     const tabs = await p.getByRole('tab').allInnerTexts()
     expect(tabs.join(' · ') === 'Список · Сделано', `Дела по дому's tabs are ${tabs.join(' · ')}`)
     await openPage(p, 'Полумарафон к маю')
-    expect(await shows(p.getByRole('button', { name: /^3 сделано/ })), 'no «3 сделано ›»')
+    await completedSubitems(p)
   } }
 ]

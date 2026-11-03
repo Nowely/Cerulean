@@ -7,7 +7,7 @@ import { useDataStore } from '~/stores/data'
 import { useScreen } from '~/composables/useScreen'
 import { useNotify } from '~/composables/useNotify'
 import { useCopy } from '~/composables/useCopy'
-import { addedText, measure, sizeText, type Snapshot } from '~/domain/export'
+import { addedText, measure, sizeText, StockImportConflict, type Snapshot } from '~/domain/export'
 import AdaptiveOverlay from '../overlay/AdaptiveOverlay.vue'
 
 const props = defineProps<{ file: { name: string, snap: Snapshot } | null }>()
@@ -19,8 +19,12 @@ const { saveCopy } = useCopy()
 const { isDesktop } = useScreen()
 
 const step = ref<'choose' | 'confirm'>('choose')
+const conflict = ref('')
 watch(open, (v) => {
-  if (v) step.value = 'choose'
+  if (v) {
+    step.value = 'choose'
+    conflict.value = ''
+  }
 })
 
 const here = computed(() => sizeText(measure({ pages: Object.values(data.pages), records: Object.values(data.records) })))
@@ -29,7 +33,15 @@ const MERGE = 'Страницы с тем же названием объедин
 
 function add() {
   if (!props.file) return
-  const added = data.addSnapshot(props.file.snap)
+  let added: ReturnType<typeof data.addSnapshot>
+  try {
+    added = data.addSnapshot(props.file.snap)
+  } catch (error) {
+    if (!(error instanceof StockImportConflict)) throw error
+    conflict.value = error.message
+    return
+  }
+  conflict.value = ''
   open.value = false
   const n = { pages: added.pages.length, records: added.records.length }
   if (n.pages || n.records) notify(addedText(n), { label: 'Отменить', run: () => data.takeBack(added) }, 8000)
@@ -61,6 +73,13 @@ async function replace() {
         <template v-else>
           Здесь удалятся {{ here }}, вместо них будут данные из файла. Перед этим сохранится копия того, что есть сейчас.
         </template>
+      </p>
+      <p
+        v-if="conflict && step === 'choose'"
+        role="alert"
+        class="pb-2 text-15 text-warn-ink"
+      >
+        {{ conflict }}
       </p>
       <!-- Desktop: one row, the weighty way on the left in words (Settings «Загрузить копию») -->
       <template v-if="isDesktop">

@@ -90,6 +90,13 @@ const rulesFirst = computed({
   get: () => data.settings.rulesFirst,
   set: (v: boolean) => data.setSettings({ rulesFirst: v })
 })
+type AiFeature = 'aiRoute' | 'aiSplit' | 'aiDepartment' | 'aiIcon'
+const aiFeatures: { id: AiFeature, label: string, icon: string, needsKey: boolean, hint: string }[] = [
+  { id: 'aiRoute', label: 'Раскладывать по страницам', icon: 'i-lucide-git-branch', needsKey: true, hint: 'Куда положить запись, решает модель' },
+  { id: 'aiSplit', label: 'Делить строку на записи', icon: 'i-lucide-list', needsKey: true, hint: '«Хлеб и позвонить маме» станет двумя' },
+  { id: 'aiDepartment', label: 'Отдел для покупок', icon: 'i-lucide-shopping-basket', needsKey: false, hint: 'Отдел выбирает модель' },
+  { id: 'aiIcon', label: 'Значок для новых страниц', icon: 'i-lucide-sparkles', needsKey: false, hint: 'Значок по названию выбирает модель' }
+]
 // A page that only collects files nothing by words, so it has no «Что сюда класть» (v24 fixes, 16)
 const userPages = computed(() => data.livePages.filter(p => p.kind === 'page' && !onlyCollects(p)))
 const described = computed(() => userPages.value.filter(p => p.description).length)
@@ -221,7 +228,7 @@ onMounted(() => {
           id="s-auto"
           class="px-4 pt-4 text-cap leading-6 text-toned lg:px-0 lg:pt-7.5 lg:pb-0.5 lg:leading-5"
         >
-          Раскладка
+          ИИ
         </h2>
         <!-- Desktop: line 2 is the real state with its dot (S10); «Без ключа…» only without a key -->
         <SettingRow
@@ -257,6 +264,30 @@ onMounted(() => {
             class="lg:w-57"
           />
         </SettingRow>
+        <div
+          v-for="feature in aiFeatures"
+          :key="feature.id"
+          class="flex min-h-12 items-center gap-3 px-4 py-1.5 lg:flex-wrap lg:gap-x-5 lg:gap-y-2 lg:border-t lg:border-default lg:px-0 lg:py-3"
+        >
+          <UIcon
+            :name="feature.icon"
+            class="size-5 shrink-0"
+            :class="feature.needsKey && !key ? 'text-dimmed' : 'text-toned'"
+          />
+          <span class="min-w-0 flex-1 lg:flex-[1_1_16rem]">
+            <span
+              class="block text-base lg:text-15 lg:font-medium"
+              :class="feature.needsKey && !key ? 'text-dimmed' : 'text-highlighted'"
+            >{{ feature.label }}</span>
+            <span class="mt-0.5 block text-13 leading-snug text-toned lg:text-sm">{{ feature.needsKey && !key ? 'Нужен ключ модели' : !key && !feature.needsKey ? 'Пока по простым правилам' : feature.hint }}</span>
+          </span>
+          <USwitch
+            :model-value="(!feature.needsKey || !!key) && data.settings[feature.id] !== false"
+            :disabled="feature.needsKey && !key"
+            :aria-label="feature.label"
+            @update:model-value="v => data.setSettings({ [feature.id]: v })"
+          />
+        </div>
         <SettingRow
           label="Сначала простые правила"
           icon="i-lucide-text"

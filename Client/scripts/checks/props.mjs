@@ -30,7 +30,8 @@ export default [
   { id: 'props-30-create', device: MOBILE, run: async (p) => {
     await open(p, '/')
     await p.getByRole('link', { name: /^Идеи/ }).first().click()
-    await p.getByRole('button', { name: 'Настроить вид' }).click()
+    await p.waitForFunction(() => document.title.startsWith('Идеи ·'))
+    await p.getByRole('tab', { selected: true }).click()
     await p.getByRole('button', { name: 'Новое свойство' }).click()
     await p.getByRole('textbox', { name: 'Название', exact: true }).fill('Статус')
     await p.getByRole('radio', { name: 'Выбор' }).click()
@@ -63,7 +64,16 @@ export default [
   } },
   // Desktop: the notice rises over the dialog's scrim, and «Отменить» works with the dialog still open
   { id: 'props-weight-option-desk', device: DESKTOP, run: async (p) => {
-    await editor(p, 'Отдел')
+    await open(p, '/')
+    await p.getByRole('link', { name: /^Покупки/ }).first().click()
+    await p.waitForURL(/\/p\//)
+    await p.waitForFunction(() => {
+      const title = document.querySelector('main textarea[aria-label="Название страницы"]')
+      return title?.value === 'Покупки' && title.getClientRects().length > 0
+    })
+    await p.locator('main').getByRole('button', { name: 'Действия со страницей' }).first().click()
+    await p.getByRole('dialog').or(p.getByRole('menu')).getByText(/^Свойства/).first().click()
+    await p.getByRole('button', { name: 'Изменить «Отдел»' }).click()
     await p.getByRole('button', { name: 'Удалить вариант «Бытовая химия»' }).click()
     const t = toast(p, 'Вариант «Бытовая химия» удалён')
     expect(await shows(t), 'no notice over the dialog')
@@ -103,16 +113,21 @@ export default [
     await p.waitForURL(/\/p\//)
     await p.getByRole('button', { name: 'Хлеб', exact: true }).first().click()
     await p.waitForURL(/\/r\//)
-    await p.getByRole('button', { name: 'Свойство', exact: true }).click()
+    await p.getByRole('button', { name: 'Добавить свойство', exact: true }).click()
     const menu = p.getByRole('dialog')
     expect(await shows(menu.getByRole('button', { name: /Новое свойство/ })), 'no «Новое свойство…»')
     expect(!(await menu.getByRole('button', { name: /^Отдел/ }).count()), 'Отдел is offered though the record shows it')
     await menu.getByRole('button', { name: /^Осталось/ }).click()
-    await p.waitForTimeout(400)
-    const field = await p.evaluate(() => document.activeElement?.getAttribute('aria-label'))
-    expect(field === 'Осталось', `the picked property did not open its field (focus on ${field})`)
+    const editor = p.getByRole('dialog', { name: 'Осталось' })
+    const field = editor.getByRole('textbox', { name: 'Осталось', exact: true })
+    await field.waitFor()
+    await p.waitForFunction(el => document.activeElement === el, await field.elementHandle(), { timeout: 5000 })
     await p.keyboard.type('2,5')
     await p.keyboard.press('Enter')
-    expect(await shows(p.getByRole('button', { name: 'Осталось: 2,5 шт. Изменить' })), 'the number did not save as «2,5 шт»')
+    await editor.waitFor({ state: 'hidden' })
+    const value = p.getByRole('button', { name: 'Осталось: 2,5 шт', exact: true })
+    expect(await shows(value), 'the number did not save as «2,5 шт»')
+    await p.reload()
+    expect(await shows(value), 'the number was not there after reload')
   } }
 ]

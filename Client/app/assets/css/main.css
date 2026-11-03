@@ -393,6 +393,41 @@
   to { opacity: 1; transform: none; }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .mf3-row-enter {
+    animation: mf3-row-enter 150ms ease-out both;
+  }
+
+  @keyframes mf3-row-enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .mf3-fold-enter-active,
+  .mf3-fold-leave-active {
+    transition: opacity 120ms ease-out;
+  }
+
+  .mf3-fold-enter-from,
+  .mf3-fold-leave-to {
+    opacity: 0;
+  }
+
+  .mf3-notice-enter-active,
+  .mf3-notice-leave-active {
+    transition: opacity 150ms ease-out, transform 150ms ease-out;
+  }
+
+  .mf3-notice-enter-from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .mf3-notice-leave-to {
+    opacity: 0;
+  }
+}
+
 /* A strip that scrolls sideways fades over its last 32px instead of cutting a tab in half */
 @utility fade-end {
   mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);

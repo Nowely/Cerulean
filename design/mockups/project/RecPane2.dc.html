@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Cerulean — Молоко: «‹ Покупки» к странице, Esc тоже</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="width: 1050px; height: 900px">
+<dc-import name="RecPane" variant="Компьютер" theme="{{theme}}" hint-size="1050px,900px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}, "$preview": {"width": 1050, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>
