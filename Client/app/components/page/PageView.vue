@@ -541,8 +541,7 @@ defineExpose({
       class="px-4 pt-1 lg:px-0"
       :class="!full ? 'lg:px-4' : 'lg:pt-px'"
     >
-      <!-- The glyph on its tile, the doc glyph until a kind or a glyph is chosen; no «Добавить значок» (main flow, item 16) -->
-      <!-- Computer: a 28 px tile over the check circles, the title where the record names start (computer delta, item 5) -->
+      <!-- The page glyph keeps its slot over the check circles without a permanent plate. -->
       <div class="flex items-center gap-2.5 lg:gap-1.5 lg:pl-1">
         <GlyphPicker
           v-if="full && page.kind === 'page'"
@@ -555,14 +554,14 @@ defineExpose({
         >
           <button
             type="button"
-            class="flex shrink-0 cursor-pointer rounded-tile-md"
+            class="relative flex size-7.5 shrink-0 cursor-pointer items-center justify-center rounded-tile-md active:bg-pressed lg:size-7 lg:hover:bg-hover after:absolute after:-inset-y-2 after:-left-4 after:right-0 after:content-['']"
             aria-label="Значок страницы"
           >
             <PageTile
               :glyph="page.glyph"
               :color="pageColor(page)"
-              size="page"
-              tile
+              :size="22"
+              tint
             />
           </button>
         </GlyphPicker>

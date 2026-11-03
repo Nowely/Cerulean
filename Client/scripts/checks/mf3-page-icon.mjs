@@ -43,6 +43,43 @@ async function scenario(p) {
   expect((await current(p)).glyph === 'sun', 'an existing page changed its icon')
 }
 
+async function headerIcon(p) {
+  await first(p)
+  const title = await makePage(p)
+  await title.fill('Дача')
+  await title.blur()
+  await p.mouse.move(0, 0)
+  const button = p.getByRole('button', { name: 'Значок страницы' })
+  const geometry = await button.evaluate((el) => {
+    const r = el.getBoundingClientRect()
+    const icon = el.firstElementChild.getBoundingClientRect()
+    const point = document.elementFromPoint(r.left - 5, r.top + r.height / 2)
+    return { width: r.width, icon: icon.width, background: getComputedStyle(el).backgroundColor, extended: point === el }
+  })
+  const desktop = p.viewportSize().width >= 900
+  expect(geometry.width === (desktop ? 28 : 30), `icon slot: ${geometry.width}`)
+  expect(geometry.icon === 22, `icon size: ${geometry.icon}`)
+  expect(geometry.background === 'rgba(0, 0, 0, 0)', `icon has a plate: ${geometry.background}`)
+  expect(geometry.extended, 'the icon hit area does not extend into the free space')
+  await button.click()
+  await p.getByRole('group', { name: 'Цвет' }).getByRole('button', { name: 'Зелёный' }).click()
+  await p.keyboard.press('Escape')
+  const colored = await button.locator('span').first().evaluate(el => getComputedStyle(el).color)
+  const green = await p.evaluate(() => {
+    const probe = document.createElement('span')
+    probe.style.color = 'var(--c-green)'
+    document.body.append(probe)
+    const color = getComputedStyle(probe).color
+    probe.remove()
+    return color
+  })
+  expect(colored === green, `icon color: ${colored}, expected ${green}`)
+  await title.click()
+  await title.fill('Дача у озера')
+  await title.blur()
+  expect((await current(p)).title === 'Дача у озера', 'the icon hit area blocked the title')
+}
+
 async function lateModel(p) {
   await first(p)
   let calls = 0
@@ -166,6 +203,9 @@ async function syncIcon(p) {
 }
 
 export default [
+  ...[MOBILE, DESKTOP].flatMap((device, i) => ['light', 'dark'].map(colorScheme => ({
+    id: `mf3-page-header-icon-${i ? 'desktop' : 'phone'}-${colorScheme}`, device: { ...device, colorScheme }, run: headerIcon
+  }))),
   ...[MOBILE, DESKTOP].flatMap((device, i) => ['light', 'dark'].map(colorScheme => ({
     id: `mf3-page-icon-${i ? 'desktop' : 'phone'}-${colorScheme}`, device: { ...device, colorScheme }, run: scenario
   }))),

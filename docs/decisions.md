@@ -279,6 +279,7 @@ Source: Josh saw an open app keep the old build after a deploy (29 Oct, 08:09Z) 
 
 ## Iteration 3
 
+- **2026-11-03 · Open page icons have no resting plate.** A page's 22 px glyph keeps its 30 px phone / 28 px desktop slot and chosen colour. The icon button keeps its picker, focus and enlarged hit area; hover and press still give feedback. This applies to editable page headers, not record cards or other page icons. Source: Josh, 3 Nov; replaces the plate in computer item 5 for this header. Code: `PageView.vue`, `PageTile.vue`.
 - **2026-11-03 · Back closes local layers first** (item 9): local layers use same-URL history entries coordinated with Vue Router; closing them by another action returns over those entries. The shared desktop field stays open across page changes. Checks: `scripts/checks/mf3-back.mjs` and `test/back-layers.test.ts`. Current limitation: Forward does not restore closed transient layers; real-device system Back and edge gestures have not been verified. Code: `composables/useBackLayer.ts`, `utils/backHistory.ts`, `router.options.ts`.
 
 ## Not built on purpose
